@@ -1,0 +1,2 @@
+C:/Users/user/Documents/enterprice/teki-mobile-app/android/app/.cxx/Debug/3g282s2q/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/user/Documents/enterprice/teki-mobile-app/android/app/.cxx/Debug/3g282s2q/armeabi-v7a/CMakeFiles/rebuild_cache.dir

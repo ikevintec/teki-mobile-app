@@ -1,0 +1,2 @@
+C:/Users/user/Desktop/inventual/inventual-flutter-package/inventual_flutter/android/app/.cxx/Debug/2w4326fj/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/user/Desktop/inventual/inventual-flutter-package/inventual_flutter/android/app/.cxx/Debug/2w4326fj/x86_64/CMakeFiles/rebuild_cache.dir
