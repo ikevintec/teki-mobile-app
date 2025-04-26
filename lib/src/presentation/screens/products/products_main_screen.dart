@@ -1,32 +1,48 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/data/models/products_model/product_list_model.dart';
+import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/product-list_section.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/search_field.dart';
 import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
 import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_floating_action_button.dart';
+import 'package:teki_app/src/providers/products/profucts.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
+import 'package:teki_app/src/utils/contstants.dart';
 
-class ProductsMainScreen extends StatefulWidget {
+class ProductsMainScreen extends ConsumerStatefulWidget {
   const ProductsMainScreen({super.key});
 
   @override
-  State<ProductsMainScreen> createState() => _ProductsMainScreenState();
+  ConsumerState<ProductsMainScreen> createState() => _ProductsMainScreenState();
 }
 
-class _ProductsMainScreenState extends State<ProductsMainScreen> {
+class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
   final controller = SidebarXController(selectedIndex: 1, extended: true);
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
 
-  List<Map<String, dynamic>> productList = List.from(productListModel);
+  late var productState = ref.watch(productProvider);
+  late List<Product> productList = [];
+  bool _loaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_loaded) {
+      Future.microtask(() {
+        ref.read(productProvider.notifier).resetProducts();
+      });
+      _loaded = true;
+    }
+  }
 
   searchProduct(value) {
     setState(() {
-      productList = productListModel
-          .where((product) => product["name"]
+      productList = productState.products
+          .where((product) => product.nombre
               .toString()
               .toLowerCase()
               .contains(value.toLowerCase()))
@@ -36,6 +52,9 @@ class _ProductsMainScreenState extends State<ProductsMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    productState = ref.watch(productProvider);
+    List<Product> productListModel = productState.products;
+    bool isLoading = productState.isLoading && productListModel.isEmpty;
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
     return Scaffold(
       key: _key,
@@ -48,7 +67,7 @@ class _ProductsMainScreenState extends State<ProductsMainScreen> {
               centerTitle: true,
               surfaceTintColor: Colors.white,
               title: Text(
-                "Product List",
+                "Productos",
                 style: GoogleFonts.raleway(
                   textStyle: const TextStyle(fontWeight: FontWeight.w500),
                 ),
@@ -85,24 +104,51 @@ class _ProductsMainScreenState extends State<ProductsMainScreen> {
           : null,
       body: Container(
         color: Colors.white70,
-        child: RefreshIndicator(
-          onRefresh: () async {},
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(
-                height: 20,
+        child: isLoading
+            ? const Center(
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(
+                      color: ColorSchema.primaryColor,
+                      strokeWidth: 2,
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Text(
+                      "Cargando productos...",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    )
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: () async {
+                  ref.read(productProvider.notifier).resetProducts();
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    SearchField(onTextChanged: (value) => searchProduct(value)),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    ProductListSection(
+                        isSmallScreen: isSmallScreen,
+                        productList: productListModel),
+                  ],
+                ),
               ),
-              SearchField(onTextChanged: (value) => searchProduct(value)),
-              const SizedBox(
-                height: 10,
-              ),
-              ProductListSection(
-                  isSmallScreen: isSmallScreen, productList: productList),
-            ],
-          ),
-        ),
       ),
       floatingActionButton: const CustomFloatingActionButton(
           buttonName: "Add Product", routeName: AppRoutes.addProduct),

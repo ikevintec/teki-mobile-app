@@ -1,0 +1,521 @@
+import 'package:teki_app/src/data/models/aditionalField.dart';
+import 'package:teki_app/src/data/models/anticipo.dart';
+import 'package:teki_app/src/data/models/attachedCompany.dart';
+import 'package:teki_app/src/data/models/cashRegisterDetail.dart';
+import 'package:teki_app/src/data/models/company.dart';
+import 'package:teki_app/src/data/models/cutomer.dart';
+import 'package:teki_app/src/data/models/guiaRelacionada.dart';
+import 'package:teki_app/src/data/models/office.dart';
+import 'package:teki_app/src/data/models/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/quotation.dart';
+import 'package:teki_app/src/data/models/saleStation.dart';
+import 'package:teki_app/src/data/models/sunatResponse.dart';
+import 'package:teki_app/src/data/models/ticketDetail.dart';
+import 'package:teki_app/src/data/models/ticketFee.dart';
+import 'package:teki_app/src/data/models/ticketFile.dart';
+import 'package:teki_app/src/data/models/user.dart';
+
+class Ticket {
+  final int? id;
+  final String? serie;
+  final int? numero;
+  final String? fechaEmision;
+  final DateTime? fechaEmisionDate;
+  final DateTime? fechaVencimientoDate;
+  final String? horaEmision;
+  final String? tipoComprobante;
+  final String? codigoMoneda;
+  final String? fechaVencimiento;
+  final String? codigoTipoOperacion;
+  final String? rucEmisor;
+  final String? razonSocialEmisor;
+  final String? codigoLocalAnexoEmisor;
+  final String? tipoDocumentoReceptor;
+  final String? numeroDocumentoReceptor;
+  final String? denominacionReceptor;
+  final String? direccionReceptor;
+  final String? emailReceptor;
+  final String? telefonoReceptor;
+  final Customer? cliente;
+  final List<AditionalField>? camposAdicionales;
+  final List<TicketFee>? cuotas;
+  final String? numeroOrdenRestaurante;
+  final String? codigoTipoOtroDocumentoRelacionado;
+  final String? serieNumeroOtroDocumentoRelacionado;
+  final double? totalValorVentaExportacion;
+  final double? totalValorVentaGravada;
+  final double? totalValorVentaInafecta;
+  final double? totalValorVentaExonerada;
+  final double? totalValorVentaGratuita;
+  final double? totalValorBaseIsc;
+  final double? totalValorBaseIgv;
+  final double? totalValorVentaGravadaIvap;
+  final double? totalTributosOperacionGratuita;
+  final double? totalTributosBolsas;
+  final double? totalIvap;
+  final double? totalIgv;
+  final double? totalIsc;
+  final double? otrosTributos;
+  final double? otrosCargos;
+  final double? porcentajeOtrosCargos;
+  final double? totalValorVenta;
+  final double? totalVenta;
+  final double? totalVentaCredito;
+  final double? totalAnticipos;
+  final bool? pagoAnticipado;
+  final String? regimenPercepcion;
+  final double? montoPercepcion;
+  final double? porcentajePercepcion;
+  final double? totalVentaPercepcion;
+  final double? montoBaseRetencion;
+  final double? montoRetencion;
+  final double? porcentajeRetencion;
+  final double? montoBaseDescuento;
+  final double? porcentajeDescuento;
+  final double? totalDescuento;
+  final double? descuentoGlobal;
+  final double? descuentoPorItem;
+  final String? codigoDescuento;
+  final double? porcentajeDescuentoGlobal;
+  final String? serieAfectado;
+  final int? numeroAfectado;
+  final String? tipoComprobanteAfectado;
+  final String? motivoNota;
+  final String? codigoTipoNotaCredito;
+  final String? codigoTipoNotaDebito;
+  final String? identificadorDocumento;
+  final int? estadoItem;
+  final String? estadoSunat;
+  final String? estado;
+  final String? estadoAnterior;
+  final String? mensajeRespuesta;
+  final String? motivoAnulacion;
+  final bool? incIgv;
+  final bool? agruparItems;
+  final double? efectivo;
+  final double? cambio;
+  final List<TicketDetail>? items;
+  final List<Anticipo>? anticipos;
+  final List<GuiaRelacionada>? guiasRelacionadas;
+  final String? uuid;
+  final String? ordenCompra;
+  final String? condicionPago;
+  final String? observacion;
+  final String? codigosRespuestaSunat;
+  final bool? boletaAnuladaSinEmitir;
+  final bool? envioAutomaticoSunat;
+  final List<TicketFile>? archivos;
+  final List<SunatResponse>? sunatRespuestas;
+  final String? codigoHash;
+  final String? codigoMedioPago;
+  final String? cuentaDetraccion;
+  final String? codigoDetraccion;
+  final double? porcentajeDetraccion;
+  final double? montoDetraccion;
+  final Company? empresa;
+  final AttachedCompany? empresaAdjunta;
+  final Office? puntoVenta;
+  final SaleStation? estacionVenta;
+  final Quotation? cotizacion;
+  final String? tipoVenta;
+  final bool? esProduccion;
+  final int? diasCredito;
+  final bool? anulado;
+  final String? comprobanteSustituto;
+  final bool? isSendBill;
+  final String? idNotaVentaAnulada;
+  final User? vendedor;
+  final OrderRestaurant? pedidoRestaurante;
+  final int? cuentaRestaurante;
+  final String? canal;
+  final String? comprobanteAnterior;
+  final CashRegisterDetail? movimientoCaja;
+  final int? intentosSendSummary;
+  final DateTime? createdOn;
+  final double? adelanto;
+  final int? createdBy;
+  final int? updatedBy;
+  final DateTime? updatedOn;
+  final int? deleteBy;
+  final DateTime? deletedOn;
+  final bool? isEdited;
+
+  Ticket({
+    this.id,
+    this.serie,
+    this.numero,
+    this.fechaEmision,
+    this.fechaEmisionDate,
+    this.fechaVencimientoDate,
+    this.horaEmision,
+    this.tipoComprobante,
+    this.codigoMoneda,
+    this.fechaVencimiento,
+    this.codigoTipoOperacion,
+    this.rucEmisor,
+    this.razonSocialEmisor,
+    this.codigoLocalAnexoEmisor,
+    this.tipoDocumentoReceptor,
+    this.numeroDocumentoReceptor,
+    this.denominacionReceptor,
+    this.direccionReceptor,
+    this.emailReceptor,
+    this.telefonoReceptor,
+    this.cliente,
+    this.camposAdicionales,
+    this.cuotas,
+    this.numeroOrdenRestaurante,
+    this.codigoTipoOtroDocumentoRelacionado,
+    this.serieNumeroOtroDocumentoRelacionado,
+    this.totalValorVentaExportacion,
+    this.totalValorVentaGravada,
+    this.totalValorVentaInafecta,
+    this.totalValorVentaExonerada,
+    this.totalValorVentaGratuita,
+    this.totalValorBaseIsc,
+    this.totalValorBaseIgv,
+    this.totalValorVentaGravadaIvap,
+    this.totalTributosOperacionGratuita,
+    this.totalTributosBolsas,
+    this.totalIvap,
+    this.totalIgv,
+    this.totalIsc,
+    this.otrosTributos,
+    this.otrosCargos,
+    this.porcentajeOtrosCargos,
+    this.totalValorVenta,
+    this.totalVenta,
+    this.totalVentaCredito,
+    this.totalAnticipos,
+    this.pagoAnticipado,
+    this.regimenPercepcion,
+    this.montoPercepcion,
+    this.porcentajePercepcion,
+    this.totalVentaPercepcion,
+    this.montoBaseRetencion,
+    this.montoRetencion,
+    this.porcentajeRetencion,
+    this.montoBaseDescuento,
+    this.porcentajeDescuento,
+    this.totalDescuento,
+    this.descuentoGlobal,
+    this.descuentoPorItem,
+    this.codigoDescuento,
+    this.porcentajeDescuentoGlobal,
+    this.serieAfectado,
+    this.numeroAfectado,
+    this.tipoComprobanteAfectado,
+    this.motivoNota,
+    this.codigoTipoNotaCredito,
+    this.codigoTipoNotaDebito,
+    this.identificadorDocumento,
+    this.estadoItem,
+    this.estadoSunat,
+    this.estado,
+    this.estadoAnterior,
+    this.mensajeRespuesta,
+    this.motivoAnulacion,
+    this.incIgv,
+    this.agruparItems,
+    this.efectivo,
+    this.cambio,
+    this.items,
+    this.anticipos,
+    this.guiasRelacionadas,
+    this.uuid,
+    this.ordenCompra,
+    this.condicionPago,
+    this.observacion,
+    this.codigosRespuestaSunat,
+    this.boletaAnuladaSinEmitir,
+    this.envioAutomaticoSunat,
+    this.archivos,
+    this.sunatRespuestas,
+    this.codigoHash,
+    this.codigoMedioPago,
+    this.cuentaDetraccion,
+    this.codigoDetraccion,
+    this.porcentajeDetraccion,
+    this.montoDetraccion,
+    this.empresa,
+    this.empresaAdjunta,
+    this.puntoVenta,
+    this.estacionVenta,
+    this.cotizacion,
+    this.tipoVenta,
+    this.esProduccion,
+    this.diasCredito,
+    this.anulado,
+    this.comprobanteSustituto,
+    this.isSendBill,
+    this.idNotaVentaAnulada,
+    this.vendedor,
+    this.pedidoRestaurante,
+    this.cuentaRestaurante,
+    this.canal,
+    this.comprobanteAnterior,
+    this.movimientoCaja,
+    this.intentosSendSummary,
+    this.createdOn,
+    this.adelanto,
+    this.createdBy,
+    this.updatedBy,
+    this.updatedOn,
+    this.deleteBy,
+    this.deletedOn,
+    this.isEdited,
+  });
+
+  factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
+  id: json['id'],
+  serie: json['serie'],
+  numero: json['numero'],
+  fechaEmision: json['fechaEmision'],
+  fechaEmisionDate: json['fechaEmisionDate'] != null ? DateTime.parse(json['fechaEmisionDate']) : null,
+  fechaVencimientoDate: json['fechaVencimientoDate'] != null ? DateTime.parse(json['fechaVencimientoDate']) : null,
+  horaEmision: json['horaEmision'],
+  tipoComprobante: json['tipoComprobante'],
+  codigoMoneda: json['codigoMoneda'],
+  fechaVencimiento: json['fechaVencimiento'],
+  codigoTipoOperacion: json['codigoTipoOperacion'],
+  rucEmisor: json['rucEmisor'],
+  razonSocialEmisor: json['razonSocialEmisor'],
+  codigoLocalAnexoEmisor: json['codigoLocalAnexoEmisor'],
+  tipoDocumentoReceptor: json['tipoDocumentoReceptor'],
+  numeroDocumentoReceptor: json['numeroDocumentoReceptor'],
+  denominacionReceptor: json['denominacionReceptor'],
+  direccionReceptor: json['direccionReceptor'],
+  emailReceptor: json['emailReceptor'],
+  telefonoReceptor: json['telefonoReceptor'],
+  cliente: json['cliente'] != null ? Customer.fromJson(json['cliente']) : null,
+  camposAdicionales: json['camposAdicionales'] != null ? List<AditionalField>.from(json['camposAdicionales'].map((x) => AditionalField.fromJson(x))) : null,
+  cuotas: json['cuotas'] != null ? List<TicketFee>.from(json['cuotas'].map((x) => TicketFee.fromJson(x))) : null,
+  numeroOrdenRestaurante: json['numeroOrdenRestaurante'],
+  codigoTipoOtroDocumentoRelacionado: json['codigoTipoOtroDocumentoRelacionado'],
+  serieNumeroOtroDocumentoRelacionado: json['serieNumeroOtroDocumentoRelacionado'],
+  totalValorVentaExportacion: json['totalValorVentaExportacion'],
+  totalValorVentaGravada: json['totalValorVentaGravada'],
+  totalValorVentaInafecta: json['totalValorVentaInafecta'],
+  totalValorVentaExonerada: json['totalValorVentaExonerada'],
+  totalValorVentaGratuita: json['totalValorVentaGratuita'],
+  totalValorBaseIsc: json['totalValorBaseIsc'],
+  totalValorBaseIgv: json['totalValorBaseIgv'],
+  totalValorVentaGravadaIvap: json['totalValorVentaGravadaIvap'],
+  totalTributosOperacionGratuita: json['totalTributosOperacionGratuita'],
+  totalTributosBolsas: json['totalTributosBolsas'],
+  totalIvap: json['totalIvap'],
+  totalIgv: json['totalIgv'],
+  totalIsc: json['totalIsc'],
+  otrosTributos: json['otrosTributos'],
+  otrosCargos: json['otrosCargos'],
+  porcentajeOtrosCargos: json['porcentajeOtrosCargos'],
+  totalValorVenta: json['totalValorVenta'],
+  totalVenta: json['totalVenta'],
+  totalVentaCredito: json['totalVentaCredito'],
+  totalAnticipos: json['totalAnticipos'],
+  pagoAnticipado: json['pagoAnticipado'],
+  regimenPercepcion: json['regimenPercepcion'],
+  montoPercepcion: json['montoPercepcion'],
+  porcentajePercepcion: json['porcentajePercepcion'],
+  totalVentaPercepcion: json['totalVentaPercepcion'],
+  montoBaseRetencion: json['montoBaseRetencion'],
+  montoRetencion: json['montoRetencion'],
+  porcentajeRetencion: json['porcentajeRetencion'],
+  montoBaseDescuento: json['montoBaseDescuento'],
+  porcentajeDescuento: json['porcentajeDescuento'],
+  totalDescuento: json['totalDescuento'],
+  descuentoGlobal: json['descuentoGlobal'],
+  descuentoPorItem: json['descuentoPorItem'],
+  codigoDescuento: json['codigoDescuento'],
+  porcentajeDescuentoGlobal: json['porcentajeDescuentoGlobal'],
+  serieAfectado: json['serieAfectado'],
+  numeroAfectado: json['numeroAfectado'],
+  tipoComprobanteAfectado: json['tipoComprobanteAfectado'],
+  motivoNota: json['motivoNota'],
+  codigoTipoNotaCredito: json['codigoTipoNotaCredito'],
+  codigoTipoNotaDebito: json['codigoTipoNotaDebito'],
+  identificadorDocumento: json['identificadorDocumento'],
+  estadoItem: json['estadoItem'],
+  estadoSunat: json['estadoSunat'],
+  estado: json['estado'],
+  estadoAnterior: json['estadoAnterior'],
+  mensajeRespuesta: json['mensajeRespuesta'],
+  motivoAnulacion: json['motivoAnulacion'],
+  incIgv: json['incIgv'],
+  agruparItems: json['agruparItems'],
+  efectivo: json['efectivo'],
+  cambio: json['cambio'],
+  items: json['items'] != null ? List<TicketDetail>.from(json['items'].map((x) => TicketDetail.fromJson(x))) : null,
+  anticipos: json['anticipos'] != null ? List<Anticipo>.from(json['anticipos'].map((x) => Anticipo.fromJson(x))) : null,
+  guiasRelacionadas: json['guiasRelacionadas'] != null ? List<GuiaRelacionada>.from(json['guiasRelacionadas'].map((x) => GuiaRelacionada.fromJson(x))) : null,
+  uuid: json['uuid'],
+  ordenCompra: json['ordenCompra'],
+  condicionPago: json['condicionPago'],
+  observacion: json['observacion'],
+  codigosRespuestaSunat: json['codigosRespuestaSunat'],
+  boletaAnuladaSinEmitir: json['boletaAnuladaSinEmitir'],
+  envioAutomaticoSunat: json['envioAutomaticoSunat'],
+  archivos: json['archivos'] != null ? List<TicketFile>.from(json['archivos'].map((x) => TicketFile.fromJson(x))) : null,
+  sunatRespuestas: json['sunatRespuestas'] != null ? List<SunatResponse>.from(json['sunatRespuestas'].map((x) => SunatResponse.fromJson(x))) : null,
+  codigoHash: json['codigoHash'],
+  codigoMedioPago: json['codigoMedioPago'],
+  cuentaDetraccion: json['cuentaDetraccion'],
+  codigoDetraccion: json['codigoDetraccion'],
+  porcentajeDetraccion: json['porcentajeDetraccion'],
+  montoDetraccion: json['montoDetraccion'],
+  empresa: json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
+  empresaAdjunta: json['empresaAdjunta'] != null ? AttachedCompany.fromJson(json['empresaAdjunta']) : null,
+  puntoVenta: json['puntoVenta'] != null ? Office.fromJson(json['puntoVenta']) : null,
+  estacionVenta: json['estacionVenta'] != null ? SaleStation.fromJson(json['estacionVenta']) : null,
+  cotizacion: json['cotizacion'] != null ? Quotation.fromJson(json['cotizacion']) : null,
+  tipoVenta: json['tipoVenta'],
+  esProduccion: json['esProduccion'],
+  diasCredito: json['diasCredito'],
+  anulado: json['anulado'],
+  comprobanteSustituto: json['comprobanteSustituto'],
+  isSendBill: json['isSendBill'],
+  idNotaVentaAnulada: json['idNotaVentaAnulada'],
+  vendedor: json['vendedor'] != null ? User.fromJson(json['vendedor']) : null,
+  pedidoRestaurante: json['pedidoRestaurante'] != null ? OrderRestaurant.fromJson(json['pedidoRestaurante']) : null,
+  cuentaRestaurante: json['cuentaRestaurante'],
+  canal: json['canal'],
+  comprobanteAnterior: json['comprobanteAnterior'],
+  movimientoCaja: json['movimientoCaja'] != null ? CashRegisterDetail.fromJson(json['movimientoCaja']) : null,
+  intentosSendSummary: json['intentosSendSummary'],
+  createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+  adelanto: json['adelanto'],
+  createdBy: json['createdBy'],
+  updatedBy: json['updatedBy'],
+  updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+  deleteBy: json['deleteBy'],
+  deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+  isEdited: json['isEdited'],
+);
+
+Map<String, dynamic> toJson() => {
+  'id': id,
+  'serie': serie,
+  'numero': numero,
+  'fechaEmision': fechaEmision,
+  'fechaEmisionDate': fechaEmisionDate?.toIso8601String(),
+  'fechaVencimientoDate': fechaVencimientoDate?.toIso8601String(),
+  'horaEmision': horaEmision,
+  'tipoComprobante': tipoComprobante,
+  'codigoMoneda': codigoMoneda,
+  'fechaVencimiento': fechaVencimiento,
+  'codigoTipoOperacion': codigoTipoOperacion,
+  'rucEmisor': rucEmisor,
+  'razonSocialEmisor': razonSocialEmisor,
+  'codigoLocalAnexoEmisor': codigoLocalAnexoEmisor,
+  'tipoDocumentoReceptor': tipoDocumentoReceptor,
+  'numeroDocumentoReceptor': numeroDocumentoReceptor,
+  'denominacionReceptor': denominacionReceptor,
+  'direccionReceptor': direccionReceptor,
+  'emailReceptor': emailReceptor,
+  'telefonoReceptor': telefonoReceptor,
+  'cliente': cliente?.toJson(),
+  'camposAdicionales': camposAdicionales?.map((x) => x.toJson()).toList(),
+  'cuotas': cuotas?.map((x) => x.toJson()).toList(),
+  'numeroOrdenRestaurante': numeroOrdenRestaurante,
+  'codigoTipoOtroDocumentoRelacionado': codigoTipoOtroDocumentoRelacionado,
+  'serieNumeroOtroDocumentoRelacionado': serieNumeroOtroDocumentoRelacionado,
+  'totalValorVentaExportacion': totalValorVentaExportacion,
+  'totalValorVentaGravada': totalValorVentaGravada,
+  'totalValorVentaInafecta': totalValorVentaInafecta,
+  'totalValorVentaExonerada': totalValorVentaExonerada,
+  'totalValorVentaGratuita': totalValorVentaGratuita,
+  'totalValorBaseIsc': totalValorBaseIsc,
+  'totalValorBaseIgv': totalValorBaseIgv,
+  'totalValorVentaGravadaIvap': totalValorVentaGravadaIvap,
+  'totalTributosOperacionGratuita': totalTributosOperacionGratuita,
+  'totalTributosBolsas': totalTributosBolsas,
+  'totalIvap': totalIvap,
+  'totalIgv': totalIgv,
+  'totalIsc': totalIsc,
+  'otrosTributos': otrosTributos,
+  'otrosCargos': otrosCargos,
+  'porcentajeOtrosCargos': porcentajeOtrosCargos,
+  'totalValorVenta': totalValorVenta,
+  'totalVenta': totalVenta,
+  'totalVentaCredito': totalVentaCredito,
+  'totalAnticipos': totalAnticipos,
+  'pagoAnticipado': pagoAnticipado,
+  'regimenPercepcion': regimenPercepcion,
+  'montoPercepcion': montoPercepcion,
+  'porcentajePercepcion': porcentajePercepcion,
+  'totalVentaPercepcion': totalVentaPercepcion,
+  'montoBaseRetencion': montoBaseRetencion,
+  'montoRetencion': montoRetencion,
+  'porcentajeRetencion': porcentajeRetencion,
+  'montoBaseDescuento': montoBaseDescuento,
+  'porcentajeDescuento': porcentajeDescuento,
+  'totalDescuento': totalDescuento,
+  'descuentoGlobal': descuentoGlobal,
+  'descuentoPorItem': descuentoPorItem,
+  'codigoDescuento': codigoDescuento,
+  'porcentajeDescuentoGlobal': porcentajeDescuentoGlobal,
+  'serieAfectado': serieAfectado,
+  'numeroAfectado': numeroAfectado,
+  'tipoComprobanteAfectado': tipoComprobanteAfectado,
+  'motivoNota': motivoNota,
+  'codigoTipoNotaCredito': codigoTipoNotaCredito,
+  'codigoTipoNotaDebito': codigoTipoNotaDebito,
+  'identificadorDocumento': identificadorDocumento,
+  'estadoItem': estadoItem,
+  'estadoSunat': estadoSunat,
+  'estado': estado,
+  'estadoAnterior': estadoAnterior,
+  'mensajeRespuesta': mensajeRespuesta,
+  'motivoAnulacion': motivoAnulacion,
+  'incIgv': incIgv,
+  'agruparItems': agruparItems,
+  'efectivo': efectivo,
+  'cambio': cambio,
+  'items': items?.map((x) => x.toJson()).toList(),
+  'anticipos': anticipos?.map((x) => x.toJson()).toList(),
+  'guiasRelacionadas': guiasRelacionadas?.map((x) => x.toJson()).toList(),
+  'uuid': uuid,
+  'ordenCompra': ordenCompra,
+  'condicionPago': condicionPago,
+  'observacion': observacion,
+  'codigosRespuestaSunat': codigosRespuestaSunat,
+  'boletaAnuladaSinEmitir': boletaAnuladaSinEmitir,
+  'envioAutomaticoSunat': envioAutomaticoSunat,
+  'archivos': archivos?.map((x) => x.toJson()).toList(),
+  'sunatRespuestas': sunatRespuestas?.map((x) => x.toJson()).toList(),
+  'codigoHash': codigoHash,
+  'codigoMedioPago': codigoMedioPago,
+  'cuentaDetraccion': cuentaDetraccion,
+  'codigoDetraccion': codigoDetraccion,
+  'porcentajeDetraccion': porcentajeDetraccion,
+  'montoDetraccion': montoDetraccion,
+  'empresa': empresa?.toJson(),
+  'empresaAdjunta': empresaAdjunta?.toJson(),
+  'puntoVenta': puntoVenta?.toJson(),
+  'estacionVenta': estacionVenta?.toJson(),
+  'cotizacion': cotizacion?.toJson(),
+  'tipoVenta': tipoVenta,
+  'esProduccion': esProduccion,
+  'diasCredito': diasCredito,
+  'anulado': anulado,
+  'comprobanteSustituto': comprobanteSustituto,
+  'isSendBill': isSendBill,
+  'idNotaVentaAnulada': idNotaVentaAnulada,
+  'vendedor': vendedor?.toJson(),
+  'pedidoRestaurante': pedidoRestaurante?.toJson(),
+  'cuentaRestaurante': cuentaRestaurante,
+  'canal': canal,
+  'comprobanteAnterior': comprobanteAnterior,
+  'movimientoCaja': movimientoCaja?.toJson(),
+  'intentosSendSummary': intentosSendSummary,
+  'createdOn': createdOn?.toIso8601String(),
+  'adelanto': adelanto,
+  'createdBy': createdBy,
+  'updatedBy': updatedBy,
+  'updatedOn': updatedOn?.toIso8601String(),
+  'deleteBy': deleteBy,
+  'deletedOn': deletedOn?.toIso8601String(),
+  'isEdited': isEdited,
+};
+
+}

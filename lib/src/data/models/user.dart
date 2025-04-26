@@ -31,25 +31,31 @@ class User {
         username: json['username'],
         name: json['name'],
         cargo: json['cargo'],
-        empresa: Companysummary.fromJson(json['empresa']),
-        empresasAdjuntas: List<Companysummary>.from(
-          json['empresasAdjuntas'].map((x) => Companysummary.fromJson(x)),
-        ),
-        puntosVenta: List<Office>.from(
-          json['puntosVenta'].map((x) => Office.fromJson(x)),
-        ),
+        empresa: json['empresa'] != null
+            ? Companysummary.fromJson(json['empresa'])
+            : null,
+        empresasAdjuntas: json['empresasAdjuntas'] != null
+            ? List<Companysummary>.from(
+                json['empresasAdjuntas'].map((x) => Companysummary.fromJson(x)),
+              )
+            : [],
+        puntosVenta: json['puntosVenta'] != null
+            ? List<Office>.from(
+                json['puntosVenta'].map((x) => Office.fromJson(x)),
+              )
+            : [],
         avatarUrl: json['avatarUrl'],
         rutaInicial: json['rutaInicial'],
         rucAsignado: json['rucAsignado'],
       );
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'username': username,
         'name': name,
         'cargo': cargo,
         'empresa': empresa?.toJson(),
-        'empresasAdjuntas':
-            empresasAdjuntas?.map((e) => e.toJson()).toList(),
+        'empresasAdjuntas': empresasAdjuntas?.map((e) => e.toJson()).toList(),
         'puntosVenta': puntosVenta?.map((e) => e.toJson()).toList(),
         'avatarUrl': avatarUrl,
         'rutaInicial': rutaInicial,

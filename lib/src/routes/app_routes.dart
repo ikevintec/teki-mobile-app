@@ -42,6 +42,7 @@ import 'package:teki_app/src/presentation/screens/purchase_invoice/purchase_sect
 import 'package:teki_app/src/presentation/screens/purchase_reports/purchase_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/reports/report_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/sales/sales_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/settings/settings_screen.dart';
 import 'package:teki_app/src/presentation/screens/splash_screen/splash_screen.dart';
 import 'package:teki_app/src/presentation/screens/stock_reports/stock_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/supplier/supplier_main_screen.dart';
@@ -113,6 +114,7 @@ class AppRoutes {
   static const String addExpenseInvoice = "/addExpenseInvoice";
   static const String salesReturn = "/salesReturn";
   static const String splashScreen = "/splashScreen";
+  static const String settings = "/settingsScreen";
 
   
 
@@ -183,6 +185,7 @@ class AppRoutes {
         name: addExpenseInvoice, page: () => const AddExpenseInvoiceSection()),
     GetPage(name: salesReturn, page: () => const SalesReturnSection()),
     GetPage(name: splashScreen, page: () => const SplashScreen()),
+    GetPage(name: settings, page: () => const SettingsScreen()),
   ];
 
     /// Retorna todas las rutas con el middleware aplicado

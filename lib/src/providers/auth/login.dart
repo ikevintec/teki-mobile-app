@@ -5,45 +5,62 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/response/login.dart';
+import 'package:teki_app/src/data/models/saleStation.dart';
 import 'package:teki_app/src/data/models/user.dart';
 import 'package:teki_app/src/data/repositories/auth_repository.impl.dart';
+import 'package:teki_app/src/data/repositories/sale_station_Repository.impl.dart';
 import 'package:teki_app/src/domain/repositories/auth_repository.dart';
+import 'package:teki_app/src/domain/repositories/sale_station_repositoy.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/services/key_values_storage_impl.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
-//Creacion del Provider que gestionara los cambios de estado
+// Creación del Provider que gestionará los cambios de estado
 final authStateProvider =
     StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
+  final SaleStationRepository saleStationRepository = SaleStationRepositoryImpl();
   final AuthRepository authRepository = AuthRepositoryImpl();
-  final KeyValueStorageServiceImpl keyvalueStorage =
-      KeyValueStorageServiceImpl();
-  //final KeyValueStorageServiceImpl keyvalueStorage = KeyValueStorageServiceImpl();
+  final KeyValueStorageServiceImpl keyvalueStorage = KeyValueStorageServiceImpl();
+
   return AuthStateNotifier(
+    ref: ref,
     authRepository: authRepository,
+    saleStationRepository: saleStationRepository,
     keyvalueStorage: keyvalueStorage,
   );
 });
 
-//Creacion del notifier que se encargara de manejar el estado de la autenticacion
+// Notifier encargado de manejar el estado de la autenticación
 class AuthStateNotifier extends StateNotifier<AuthState> {
+  final Ref ref;
   final AuthRepository authRepository;
+  final SaleStationRepository saleStationRepository;
   final KeyValueStorageServiceImpl keyvalueStorage;
-  AuthStateNotifier(
-      {required this.authRepository, required this.keyvalueStorage})
-      : super(AuthState(isLoggedIn: false));
+
+  AuthStateNotifier({
+    required this.saleStationRepository,
+    required this.ref,
+    required this.authRepository,
+    required this.keyvalueStorage,
+  }) : super(AuthState(isLoggedIn: false));
 
   void login(String username, String password) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
+
     try {
       LoginResponse response = await authRepository.login(username, password);
+
       state = state.copyWith(
         isLoggedIn: true,
         token: response.accessToken,
         user: response.user,
       );
+
       await keyvalueStorage.setKeyValue('access_token', response.accessToken);
-      await keyvalueStorage.setKeyValue(
-          'user', jsonEncode(response.user.toJson()));
+      await keyvalueStorage.setKeyValue('login', jsonEncode(response.toJson()));
+      await setConfigProvider(ref, response, saleStationRepository);
+
       Get.snackbar(
         "Bienvenido",
         "Has iniciado sesión correctamente",
@@ -51,6 +68,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         backgroundColor: ColorSchema.primaryColor,
         duration: const Duration(seconds: 2),
       );
+
       Get.offAllNamed('/dashboard');
     } on DioException catch (e) {
       String message = 'Ocurrió un error desconocido.';
@@ -64,9 +82,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       } else if (e.type == DioExceptionType.badResponse) {
         final statusCode = e.response?.statusCode;
         final errorData = e.response?.data;
+
         if (statusCode == 401) {
-          message =
-              'Credenciales incorrectas. Verifica tu usuario y contraseña.';
+          message = 'Credenciales incorrectas. Verifica tu usuario y contraseña.';
         } else if (statusCode == 403) {
           message = 'Acceso denegado. No tienes permisos suficientes.';
         } else if (statusCode == 500) {
@@ -83,6 +101,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       }
 
       setError(message);
+
       Get.snackbar(
         "Error",
         message,
@@ -92,6 +111,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       );
     } on Exception catch (e) {
       setError('Error inesperado: ${e.toString()}');
+
       Get.snackbar(
         "Error",
         e.toString(),
@@ -106,15 +126,19 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   Future<void> checkAuthStatus() async {
     final token = await keyvalueStorage.getValue<String>('access_token');
-    final userJson = await keyvalueStorage.getValue<String>('user');
-    if (token != null && userJson != null) {
-      final user = User.fromJson(jsonDecode(userJson));
+    final loginJson = await keyvalueStorage.getValue<String>('login');
+
+    if (token != null && loginJson != null) {
+      final login = LoginResponse.fromJson(jsonDecode(loginJson));
+
       state = state.copyWith(
         isLoggedIn: true,
         token: token,
-        user: user,
+        user: login.user,
         isLoading: false,
       );
+        await setConfigProvider(ref, login, saleStationRepository);
+
     } else {
       logout();
     }
@@ -122,6 +146,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   void logout() async {
     await keyvalueStorage.removeKey('access_token');
+
     state = state.copyWith(
       isLoggedIn: false,
       token: null,
@@ -129,7 +154,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       errorMessage: null,
       isLoading: false,
     );
+
     String actualRoute = Get.currentRoute;
+
     if (actualRoute != '/login' && actualRoute != '/splashScreen') {
       Get.offAllNamed('/login');
     }
@@ -140,7 +167,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 }
 
-// creacion del estado que se mantendra en el provider
+// Estado del Auth Provider
 class AuthState {
   final bool isLoggedIn;
   final String? token;
@@ -171,4 +198,27 @@ class AuthState {
       isLoading: isLoading ?? this.isLoading,
     );
   }
+}
+
+// Seteo de configuración global tras autenticación
+Future<void> setConfigProvider(
+  Ref ref,
+  LoginResponse login,
+  SaleStationRepository saleStationRepository,
+) async {
+  final int companyId = login.user?.puntosVenta?[0].id ?? 0;
+ List<SaleStation> saleStations =[];
+  try {
+    saleStations = await saleStationRepository.getSaleStations(companyId);
+  } on DioException catch (e) {
+      errorNotification( e.response?.data['message'] ?? 'Error de conexión');
+  } catch (e) {
+    errorNotification(e.toString());
+  }
+  if (saleStations.isEmpty) {
+    ref.read(authStateProvider.notifier).logout();
+    return;
+  }
+
+  ref.read(configProvider.notifier).setFullConfig(login, saleStations);
 }

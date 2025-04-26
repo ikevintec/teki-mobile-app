@@ -1,15 +1,15 @@
 import 'package:teki_app/src/data/models/user.dart';
 
 class LoginResponse {
-  final String accessToken;
-  final String tokenType;
-  final User user;
+  final String? accessToken;
+  final String? tokenType;
+  final User? user;
   final List<String>? roles;
 
   LoginResponse({
-    required this.accessToken,
-    required this.tokenType,
-    required this.user,
+    this.accessToken,
+    this.tokenType,
+    this.user,
     this.roles,
   });
 
@@ -22,5 +22,14 @@ class LoginResponse {
           ? List<String>.from(json['roles'])
           : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'accessToken': accessToken,
+      'tokenType': tokenType,
+      'user': user?.toJson(),
+      'roles': roles,
+    };
   }
 }

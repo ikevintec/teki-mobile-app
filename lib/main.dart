@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/application.dart';
-import 'package:teki_app/src/providers/login.dart';
+import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 final ProviderContainer globalContainer = ProviderContainer();

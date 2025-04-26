@@ -1,5 +1,5 @@
 class Companysummary {
-  final int id;
+  final int? id;
   final String? uuid;
   final String? razonSocial;
   final String? nombreComercial;
@@ -12,7 +12,7 @@ class Companysummary {
   final bool? integracionApi;
 
   Companysummary({
-    required this.id,
+    this.id,
     this.uuid,
     this.razonSocial,
     this.nombreComercial,

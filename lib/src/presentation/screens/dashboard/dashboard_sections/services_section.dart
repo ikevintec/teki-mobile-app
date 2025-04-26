@@ -17,7 +17,7 @@ class ServicesSection extends StatelessWidget {
             children: [
               buildServices(
                   context,
-                  "Products",
+                  "Productos",
                   "assets/icons/icon_image/products.png",
                   Colors.grey.shade100,
                   Colors.purple, () {

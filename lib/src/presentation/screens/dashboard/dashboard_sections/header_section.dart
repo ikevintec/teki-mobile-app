@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/providers/login.dart';
+import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
@@ -96,7 +96,7 @@ class DashboardHeaderSection extends ConsumerWidget {
             InkWell(
               borderRadius: BorderRadius.circular(50),
               onTap: () {
-                Get.toNamed(AppRoutes.notification);
+                Get.toNamed(AppRoutes.settings);
               },
               child: Stack(
                 children: [
@@ -107,21 +107,21 @@ class DashboardHeaderSection extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(50),
                         color: Colors.blue.shade50.withOpacity(0.5)),
                     child: const Icon(
-                      Icons.notifications_outlined,
+                      Icons.tune,
                       color: ColorSchema.primaryColor,
                       size: 30,
                     ),
                   ),
-                  Positioned(
-                      right: 14,
-                      top: 14,
-                      child: Container(
-                        width: 5,
-                        height: 5,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(50),
-                            color: Colors.red),
-                      ))
+                  // Positioned(
+                  //     right: 14,
+                  //     top: 14,
+                  //     child: Container(
+                  //       width: 5,
+                  //       height: 5,
+                  //       decoration: BoxDecoration(
+                  //           borderRadius: BorderRadius.circular(50),
+                  //           color: Colors.red),
+                  //     ))
                 ],
               ),
             )
