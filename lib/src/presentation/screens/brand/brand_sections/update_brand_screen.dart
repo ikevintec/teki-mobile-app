@@ -56,7 +56,11 @@ class UpdateBrandScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(children: [
-              UploadImage(image: brand["brand-image"]),
+              UploadImage(image: brand["brand-image"],
+              onImageSelected: (newImage,file) {
+                brand["brand-iamge"] = newImage;
+              },
+              ),
               const SizedBox(
                 height: 20,
               ),

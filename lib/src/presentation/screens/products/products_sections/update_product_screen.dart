@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:teki_app/src/data/enums/products.dart';
+import 'package:teki_app/src/data/models/inventory.dart';
+import 'package:teki_app/src/data/models/product.dart';
+import 'package:teki_app/src/data/models/productPrice.dart';
 import 'package:teki_app/src/presentation/widgets/button/custom_elevated_button.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
@@ -8,9 +12,11 @@ import 'package:teki_app/src/presentation/widgets/toast/success_toast.dart';
 import 'package:teki_app/src/presentation/widgets/upload_image/upload_image.dart';
 
 class UpdateProductScreen extends StatefulWidget {
-  final dynamic product;
+  final Product product;
+  final int idPuntoVenta; // Cambia esto por el ID de tu punto de venta
 
-  const UpdateProductScreen({super.key, required this.product});
+  const UpdateProductScreen(
+      {super.key, required this.product, required this.idPuntoVenta});
 
   @override
   State<UpdateProductScreen> createState() => _UpdateProductScreenState();
@@ -30,6 +36,17 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
   List<String> taxMethodItems = ["Exclusive", "Non - Exclusive"];
   List<String> unitItems = ["Kilogram", "Meter", "Piece"];
   List<String> warehouseItems = ["Warehouse 1", "Warehouse 2", "Warehouse 3"];
+
+   late Product _product; // Inicializamos el producto
+  String? imagenUrl;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _product = widget.product; // Copiamos el producto inicial
+    imagenUrl = _product.imagenUrl; // Asignamos la URL de la imagen
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +91,14 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
           const SizedBox(
             height: 20,
           ),
-          UploadImage(image: widget.product["product-image"]),
+          UploadImage(
+            image: imagenUrl ?? "",
+            onImageSelected: (newImageUrl,file) {
+              setState(() {
+              imagenUrl = newImageUrl;
+              });
+            },
+          ),
           const SizedBox(
             height: 20,
           ),
@@ -84,14 +108,14 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
               children: [
                 TextFieldSection(
                     label: "Product",
-                    hint: widget.product["name"],
+                    hint: _product.nombre ?? "",
                     inputType: TextInputType.name),
                 const SizedBox(
                   height: 20,
                 ),
                 DropdownFormFieldSection(
                     label: "Category",
-                    hint: widget.product["category"],
+                    hint: _product.categoria?.nombre ?? "Sin Categoria",
                     items: categoryItems,
                     selectionItem: categorySelectedValue),
                 const SizedBox(
@@ -99,7 +123,7 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                 ),
                 DropdownFormFieldSection(
                     label: "Brand",
-                    hint: widget.product["Brand"],
+                    hint: _product.marca?.nombre ?? "Sin Marca",
                     items: brandItems,
                     selectionItem: brandSelectedValue),
                 const SizedBox(
@@ -107,7 +131,7 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                 ),
                 DropdownFormFieldSection(
                     label: "Unit",
-                    hint: widget.product["unit"],
+                    hint: _product.unidad?.descripcion ?? "Sin Unidad",
                     items: unitItems,
                     selectionItem: unitSelectedValue),
                 const SizedBox(
@@ -115,7 +139,7 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                 ),
                 DropdownFormFieldSection(
                     label: "Warehouse",
-                    hint: widget.product["warehouse"],
+                    hint: "",
                     items: warehouseItems,
                     selectionItem: warehouseSelectedValue),
                 const SizedBox(
@@ -127,7 +151,7 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                       flex: 6,
                       child: TextFieldSection(
                           label: "Product Code",
-                          hint: widget.product["barcode"],
+                          hint: _product.codigoBarra ?? "Sin Codigo",
                           inputType: TextInputType.number),
                     ),
                     const SizedBox(width: 10),
@@ -149,7 +173,7 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                 ),
                 DropdownFormFieldSection(
                     label: "Product Tax",
-                    hint: widget.product["product-tax"],
+                    hint: '',
                     items: taxItems,
                     selectionItem: taxSelectedValue),
                 const SizedBox(
@@ -157,7 +181,7 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                 ),
                 DropdownFormFieldSection(
                   label: "Tax Method",
-                  hint: widget.product["tax-method"],
+                  hint: '',
                   items: taxMethodItems,
                   selectionItem: taxMethodSelectedValue,
                 ),
@@ -170,7 +194,16 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                       flex: 5,
                       child: TextFieldSection(
                           label: "Product Price",
-                          hint: widget.product["price"],
+                          hint: (_product.preciosVenta
+                                  ?.firstWhere(
+                                    (element) =>
+                                        element.tipoPrecio ==
+                                        TipoPrecio.POR_DEFECTO,
+                                    orElse: () => ProductPrice(),
+                                  )
+                                  .precio
+                                  .toString() ??
+                              "No registrado"),
                           inputType: TextInputType.number),
                     ),
                     const SizedBox(
@@ -180,7 +213,15 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                       flex: 5,
                       child: TextFieldSection(
                           label: "Product Stock",
-                          hint: widget.product["stock"],
+                          hint:
+                              "Stock: ${_product.inventarios?.firstWhere(
+                                    (element) =>
+                                        element.puntoVenta?.id ==
+                                        widget.idPuntoVenta,
+                                    orElse: () => Inventory(
+                                      stock: 0,
+                                    ),
+                                  ).stock ?? 0}",
                           inputType: TextInputType.number),
                     ),
                   ],
@@ -193,8 +234,8 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
                   child: CustomElevatedButton(
                       buttonName: "Update",
                       showToast: () {
-                        SuccessToast.showSuccessToast(context, "Update Complete",
-                            "Product Update Complete");
+                        SuccessToast.showSuccessToast(context,
+                            "Update Complete", "Product Update Complete");
                       }),
                 ),
                 const SizedBox(

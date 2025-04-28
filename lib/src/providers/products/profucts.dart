@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/data/models/response/products.dart';
-import 'package:teki_app/src/data/repositories/products_repository.impl.dart';
+import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
-import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
 
 final productProvider = StateNotifierProvider<ProductsNotifier, ProductsState>(
@@ -53,25 +52,59 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
         await productsRepository.getProducts(buildProductQueryParams(state));
     if (response.content != null || response.content!.isNotEmpty) {
       setProducts([...state.products, ...response.content!]);
-    } else {
-      setLast(true);
     }
+    setLast(response.last ?? false);
+
     setLoading(false);
   }
 
   void resetProducts() async {
     setLoading(true);
-    setIdPuntoVentaOrder(ref.read(configProvider).office?.id ?? 0);
-    setFilterGlobal('');
-    setPageNumber(0);
+    resetFilters();
     ProductResponse response =
         await productsRepository.getProducts(buildProductQueryParams(state));
     if (response.content != null || response.content!.isNotEmpty) {
       setProducts(response.content!);
-    } else {
-      setLast(true);
     }
+    setLast(response.last ?? false);
     setLoading(false);
+  }
+
+  void searchProducts(String search) async {
+    setLoading(true);
+    setPageNumber(0);
+    setProducts([]);
+    setFilterGlobal(search);
+    ProductResponse response =
+        await productsRepository.getProducts(buildProductQueryParams(state));
+    if (response.content != null || response.content!.isNotEmpty) {
+      setProducts(response.content!);
+    }
+    setLast(response.last ?? false);
+    setLoading(false);
+  }
+
+  void resetFilters() {
+    state = state.copyWith(
+      paginacion: true,
+      pageNumber: 0,
+      perPage: 10,
+      sortOrder: 1,
+      sortField: 'id',
+      filterGlobal: null,
+      codigo: null,
+      codigoBarra: null,
+      nombre: null,
+      tipo: null,
+      idMarca: null,
+      codigoMoneda: null,
+      idCategoria: null,
+      mostrarEnRestaurante: null,
+      mostrarEnWeb: null,
+      favorito: null,
+      idPuntoVenta: null,
+      idPuntoVentaOrder: null,
+    );
   }
 
   void setFilterGlobal(String filterGlobal) {
@@ -94,14 +127,18 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
     state = state.copyWith(idPuntoVentaOrder: idPuntoVenta);
   }
 
-  setPageNumber(int pageNumber) {
+  void setPageNumber(int pageNumber) {
     state = state.copyWith(pageNumber: pageNumber);
   }
 
+  void setProduct(Product product) {
+    state = state.copyWith(product: product);
+  }
 }
 
 class ProductsState {
   final List<Product> products;
+  final Product? product;
   final bool isLoading;
   final bool last;
 
@@ -149,10 +186,12 @@ class ProductsState {
     this.idPuntoVenta,
     this.idPuntoVentaOrder,
     this.limit,
+    this.product
   });
 
   ProductsState copyWith({
     List<Product>? products,
+    Product? product,
     bool? isLoading,
     bool? last,
     int? pageNumber,
@@ -198,6 +237,7 @@ class ProductsState {
       idPuntoVenta: idPuntoVenta ?? this.idPuntoVenta,
       idPuntoVentaOrder: idPuntoVentaOrder ?? this.idPuntoVentaOrder,
       limit: limit ?? this.limit,
+      product: product ?? this.product,
     );
   }
 }

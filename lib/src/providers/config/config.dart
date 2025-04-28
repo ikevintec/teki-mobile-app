@@ -1,24 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/companySummary.dart';
+import 'package:teki_app/src/data/models/config.dart';
 import 'package:teki_app/src/data/models/office.dart';
 import 'package:teki_app/src/data/models/response/login.dart';
 import 'package:teki_app/src/data/models/saleStation.dart';
-import 'package:teki_app/src/data/repositories/sale_station_repository.impl.dart';
+import 'package:teki_app/src/data/models/user.dart';
+import 'package:teki_app/src/data/repositories/sale_station_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repositoy.dart';
 
-final configProvider = StateNotifierProvider<ConfigNotifier, ConfigState>((ref) {
+final sesionProvider = StateNotifierProvider<SesionNotifier, SesionState>((ref) {
   final SaleStationRepository saleStationRepository = SaleStationRepositoryImpl();
-  return ConfigNotifier(
+  return SesionNotifier(
     saleStationRepository: saleStationRepository,
   );
 });
 
-class ConfigNotifier extends StateNotifier<ConfigState> {
+class SesionNotifier extends StateNotifier<SesionState> {
   final SaleStationRepository saleStationRepository;
-  ConfigNotifier({
+  SesionNotifier({
    required this.saleStationRepository, 
   })
-      : super(ConfigState(
+      : super(SesionState(
           company: Companysummary(),
           companySelected: Companysummary(),
           office: Office(),
@@ -30,7 +32,7 @@ class ConfigNotifier extends StateNotifier<ConfigState> {
           offices: [],
         ));
 
-  void setFullConfig(LoginResponse login, List<SaleStation> saleStations) {
+  void setFullConfig(LoginResponse login, List<SaleStation> saleStations) async {
     Office? oficinaEncontrada = login.user?.puntosVenta?.firstWhere(
       (office) => office.rucAsignado == login.user?.rucAsignado,
       orElse: () => Office(),
@@ -57,7 +59,7 @@ class ConfigNotifier extends StateNotifier<ConfigState> {
       orElse: () => Office(),
     );
     state = state.copyWith(
-      company: company,
+      companySelected: company,
     );
     if (oficinaEncontrada?.rucAsignado != null) {
       changeOffice(oficinaEncontrada!, false);
@@ -78,7 +80,7 @@ class ConfigNotifier extends StateNotifier<ConfigState> {
       );
       if (company?.ruc != null) {
         state = state.copyWith(
-          company: company,
+          companySelected: company,
         );
       }
     }
@@ -88,9 +90,26 @@ class ConfigNotifier extends StateNotifier<ConfigState> {
       saleStation: saleStation,
     );
   }
+  void setConfigCompany(ConfigCompany configCompany) {
+    state = state.copyWith(
+      config: configCompany,
+    );
+  }
+  void set(User user) {
+    state = state.copyWith(
+      saleStation: SaleStation(),
+      login: LoginResponse(
+        accessToken: state.login.accessToken,
+        tokenType: state.login.tokenType,
+        user: user,
+        roles: state.login.roles,
+      ),
+    );
+  }
+
 }
 
-class ConfigState {
+class SesionState {
   final Companysummary? company;
   final Companysummary? companySelected;
   final List<Companysummary>? companies;
@@ -98,10 +117,11 @@ class ConfigState {
   final List<String>? roles;
   final SaleStation? saleStation;
   final List<SaleStation>? saleStations;
-  final LoginResponse login;
   final List<Office>? offices;
+  final LoginResponse login;
+  final ConfigCompany? config;
 
-  ConfigState({
+  SesionState({
     required this.login,
     this.company,
     this.companySelected,
@@ -111,8 +131,9 @@ class ConfigState {
     this.saleStations,
     this.companies,
     this.offices,
+    this.config,
   });
-  ConfigState copyWith({
+  SesionState copyWith({
     Companysummary? company,
     Companysummary? companySelected,
     Office? office,
@@ -122,8 +143,9 @@ class ConfigState {
     LoginResponse? login,
     List<Companysummary>? companies,
     List<Office>? offices,
+    ConfigCompany? config,
   }) {
-    return ConfigState(
+    return SesionState(
       company: company ?? this.company,
       companySelected: companySelected ?? this.companySelected,
       office: office ?? this.office,
@@ -133,6 +155,7 @@ class ConfigState {
       saleStations: saleStations ?? this.saleStations,
       companies: companies ?? this.companies,
       offices: offices ?? this.offices,
+      config: config ?? this.config,
     );
   }
 }

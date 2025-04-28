@@ -46,7 +46,7 @@ class Product {
   final List<Inventory>? inventarios;
   final bool? igv;
   final String? tipoAfectacion;
-  final String? imagenUrl;
+  late final String? imagenUrl;
   final double? peso;
   final Company? empresa;
   final Brand? marca;

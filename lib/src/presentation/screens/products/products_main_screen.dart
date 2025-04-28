@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,15 +40,20 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
     }
   }
 
-  searchProduct(value) {
-    setState(() {
-      productList = productState.products
-          .where((product) => product.nombre
-              .toString()
-              .toLowerCase()
-              .contains(value.toLowerCase()))
-          .toList();
+  Timer? _debounce;
+  void onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) {
+      _debounce?.cancel();
+    }
+    _debounce = Timer(const Duration(milliseconds: 1000), () {
+      ref.read(productProvider.notifier).searchProducts(value);
     });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel(); // muy importante cancelar cuando destruyes el widget
+    super.dispose();
   }
 
   @override
@@ -104,54 +110,58 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
           : null,
       body: Container(
         color: Colors.white70,
-        child: isLoading
-            ? const Center(
-                child: Column(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(
-                      color: ColorSchema.primaryColor,
-                      strokeWidth: 2,
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      "Cargando productos...",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.read(productProvider.notifier).resetProducts();
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(
+                height: 20,
+              ),
+              SearchField(onTextChanged: onSearchChanged),
+              const SizedBox(
+                height: 10,
+              ),
+              isLoading
+                  ? Expanded(
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(
+                              color: ColorSchema.primaryColor,
+                              strokeWidth: 2,
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Cargando productos...",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     )
-                  ],
-                ),
-              )
-            : RefreshIndicator(
-                onRefresh: () async {
-                  ref.read(productProvider.notifier).resetProducts();
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    SearchField(onTextChanged: (value) => searchProduct(value)),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    ProductListSection(
-                        isSmallScreen: isSmallScreen,
-                        productList: productListModel),
-                  ],
-                ),
-              ),
+                  : ProductListSection(
+                      isSmallScreen: isSmallScreen,
+                      productList: productListModel),
+            ],
+          ),
+        ),
       ),
       floatingActionButton: const CustomFloatingActionButton(
-          buttonName: "Add Product", routeName: AppRoutes.addProduct),
+          buttonName: "Agregar", 
+          routeName: AppRoutes.addProduct,
+          iconData: Icons.add_circle_outline,
+      ),
     );
   }
 }

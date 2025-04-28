@@ -21,6 +21,8 @@ class BrandMainScreenState extends State<BrandMainScreen> {
   TextEditingController brandNameController = TextEditingController();
   List<Map<String, dynamic>> brandList = List.from(productBrandModel);
 
+  String image = "assets/images/logo/dell.png";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +39,13 @@ class BrandMainScreenState extends State<BrandMainScreen> {
             const SizedBox(
               height: 20,
             ),
-            const UploadImage(image: "assets/images/logo/dell.png"),
+            UploadImage(image: image,
+            onImageSelected: (newImage,file) {
+              setState(() {
+                image = newImage;
+              });
+            },
+            ),
             const SizedBox(height: 20),
             const TextFieldSection(
               label: "Brand",

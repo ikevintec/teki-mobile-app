@@ -36,10 +36,6 @@ class ApiClient {
         onError: (DioException e, handler) async {
           bool isLoggingOut = false;
           if (e.response?.statusCode == 401 && !isLoggingOut) {
-            // Aquí puedes limpiar el token y redirigir
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.remove('access_token');
-            // Usamos el container global para llamar al logout
             isLoggingOut = true;
             globalContainer.read(authStateProvider.notifier).logout();
           }

@@ -19,6 +19,7 @@ class _AddUserMainScreenState extends State<AddUserMainScreen> {
 
   List<String> genderItems = ["Male", "Gender"];
   List<String> roleItems = ["Supervisor", "Officer", "Manager"];
+  String imageUrl = "assets/images/avatar/avatar.png";
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +36,13 @@ class _AddUserMainScreenState extends State<AddUserMainScreen> {
             const SizedBox(
               height: 20,
             ),
-            const UploadImage(image: "assets/images/avatar/avatar.png"),
+            UploadImage(
+              image: imageUrl,
+              onImageSelected: (newImageUrl,file) {
+                imageUrl = newImageUrl; // Actualiza la URL de la imagen
+                setState(() {});
+              },
+            ),
             const SizedBox(
               height: 20,
             ),

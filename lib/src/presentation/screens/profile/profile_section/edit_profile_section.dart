@@ -36,6 +36,8 @@ class _EditProfileSectionState extends State<EditProfileSection> {
   List<String> genderItems = ["Male", "Female"];
   List<String> roleItems = ["Admin", "Staff", "Manager"];
 
+  String imageUrl = "assets/images/avatar/avatar.png";
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -53,7 +55,13 @@ class _EditProfileSectionState extends State<EditProfileSection> {
           _buildHeader(),
           const Divider(color: Colors.white38),
           const SizedBox(height: 20),
-          const UploadImage(image: "assets/images/avatar/avatar.png"),
+          UploadImage(
+            image: imageUrl,
+            onImageSelected: (newImageUrl,file) {
+              imageUrl = newImageUrl; // Actualiza la URL de la imagen
+              setState(() {});
+            },
+          ),
           const SizedBox(height: 20),
           _buildForm(),
           const SizedBox(height: 20),

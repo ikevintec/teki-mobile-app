@@ -29,7 +29,7 @@ class _AddProductMainScreenState extends State<AddProductMainScreen> {
   List<String> taxMethodItems = ["Exclusive", "Non - Exclusive"];
   List<String> unitItems = ["Kilogram", "Meter", "Piece"];
   List<String> warehouseItems = ["Warehouse 1", "Warehouse 2", "Warehouse 3"];
-
+  String img = "assets/images/products/apple_device.png";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,7 +46,13 @@ class _AddProductMainScreenState extends State<AddProductMainScreen> {
             const SizedBox(
               height: 20,
             ),
-            const UploadImage(image: "assets/images/products/apple_device.png"),
+            UploadImage(image: img,
+            onImageSelected: (newImage,file) {
+              setState(() {
+                img = newImage;
+              });
+            },
+            ),
             const SizedBox(
               height: 20,
             ),

@@ -21,7 +21,7 @@ void errorNotification(String message) {
   Get.snackbar(
     'Error',
     message,
-    duration: const Duration(seconds: 2),
+    duration: const Duration(seconds: 4),
     colorText: Colors.white,
     backgroundColor: Colors.red,
     icon: const Icon(

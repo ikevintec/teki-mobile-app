@@ -7,12 +7,12 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final config = ref.watch(configProvider);
+    final config = ref.watch(sesionProvider);
     final companies = config.companies;
     final puntosVenta = config.offices;
     final saleStations = config.saleStations;
 
-    final selectedCompany = config.company;
+    final selectedCompany = config.companySelected;
     final selectedOffice = config.office;
     final selectedSaleStation = config.saleStation;
 
@@ -38,7 +38,7 @@ class SettingsScreen extends ConsumerWidget {
                       ))
                   .toList(),
               onChanged: (value) {
-                ref.read(configProvider.notifier).changeCompany(value!);
+                ref.read(sesionProvider.notifier).changeCompany(value!);
               },
             ),
             const SizedBox(height: 20),
@@ -52,7 +52,7 @@ class SettingsScreen extends ConsumerWidget {
                       ))
                   .toList(),
               onChanged: (value) {
-                ref.read(configProvider.notifier).changeOffice(value!, true);
+                ref.read(sesionProvider.notifier).changeOffice(value!, true);
               },
             ),
             const SizedBox(height: 20),
@@ -66,7 +66,7 @@ class SettingsScreen extends ConsumerWidget {
                       ))
                   .toList(),
               onChanged: (value) {
-                ref.read(configProvider.notifier).changeSaleStation(value!);
+                ref.read(sesionProvider.notifier).changeSaleStation(value!);
               },
             ),
           ],

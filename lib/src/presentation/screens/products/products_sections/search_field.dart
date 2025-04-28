@@ -16,18 +16,18 @@ class SearchField extends StatelessWidget {
       child: TextField(
         onChanged: onTextChanged,
         decoration: InputDecoration(
-          hintText: "Search Product",
+          hintText: "Buscar productos",
           hintStyle: GoogleFonts.nunito(
               textStyle: const TextStyle(color: Colors.grey)),
           suffixIcon: const Icon(Icons.search, color: Colors.grey),
           filled: true,
           fillColor: Colors.white,
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(25),
             borderSide: const BorderSide(color: Colors.grey, width: 1),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(25),
             borderSide:
                 const BorderSide(color: ColorSchema.primaryColor, width: 1),
           ),

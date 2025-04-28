@@ -23,8 +23,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       TextEditingController();
   final TextEditingController _userPasswordController = TextEditingController();
 
-  final String _defaultEmail = "demo@teki.pe";
-  final String _defaultPassword = "20202020202";
+  final String _defaultEmail = "admin";
+  final String _defaultPassword = "admin";
   @override
   void initState() {
     _userEmailAddressController.text = _defaultEmail;
@@ -36,9 +36,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: const Color.fromARGB(255, 66, 129, 255),
+        color: Colors.grey.shade50,
         width: double.infinity,
         height: double.infinity,
+        //cambiar el stroke y color de borde
         child: Center(
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 30),
@@ -46,12 +47,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: ColorSchema.primaryColor,
+                width: 0.5,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  spreadRadius: 4,
-                  blurRadius: 20,
-                  offset: const Offset(0, 5),
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 0.1,
+                  blurRadius: 3,
+                  blurStyle: BlurStyle.outer,
+
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -64,7 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   Text("Teki app",
                       style: GoogleFonts.poppins(
-                          fontSize: 18,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: ColorSchema.primaryColor)),
                   const SizedBox(

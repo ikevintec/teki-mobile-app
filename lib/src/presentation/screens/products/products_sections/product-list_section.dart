@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/enums/products.dart';
+import 'package:teki_app/src/data/models/inventory.dart';
 import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/data/models/productPrice.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/update_product_screen.dart';
@@ -53,8 +54,9 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = ref.watch(configProvider);
+    final provider = ref.watch(sesionProvider);
     final idPuntoVenta = provider.office?.id;
+    final isLast = ref.watch(productProvider).last;
     return Expanded(
       child: widget.productList.isEmpty
           ? ListView(
@@ -71,7 +73,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                         width: 350,
                       ),
                       Text(
-                        "No Product Found",
+                        "No se encontraron productos",
                         style: GoogleFonts.raleway(
                           fontWeight: FontWeight.w500,
                           fontSize: 24,
@@ -86,20 +88,31 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
           : ListView.builder(
               controller: _scrollController,
               padding: EdgeInsets.zero,
-              physics: const BouncingScrollPhysics(),
               itemCount: widget.productList.length +
                   1, // +1 para el loader/mensaje final
               itemBuilder: (context, index) {
                 if (index == widget.productList.length) {
-                  _loadMoreProducts();
-                  return const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(
-                        child: CircularProgressIndicator(
-                      color: ColorSchema.primaryColor,
-                      strokeWidth: 2,
-                    )),
-                  );
+                  if (isLast) {
+                    return const SizedBox(
+                      height: 50,
+                      child: Center(
+                        child: Text(
+                          "No hay más productos",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      ),
+                    );
+                  } else {
+                    _loadMoreProducts();
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(
+                          child: CircularProgressIndicator(
+                        color: ColorSchema.primaryColor,
+                        strokeWidth: 2,
+                      )),
+                    );
+                  }
                 }
 
                 final product = widget.productList[index];
@@ -124,9 +137,20 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                 ? Image.network(
                                     product.imagenUrl!,
                                     fit: BoxFit.contain,
+                                    loadingBuilder: (context, child, loadingProgress) => 
+                                        loadingProgress == null
+                                            ? child
+                                            : Center(
+                                                    child: Image.asset(
+                                                      'assets/images/gif/loader.gif', 
+                                                      width: 60,
+                                                      height: 60,
+                                                      fit: BoxFit.contain,
+                                                    ),
+                                                  ),
                                   )
                                 : Image.asset(
-                                    'assets/images/logo/logo-teki-solo.png',
+                                    'assets/images/products/icon.png',
                                     errorBuilder: (context, error, stackTrace) {
                                       return const Icon(Icons.error);
                                     },
@@ -137,7 +161,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                       ),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.all(4.0),
+                          padding: const EdgeInsets.only(top: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -146,7 +170,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                 style: GoogleFonts.raleway(
                                   textStyle: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: widget.isSmallScreen ? 16 : 18,
+                                    fontSize: 14,
                                     color: Colors.black,
                                   ),
                                 ),
@@ -155,7 +179,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                 contentPadding: EdgeInsets.zero,
                                 title: Padding(
                                   padding:
-                                      const EdgeInsets.only(bottom: 8, top: 6),
+                                      const EdgeInsets.only(bottom: 8, top: 0),
                                   child: Text(
                                     product.categoria?.nombre ??
                                         "Sin Categoria",
@@ -163,6 +187,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                       textStyle: const TextStyle(
                                         color: Colors.black54,
                                         fontWeight: FontWeight.w600,
+                                        fontSize: 14,
                                       ),
                                     ),
                                   ),
@@ -171,8 +196,17 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "Stock: ${product.inventarios?.firstWhere((element) => element.puntoVenta?.id == idPuntoVenta).stock ?? 0}",
-                                      style: GoogleFonts.nunito(),
+                                      "Stock: ${product.inventarios?.firstWhere(
+                                            (element) =>
+                                                element.puntoVenta?.id ==
+                                                idPuntoVenta,
+                                            orElse: () => Inventory(
+                                              stock: 0,
+                                            ),
+                                          ).stock ?? 0}",
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 10,
+                                      ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -182,12 +216,16 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                                 TipoPrecio.POR_DEFECTO,
                                             orElse: () => ProductPrice(),
                                           ).precio ?? "No registrado"}",
-                                      style: GoogleFonts.nunito(),
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 10,
+                                      ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       "Precio compra: ${product.precioCompra ?? "No registrado"}",
-                                      style: GoogleFonts.nunito(),
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 10,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -197,7 +235,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
+                        padding: const EdgeInsets.all(4.0),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -217,7 +255,9 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  buildModalBottomSheet(context, product);
+                                  ref.read(productProvider.notifier).setProduct(product);
+                                  buildModalBottomSheet(
+                                      context, product, idPuntoVenta!);
                                 },
                               ),
                             ),
@@ -232,7 +272,8 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
     );
   }
 
-  void buildModalBottomSheet(BuildContext context, Product product) {
+  void buildModalBottomSheet(
+      BuildContext context, Product product, int idPuntoVenta) {
     showModalBottomSheet(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -247,7 +288,8 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
       builder: (_) {
         return SizedBox(
           height: MediaQuery.of(context).size.height * 0.9,
-          child: UpdateProductScreen(product: product),
+          child:
+              UpdateProductScreen(product: product, idPuntoVenta: idPuntoVenta),
         );
       },
     );

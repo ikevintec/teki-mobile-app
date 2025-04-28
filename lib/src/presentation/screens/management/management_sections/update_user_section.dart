@@ -22,6 +22,9 @@ class _UpdateUserSectionState extends State<UpdateUserSection> {
   List<String> genderItems = ["Male", "Gender"];
   List<String> roleItems = ["Supervisor", "Officer", "Manager"];
 
+    String imageUrl = "assets/images/avatar/avatar.png";
+
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -63,7 +66,13 @@ class _UpdateUserSectionState extends State<UpdateUserSection> {
         const SizedBox(
           height: 20,
         ),
-        const UploadImage(image: "assets/images/avatar/avatar.png"),
+        UploadImage(image: imageUrl,
+        onImageSelected: (newImage,file) {
+          setState(() {
+            imageUrl = newImage;
+          });
+        },
+        ),
 
         Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
