@@ -10,10 +10,9 @@ class AuthMiddleware extends GetMiddleware {
     final authState = globalContainer.read(authStateProvider);
     final isLoggedIn = authState.isLoggedIn;
     print(isLoggedIn);
+    print('Ruta: $route');
 
-
-
-    if (isLoggedIn && (route == '/login' || route == '/splashScreen')) {
+    if (isLoggedIn && (route == '/login' || route == '/splashScreen' || route == '/onboarding')) {
       return const RouteSettings(name: '/dashboard');
     }
 

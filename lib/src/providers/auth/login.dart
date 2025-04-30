@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/config.dart';
@@ -16,7 +15,6 @@ import 'package:teki_app/src/domain/repositories/config_repository.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repositoy.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/services/key_values_storage_impl.dart';
-import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 // Creación del Provider que gestionará los cambios de estado
@@ -135,10 +133,15 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         user: login.user,
         isLoading: false,
       );
-      await setConfigProvider(ref, login, saleStationRepository);
-      ConfigCompany configCompany =
-          ConfigCompany.fromJson(jsonDecode(configCompanyJson));
-      ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+      try {
+        await setConfigProvider(ref, login, saleStationRepository);
+        ConfigCompany configCompany =
+            ConfigCompany.fromJson(jsonDecode(configCompanyJson));
+        ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+      } catch (e) {
+        logout();
+        errorNotification(e.toString());
+      }
     } else {
       logout();
     }

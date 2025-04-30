@@ -47,8 +47,8 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
 
   Future<void> _loadMoreProducts() async {
     Future.microtask(() {
-      if (ref.read(productProvider).isLoading) return;
-      ref.read(productProvider.notifier).loadNextPage();
+      if (ref.read(productsProvider).isLoading) return;
+      ref.read(productsProvider.notifier).loadNextPage();
     });
   }
 
@@ -56,7 +56,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
   Widget build(BuildContext context) {
     final provider = ref.watch(sesionProvider);
     final idPuntoVenta = provider.office?.id;
-    final isLast = ref.watch(productProvider).last;
+    final isLast = ref.watch(productsProvider).last;
     return Expanded(
       child: widget.productList.isEmpty
           ? ListView(
@@ -255,7 +255,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  ref.read(productProvider.notifier).setProduct(product);
+                                  ref.read(productsProvider.notifier).setProduct(product);
                                   buildModalBottomSheet(
                                       context, product, idPuntoVenta!);
                                 },

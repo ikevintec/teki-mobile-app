@@ -7,6 +7,7 @@ class Application extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return GetMaterialApp(
       title: "teki_app",
       debugShowCheckedModeBanner: false,

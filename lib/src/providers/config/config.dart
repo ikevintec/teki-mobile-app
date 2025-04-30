@@ -7,6 +7,7 @@ import 'package:teki_app/src/data/models/saleStation.dart';
 import 'package:teki_app/src/data/models/user.dart';
 import 'package:teki_app/src/data/repositories/sale_station_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repositoy.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 final sesionProvider = StateNotifierProvider<SesionNotifier, SesionState>((ref) {
   final SaleStationRepository saleStationRepository = SaleStationRepositoryImpl();
@@ -66,7 +67,12 @@ class SesionNotifier extends StateNotifier<SesionState> {
     }
   }
   void changeOffice(Office office, bool changeCompany) async{
-    List<SaleStation> saleStations = await saleStationRepository.getSaleStations(office.id ?? 0);
+    List<SaleStation> saleStations = [];
+    try {
+      saleStations = await saleStationRepository.getSaleStations(office.id ?? 0);
+    } catch (e) {
+      errorNotification(e.toString());
+    }
     state = state.copyWith(
       office: office,
       saleStation: saleStations.isNotEmpty ? saleStations.first : SaleStation(),

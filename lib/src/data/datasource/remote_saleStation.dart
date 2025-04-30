@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:get/route_manager.dart';
 import 'package:teki_app/src/data/models/saleStation.dart';
 import 'package:teki_app/src/domain/datasource/sale_station.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
@@ -17,15 +16,15 @@ class RemoteSalestation extends SaleStationDataSource {
       }
       return saleStations;
     } on DioException catch (e) {
+      String responseMessage = 'Error de conexión';
       if (e.response != null) {
-        Get.snackbar('Error', e.response?.data['message']);
+        responseMessage = e.response?.data['message'] ?? 'Error de conexión';
       } else {
-        Get.snackbar('Error', e.message ?? 'Error de conexión');
+        responseMessage = e.message ?? 'Error de conexión';
       }
-      return [];
+      return Future.error(responseMessage);
     } catch (e) {
-      Get.snackbar('Error', e.toString());
-      return [];
+      return Future.error(e.toString());
     }
   }
 }

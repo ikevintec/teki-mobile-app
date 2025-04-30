@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/data/models/response/products.dart';
@@ -9,22 +8,38 @@ import 'package:teki_app/src/utils/notifications.dart';
 class RemoteProducts extends ProductsDatasource {
   Dio dio = ApiClient.dio;
   @override
-  Future<Product> getProductById(int id) {
-    // TODO: implement getProductById
-    throw UnimplementedError();
+  Future<Product> getProductById(int id) async{
+    try {
+      final response = await dio.get('/products/$id');
+      return Product.fromJson(response.data);
+    } on DioException catch (e) {
+      String errorMessage = 'Error de conexión';
+      if (e.response != null) {
+        errorMessage = e.response?.data['message'] ?? 'Error de conexión';
+      } else {
+        errorMessage = e.message ?? 'Error de conexión';
+      }
+      return Future.error(errorMessage);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
   }
 
   @override
-  Future<ProductResponse> getProducts(Map<String,dynamic> params) async {
+  Future<ProductResponse> getProducts(Map<String, dynamic> params) async {
     try {
-    final response = await dio.get('/products', queryParameters: params);
-    return ProductResponse.fromJson(response.data);
+      final response = await dio.get('/products', queryParameters: params);
+      return ProductResponse.fromJson(response.data);
     } on DioException catch (e) {
+      String errorMessage = 'Error de conexión';
+
       if (e.response != null) {
-        errorNotification(e.response?.data['message']);
+        errorMessage = e.response?.data['message'] ?? 'Error de conexión';
       } else {
-        errorNotification(e.message ?? 'Error de conexión');
+        errorMessage = e.message ?? 'Error de conexión';
       }
+      errorNotification(errorMessage);
+
       return ProductResponse(
         content: [],
         empty: true,
@@ -37,8 +52,7 @@ class RemoteProducts extends ProductsDatasource {
         totalElements: 0,
         totalPages: 0,
       );
-    } on Exception
-     catch (e) {
+    } catch (e) {
       errorNotification(e.toString());
       return ProductResponse(
         content: [],

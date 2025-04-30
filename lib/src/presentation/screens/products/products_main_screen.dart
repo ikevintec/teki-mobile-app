@@ -25,7 +25,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
   final controller = SidebarXController(selectedIndex: 1, extended: true);
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
 
-  late var productState = ref.watch(productProvider);
+  late var productState = ref.watch(productsProvider);
   late List<Product> productList = [];
   bool _loaded = false;
 
@@ -34,7 +34,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
     super.didChangeDependencies();
     if (!_loaded) {
       Future.microtask(() {
-        ref.read(productProvider.notifier).resetProducts();
+        ref.read(productsProvider.notifier).resetProducts();
       });
       _loaded = true;
     }
@@ -46,7 +46,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
       _debounce?.cancel();
     }
     _debounce = Timer(const Duration(milliseconds: 1000), () {
-      ref.read(productProvider.notifier).searchProducts(value);
+      ref.read(productsProvider.notifier).searchProducts(value);
     });
   }
 
@@ -58,7 +58,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    productState = ref.watch(productProvider);
+    productState = ref.watch(productsProvider);
     List<Product> productListModel = productState.products;
     bool isLoading = productState.isLoading && productListModel.isEmpty;
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
@@ -112,7 +112,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
         color: Colors.white70,
         child: RefreshIndicator(
           onRefresh: () async {
-            ref.read(productProvider.notifier).resetProducts();
+            ref.read(productsProvider.notifier).resetProducts();
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -159,7 +159,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
       ),
       floatingActionButton: const CustomFloatingActionButton(
           buttonName: "Agregar", 
-          routeName: AppRoutes.addProduct,
+          routeName: AppRoutes.createProduct,
           iconData: Icons.add_circle_outline,
       ),
     );

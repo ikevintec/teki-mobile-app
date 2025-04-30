@@ -3,6 +3,7 @@ import 'package:teki_app/main.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get/get.dart';
 
 class ApiClient {
   static Dio dio = Dio(
@@ -21,7 +22,7 @@ class ApiClient {
         requestBody: true,
         responseBody: true,
         logPrint: (obj) {
-          print('📦 --->: $obj');
+          print('--->: $obj');
         },
       ),
       InterceptorsWrapper(

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/presentation/screens/add_product/add_product_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/add_user/add_user_main_screen.dart';
@@ -31,6 +29,7 @@ import 'package:teki_app/src/presentation/screens/notification/notification_sect
 import 'package:teki_app/src/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:teki_app/src/presentation/screens/payment_reports/payment_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/product/product_screen.dart';
 import 'package:teki_app/src/presentation/screens/sales/salesSections/sales_return_section.dart';
 import 'package:teki_app/src/presentation/screens/products/products_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/products_reports/products_reports_main_screen.dart';
@@ -57,7 +56,6 @@ import 'package:teki_app/src/presentation/screens/warehouse/warehouse_main_scree
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_sections/add_warehouse_section.dart';
 import 'package:teki_app/src/presentation/screens/warehouse_reports/warehouse_reports_main_screen.dart';
 import 'package:teki_app/src/routes/middleware/auth_middleware.dart';
-
 
 class AppRoutes {
   static const String onboarding = "/onboarding";
@@ -115,8 +113,9 @@ class AppRoutes {
   static const String salesReturn = "/salesReturn";
   static const String splashScreen = "/splashScreen";
   static const String settings = "/settingsScreen";
-
-  
+  // Productos
+  static const String createProduct = "/product/create";
+  static const String updateProduct = "/product/edit/:id";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -186,9 +185,19 @@ class AppRoutes {
     GetPage(name: salesReturn, page: () => const SalesReturnSection()),
     GetPage(name: splashScreen, page: () => const SplashScreen()),
     GetPage(name: settings, page: () => const SettingsScreen()),
+    //Pages for products
+    GetPage(name: createProduct, page: () => const ProductScreen()),
+    GetPage(
+      name: updateProduct,
+      page: () {
+        final idParam = Get.parameters['id'];
+        final productId = idParam != null ? int.tryParse(idParam) : null;
+        return ProductScreen(productId: productId);
+      },
+    ),
   ];
 
-    /// Retorna todas las rutas con el middleware aplicado
+  /// Retorna todas las rutas con el middleware aplicado
   static List<GetPage> get pages => _rawPages.map((page) {
         return GetPage(
           name: page.name,
@@ -204,5 +213,4 @@ class AppRoutes {
           middlewares: [AuthMiddleware()], // aquí lo aplicamos a todas
         );
       }).toList();
-
 }

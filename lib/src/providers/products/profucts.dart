@@ -5,7 +5,7 @@ import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
 
-final productProvider = StateNotifierProvider<ProductsNotifier, ProductsState>(
+final productsProvider = StateNotifierProvider<ProductsNotifier, ProductsState>(
   (ref) {
     final ProductsRepository productsRepository = ProductsRepositoryImpl();
     return ProductsNotifier(
@@ -163,31 +163,30 @@ class ProductsState {
   final int? idPuntoVentaOrder;
   final int? limit;
 
-  ProductsState({
-    required this.products,
-    required this.isLoading,
-    required this.last,
-    this.pageNumber,
-    this.paginacion,
-    this.perPage,
-    this.sortField,
-    this.sortOrder,
-    this.filterGlobal,
-    this.codigo,
-    this.codigoBarra,
-    this.nombre,
-    this.tipo,
-    this.idMarca,
-    this.codigoMoneda,
-    this.idCategoria,
-    this.mostrarEnRestaurante,
-    this.mostrarEnWeb,
-    this.favorito,
-    this.idPuntoVenta,
-    this.idPuntoVentaOrder,
-    this.limit,
-    this.product
-  });
+  ProductsState(
+      {required this.products,
+      required this.isLoading,
+      required this.last,
+      this.pageNumber,
+      this.paginacion,
+      this.perPage,
+      this.sortField,
+      this.sortOrder,
+      this.filterGlobal,
+      this.codigo,
+      this.codigoBarra,
+      this.nombre,
+      this.tipo,
+      this.idMarca,
+      this.codigoMoneda,
+      this.idCategoria,
+      this.mostrarEnRestaurante,
+      this.mostrarEnWeb,
+      this.favorito,
+      this.idPuntoVenta,
+      this.idPuntoVentaOrder,
+      this.limit,
+      this.product});
 
   ProductsState copyWith({
     List<Product>? products,
