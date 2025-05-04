@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/contstants.dart';
 
 class ScreenLoader extends StatelessWidget {
   final String? message;
@@ -7,11 +8,13 @@ class ScreenLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white70,
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(strokeWidth: 1,),
+            const CircularProgressIndicator(strokeWidth: 3, color: ColorSchema.primaryColor,),
             const SizedBox(
               height: 20,
             ),

@@ -1,4 +1,5 @@
 import 'package:teki_app/src/data/models/fileStorage.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class Certificate {
   final int? id;
@@ -27,12 +28,8 @@ class Certificate {
         ruc: json['ruc'],
         clave: json['clave'],
         estado: json['estado'],
-        fechaInicio: json['fechaInicio'] != null
-            ? DateTime.fromMillisecondsSinceEpoch(json['fechaInicio'] * 1000)
-            : null,
-        fechaFin: json['fechaFin'] != null
-            ? DateTime.fromMillisecondsSinceEpoch(json['fechaFin'] * 1000)
-            : null,
+        fechaInicio: parseDateTimeFlexible(json['fechaInicio']),
+        fechaFin: parseDateTimeFlexible(json['fechaFin']),
       );
 
   Map<String, dynamic> toJson() => {

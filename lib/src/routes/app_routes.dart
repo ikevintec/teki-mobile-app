@@ -115,7 +115,7 @@ class AppRoutes {
   static const String settings = "/settingsScreen";
   // Productos
   static const String createProduct = "/product/create";
-  static const String updateProduct = "/product/edit/:id";
+  static const String updateProduct = "/product/edit";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -190,8 +190,8 @@ class AppRoutes {
     GetPage(
       name: updateProduct,
       page: () {
-        final idParam = Get.parameters['id'];
-        final productId = idParam != null ? int.tryParse(idParam) : null;
+        final args = Get.arguments as Map<String, dynamic>?;
+        final productId = args?['id'] as int?;
         return ProductScreen(productId: productId);
       },
     ),

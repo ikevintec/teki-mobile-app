@@ -62,3 +62,34 @@ class ProductPrice {
         'producto': producto?.toJson(),
       };
 }
+
+extension ProductPriceCopyWith on ProductPrice {
+  ProductPrice copyWith({
+    int? id,
+    double? precio,
+    double? precioNeto,
+    double? margenUtilidad,
+    double? unidadesMayoreo,
+    String? tipoPrecio,
+    String? nombre,
+    Office? puntoVenta,
+    User? usuario,
+    DateTime? fecha,
+    Product? producto,
+  }) {
+    return ProductPrice(
+      id: id ?? this.id,
+      precio: precio ?? this.precio,
+      precioNeto: precioNeto ?? this.precioNeto,
+      margenUtilidad: margenUtilidad ?? this.margenUtilidad,
+      unidadesMayoreo: unidadesMayoreo ?? this.unidadesMayoreo,
+      tipoPrecio: tipoPrecio ?? this.tipoPrecio,
+      nombre: nombre ?? this.nombre,
+      puntoVenta: puntoVenta ?? this.puntoVenta,
+      usuario: usuario ?? this.usuario,
+      fecha: fecha ?? this.fecha,
+      producto: producto ?? this.producto,
+    );
+  }
+}
+

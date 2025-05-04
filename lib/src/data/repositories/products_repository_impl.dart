@@ -1,4 +1,5 @@
 import 'package:teki_app/src/data/datasource/remote_products.dart';
+import 'package:teki_app/src/data/models/currency.dart';
 import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/data/models/response/products.dart';
 import 'package:teki_app/src/domain/datasource/products_datasource.dart';
@@ -17,8 +18,7 @@ class ProductsRepositoryImpl extends ProductsRepository {
 
   @override
   Future<Product> getProductById(int id) {
-    // TODO: implement getProductById
-    throw UnimplementedError();
+    return productsDatasource.getProductById(id);
   }
 
   @override
@@ -38,4 +38,10 @@ class ProductsRepositoryImpl extends ProductsRepository {
     // TODO: implement searchProducts
     throw UnimplementedError();
   }
+  
+  @override
+  Future<List<Currency>> getCurrency() async {
+    return await productsDatasource.getCurrency();
+  }
+
 }

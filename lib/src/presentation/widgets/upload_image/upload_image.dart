@@ -20,11 +20,12 @@ class UploadImage extends ConsumerWidget {
     return Align(
       alignment: Alignment.center,
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           ClipOval(
             child: Container(
-              width: 200,
-              height: 200,
+              width: 150,
+              height: 150,
               color: Colors.grey.shade200,
               child: image.startsWith("assets/")
                   ? Image.asset(
@@ -44,13 +45,12 @@ class UploadImage extends ConsumerWidget {
                                   (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return Center(
-                                  child:
-                                      CircularProgressIndicator(),
+                                  child: CircularProgressIndicator(),
                                 );
                               },
                             )
                           : Image.asset(
-                              'assets/images/logo/icon.png',
+                              'assets/images/products/icon.png',
                               fit: BoxFit.contain,
                             ),
             ),
@@ -72,16 +72,17 @@ class UploadImage extends ConsumerWidget {
                   onImageSelected(file.path, file);
                 },
                 child: CircleAvatar(
-                    radius: 20,
+                    radius: 15,
                     backgroundColor: ColorSchema.primaryColor,
                     child: Icon(
                       Icons.camera_alt_outlined,
                       color: Colors.white,
+                      size: 17,
                     )),
               )),
           Positioned(
-              right: 0,
-              bottom: 0,
+              right: -25,
+              bottom: 88,
               child: GestureDetector(
                 onTap: () async {
                   XFile? file = await keyCameraAccess.getFromGallery();
@@ -98,11 +99,12 @@ class UploadImage extends ConsumerWidget {
                   onImageSelected(file.path, file);
                 },
                 child: CircleAvatar(
-                    radius: 20,
+                    radius: 15,
                     backgroundColor: ColorSchema.primaryColor,
                     child: Icon(
                       Icons.image,
                       color: Colors.white,
+                      size: 17,
                     )),
               ))
         ],

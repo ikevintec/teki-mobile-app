@@ -5,9 +5,7 @@ class ProductNotFoundScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white70,
-      body: Center(
+    return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -20,7 +18,7 @@ class ProductNotFoundScreen extends StatelessWidget {
               height: 20,
             ),
             const Text(
-              "No se ecnontró producto",
+              "Error al cargar el producto",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -28,7 +26,6 @@ class ProductNotFoundScreen extends StatelessWidget {
             )
           ],
         ),
-      ),
-    );
+      );
   }
 }

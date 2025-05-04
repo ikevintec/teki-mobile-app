@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/currency.dart';
 import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/data/models/response/products.dart';
 import 'package:teki_app/src/domain/datasource/products_datasource.dart';
@@ -84,6 +85,21 @@ class RemoteProducts extends ProductsDatasource {
   @override
   Future<List<Product>> searchProducts(String query) {
     // TODO: implement searchProducts
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<Currency>> getCurrency() async {
+    try {
+      final response = await dio.get('/currencies');
+      List<Currency> currencies = (response.data as List)
+          .map((currency) => Currency.fromJson(currency))
+          .toList();
+      return currencies;
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+    // TODO: implement getCurrency
     throw UnimplementedError();
   }
 }

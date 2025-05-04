@@ -226,7 +226,7 @@ class Company {
     this.plantillaCuentasPorCobrar,
   });
   factory Company.fromJson(Map<String, dynamic> json) => Company(
-    id: json['id'],
+    id: json['id'] ,
     direccion: json['direccion'],
     estadoServicio: json['estadoServicio'],
     restriccionCertificado: json['restriccionCertificado'],

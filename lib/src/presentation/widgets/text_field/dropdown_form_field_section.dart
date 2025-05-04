@@ -5,16 +5,30 @@ import 'package:teki_app/src/utils/contstants.dart';
 class DropdownFormFieldSection extends StatefulWidget {
   final String label;
   final String hint;
-  final List<String> items;
+
+  /// Opción 1: lista de strings simples
+  final List<String>? items;
+
+  /// Opción 2: lista de mapas {label: ..., value: ...}
+  final List<Map<String, String>>? itemsMap;
+  final String? labelKey;
+  final String? valueKey;
+
   String? selectionItem;
+  final ValueChanged<String?>? onChanged;
 
   DropdownFormFieldSection({
     super.key,
     required this.label,
     required this.hint,
-    required this.items,
+    this.items,
+    this.itemsMap,
+    this.labelKey,
+    this.valueKey,
     required this.selectionItem,
-  });
+    this.onChanged,
+  }) : assert((items != null && itemsMap == null) || (itemsMap != null && items == null),
+            'Debes usar solo uno: items o itemsMap');
 
   @override
   State<DropdownFormFieldSection> createState() =>
@@ -24,20 +38,49 @@ class DropdownFormFieldSection extends StatefulWidget {
 class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
   @override
   Widget build(BuildContext context) {
+    final List<DropdownMenuItem<String>> dropdownItems = widget.items != null
+        ? widget.items!
+            .map((item) => DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(item, style: GoogleFonts.nunito(color: Colors.black)),
+                ))
+            .toList()
+        : widget.itemsMap!
+            .map((map) {
+              final value = map[widget.valueKey!] ?? '';
+              final label = map[widget.labelKey!] ?? '';
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(label, style: GoogleFonts.nunito(color: Colors.black)),
+              );
+            }).toList();
+
+    final bool valueExists = widget.items != null
+        ? widget.items!.contains(widget.selectionItem)
+        : widget.itemsMap!.any((e) => e[widget.valueKey!] == widget.selectionItem);
+
     return DropdownButtonFormField<String>(
+      isExpanded: true,
+      style: GoogleFonts.nunito(
+        textStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF4B5563),
+        ),
+      ),
+      value: valueExists ? widget.selectionItem : null,
       dropdownColor: Colors.white,
       icon: const Icon(
         Icons.keyboard_arrow_down,
         color: Color(0xFFE2E4E7),
       ),
       decoration: InputDecoration(
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
         labelText: widget.label,
         labelStyle: GoogleFonts.raleway(
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 20,
+            fontSize: 17,
             color: Color(0xFF444444),
           ),
         ),
@@ -55,25 +98,19 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
           borderSide: const BorderSide(color: Color(0xFFE2E4E7), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide:
-              const BorderSide(color: ColorSchema.primaryColor, width: 1),
+          borderSide: const BorderSide(color: ColorSchema.primaryColor, width: 1),
           borderRadius: BorderRadius.circular(8),
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
       ),
-      items: widget.items.map((String item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(
-            item,
-            style: GoogleFonts.nunito(color: Colors.black),
-          ),
-        );
-      }).toList(),
+      items: dropdownItems,
       onChanged: (String? value) {
         setState(() {
           widget.selectionItem = value;
         });
+        if (widget.onChanged != null) {
+          widget.onChanged!(value);
+        }
       },
     );
   }

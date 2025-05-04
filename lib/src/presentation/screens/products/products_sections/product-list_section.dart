@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/enums/products.dart';
 import 'package:teki_app/src/data/models/inventory.dart';
@@ -9,6 +10,7 @@ import 'package:teki_app/src/data/models/productPrice.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/update_product_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/products/profucts.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class ProductListSection extends ConsumerStatefulWidget {
@@ -255,9 +257,10 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  ref.read(productsProvider.notifier).setProduct(product);
-                                  buildModalBottomSheet(
-                                      context, product, idPuntoVenta!);
+                                  Get.toNamed(AppRoutes.updateProduct,
+                                      arguments: {
+                                        "id": product.id,
+                                      });
                                 },
                               ),
                             ),

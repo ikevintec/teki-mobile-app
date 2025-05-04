@@ -109,7 +109,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
             )
           : null,
       body: Container(
-        color: Colors.white70,
+        color: Colors.white54,
         child: RefreshIndicator(
           onRefresh: () async {
             ref.read(productsProvider.notifier).resetProducts();
