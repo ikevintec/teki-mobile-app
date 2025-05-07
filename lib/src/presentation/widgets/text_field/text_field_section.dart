@@ -11,6 +11,7 @@ class TextFieldSection extends StatelessWidget {
   final bool enabled;
   final bool isReadOnly;
   final TextEditingController? controller;
+  final String? Function(String?)? validator;
 
 
   const TextFieldSection({
@@ -23,11 +24,13 @@ class TextFieldSection extends StatelessWidget {
     this.enabled = true,
     this.isReadOnly = false,
     this.controller,
+    this.validator,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      validator: validator,
       enabled: enabled,
       readOnly: isReadOnly,
       controller: controller,
@@ -36,11 +39,12 @@ class TextFieldSection extends StatelessWidget {
         fontSize: 12,
       ),
       decoration: InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         labelText: label,
         labelStyle: GoogleFonts.raleway(
           color: const Color(0xFF444444),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
         fillColor: Colors.white,
         filled: true,
@@ -52,13 +56,13 @@ class TextFieldSection extends StatelessWidget {
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: Color(0xFFE2E4E7), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderSide:
               const BorderSide(color: ColorSchema.primaryColor, width: 1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(20),
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
       ),

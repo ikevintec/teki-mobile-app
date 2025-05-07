@@ -23,7 +23,7 @@ class CustomSegmentedSelector extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: ColorSchema.primaryColor, width: 1),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -46,10 +46,10 @@ class CustomSegmentedSelector extends StatelessWidget {
                             : Colors.transparent,
                         borderRadius: BorderRadius.horizontal(
                           left: index == 0
-                              ? const Radius.circular(6)
+                              ? const Radius.circular(20)
                               : Radius.zero,
                           right: index == options.length - 1
-                              ? const Radius.circular(6)
+                              ? const Radius.circular(20)
                               : Radius.zero,
                         ),
                       ),

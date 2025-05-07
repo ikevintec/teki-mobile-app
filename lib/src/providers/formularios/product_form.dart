@@ -5,14 +5,16 @@ import 'package:teki_app/src/data/models/currency.dart';
 import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/data/models/productPrice.dart';
 import 'package:teki_app/src/data/models/unitCode.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 
 final productFormProvider =
     StateNotifierProvider<ProductFormNotifier, ProductFormState>((ref) {
-  return ProductFormNotifier();
+  return ProductFormNotifier(ref: ref);
 });
 
 class ProductFormNotifier extends StateNotifier<ProductFormState> {
-  ProductFormNotifier()
+  final Ref ref;
+  ProductFormNotifier({required this.ref})
       : super(ProductFormState(
           nombre: '',
           unidad: UnitCode(),
@@ -37,8 +39,11 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
           ],
           preciosPorPuntoVenta: false,
           precioCompraNeto: 0.0,
-          precioCompraIncImp: true,
+          precioCompraNetoPorPieza: 0.0,
+          precioCompraPorPieza: 0.0,
+          precioCompraIncImp: false,
           precioCompra: 0.0,
+          precioCompraTemporal: 0.0,
           mostrarEnWeb: false,
           mostrarEnRestaurante: false,
           favorito: false,
@@ -58,6 +63,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         unidad: state.unidades.firstWhere(
             (element) => (element.descripcion!).trim() == unidad.trim()));
     setFactorValue();
+    changePrice();
   }
 
   void setUnidadAlternativa(String unidad) {
@@ -65,6 +71,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         unidadAlternativa: state.unidades.firstWhere(
             (element) => (element.descripcion!).trim() == unidad.trim()));
     setFactorValue();
+    changePrice();
   }
 
   void setUnidadCompra(String unidad) {
@@ -72,6 +79,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         unidadCompra: state.unidades.firstWhere(
             (element) => (element.descripcion!).trim() == unidad.trim()));
     setFactorValue();
+    changePrice();
   }
 
   void setMoneda(String moneda) {
@@ -80,10 +88,12 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
 
   void setFactor(double factor) {
     state = state.copyWith(factor: factor);
+    changePrice();
   }
 
   void setIgv(bool igv) {
     state = state.copyWith(igv: igv);
+    changePrice();
   }
 
   void setValidacionLote(bool validacionLote) {
@@ -112,6 +122,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
 
   void setPrecioCompraIncImp(bool precioCompraIncImp) {
     state = state.copyWith(precioCompraIncImp: precioCompraIncImp);
+    changePrice();
   }
 
   void setPrecioCompra(double precioCompra) {
@@ -150,6 +161,11 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
     }
   }
 
+  void setPrecioCompraTemporal(double precioCompraTemporal) {
+    state = state.copyWith(precioCompraTemporal: precioCompraTemporal);
+    changePrice();
+  }
+
   ProductPrice getPrecioVenta(int index) {
     if (index >= 0 && index < state.preciosVenta.length) {
       return state.preciosVenta[index];
@@ -163,16 +179,17 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
       preciosVenta: [
         ...state.preciosVenta,
         ProductPrice(
-          tipoPrecio: 'POR_DEFECTO',
+          tipoPrecio: '',
           precio: 0.0,
           fecha: DateTime.now(),
           precioNeto: 0.0,
           margenUtilidad: 0.0,
-          nombre: 'Por defecto',
+          nombre: '-',
           unidadesMayoreo: null,
         )
       ],
     );
+    changePrice();
   }
 
   void removePrice(int index) {
@@ -186,20 +203,24 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
     }
   }
 
-  void modifyPrecioVenta(
-      int index, ProductPrice Function(ProductPrice) updateFn) {
+  void modifyPrecioVenta(int index,
+      ProductPrice Function(ProductPrice) updateFn, bool modifyName) {
     final updatedList = [...state.preciosVenta];
     if (index >= 0 && index < updatedList.length) {
       ProductPrice updatedItem = updateFn(updatedList[index]);
-      if ( updatedItem.tipoPrecio == 'ESPECIAL') {
-        updatedItem = updatedItem.copyWith(nombre: '');
+      if (modifyName) {
+        if (updatedItem.tipoPrecio == 'ESPECIAL') {
+          updatedItem = updatedItem.copyWith(nombre: '');
+        }
+        if (updatedItem.tipoPrecio == 'MAYOREO') {
+          updatedItem = updatedItem.copyWith(nombre: 'Mayoreo');
+        }
+        if (updatedItem.tipoPrecio == 'POR_DEFECTO') {
+          updatedItem = updatedItem.copyWith(
+              nombre: 'Por defecto', unidadesMayoreo: null);
+        }
       }
-      if (updatedItem.tipoPrecio == 'MAYOREO') {
-        updatedItem = updatedItem.copyWith(nombre: 'Mayoreo');
-      }
-      if (updatedItem.tipoPrecio == 'POR_DEFECTO') {
-        updatedItem = updatedItem.copyWith(nombre: 'Por defecto');
-      }
+      updatedItem = updatedItem.copyWith(margenUtilidad: getUtilidad(state.precioCompraPorPieza, updatedItem.precio ?? 0.0));
       updatedList[index] = updatedItem;
       state = state.copyWith(preciosVenta: updatedList);
     }
@@ -244,13 +265,73 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         favorito: product.favorito ?? false,
         empresa: product.empresa ?? Company(),
         imagenUrl: product.imagenUrl ?? '',
+        precioCompraTemporal: product.precioCompra ?? 0.0,
       );
+      if (product.nombre == null ||
+          product.nombre!.isEmpty ||
+          product.precioCompraIncImp == null) {
+        changePrice();
+      }
     } catch (e) {
       print('Error loading product data: $e');
     }
   }
 
+  double getUtilidad(double precioCompra, double precioVenta) {
+    if (precioCompra == 0) {
+      return 0.0;
+    }
+    double utilidad = ((precioVenta - precioCompra) / precioCompra) * 100;
+    return utilidad;
+  }
+
   // Add other setters as needed
+  changePrice() {
+    final config = ref.read(sesionProvider).config;
+    final igv = state.igv;
+    final igvAmount = config!.igv;
+    final precioCompraIncImp = state.precioCompraIncImp;
+    final precioCompraTemporal = state.precioCompraTemporal;
+    final factor = state.factor;
+    if (!igv) {
+      state = state.copyWith(
+        precioCompra: (precioCompraTemporal * (1.0 + igvAmount!)),
+        precioCompraNeto: precioCompraTemporal,
+      );
+    } else {
+      if (precioCompraIncImp) {
+        state = state.copyWith(
+          precioCompraNeto: (precioCompraTemporal / (1.0 + igvAmount!)),
+          precioCompra: precioCompraTemporal,
+        );
+      } else {
+        state = state.copyWith(
+          precioCompraNeto: precioCompraTemporal,
+          precioCompra: (precioCompraTemporal * (1.0 + igvAmount!)),
+        );
+      }
+    }
+    state = state.copyWith(
+      precioCompraPorPieza: factor != 0 ? (state.precioCompra / factor) : 0.0,
+      precioCompraNetoPorPieza:
+          factor != 0 ? (state.precioCompraNeto / factor) : 0.0,
+    );
+    //iterar por los rpecios venta y actualizarles la utilidad
+    for (int i = 0; i < state.preciosVenta.length; i++) {
+      ProductPrice precioVenta = state.preciosVenta[i];
+      double precioCompraPorPieza = state.precioCompraPorPieza;
+      state = state.copyWith(
+        preciosVenta: [
+          ...state.preciosVenta.sublist(0, i),
+          precioVenta.copyWith(
+            margenUtilidad:
+                getUtilidad(precioCompraPorPieza, precioVenta.precio ?? 0.0),
+          ),
+          ...state.preciosVenta.sublist(i + 1),
+        ],
+      );
+    }
+  }
 }
 
 class ProductFormState {
@@ -277,6 +358,9 @@ class ProductFormState {
   final List<UnitCode> unidades;
   final String imagenUrl;
   final XFile? imagenFile;
+  final double precioCompraTemporal;
+  final double precioCompraPorPieza;
+  final double precioCompraNetoPorPieza;
 
   ProductFormState({
     required this.nombre,
@@ -302,6 +386,9 @@ class ProductFormState {
     required this.unidades,
     required this.imagenUrl,
     required this.imagenFile,
+    required this.precioCompraTemporal,
+    required this.precioCompraPorPieza,
+    required this.precioCompraNetoPorPieza,
   });
 
   ProductFormState copyWith({
@@ -328,6 +415,9 @@ class ProductFormState {
     List<UnitCode>? unidades,
     String? imagenUrl,
     XFile? imagenFile,
+    double? precioCompraTemporal,
+    double? precioCompraPorPieza,
+    double? precioCompraNetoPorPieza,
   }) {
     return ProductFormState(
       nombre: nombre ?? this.nombre,
@@ -353,6 +443,10 @@ class ProductFormState {
       unidades: unidades ?? this.unidades,
       imagenUrl: imagenUrl ?? this.imagenUrl,
       imagenFile: imagenFile ?? this.imagenFile,
+      precioCompraTemporal: precioCompraTemporal ?? this.precioCompraTemporal,
+      precioCompraPorPieza: precioCompraPorPieza ?? this.precioCompraPorPieza,
+      precioCompraNetoPorPieza:
+          precioCompraNetoPorPieza ?? this.precioCompraNetoPorPieza,
     );
   }
 }

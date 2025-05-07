@@ -17,5 +17,5 @@ String formatDouble(double value) {
   if (value == value.toInt()) {
     return value.toInt().toString(); // 7.0 → 7
   }
-  return value.toString(); // 7.25 → 7.25
+  return value.toStringAsFixed(2); // 7.25 → 7.25
 }

@@ -75,12 +75,13 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
         color: Color(0xFFE2E4E7),
       ),
       decoration: InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+        isDense: true, // 🔽 Esto reduce la altura vertical
+        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         labelText: widget.label,
         labelStyle: GoogleFonts.raleway(
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 17,
+            fontSize: 15,
             color: Color(0xFF444444),
           ),
         ),
@@ -94,12 +95,12 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: Color(0xFFE2E4E7), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderSide: const BorderSide(color: ColorSchema.primaryColor, width: 1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(20),
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
       ),
