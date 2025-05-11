@@ -15,7 +15,7 @@ class UploadImage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    int sizeLimit = 2;
+    int sizeLimit = 1;
     KeyCameraAccessImpl keyCameraAccess = KeyCameraAccessImpl();
     return Align(
       alignment: Alignment.center,
@@ -26,7 +26,7 @@ class UploadImage extends ConsumerWidget {
             child: Container(
               width: 150,
               height: 150,
-              color: Colors.grey.shade200,
+              color: const Color.fromARGB(255, 245, 245, 245),
               child: image.startsWith("assets/")
                   ? Image.asset(
                       image,
@@ -85,6 +85,7 @@ class UploadImage extends ConsumerWidget {
               bottom: 88,
               child: GestureDetector(
                 onTap: () async {
+                  print('Seleccion de imagen de galeria');
                   XFile? file = await keyCameraAccess.getFromGallery();
                   if (file == null) return;
                   int fileSizeInBytes = await file.length();

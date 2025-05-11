@@ -1,3 +1,5 @@
+import 'package:teki_app/src/utils/formats.dart';
+
 import 'product.dart';
 
 class ProductItemPackage {
@@ -36,18 +38,12 @@ class ProductItemPackage {
       cantidad: (json['cantidad'] as num?)?.toDouble(),
       modificado: json['modificado'],
       eliminado: json['eliminado'],
-      createdOn: json['createdOn'] != null
-          ? DateTime.parse(json['createdOn'])
-          : null,
+      createdOn: parseDateTimeFlexible(json['createdOn']),
       createdBy: json['createdBy'],
       updatedBy: json['updatedBy'],
-      updatedOn: json['updatedOn'] != null
-          ? DateTime.parse(json['updatedOn'])
-          : null,
+      updatedOn: parseDateTimeFlexible(json['updatedOn']),
       deleteBy: json['deleteBy'],
-      deletedOn: json['deletedOn'] != null
-          ? DateTime.parse(json['deletedOn'])
-          : null,
+      deletedOn: parseDateTimeFlexible(json['deletedOn']),
     );
   }
 

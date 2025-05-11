@@ -1,6 +1,7 @@
 import 'package:teki_app/src/data/models/office.dart';
 import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/data/models/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class ProductPrice {
   final int? id;
@@ -40,9 +41,8 @@ class ProductPrice {
         puntoVenta: json['puntoVenta'] != null
             ? Office.fromJson(json['puntoVenta'])
             : null,
-        usuario:
-            json['usuario'] != null ? User.fromJson(json['usuario']) : null,
-        fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : null,
+        usuario:json['usuario'] != null ? User.fromJson(json['usuario']) : null,
+        fecha:  parseDateTimeFlexible(json['fecha']),
         producto: json['producto'] != null
             ? Product.fromJson(json['producto'])
             : null,

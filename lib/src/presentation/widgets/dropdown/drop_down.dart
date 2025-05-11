@@ -55,7 +55,7 @@ class _DropDownState extends State<DropDown> {
                 Expanded(
                   child: Text(
                     selectedValue != null
-                        ? widget.itemAsString?.call(selectedValue) ?? '' ?? 'Seleccionar'
+                        ? widget.itemAsString?.call(selectedValue) ?? 'Seleccionar'
                         : widget.label ?? 'Seleccionar',
                     overflow: TextOverflow.ellipsis,
                   ),

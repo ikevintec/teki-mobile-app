@@ -17,7 +17,7 @@ class ProductsRepositoryImpl extends ProductsRepository {
   }
 
   @override
-  Future<Product> getProductById(int id) {
+  Future<Product> getProductById(int id) async{
     return productsDatasource.getProductById(id);
   }
 
@@ -42,6 +42,16 @@ class ProductsRepositoryImpl extends ProductsRepository {
   @override
   Future<List<Currency>> getCurrency() async {
     return await productsDatasource.getCurrency();
+  }
+  
+  @override
+  Future<Product> createProduct(Product product) async{
+    return productsDatasource.createProduct(product);
+  }
+  
+  @override
+  Future<Product> updateProduct(Product product) async{
+    return productsDatasource.updateProduct(product);
   }
 
 }

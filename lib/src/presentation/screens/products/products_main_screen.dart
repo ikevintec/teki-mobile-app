@@ -27,6 +27,8 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
 
   late var productState = ref.watch(productsProvider);
   late List<Product> productList = [];
+  late TextEditingController searchController;
+
   bool _loaded = false;
 
   @override
@@ -34,6 +36,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
     super.didChangeDependencies();
     if (!_loaded) {
       Future.microtask(() {
+        searchController = TextEditingController();
         ref.read(productsProvider.notifier).resetProducts();
       });
       _loaded = true;
@@ -53,6 +56,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
   @override
   void dispose() {
     _debounce?.cancel(); // muy importante cancelar cuando destruyes el widget
+    searchController.dispose();
     super.dispose();
   }
 
@@ -68,21 +72,24 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
       appBar: isSmallScreen
           ? AppBar(
               elevation: 0,
-              backgroundColor: Colors.white,
+              backgroundColor: ColorSchema.primaryColor,
               automaticallyImplyLeading: true,
               centerTitle: true,
               surfaceTintColor: Colors.white,
               title: Text(
                 "Productos",
                 style: GoogleFonts.raleway(
+                  color: Colors.white,
                   textStyle: const TextStyle(fontWeight: FontWeight.w500),
                 ),
               ),
               leading: IconButton(
+                color: Colors.white,
                 onPressed: () {
                   Get.back();
                 },
                 icon: const Icon(
+                  color: Colors.white,
                   Icons.keyboard_arrow_left,
                   size: 30,
                 ),
@@ -100,6 +107,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
                       }
                     },
                     icon: const Icon(
+                      color: Colors.white,
                       Icons.menu,
                       size: 30,
                     ),
@@ -108,59 +116,59 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
               ],
             )
           : null,
-      body: Container(
-        color: Colors.white54,
-        child: RefreshIndicator(
-          onRefresh: () async {
-            ref.read(productsProvider.notifier).resetProducts();
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(
-                height: 20,
-              ),
-              SearchField(onTextChanged: onSearchChanged),
-              const SizedBox(
-                height: 10,
-              ),
-              isLoading
-                  ? Expanded(
-                      child: const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(
-                              color: ColorSchema.primaryColor,
-                              strokeWidth: 2,
-                            ),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Text(
-                              "Cargando productos...",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            )
-                          ],
+      body: RefreshIndicator(
+        color: ColorSchema.primaryColor,
+        onRefresh: () async {
+          await ref.read(productsProvider.notifier).resetProducts();
+          searchController.clear();
+        },
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 20),
+            SearchField(onTextChanged: onSearchChanged,controller: searchController,),
+            const SizedBox(height: 10),
+            if (isLoading)
+              SizedBox(
+                height: MediaQuery.of(context).size.height *
+                    0.6, // o el alto que necesites
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        color: ColorSchema.primaryColor,
+                        strokeWidth: 2,
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "Cargando productos...",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    )
-                  : ProductListSection(
-                      isSmallScreen: isSmallScreen,
-                      productList: productListModel),
-            ],
-          ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.75,
+                child: ProductListSection(
+                  isSmallScreen: isSmallScreen,
+                  productList: productListModel,
+                ),
+              ),
+          ],
         ),
       ),
       floatingActionButton: const CustomFloatingActionButton(
-          buttonName: "Agregar", 
-          routeName: AppRoutes.createProduct,
-          iconData: Icons.add_circle_outline,
+        buttonName: "Agregar",
+        routeName: AppRoutes.createProduct,
+        iconData: Icons.add_circle_outline,
       ),
     );
   }

@@ -102,4 +102,24 @@ class RemoteProducts extends ProductsDatasource {
     // TODO: implement getCurrency
     throw UnimplementedError();
   }
+  
+  @override
+  Future<Product> createProduct(Product product) async{
+    try {
+      final response = await dio.post('/products', data: product.toJson());
+      return Product.fromJson(response.data);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+  
+  @override
+  Future<Product> updateProduct(Product product) async{
+    try {
+      final response = await dio.put('/products', data: product.toJson());
+      return Product.fromJson(response.data);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
 }

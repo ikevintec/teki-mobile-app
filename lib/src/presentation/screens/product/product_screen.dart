@@ -1,6 +1,8 @@
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/general_section.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/precios_section.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/product_not_found_screen.dart';
@@ -40,7 +42,7 @@ class ProductScreen extends HookConsumerWidget {
             await ref.read(productProvider.notifier).loadProduct(productId!);
           }
 
-          final product = ref.read(productProvider).product!;
+          final product = productId != null ? ref.read(productProvider).product! : Product();
           ref.read(productFormProvider.notifier).loadDataFromProduct(
                 product,
                 currencies,
@@ -66,33 +68,31 @@ class ProductScreen extends HookConsumerWidget {
       ),
       body: provider.isError == true
           ? const ProductNotFoundScreen()
-          : Column(
+          : IndexedStack(
+              index: selectedTabIndex.value,
               children: [
-                Container(
-                  color: Colors.white,
-                  child: TabBar(
-                    controller: controller,
-                    onTap: (index) => selectedTabIndex.value = index,
-                    labelColor: ColorSchema.primaryColor,
-                    indicatorColor: ColorSchema.primaryColor,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-                    tabs: const [
-                      Tab(text: "General"),
-                      Tab(text: "Precios"),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: IndexedStack(
-                    index: selectedTabIndex.value,
-                    children: [
-                      ProductGeneralSection(formKey: generalFormKey),
-                      ProductPreciosSection(formKey: preciosFormKey),
-                    ],
-                  ),
-                ),
+                ProductGeneralSection(formKey: generalFormKey),
+                ProductPreciosSection(formKey: preciosFormKey),
               ],
             ),
+      bottomNavigationBar: CurvedNavigationBar(
+        index: selectedTabIndex.value,
+        height: 60.0,
+        backgroundColor: Colors.transparent, // Fondo detrás de la barra
+        color: ColorSchema.primaryColor, // Color de la barra (fondo)
+        buttonBackgroundColor:
+            ColorSchema.primaryColor, // Botón/tab seleccionado
+        animationDuration: Duration(milliseconds: 300),
+        animationCurve: Curves.easeInOut,
+        items: const <Widget>[
+          Icon(Icons.description, size: 25, color: Colors.white),
+          Icon(Icons.attach_money, size: 25, color: Colors.white),
+        ],
+        onTap: (index) {
+          selectedTabIndex.value = index;
+          controller.animateTo(index);
+        },
+      ),
       floatingActionButton: provider.isError == true
           ? null
           : CustomFloatingActionButton(
@@ -105,7 +105,6 @@ class ProductScreen extends HookConsumerWidget {
 
                 if (!generalValid) {
                   selectedTabIndex.value = 0;
-                  controller.animateTo(0); // 🔁 sincroniza con TabBar
                   errorNotification(
                       'Completa los campos requeridos en "General"');
                   return;
@@ -113,13 +112,15 @@ class ProductScreen extends HookConsumerWidget {
 
                 if (!preciosValid) {
                   selectedTabIndex.value = 1;
-                  controller.animateTo(1); // 🔁 sincroniza con TabBar
                   errorNotification(
                       'Completa los campos requeridos en "Precios"');
                   return;
                 }
-
-                successNotification('Formulario válido');
+                if (productId != null) {
+                  ref.read(productFormProvider.notifier).updateProduct();
+                  return;
+                }
+                ref.read(productFormProvider.notifier).createProduct();
               },
             ),
     );

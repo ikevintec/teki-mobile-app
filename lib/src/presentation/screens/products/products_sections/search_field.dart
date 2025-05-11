@@ -4,8 +4,9 @@ import 'package:teki_app/src/utils/contstants.dart';
 
 class SearchField extends StatelessWidget {
   final ValueChanged<String> onTextChanged;
+  final TextEditingController? controller;
 
-  const SearchField({super.key, required this.onTextChanged});
+  const SearchField({super.key, required this.onTextChanged, this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +15,7 @@ class SearchField extends StatelessWidget {
         horizontal: 16.0,
       ),
       child: TextField(
+        controller: controller,
         onChanged: onTextChanged,
         decoration: InputDecoration(
           hintText: "Buscar productos",

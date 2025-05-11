@@ -8,7 +8,7 @@ class KeyCameraAccessImpl implements KeyCameraAccess {
   Future<XFile?> getFromCamera() async {
     final XFile? image = await picker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 80,
+        imageQuality: 70,
         preferredCameraDevice: CameraDevice.rear);
     return image;
   }
@@ -16,7 +16,7 @@ class KeyCameraAccessImpl implements KeyCameraAccess {
   @override
   Future<XFile?> getFromGallery() async {
     final XFile? image =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     return image;
   }
 }

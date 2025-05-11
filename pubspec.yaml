@@ -11,7 +11,9 @@ dependencies:
   card_slider: ^1.0.5
   carousel_slider: ^5.0.0
   cherry_toast: ^1.8.0
+  convex_bottom_bar: ^3.2.0
   cupertino_icons: ^1.0.2
+  curved_navigation_bar: ^1.0.6
   dio: ^5.8.0+1
   expansion_tile_card: ^3.0.0
   fl_chart: ^0.71.0

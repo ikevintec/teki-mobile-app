@@ -242,18 +242,6 @@ class ProductGeneralSection extends HookConsumerWidget {
                                 ? notifier.setPrecioCompraTemporal(
                                     double.parse(value))
                                 : null,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return "Campo requerido";
-                              }
-                              if (double.parse(value) <= 0) {
-                                return "Precio minimo es 1";
-                              }
-                              if (double.parse(value) > 99999999) {
-                                return "Precio fuera de limite";
-                              }
-                              return null;
-                            },
                           ),
                         ),
                         SizedBox(width: 10),

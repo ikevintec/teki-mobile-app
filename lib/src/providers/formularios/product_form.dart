@@ -1,20 +1,38 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teki_app/src/data/models/company.dart';
 import 'package:teki_app/src/data/models/currency.dart';
 import 'package:teki_app/src/data/models/product.dart';
 import 'package:teki_app/src/data/models/productPrice.dart';
 import 'package:teki_app/src/data/models/unitCode.dart';
+import 'package:teki_app/src/data/repositories/image_repository_impl.dart';
+import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
+import 'package:teki_app/src/domain/repositories/image_repository.dart';
+import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/products/product.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 final productFormProvider =
     StateNotifierProvider<ProductFormNotifier, ProductFormState>((ref) {
-  return ProductFormNotifier(ref: ref);
+  ProductsRepository productsRepository = ProductsRepositoryImpl();
+  ImageRepository imageRepository = ImageRepositoryImpl();
+  return ProductFormNotifier(
+      ref: ref,
+      productsRepository: productsRepository,
+      imageRepository: imageRepository);
 });
 
 class ProductFormNotifier extends StateNotifier<ProductFormState> {
   final Ref ref;
-  ProductFormNotifier({required this.ref})
+  final ProductsRepository productsRepository;
+  final ImageRepository imageRepository;
+  ProductFormNotifier(
+      {required this.ref,
+      required this.productsRepository,
+      required this.imageRepository})
       : super(ProductFormState(
           nombre: '',
           unidad: UnitCode(),
@@ -26,6 +44,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
           validacionLote: false,
           tipoLote: 'Lote',
           tipoProducto: 'Articulo',
+          tipoAfectacion: '10',
           preciosVenta: [
             ProductPrice(
               tipoPrecio: 'POR_DEFECTO',
@@ -52,6 +71,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
           unidades: [],
           imagenUrl: '',
           imagenFile: null,
+          product: Product(),
         ));
 
   void setNombre(String nombre) {
@@ -220,14 +240,15 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
               nombre: 'Por defecto', unidadesMayoreo: null);
         }
       }
-      updatedItem = updatedItem.copyWith(margenUtilidad: getUtilidad(state.precioCompraPorPieza, updatedItem.precio ?? 0.0));
+      updatedItem = updatedItem.copyWith(
+          margenUtilidad: getUtilidad(
+              state.precioCompraPorPieza, updatedItem.precio ?? 0.0));
       updatedList[index] = updatedItem;
       state = state.copyWith(preciosVenta: updatedList);
     }
   }
 
-  void loadDataFromProduct(
-      Product product, List<Currency> currencies, List<UnitCode> unidades) {
+  void loadDataFromProduct(Product product, List<Currency> currencies, List<UnitCode> unidades) {
     try {
       state = state.copyWith(
         currencies: currencies,
@@ -266,6 +287,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         empresa: product.empresa ?? Company(),
         imagenUrl: product.imagenUrl ?? '',
         precioCompraTemporal: product.precioCompra ?? 0.0,
+        product: product,
       );
       if (product.nombre == null ||
           product.nombre!.isEmpty ||
@@ -332,6 +354,74 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
       );
     }
   }
+
+  //imprimir el estado actual
+Product formTomodel() {
+  return state.product.copyWith(
+    nombre: state.nombre,
+    unidadCompra: state.unidadCompra,
+    unidad: state.unidad,
+    unidadAlternativa: state.unidadAlternativa,
+    moneda: state.moneda,
+    factor: state.factor,
+    igv: state.igv,
+    validacionLote: state.validacionLote,
+    tipoLote: state.tipoLote.toUpperCase(),
+    tipoProducto: state.tipoProducto,
+    preciosVenta: state.preciosVenta,
+    preciosPorPuntoVenta: state.preciosPorPuntoVenta,
+    precioCompraNeto: state.precioCompraNeto,
+    precioCompraIncImp: state.precioCompraIncImp,
+    precioCompra: state.precioCompra == 0.0 ? null : state.precioCompra,
+    mostrarEnWeb: state.mostrarEnWeb,
+    mostrarEnRestaurante: state.mostrarEnRestaurante,
+    favorito: state.favorito,
+    empresa: state.empresa,
+    imagenUrl: state.imagenUrl == '' || state.imagenUrl.length <= 10
+        ? null
+        : state.imagenUrl,
+    tipoAfectacion: state.igv ? '10' : '20',
+  );
+}
+  void loadImagen() async {
+      if (state.imagenFile != null) {
+        final idCompany = ref.read(sesionProvider).company!.id;
+        final imageResponse = await imageRepository.getImageUrl(
+            idCompany!, state.imagenFile!.path, state.imagenFile!.name);
+        String url = imageResponse.url;
+        state = state.copyWith(imagenUrl: url);
+      }
+  }
+
+  void createProduct() async {
+    ref.read(productProvider.notifier).setLoading(true); 
+    try {
+      loadImagen();
+      Product product = formTomodel();
+      await productsRepository.createProduct(product);
+      successNotification('Producto creado correctamente');
+      ref.read(productProvider.notifier).setLoading(false);
+      Get.toNamed(AppRoutes.products);
+    } catch (e) {
+      errorNotification(e.toString());
+      ref.read(productProvider.notifier).setLoading(false);
+    }
+  }
+
+  void updateProduct() async {
+    ref.read(productProvider.notifier).setLoading(true);
+    try {
+      loadImagen();
+      Product product = formTomodel();
+      await productsRepository.updateProduct(product);
+      successNotification('Producto actualizado correctamente');
+      ref.read(productProvider.notifier).setLoading(false);
+      Get.toNamed(AppRoutes.products);
+    } catch (e) {
+      errorNotification(e.toString());
+      ref.read(productProvider.notifier).setLoading(false);
+    }
+  }
 }
 
 class ProductFormState {
@@ -361,6 +451,8 @@ class ProductFormState {
   final double precioCompraTemporal;
   final double precioCompraPorPieza;
   final double precioCompraNetoPorPieza;
+  final String tipoAfectacion;
+  final Product product;
 
   ProductFormState({
     required this.nombre,
@@ -389,6 +481,8 @@ class ProductFormState {
     required this.precioCompraTemporal,
     required this.precioCompraPorPieza,
     required this.precioCompraNetoPorPieza,
+    required this.tipoAfectacion,
+    required this.product,
   });
 
   ProductFormState copyWith({
@@ -418,6 +512,8 @@ class ProductFormState {
     double? precioCompraTemporal,
     double? precioCompraPorPieza,
     double? precioCompraNetoPorPieza,
+    String? tipoAfectacion,
+    Product? product,
   }) {
     return ProductFormState(
       nombre: nombre ?? this.nombre,
@@ -447,6 +543,14 @@ class ProductFormState {
       precioCompraPorPieza: precioCompraPorPieza ?? this.precioCompraPorPieza,
       precioCompraNetoPorPieza:
           precioCompraNetoPorPieza ?? this.precioCompraNetoPorPieza,
+      tipoAfectacion: tipoAfectacion ?? this.tipoAfectacion,
+      product: product ?? this.product,
     );
+  }
+
+  @override
+  String toString() {
+    // TODO: implement toString
+    return super.toString();
   }
 }

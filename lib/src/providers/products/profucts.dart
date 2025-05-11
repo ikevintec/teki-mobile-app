@@ -5,7 +5,7 @@ import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
 
-final productsProvider = StateNotifierProvider<ProductsNotifier, ProductsState>(
+final productsProvider = StateNotifierProvider.autoDispose<ProductsNotifier, ProductsState>(
   (ref) {
     final ProductsRepository productsRepository = ProductsRepositoryImpl();
     return ProductsNotifier(
@@ -58,9 +58,9 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
     setLoading(false);
   }
 
-  void resetProducts() async {
+  Future<void> resetProducts() async {
     setLoading(true);
-    resetFilters();
+    resetFilters(); 
     ProductResponse response =
         await productsRepository.getProducts(buildProductQueryParams(state));
     if (response.content != null || response.content!.isNotEmpty) {
@@ -91,7 +91,7 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
       perPage: 10,
       sortOrder: 1,
       sortField: 'id',
-      filterGlobal: null,
+      filterGlobal: '',
       codigo: null,
       codigoBarra: null,
       nombre: null,
@@ -104,6 +104,7 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
       favorito: null,
       idPuntoVenta: null,
       idPuntoVentaOrder: null,
+      products: [],
     );
   }
 

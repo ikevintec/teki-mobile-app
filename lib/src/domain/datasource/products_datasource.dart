@@ -9,5 +9,7 @@ abstract class ProductsDatasource {
   Future<List<Product>> getProductsByCategory(String category);
   Future<List<Product>> getProductsByBrand(String brand);
   Future<List<Product>> searchProducts(String query);
+  Future<Product> createProduct(Product product);
+  Future<Product> updateProduct(Product product);
 
 }

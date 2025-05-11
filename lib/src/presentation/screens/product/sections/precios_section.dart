@@ -22,13 +22,29 @@ class ProductPreciosSection extends HookConsumerWidget {
       {"label": "Especial", "value": "ESPECIAL"},
     ];
 
-    return Container(
-      color: Colors.white54,
-      child: Padding(
+    final scrollController = useScrollController();
+    final prevLength = useRef(preciosVenta.length);
+
+    useEffect(() {
+      if (preciosVenta.length > prevLength.value) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          scrollController.animateTo(
+            scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      }
+      prevLength.value = preciosVenta.length;
+      return null;
+    }, [preciosVenta.length]);
+
+    return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 25),
         child: Form(
           key: formKey,
           child: SingleChildScrollView(
+            controller: scrollController,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -73,8 +89,7 @@ class ProductPreciosSection extends HookConsumerWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -137,10 +152,10 @@ class PriceEditBottomSheet extends HookConsumerWidget {
     final bool isReadOnly = precioVenta.tipoPrecio != "ESPECIAL";
     final bool isMayoreo = precioVenta.tipoPrecio != "POR_DEFECTO";
 
-    return Column(
+    return Stack(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+          padding: index != 0 ? const EdgeInsets.only(top: 40, bottom: 20, left: 15, right: 15) : const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.black12),
@@ -156,7 +171,6 @@ class PriceEditBottomSheet extends HookConsumerWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final double halfWidth = (constraints.maxWidth - 15) / 2;
-
               return Wrap(
                 spacing: 15,
                 runSpacing: 10,
@@ -177,7 +191,8 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                         }, false);
                       },
                       validator: (value) {
-                        if (value == null || value.isEmpty) return "Campo requerido";
+                        if (value == null || value.isEmpty)
+                          return "Campo requerido";
                         if (value == "-") return "Nombre invalido";
                         if (value.length < 3) return "Nombre muy corto";
                         return null;
@@ -200,12 +215,15 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                         }, false);
                       },
                       validator: (value) {
-                        if (value == null || value.isEmpty)
+                        if (value == null || value.isEmpty) {
                           return "Campo requerido";
-                        if (double.tryParse(value) == null)
+                        }
+                        if (double.tryParse(value) == null) {
                           return "El precio no es válido";
-                        if (double.parse(value) <= 0)
+                        }
+                        if (double.parse(value) <= 0) {
                           return "Precio no debe ser 0";
+                        }
                         return null;
                       },
                     ),
@@ -236,7 +254,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                         label: "Unidades mayoreo",
                         hint: "Unidades al mayoreo",
                         controller: unidadesMayoreoController,
-                        inputType: TextInputType.name,
+                        inputType: TextInputType.number,
                         onChanged: (value) {
                           ref
                               .read(productFormProvider.notifier)
@@ -244,6 +262,20 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                             return item.copyWith(
                                 unidadesMayoreo: double.parse(value));
                           }, false);
+                        },
+                        validator: (value) {
+                          if (precioVenta.tipoPrecio == "POR_DEFECTO")
+                            return null;
+                          if (value == null || value.isEmpty) {
+                            return "Campo requerido";
+                          }
+                          if (double.tryParse(value) == null) {
+                            return "El precio no es válido";
+                          }
+                          if (double.parse(value) <= 0) {
+                            return "Unidad minima es 1";
+                          }
+                          return null;
                         },
                       ),
                     ),
@@ -267,6 +299,18 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                   ),
                 ],
               );
+            },
+          ),
+        ),
+        if (index != 0)
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+            icon: const Icon(Icons.close,
+                size: 20, color: Colors.red),
+            onPressed: () {
+              ref.read(productFormProvider.notifier).removePrice(index);
             },
           ),
         ),
