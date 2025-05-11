@@ -136,7 +136,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         utilidadController.text =
-            '${formatDouble(precioVenta.margenUtilidad!)}%';
+            '${formatDouble(precioVenta.margenUtilidad ?? 0)}%';
       });
       return null;
     }, [precioVenta.margenUtilidad]);
@@ -287,6 +287,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                       itemsMap: tiposPrecioVentaFiltrado,
                       labelKey: "label",
                       valueKey: "value",
+                      readOnly: index == 0 ? true : false,
                       selectionItem: precioVenta.tipoPrecio,
                       onChanged: (value) {
                         ref

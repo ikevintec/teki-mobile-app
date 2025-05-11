@@ -9,6 +9,8 @@ class DropdownFormFieldSection extends StatefulWidget {
   /// Opción 1: lista de strings simples
   final List<String>? items;
 
+  final bool? readOnly;
+
   /// Opción 2: lista de mapas {label: ..., value: ...}
   final List<Map<String, String>>? itemsMap;
   final String? labelKey;
@@ -21,11 +23,12 @@ class DropdownFormFieldSection extends StatefulWidget {
     super.key,
     required this.label,
     required this.hint,
+    required this.selectionItem,
+    this.readOnly,
     this.items,
     this.itemsMap,
     this.labelKey,
     this.valueKey,
-    required this.selectionItem,
     this.onChanged,
   }) : assert((items != null && itemsMap == null) || (itemsMap != null && items == null),
             'Debes usar solo uno: items o itemsMap');
@@ -105,7 +108,9 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
       ),
       items: dropdownItems,
-      onChanged: (String? value) {
+      onChanged: widget.readOnly == true
+          ? null
+          :(String? value) {
         setState(() {
           widget.selectionItem = value;
         });

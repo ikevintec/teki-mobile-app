@@ -65,9 +65,7 @@ class ProductGeneralSection extends HookConsumerWidget {
               image: formProvider.imagenUrl,
               onImageSelected: (newImage, file) {
                 notifier.setImagenUrl(newImage);
-                if (file != null) {
-                  notifier.setImagenFile(file);
-                }
+                notifier.setImagenFile(file);
               },
             ),
             const SizedBox(height: 20),

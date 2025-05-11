@@ -32,11 +32,16 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
   bool _loaded = false;
 
   @override
+  void initState() {
+    super.initState();
+    searchController = TextEditingController();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_loaded) {
       Future.microtask(() {
-        searchController = TextEditingController();
         ref.read(productsProvider.notifier).resetProducts();
       });
       _loaded = true;
@@ -127,7 +132,10 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 20),
-            SearchField(onTextChanged: onSearchChanged,controller: searchController,),
+            SearchField(
+              onTextChanged: onSearchChanged,
+              controller: searchController,
+            ),
             const SizedBox(height: 10),
             if (isLoading)
               SizedBox(

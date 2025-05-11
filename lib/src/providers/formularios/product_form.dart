@@ -248,7 +248,8 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
     }
   }
 
-  void loadDataFromProduct(Product product, List<Currency> currencies, List<UnitCode> unidades) {
+  void loadDataFromProduct(
+      Product product, List<Currency> currencies, List<UnitCode> unidades) {
     try {
       state = state.copyWith(
         currencies: currencies,
@@ -289,6 +290,25 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         precioCompraTemporal: product.precioCompra ?? 0.0,
         product: product,
       );
+      //actualizar los precios venta
+      for (int i = 0; i < state.preciosVenta.length; i++) {
+        ProductPrice precioVenta = state.preciosVenta[i];
+        state = state.copyWith(
+          preciosVenta: [
+            ...state.preciosVenta.sublist(0, i),
+            precioVenta.copyWith(
+              nombre: state.preciosVenta[i].tipoPrecio == 'ESPECIAL'
+                  ? state.preciosVenta[i].nombre
+                  : state.preciosVenta[i].tipoPrecio == 'MAYOREO'
+                      ? 'Mayoreo'
+                      : state.preciosVenta[i].tipoPrecio == 'POR_DEFECTO'
+                          ? 'Por defecto'
+                          : '',
+            ),
+            ...state.preciosVenta.sublist(i + 1),
+          ],
+        );
+      }
       if (product.nombre == null ||
           product.nombre!.isEmpty ||
           product.precioCompraIncImp == null) {
@@ -356,47 +376,62 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
   }
 
   //imprimir el estado actual
-Product formTomodel() {
-  return state.product.copyWith(
-    nombre: state.nombre,
-    unidadCompra: state.unidadCompra,
-    unidad: state.unidad,
-    unidadAlternativa: state.unidadAlternativa,
-    moneda: state.moneda,
-    factor: state.factor,
-    igv: state.igv,
-    validacionLote: state.validacionLote,
-    tipoLote: state.tipoLote.toUpperCase(),
-    tipoProducto: state.tipoProducto,
-    preciosVenta: state.preciosVenta,
-    preciosPorPuntoVenta: state.preciosPorPuntoVenta,
-    precioCompraNeto: state.precioCompraNeto,
-    precioCompraIncImp: state.precioCompraIncImp,
-    precioCompra: state.precioCompra == 0.0 ? null : state.precioCompra,
-    mostrarEnWeb: state.mostrarEnWeb,
-    mostrarEnRestaurante: state.mostrarEnRestaurante,
-    favorito: state.favorito,
-    empresa: state.empresa,
-    imagenUrl: state.imagenUrl == '' || state.imagenUrl.length <= 10
-        ? null
-        : state.imagenUrl,
-    tipoAfectacion: state.igv ? '10' : '20',
-  );
-}
-  void loadImagen() async {
-      if (state.imagenFile != null) {
-        final idCompany = ref.read(sesionProvider).company!.id;
-        final imageResponse = await imageRepository.getImageUrl(
-            idCompany!, state.imagenFile!.path, state.imagenFile!.name);
-        String url = imageResponse.url;
-        state = state.copyWith(imagenUrl: url);
-      }
+  Product formTomodel() {
+    for (int i = 0; i < state.preciosVenta.length; i++) {
+      ProductPrice precioVenta = state.preciosVenta[i];
+      state = state.copyWith(
+        preciosVenta: [
+          ...state.preciosVenta.sublist(0, i),
+          precioVenta.copyWith(
+            nombre: state.preciosVenta[i].tipoPrecio == 'ESPECIAL'
+                ? state.preciosVenta[i].nombre
+                : '',
+          ),
+          ...state.preciosVenta.sublist(i + 1),
+        ],
+      );
+    }
+    return state.product.copyWith(
+      nombre: state.nombre,
+      unidadCompra: state.unidadCompra,
+      unidad: state.unidad,
+      unidadAlternativa: state.unidadAlternativa,
+      moneda: state.moneda,
+      factor: state.factor,
+      igv: state.igv,
+      validacionLote: state.validacionLote,
+      tipoLote: state.tipoLote.toUpperCase(),
+      tipoProducto: state.tipoProducto,
+      preciosVenta: state.preciosVenta,
+      preciosPorPuntoVenta: state.preciosPorPuntoVenta,
+      precioCompraNeto: state.precioCompraNeto,
+      precioCompraIncImp: state.precioCompraIncImp,
+      precioCompra: state.precioCompra == 0.0 ? null : state.precioCompra,
+      mostrarEnWeb: state.mostrarEnWeb,
+      mostrarEnRestaurante: state.mostrarEnRestaurante,
+      favorito: state.favorito,
+      empresa: state.empresa,
+      imagenUrl: state.imagenUrl,
+      tipoAfectacion: state.igv ? '10' : '20',
+    );
+  }
+
+  Future<void> loadImagen() async {
+    if (state.imagenFile != null && state.imagenUrl.isNotEmpty) {
+      final idCompany = ref.read(sesionProvider).company!.id;
+      final imageResponse = await imageRepository.getImageUrl(
+          idCompany!, state.imagenFile!.path, state.imagenFile!.name);
+      String url = imageResponse.url;
+      state = state.copyWith(imagenUrl: url);
+    } else {
+      state = state.copyWith(imagenUrl: null);
+    }
   }
 
   void createProduct() async {
-    ref.read(productProvider.notifier).setLoading(true); 
+    ref.read(productProvider.notifier).setLoading(true);
     try {
-      loadImagen();
+      await loadImagen();
       Product product = formTomodel();
       await productsRepository.createProduct(product);
       successNotification('Producto creado correctamente');
@@ -411,7 +446,7 @@ Product formTomodel() {
   void updateProduct() async {
     ref.read(productProvider.notifier).setLoading(true);
     try {
-      loadImagen();
+      await loadImagen();
       Product product = formTomodel();
       await productsRepository.updateProduct(product);
       successNotification('Producto actualizado correctamente');

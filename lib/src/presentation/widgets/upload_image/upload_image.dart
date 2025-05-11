@@ -24,8 +24,8 @@ class UploadImage extends ConsumerWidget {
         children: [
           ClipOval(
             child: Container(
-              width: 150,
-              height: 150,
+              width: 180,
+              height: 180,
               color: const Color.fromARGB(255, 245, 245, 245),
               child: image.startsWith("assets/")
                   ? Image.asset(
@@ -72,7 +72,7 @@ class UploadImage extends ConsumerWidget {
                   onImageSelected(file.path, file);
                 },
                 child: CircleAvatar(
-                    radius: 15,
+                    radius: 20,
                     backgroundColor: ColorSchema.primaryColor,
                     child: Icon(
                       Icons.camera_alt_outlined,
@@ -100,7 +100,7 @@ class UploadImage extends ConsumerWidget {
                   onImageSelected(file.path, file);
                 },
                 child: CircleAvatar(
-                    radius: 15,
+                    radius: 20,
                     backgroundColor: ColorSchema.primaryColor,
                     child: Icon(
                       Icons.image,
@@ -108,6 +108,26 @@ class UploadImage extends ConsumerWidget {
                       size: 17,
                     )),
               ))
+              ,
+              //Boton para eliminar imagen si esque se selecciona una
+          if (image.isNotEmpty)
+            Positioned(
+              right: -10,
+              bottom: 0,
+              child: GestureDetector(
+                onTap: () {
+                  onImageSelected("", null);
+                },
+                child: CircleAvatar(
+                    radius: 15,
+                    backgroundColor: Colors.red,
+                    child: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 17,
+                    )),
+              ),
+            )
         ],
       ),
     );
