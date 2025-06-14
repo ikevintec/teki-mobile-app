@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:teki_app/src/data/models/currency.dart';
-import 'package:teki_app/src/data/models/product.dart';
+import 'package:teki_app/src/data/models/teki_model/currency.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/response/products.dart';
 import 'package:teki_app/src/domain/datasource/products_datasource.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';

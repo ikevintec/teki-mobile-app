@@ -2,7 +2,7 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:teki_app/src/data/models/product.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/general_section.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/precios_section.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/product_not_found_screen.dart';
@@ -63,7 +63,7 @@ class ProductScreen extends HookConsumerWidget {
         preferredSize: const Size.fromHeight(60),
         child: CustomAppBar(
           navigateName:
-              productId == null ? "Crear Producto" : "Editar Producto",
+              productId == null ? "Crear Producto" : "Editar Producto"
         ),
       ),
       body: provider.isError == true

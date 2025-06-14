@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/user.dart';
+import 'package:teki_app/src/data/models/teki_model/user.dart';
 
 class LoginResponse {
   final String? accessToken;

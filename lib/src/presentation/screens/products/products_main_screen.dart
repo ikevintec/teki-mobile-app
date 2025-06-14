@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/data/models/product.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/product-list_section.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/search_field.dart';
 import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';

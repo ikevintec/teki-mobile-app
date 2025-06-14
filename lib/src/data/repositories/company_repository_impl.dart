@@ -1,5 +1,5 @@
 import 'package:teki_app/src/data/datasource/remote_company.dart';
-import 'package:teki_app/src/data/models/company.dart';
+import 'package:teki_app/src/data/models/teki_model/company.dart';
 import 'package:teki_app/src/domain/datasource/company_datasource.dart';
 import 'package:teki_app/src/domain/repositories/company_repository.dart';
 

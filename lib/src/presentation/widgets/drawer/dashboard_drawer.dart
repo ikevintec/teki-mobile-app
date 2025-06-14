@@ -10,7 +10,7 @@ import 'package:teki_app/src/data/models/route_item_model/invoice_route_model.da
 import 'package:teki_app/src/data/models/route_item_model/products_route_model.dart';
 import 'package:teki_app/src/data/models/route_item_model/reports_route_model.dart';
 import 'package:teki_app/src/data/models/route_item_model/trading_route_model.dart';
-import 'package:teki_app/src/data/models/user.dart';
+import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';

@@ -1,6 +1,6 @@
 import 'package:teki_app/src/data/models/page/pageable.dart';
 import 'package:teki_app/src/data/models/page/sort.dart';
-import 'package:teki_app/src/data/models/product.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 
 class ProductResponse {
   final List<Product>? content;

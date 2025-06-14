@@ -12,6 +12,11 @@ class TextFieldSection extends StatelessWidget {
   final bool isReadOnly;
   final TextEditingController? controller;
   final String? Function(String?)? validator;
+  final String? prefix;
+  final bool showBorders;
+  final double? paddingHorinzontal;
+  final double? fontSize;
+
 
 
   const TextFieldSection({
@@ -25,6 +30,10 @@ class TextFieldSection extends StatelessWidget {
     this.isReadOnly = false,
     this.controller,
     this.validator,
+    this.prefix,
+    this.showBorders = true,
+    this.paddingHorinzontal = 10,
+    this.fontSize = 15,
   });
 
   @override
@@ -36,15 +45,16 @@ class TextFieldSection extends StatelessWidget {
       controller: controller,
       style: GoogleFonts.nunito(
         fontWeight: FontWeight.w600,
-        fontSize: 12,
+        fontSize: fontSize,
       ),
       decoration: InputDecoration(
+        prefixText: prefix,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        contentPadding: EdgeInsets.symmetric(vertical: 10,horizontal: paddingHorinzontal!),
         labelText: label,
         labelStyle: GoogleFonts.raleway(
           color: const Color(0xFF444444),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          textStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: fontSize),
         ),
         fillColor: Colors.white,
         filled: true,
@@ -57,11 +67,11 @@ class TextFieldSection extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: Color(0xFFE2E4E7), width: 1),
+          
+          borderSide: BorderSide(color: Color(0xFFE2E4E7), width: showBorders ? 1 : 0),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide:
-              const BorderSide(color: ColorSchema.primaryColor, width: 1),
+          borderSide: BorderSide(color: Color(0xFFE2E4E7), width: showBorders ? 1 : 0),
           borderRadius: BorderRadius.circular(20),
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,

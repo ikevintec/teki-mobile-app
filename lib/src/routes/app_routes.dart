@@ -30,6 +30,7 @@ import 'package:teki_app/src/presentation/screens/onboarding/onboarding_screen.d
 import 'package:teki_app/src/presentation/screens/payment_reports/payment_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/product/product_screen.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/presentation/screens/sales/salesSections/sales_return_section.dart';
 import 'package:teki_app/src/presentation/screens/products/products_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/products_reports/products_reports_main_screen.dart';
@@ -116,6 +117,8 @@ class AppRoutes {
   // Productos
   static const String createProduct = "/product/create";
   static const String updateProduct = "/product/edit";
+  //Ventas
+  static const String productsSales = "/products_sale";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -195,6 +198,7 @@ class AppRoutes {
         return ProductScreen(productId: productId);
       },
     ),
+    GetPage(name: productsSales, page: () => const ProductsSaleScreen()),
   ];
 
   /// Retorna todas las rutas con el middleware aplicado

@@ -19,3 +19,18 @@ String formatDouble(double value) {
   }
   return value.toStringAsFixed(2); // 7.25 → 7.25
 }
+
+String formatExchange({required String moneda}){
+  switch (moneda) {
+    case 'PEN':
+      return 'S/. ';
+    case 'USD':
+      return '\$ ';
+    case 'EUR':
+      return '€ ';
+    case 'GBP':
+      return '£ ';
+    default:
+      return moneda; // Retorna el código de moneda si no coincide con los casos anteriores
+  }
+}

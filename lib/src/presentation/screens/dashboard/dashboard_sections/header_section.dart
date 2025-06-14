@@ -19,10 +19,10 @@ class DashboardHeaderSection extends ConsumerWidget {
     final username = user?.username ?? "User Username";
     final avatarUrl = user?.avatarUrl;
     return Container(
-      color: Colors.white,
+      color: ColorSchema.primaryColor,
       child: Padding(
         padding: const EdgeInsets.only(
-          top: 50,
+          top: 30,
           left: 10,
           right: 16,
         ),
@@ -72,22 +72,13 @@ class DashboardHeaderSection extends ConsumerWidget {
                           textStyle: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: ColorSchema.titleTextColor)),
+                              color: Colors.white)),
                     ),
                     Text(
-                      cargo,
-                      style: GoogleFonts.raleway(
-                          textStyle: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: ColorSchema.titleTextColor)),
-                    ),
-                                        Text(
-                      username,
+                      '$username ($cargo)',
                       style: GoogleFonts.nunito(
                           textStyle: const TextStyle(
-                              color: ColorSchema.subTitleTextColor,
-                              fontSize: 16)),
+                              color: Colors.white, fontSize: 13)),
                     ),
                   ],
                 ),
@@ -101,15 +92,15 @@ class DashboardHeaderSection extends ConsumerWidget {
               child: Stack(
                 children: [
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(50),
-                        color: Colors.blue.shade50.withOpacity(0.5)),
+                        color: Colors.white),
                     child: const Icon(
                       Icons.tune,
                       color: ColorSchema.primaryColor,
-                      size: 30,
+                      size: 26,
                     ),
                   ),
                   // Positioned(

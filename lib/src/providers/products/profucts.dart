@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/product.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/response/products.dart';
 import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';

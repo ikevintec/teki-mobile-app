@@ -1,5 +1,5 @@
 import 'package:teki_app/src/data/datasource/remote_config.dart';
-import 'package:teki_app/src/data/models/config.dart';
+import 'package:teki_app/src/data/models/teki_model/config.dart';
 import 'package:teki_app/src/domain/datasource/config_datasource.dart';
 import 'package:teki_app/src/domain/repositories/config_repository.dart';
 

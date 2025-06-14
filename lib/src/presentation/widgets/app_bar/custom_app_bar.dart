@@ -5,8 +5,9 @@ import 'package:teki_app/src/utils/contstants.dart';
 
 class CustomAppBar extends StatelessWidget {
   final String navigateName;
+  final String? navigateRoute; 
 
-  const CustomAppBar({super.key, required this.navigateName});
+  const CustomAppBar({super.key, required this.navigateName, this.navigateRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,11 @@ class CustomAppBar extends StatelessWidget {
       automaticallyImplyLeading: false,
       leading: IconButton(
           onPressed: () {
-            Get.back();
+            if (navigateRoute == null) {
+              Get.back();
+              return;
+            }
+            Get.offAllNamed(navigateRoute!);
           },
           icon: const Icon(
           color: Colors.white,

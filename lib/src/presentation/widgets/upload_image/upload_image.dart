@@ -9,9 +9,13 @@ import 'package:teki_app/src/utils/notifications.dart';
 
 class UploadImage extends ConsumerWidget {
   final String image;
-  final void Function(String newImage, XFile? file) onImageSelected;
+  final bool? showButtons;
+  final void Function(String newImage, XFile? file)? onImageSelected;
   const UploadImage(
-      {super.key, required this.image, required this.onImageSelected});
+      {super.key,
+      required this.image,
+      this.onImageSelected,
+      this.showButtons = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,76 +59,83 @@ class UploadImage extends ConsumerWidget {
                             ),
             ),
           ),
-          Positioned(
-              right: 0,
-              child: GestureDetector(
-                onTap: () async {
-                  XFile? file = await keyCameraAccess.getFromCamera();
-                  if (file == null) return;
-                  int fileSizeInBytes = await file.length();
-                  double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
-                  print('File size camara: $fileSizeInMB MB');
-                  if (fileSizeInMB > sizeLimit) {
-                    errorNotification(
-                        "El tamaño del archivo es mayor a ${sizeLimit}MB");
-                    return;
-                  }
-                  onImageSelected(file.path, file);
-                },
-                child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: ColorSchema.primaryColor,
-                    child: Icon(
-                      Icons.camera_alt_outlined,
-                      color: Colors.white,
-                      size: 17,
-                    )),
-              )),
-          Positioned(
-              right: -25,
-              bottom: 88,
-              child: GestureDetector(
-                onTap: () async {
-                  print('Seleccion de imagen de galeria');
-                  XFile? file = await keyCameraAccess.getFromGallery();
-                  if (file == null) return;
-                  int fileSizeInBytes = await file.length();
-                  double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
-                  print('File size galeria: $fileSizeInMB MB');
-
-                  if (fileSizeInMB > sizeLimit) {
-                    errorNotification(
-                        "El tamaño de la imagen seleccionada es mayor a ${sizeLimit}MB");
-                    return;
-                  }
-                  onImageSelected(file.path, file);
-                },
-                child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: ColorSchema.primaryColor,
-                    child: Icon(
-                      Icons.image,
-                      color: Colors.white,
-                      size: 17,
-                    )),
-              ))
-              ,
-              //Boton para eliminar imagen si esque se selecciona una
-          if (image.isNotEmpty)
+          if (showButtons!)
             Positioned(
-              right: -10,
+                right: 0,
+                child: GestureDetector(
+                  onTap: () async {
+                    XFile? file = await keyCameraAccess.getFromCamera();
+                    if (file == null) return;
+                    int fileSizeInBytes = await file.length();
+                    double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
+                    print('File size camara: $fileSizeInMB MB');
+                    if (fileSizeInMB > sizeLimit) {
+                      errorNotification(
+                          "El tamaño del archivo es mayor a ${sizeLimit}MB");
+                      return;
+                    }
+                    if (onImageSelected != null) {
+                      onImageSelected!(file.path, file);
+                    }
+                  },
+                  child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: ColorSchema.primaryColor,
+                      child: Icon(
+                        Icons.camera_alt_outlined,
+                        color: Colors.white,
+                        size: 17,
+                      )),
+                )),
+          if (showButtons!)
+            Positioned(
+                right: -25,
+                bottom: 88,
+                child: GestureDetector(
+                  onTap: () async {
+                    print('Seleccion de imagen de galeria');
+                    XFile? file = await keyCameraAccess.getFromGallery();
+                    if (file == null) return;
+                    int fileSizeInBytes = await file.length();
+                    double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
+                    print('File size galeria: $fileSizeInMB MB');
+
+                    if (fileSizeInMB > sizeLimit) {
+                      errorNotification(
+                          "El tamaño de la imagen seleccionada es mayor a ${sizeLimit}MB");
+                      return;
+                    }
+                    if (onImageSelected != null) {
+                      onImageSelected!(file.path, file);
+                    }
+                  },
+                  child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: ColorSchema.primaryColor,
+                      child: Icon(
+                        Icons.image,
+                        color: Colors.white,
+                        size: 17,
+                      )),
+                )),
+          //Boton para eliminar imagen si esque se selecciona una
+          if (image.isNotEmpty && showButtons!)
+            Positioned(
+              left: 15,
               bottom: 0,
               child: GestureDetector(
                 onTap: () {
-                  onImageSelected("", null);
+                  if (onImageSelected != null) {
+                    onImageSelected!("", null);
+                  }
                 },
                 child: CircleAvatar(
-                    radius: 15,
+                    radius: 10,
                     backgroundColor: Colors.red,
                     child: Icon(
-                      Icons.delete,
+                      Icons.close,
                       color: Colors.white,
-                      size: 17,
+                      size: 15,
                     )),
               ),
             )

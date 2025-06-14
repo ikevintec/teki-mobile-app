@@ -35,31 +35,35 @@ class CustomSegmentedSelector extends StatelessWidget {
                       selected.toUpperCase() == option.toUpperCase();
                   final index = options.indexOf(option);
 
-                  return GestureDetector(
-                    onTap: () => onChanged(option),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? ColorSchema.primaryColor
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.horizontal(
-                          left: index == 0
-                              ? const Radius.circular(20)
-                              : Radius.zero,
-                          right: index == options.length - 1
-                              ? const Radius.circular(20)
-                              : Radius.zero,
-                        ),
-                      ),
-                      child: Text(
-                        option,
-                        style: TextStyle(
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => onChanged(option),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.white
-                              : ColorSchema.primaryColor,
-                          fontWeight: FontWeight.bold,
+                              ? ColorSchema.primaryColor
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.horizontal(
+                            left: index == 0
+                                ? const Radius.circular(20)
+                                : Radius.zero,
+                            right: index == options.length - 1
+                                ? const Radius.circular(20)
+                                : Radius.zero,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            option,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : ColorSchema.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),

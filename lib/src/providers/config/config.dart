@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/companySummary.dart';
-import 'package:teki_app/src/data/models/config.dart';
-import 'package:teki_app/src/data/models/office.dart';
+import 'package:teki_app/src/data/models/teki_model/companySummary.dart';
+import 'package:teki_app/src/data/models/teki_model/config.dart';
+import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/response/login.dart';
-import 'package:teki_app/src/data/models/saleStation.dart';
-import 'package:teki_app/src/data/models/user.dart';
+import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
+import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/repositories/sale_station_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repositoy.dart';
 import 'package:teki_app/src/utils/notifications.dart';

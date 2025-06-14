@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/company.dart';
-import 'package:teki_app/src/data/models/currency.dart';
-import 'package:teki_app/src/data/models/product.dart';
-import 'package:teki_app/src/data/models/unitCode.dart';
+import 'package:teki_app/src/data/models/teki_model/company.dart';
+import 'package:teki_app/src/data/models/teki_model/currency.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/unitCode.dart';
 import 'package:teki_app/src/data/repositories/company_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/company_repository.dart';

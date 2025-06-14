@@ -8,6 +8,7 @@ class CustomSwitch extends StatelessWidget {
   final String? textOn;
   final String? textOff;
   final Function(bool) onChanged;
+  final bool? border;
 
   const CustomSwitch({
     super.key,
@@ -16,6 +17,7 @@ class CustomSwitch extends StatelessWidget {
     required this.onChanged,
     this.textOn,
     this.textOff,
+    this.border = true,
   });
 
   @override
@@ -24,11 +26,11 @@ class CustomSwitch extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        decoration: BoxDecoration(
+        decoration: border!? BoxDecoration(
           color: Colors.white,
           border: Border.all(color: const Color(0xFFE2E4E7), width: 1),
           borderRadius: BorderRadius.circular(20),
-        ),
+        ): null,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

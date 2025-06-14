@@ -4,9 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/enums/products.dart';
-import 'package:teki_app/src/data/models/inventory.dart';
-import 'package:teki_app/src/data/models/product.dart';
-import 'package:teki_app/src/data/models/productPrice.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/update_product_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/products/profucts.dart';
@@ -125,6 +125,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
+                    SizedBox(width: 10),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: SizedBox(
@@ -166,9 +167,10 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                         ),
                       ),
                     ),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.only(top: 8 , bottom: 8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -177,27 +179,13 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                               style: GoogleFonts.raleway(
                                 textStyle: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   color: Colors.black,
                                 ),
                               ),
                             ),
                             ListTile(
                               contentPadding: EdgeInsets.zero,
-                              title: Padding(
-                                padding:
-                                    const EdgeInsets.only(bottom: 8, top: 0),
-                                child: Text(
-                                  product.categoria?.nombre ?? "Sin Categoria",
-                                  style: GoogleFonts.raleway(
-                                    textStyle: const TextStyle(
-                                      color: Colors.black54,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

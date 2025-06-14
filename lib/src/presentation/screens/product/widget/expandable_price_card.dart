@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:teki_app/src/data/models/productPrice.dart';
+import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class ExpandablePriceCard extends HookWidget {

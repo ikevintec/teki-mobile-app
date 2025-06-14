@@ -15,9 +15,9 @@ class DropdownFormFieldSection extends StatefulWidget {
   final List<Map<String, String>>? itemsMap;
   final String? labelKey;
   final String? valueKey;
-
   String? selectionItem;
   final ValueChanged<String?>? onChanged;
+  final bool? hintText;
 
   DropdownFormFieldSection({
     super.key,
@@ -30,6 +30,7 @@ class DropdownFormFieldSection extends StatefulWidget {
     this.labelKey,
     this.valueKey,
     this.onChanged,
+    this.hintText,
   }) : assert((items != null && itemsMap == null) || (itemsMap != null && items == null),
             'Debes usar solo uno: items o itemsMap');
 
@@ -80,7 +81,7 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
       decoration: InputDecoration(
         isDense: true, // 🔽 Esto reduce la altura vertical
         contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        labelText: widget.label,
+        labelText: (widget.hintText ?? false) ? "" : widget.label,
         labelStyle: GoogleFonts.raleway(
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
