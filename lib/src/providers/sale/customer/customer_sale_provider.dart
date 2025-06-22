@@ -59,34 +59,6 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
     }
   }
 
-  // Future<List<Customer>> fetchCustomers([String? filter]) async {
-  //   state = state.copyWith(isLoading: true, filterGlobal: filter ?? '');
-  //   try {
-  //     final response = await customersRepository.getCustomers({
-  //       'paginacion': state.paginacion,
-  //       'filtro': state.filterGlobal,
-  //       'limit': state.perPage,
-  //     });
-
-  //     state = state.copyWith(
-  //       customers: response.content ?? [],
-  //       totalElements: response.totalElements,
-  //       isLoading: false,
-  //       error: null,
-  //     );
-
-  //     return response.content ??
-  //         []; // <-- IMPORTANTE: necesitas retornar algo si el método es Future<List<Customer>>
-  //   } catch (e) {
-  //     state = state.copyWith(
-  //       isLoading: false,
-  //       error: e.toString(),
-  //     );
-  //     errorNotification(e.toString());
-  //     return []; // <-- También deberías retornar una lista vacía en caso de error
-  //   }
-  // }
-
   void setFilterGlobal(String? value) {
     state = state.copyWith(filterGlobal: value ?? '');
   }

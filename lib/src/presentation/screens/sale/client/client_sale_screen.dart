@@ -25,6 +25,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   final _telefonoController = TextEditingController();
 
   final GlobalKey _fieldKey = GlobalKey();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
 // 1. Mapeo de códigos a texto
   final Map<String, String> tipoDocumentoMap = {
@@ -92,194 +93,358 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                   children: [
                     Expanded(
                       child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.person_pin_outlined,
-                                  color: ColorSchema.primaryColor,
-                                  size: 70,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
+                        //From
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.person_pin_outlined,
+                                    color: ColorSchema.primaryColor,
+                                    size: 70,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 15),
 
-                            /// Autocomplete para nombre
-                            Autocomplete<Customer>(
-                              optionsBuilder:
-                                  (TextEditingValue textEditingValue) async {
-                                if (textEditingValue.text.trim().isEmpty) {
-                                  ref
-                                      .read(customerSaleProvider.notifier)
-                                      .clearCustomers();
-                                  _direccionController.text = "";
-                                  _documentoController.text = "";
-                                  _emailController.text = "";
-                                  _telefonoController.text = "";
-                                  _nombreController.text = "";
-                                  _selectedTipoDocumentoValue = "1";
-                                  return const Iterable<Customer>.empty();
-                                }
+                              /// Autocomplete para nombre
+                              Autocomplete<Customer>(
+                                optionsBuilder:
+                                    (TextEditingValue textEditingValue) async {
+                                  if (textEditingValue.text.trim().isEmpty) {
+                                    ref
+                                        .read(customerSaleProvider.notifier)
+                                        .clearCustomers();
+                                    _direccionController.text = "";
+                                    _documentoController.text = "";
+                                    _emailController.text = "";
+                                    _telefonoController.text = "";
+                                    _nombreController.text = "";
+                                    setState(() {
+                                      _selectedTipoDocumentoValue = "1";
+                                    });
+                                    return const Iterable<Customer>.empty();
+                                  }
 
-                                return await onSearchChanged(
-                                    textEditingValue.text);
-                              },
-                              displayStringForOption: (Customer option) => option.razonSocial ?? 'Sin nombre',
-                              fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                                _nombreController.value = controller.value;
+                                  return await onSearchChanged(
+                                      textEditingValue.text);
+                                },
+                                displayStringForOption: (Customer option) =>
+                                    option.razonSocial ?? 'Sin nombre',
+                                fieldViewBuilder: (context, controller,
+                                    focusNode, onEditingComplete) {
+                                  _nombreController.value = controller.value;
 
-                                return Container(
-                                  key: _fieldKey,
-                                  child: TextField(
-                                    controller: controller,
-                                    focusNode: focusNode,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Nombre',
-                                      hintText: 'Ingrese el nombre',
-                                      filled: true,
-                                      fillColor: Color.fromARGB(255, 255, 255, 255),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                                        borderSide: BorderSide(color: Color.fromARGB(255, 233, 233, 233)),
+                                  return Container(
+                                    key: _fieldKey,
+                                    child: TextField(
+                                      controller: controller,
+                                      focusNode: focusNode,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Nombre',
+                                        hintText: 'Ingrese el nombre',
+                                        filled: true,
+                                        fillColor:
+                                            Color.fromARGB(255, 255, 255, 255),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(12)),
+                                          borderSide: BorderSide(
+                                              color: Color.fromARGB(
+                                                  255, 233, 233, 233)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(30)),
+                                          borderSide: BorderSide(
+                                              color: Color.fromARGB(
+                                                  255, 194, 194, 194)),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(30)),
+                                          borderSide: BorderSide(
+                                            color: ColorSchema.primaryColor,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        prefixIcon: Icon(Icons.person),
                                       ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(30)),
-                                        borderSide: BorderSide(color: Color.fromARGB(255, 194, 194, 194)),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(30)),
-                                        borderSide: BorderSide(
-                                          color: ColorSchema.primaryColor,
-                                          width: 1,
+                                      style: const TextStyle(fontSize: 14),
+                                      onEditingComplete: onEditingComplete,
+                                    ),
+                                  );
+                                },
+                                optionsViewBuilder:
+                                    (context, onSelected, options) {
+                                  // Obtener ancho del campo
+                                  final renderBox = _fieldKey.currentContext
+                                      ?.findRenderObject() as RenderBox?;
+                                  final fieldWidth =
+                                      renderBox?.size.width ?? 400;
+
+                                  return Align(
+                                    alignment: Alignment.topLeft,
+                                    child: ConstrainedBox(
+                                      constraints:
+                                          BoxConstraints(maxWidth: fieldWidth),
+                                      child: Material(
+                                        elevation: 4,
+                                        borderRadius: BorderRadius.circular(12),
+                                        color: Colors.white,
+                                        child: ListView.separated(
+                                          padding: const EdgeInsets.all(8),
+                                          shrinkWrap: true,
+                                          itemCount: options.length,
+                                          separatorBuilder: (_, __) =>
+                                              const Divider(height: 1),
+                                          itemBuilder: (context, index) {
+                                            final customer =
+                                                options.elementAt(index);
+                                            return ListTile(
+                                              leading: const Icon(Icons.person),
+                                              title: Text(
+                                                customer.razonSocial ??
+                                                    'Sin nombre',
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              subtitle: Text(
+                                                customer.numeroDocumento
+                                                        ?.toString() ??
+                                                    '',
+                                                style: const TextStyle(
+                                                    color: Colors.grey),
+                                              ),
+                                              onTap: () => onSelected(customer),
+                                            );
+                                          },
                                         ),
                                       ),
-                                      prefixIcon: Icon(Icons.person),
                                     ),
-                                    style: const TextStyle(fontSize: 14),
-                                    onEditingComplete: onEditingComplete,
+                                  );
+                                },
+                                onSelected: (Customer selection) {
+                                  ref
+                                      .read(customerSaleProvider.notifier)
+                                      .selectCustomer(selection);
+
+                                  _documentoController.text =
+                                      selection.numeroDocumento?.toString() ??
+                                          '';
+                                  _direccionController.text =
+                                      selection.direccionCompleta ?? '';
+                                  _emailController.text = selection.email ?? '';
+                                  _telefonoController.text =
+                                      selection.telefono ?? '';
+
+                                  // 👇 Asigna el tipo de documento según el código recibido
+                                  final tipoDocCodigo =
+                                      selection.tipoDocumento?.toString();
+                                  if (tipoDocCodigo != null &&
+                                      tipoDocumentoMap
+                                          .containsKey(tipoDocCodigo)) {
+                                    setState(() {
+                                      _selectedTipoDocumentoValue =
+                                          tipoDocCodigo;
+                                    });
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 18),
+
+                              DropdownButtonFormField<String>(
+                                value: tipoDocumentoMap[
+                                    _selectedTipoDocumentoValue],
+                                decoration: const InputDecoration(
+                                  labelText: 'Tipo documento',
+                                  hintText: 'Selecciona un tipo documento',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  prefixIcon: Icon(Icons.badge),
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
                                   ),
-                                );
-                              },                       
-                              optionsViewBuilder: (context, onSelected, options) {
-                                // Obtener ancho del campo
-                                final renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
-                                final fieldWidth = renderBox?.size.width ?? 400;
-
-                                return Align(
-                                  alignment: Alignment.topLeft,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(maxWidth: fieldWidth),
-                                    child: Material(
-                                      elevation: 4,
-                                      borderRadius: BorderRadius.circular(12),
-                                      color: Colors.white,
-                                      child: ListView.separated(
-                                        padding: const EdgeInsets.all(8),
-                                        shrinkWrap: true,
-                                        itemCount: options.length,
-                                        separatorBuilder: (_, __) => const Divider(height: 1),
-                                        itemBuilder: (context, index) {
-                                          final customer = options.elementAt(index);
-                                          return ListTile(
-                                            leading: const Icon(Icons.person),
-                                            title: Text(
-                                              customer.razonSocial ?? 'Sin nombre',
-                                              style: const TextStyle(fontWeight: FontWeight.bold),
-                                            ),
-                                            subtitle: Text(
-                                              customer.numeroDocumento?.toString() ?? '',
-                                              style: const TextStyle(color: Colors.grey),
-                                            ),
-                                            onTap: () => onSelected(customer),
-                                          );
-                                        },
-                                      ),
-                                    ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
                                   ),
-                                );
-                              },
-
-                              onSelected: (Customer selection) {
-                                ref
-                                    .read(customerSaleProvider.notifier)
-                                    .selectCustomer(selection);
-
-                                _documentoController.text =
-                                    selection.numeroDocumento?.toString() ?? '';
-                                _direccionController.text =
-                                    selection.direccionCompleta ?? '';
-                                _emailController.text = selection.email ?? '';
-                                _telefonoController.text =
-                                    selection.telefono ?? '';
-
-                                // 👇 Asigna el tipo de documento según el código recibido
-                                final tipoDocCodigo =
-                                    selection.tipoDocumento?.toString();
-                                if (tipoDocCodigo != null &&
-                                    tipoDocumentoMap
-                                        .containsKey(tipoDocCodigo)) {
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(
+                                        color: Colors.blue, width: 2),
+                                  ),
+                                ),
+                                items: tipoDocumentoMap.values.map((doc) {
+                                  return DropdownMenuItem<String>(
+                                    value: doc,
+                                    child: Text(doc),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  final selectedCode = tipoDocumentoMap.entries
+                                      .firstWhere(
+                                          (entry) => entry.value == value)
+                                      .key;
                                   setState(() {
-                                    _selectedTipoDocumentoValue = tipoDocCodigo;
+                                    _selectedTipoDocumentoValue = selectedCode;
                                   });
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 30),
-                            
-                            DropdownFormFieldSection(
-                              label: "Tipo documento",
-                              hint: "Selecciona un tipo documento",
-                              items: tipoDocumentoMap.values.toList(),
-                              selectionItem: tipoDocumentoMap[
-                                  _selectedTipoDocumentoValue]!,
-                              onChanged: (value) {
-                                // Convierte el valor seleccionado (texto) a su código
-                                final selectedCode = tipoDocumentoMap.entries
-                                    .firstWhere((entry) => entry.value == value)
-                                    .key;
+                                },
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Debe seleccionar un tipo de documento';
+                                  }
+                                  return null;
+                                },
+                              ),
 
-                                setState(() {
-                                  _selectedTipoDocumentoValue = selectedCode;
-                                });
-                              },
-                            ),
+                              const SizedBox(height: 18),
+                              TextFormField(
+                                controller: _documentoController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'Número Documento',
+                                  hintText: 'Ingrese el número de documento',
+                                  prefixIcon: Icon(Icons.edit_document),
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(
+                                        color: Colors.blue, width: 2),
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Este campo es obligatorio';
+                                  }
+                                  return null;
+                                },
+                              ),
 
-                            const SizedBox(height: 30),
-                            TextFieldSection(
-                              label: "Numero Documento",
-                              hint: "Numero Documento",
-                              inputType: TextInputType.number,
-                              controller: _documentoController,
-                              onChanged: (value) {},
-                            ),
-                            const SizedBox(height: 30),
-                            TextFieldSection(
-                              label: "Direccion fiscal",
-                              hint: "Direccion fiscal",
-                              inputType: TextInputType.text,
-                              controller: _direccionController,
-                              onChanged: (value) {},
-                            ),
-                            const SizedBox(height: 30),
-                            TextFieldSection(
-                              label: "Email",
-                              hint: "Email",
-                              inputType: TextInputType.emailAddress,
-                              controller: _emailController,
-                              onChanged: (value) {},
-                            ),
-                            const SizedBox(height: 30),
-                            TextFieldSection(
-                              label: "Telefono",
-                              hint: "Telefono",
-                              inputType: TextInputType.phone,
-                              controller: _telefonoController,
-                              onChanged: (value) {},
-                            ),
-                          ],
+                              const SizedBox(height: 18),
+                              TextFormField(
+                                controller: _direccionController,
+                                keyboardType: TextInputType.text,
+                                maxLength: 100,
+                                decoration: const InputDecoration(
+                                  labelText: 'Dirección fiscal',
+                                  hintText: 'Ingrese su dirección fiscal',
+                                  counterText: '',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  prefixIcon: Icon(Icons.location_on),
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(
+                                        color: Colors.blue, width: 2),
+                                  ),
+                                ),
+                                validator: (value) {},
+                              ),
+
+                              const SizedBox(height: 18),
+                              TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.text,
+                                maxLength: 100,
+                                decoration: const InputDecoration(
+                                  labelText: 'Email',
+                                  hintText: 'Ingrese su emaill',
+                                  counterText: '',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  prefixIcon: Icon(Icons.email),
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(
+                                        color: Colors.blue, width: 2),
+                                  ),
+                                ),
+                                validator: (value) {},
+                              ),
+                              const SizedBox(height: 18),
+                              TextFormField(
+                                controller: _telefonoController,
+                                keyboardType: TextInputType.phone,
+                                maxLength: 9,
+                                decoration: const InputDecoration(
+                                  labelText: 'Teléfono',
+                                  hintText: 'Ingrese su teléfono',
+                                  counterText:
+                                      '', // oculta contador de caracteres
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(30)),
+                                    borderSide: BorderSide(
+                                        color: Colors.blue, width: 2),
+                                  ),
+                                  prefixIcon: Icon(Icons.phone),
+                                ),
+                                validator: (value) {
+                                  // if (value == null || value.trim().isEmpty) {
+                                  //   return 'Este campo es obligatorio';
+                                  // }
+                                  // if (value.length != 9) {
+                                  //   return 'Número no válido';
+                                  // }
+                                  // return null;
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -289,12 +454,25 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SaleInfoScreen(),
-                                ),
-                              );
+                              if (_formKey.currentState!.validate()) {
+                                final formData = {
+                                  "nombre": _nombreController.text,
+                                  "documento": _documentoController.text,
+                                  "direccion": _direccionController.text,
+                                  "email": _emailController.text,
+                                  "telefono": _telefonoController.text,
+                                  "tipoDocumento": _selectedTipoDocumentoValue
+                                };
+
+                                print(formData);
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SaleInfoScreen()),
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,
