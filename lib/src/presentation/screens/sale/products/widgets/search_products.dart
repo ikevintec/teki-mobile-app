@@ -39,6 +39,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
         final products =
             await ref.read(productSaleProvider.notifier).getProducts(query);
         completer.complete(products);
+        print(completer);
       } else {
         completer.complete([]);
       }
@@ -98,7 +99,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
                         _ignoreNextSearch = true;
                         ref
                             .read(productSaleProvider.notifier)
-                            .setProductsSales(product,null);
+                            .setProductsSales(product, null);
                         controller.closeView("");
                       },
                       child: ItemProduct(

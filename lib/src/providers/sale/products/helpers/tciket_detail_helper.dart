@@ -8,16 +8,15 @@ import 'package:teki_app/src/providers/sale/products/products_sales_provider.dar
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/price.dart';
 
-TicketDetail getTicketDetail({
-  required Product product,
-  required SesionState sesion,
-  double? quantity = 1
-  }) {
-    final price = getPriceProduct(product, sesion.office!, {
-      'qty': quantity,
-      'igv': sesion.config!.igv,
-      'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
-    });
+TicketDetail getTicketDetail(
+    {required Product product,
+    required SesionState sesion,
+    double? quantity = 1}) {
+  final price = getPriceProduct(product, sesion.office!, {
+    'qty': quantity,
+    'igv': sesion.config!.igv,
+    'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
+  });
   return TicketDetail(
     cantidad: quantity,
     montoOriginal: price,
@@ -29,7 +28,8 @@ TicketDetail getTicketDetail({
     codigoTipoAfectacionIgv: product.tipoAfectacion ?? '',
     tieneImpuestoBolsas: product.tieneImpuestoBolsas ?? false,
     porcentajeDescuentoGlobal: 0,
-    porcentajeOtrosCargos: product.tipoProducto == 'PLAN' ? product.porcentajeOtrosCargos :null,
+    porcentajeOtrosCargos:
+        product.tipoProducto == 'PLAN' ? product.porcentajeOtrosCargos : null,
     esAnticipo: null,
     producto: product,
     despachos: [],
@@ -79,20 +79,25 @@ double exchange(Exchance model, List<Currency> currencies) {
     errorNotification(messageError);
     throw Exception(messageError);
   }
-  final montoEnMonedaNacional = (model.montoOrigen ?? 1).toDouble() * (monedaOrigen.tipoCambio ?? 1).toDouble();
+  final montoEnMonedaNacional = (model.montoOrigen ?? 1).toDouble() *
+      (monedaOrigen.tipoCambio ?? 1).toDouble();
   return montoEnMonedaNacional / monedaDestino.tipoCambio!;
 }
 
-ProductsSaleState setPrice(ProductsSaleState state, int index, double price,bool incIgv,bool compra) {
-    final existingTicketDetail = state.productsSales[index];
-    final updatedTicketDetail = incIgv ? existingTicketDetail.copyWith(precioVentaUnitario: price)
-    : compra ? existingTicketDetail.copyWith(precioCompraUnitario: price) 
-    : existingTicketDetail.copyWith(valorUnitario: price);
-    return state.copyWith(
-      productsSales: List.from(state.productsSales)
-        ..[index] = updatedTicketDetail,
-    );
+ProductsSaleState setPrice(ProductsSaleState state, int index, double price,
+    bool incIgv, bool compra) {
+  final existingTicketDetail = state.productsSales[index];
+  final updatedTicketDetail = incIgv
+      ? existingTicketDetail.copyWith(precioVentaUnitario: price)
+      : compra
+          ? existingTicketDetail.copyWith(precioCompraUnitario: price)
+          : existingTicketDetail.copyWith(valorUnitario: price);
+  return state.copyWith(
+    productsSales: List.from(state.productsSales)
+      ..[index] = updatedTicketDetail,
+  );
 }
+
 ProductsSaleState setPriceExchange({
   required List<Currency> currencies,
   required Currency currency,
@@ -111,12 +116,13 @@ ProductsSaleState setPriceExchange({
   );
   final precioVentaUnitario = exchange(tipoCambioRequest, currencies);
   if (state.incIgv) {
-   return setPrice(state,index,precioVentaUnitario,true, false);
+    return setPrice(state, index, precioVentaUnitario, true, false);
   } else {
-    if ( product != null && !product.igv!) {
-     return setPrice(state,index,precioVentaUnitario / (1 + sesion.config!.igv!),false,false);
+    if (product != null && !product.igv!) {
+      return setPrice(state, index,
+          precioVentaUnitario / (1 + sesion.config!.igv!), false, false);
     } else {
-     return setPrice(state,index,precioVentaUnitario,false, false);
+      return setPrice(state, index, precioVentaUnitario, false, false);
     }
   }
 }
@@ -137,5 +143,5 @@ ProductsSaleState setPurchasePriceExchange({
     montoOrigen: monto ?? 0,
   );
   final precioCompraUnitario = exchange(tipoCambioRequest, currencies);
-  return setPrice(state,index,precioCompraUnitario,false, true);
+  return setPrice(state, index, precioCompraUnitario, false, true);
 }

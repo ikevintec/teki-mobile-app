@@ -62,7 +62,11 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   void setProductsSales(Product productsSales, int? index) {
     final existingProductIndex = index ??
         state.productsSales.indexWhere(
-          (ticketDetail) => (ticketDetail.producto != null ? ticketDetail.producto!.id : -1) == productsSales.id,
+          (ticketDetail) =>
+              (ticketDetail.producto != null
+                  ? ticketDetail.producto!.id
+                  : -1) ==
+              productsSales.id,
         );
     if (existingProductIndex != -1) {
       final existingTicketDetail = state.productsSales[existingProductIndex];

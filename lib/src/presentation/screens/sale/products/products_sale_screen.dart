@@ -299,7 +299,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                 ) as Widget;
                                               },
                                             ),
-                                            if (_showScrollHint )
+                                            if (_showScrollHint)
                                               Positioned(
                                                 bottom: 0,
                                                 left: 0,

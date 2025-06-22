@@ -15,7 +15,7 @@ class SummaryBarSales extends ConsumerStatefulWidget {
 
 class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
   bool isExpanded = false;
-  
+
   @override
   Widget build(BuildContext context) {
     final providerTicket = ref.watch(ticketProvider);

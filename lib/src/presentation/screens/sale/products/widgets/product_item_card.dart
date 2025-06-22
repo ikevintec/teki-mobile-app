@@ -115,7 +115,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    if(widget.productTicketDetail.producto != null)
+                    if (widget.productTicketDetail.producto != null)
                       Text(
                         widget.productTicketDetail.producto!.nombre ?? '',
                         style: const TextStyle(
@@ -123,25 +123,27 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                             fontWeight: FontWeight.bold,
                             overflow: TextOverflow.ellipsis),
                       ),
-                    if(widget.productTicketDetail.producto == null)
-                    ReactiveTextField<String>(
-                      formControlName: 'description',
-                      keyboardType: TextInputType.name,
-                      onChanged: _onDescriptionChanged,
-                      style: const TextStyle(
-                        color: Colors.black, // Texto en color negro
-                      ),
-                      decoration: const InputDecoration(
-                        isDense: true, // Reduce altura vertical
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 0, // ↓ Espacio vertical mínimo
+                    if (widget.productTicketDetail.producto == null)
+                      ReactiveTextField<String>(
+                        formControlName: 'description',
+                        keyboardType: TextInputType.name,
+                        onChanged: _onDescriptionChanged,
+                        style: const TextStyle(
+                          color: Colors.black, // Texto en color negro
                         ),
+                        decoration: const InputDecoration(
+                          isDense: true, // Reduce altura vertical
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 0, // ↓ Espacio vertical mínimo
+                          ),
+                        ),
+                        validationMessages: {
+                          ValidationMessage.minLength: (error) =>
+                              'Debe ser al menos 3 caracter',
+                          ValidationMessage.required: (error) =>
+                              'Nombre requerido',
+                        },
                       ),
-                      validationMessages: {
-                        ValidationMessage.minLength: (error) => 'Debe ser al menos 3 caracter',
-                        ValidationMessage.required: (error) => 'Nombre requerido',
-                      },
-                    ),
                     const SizedBox(height: 5),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
