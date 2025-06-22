@@ -14,7 +14,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordHidden = true;
-  String _roleSelectedValue = "";
+  String roleSelectedValue = "";
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _userNameController = TextEditingController();
@@ -450,7 +450,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }).toList(),
       onChanged: (String? value) {
         setState(() {
-          _roleSelectedValue = value!;
+          roleSelectedValue = value!;
         });
       },
       validator: (value) {

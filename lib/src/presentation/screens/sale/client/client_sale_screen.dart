@@ -23,6 +23,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   final _direccionController = TextEditingController();
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
+
+  final GlobalKey _fieldKey = GlobalKey();
+
 // 1. Mapeo de códigos a texto
   final Map<String, String> tipoDocumentoMap = {
     '0': 'DOC NO DOM SIN RUC',
@@ -65,8 +68,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final customerState = ref.watch(customerSaleProvider);
-
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
@@ -126,67 +127,81 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 return await onSearchChanged(
                                     textEditingValue.text);
                               },
-                              displayStringForOption: (Customer option) =>
-                                  option.razonSocial ?? 'Sin nombre',
-                              fieldViewBuilder: (context, controller, focusNode,
-                                  onEditingComplete) {
+                              displayStringForOption: (Customer option) => option.razonSocial ?? 'Sin nombre',
+                              fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
                                 _nombreController.value = controller.value;
-                                return TextField(
-                                  controller: controller,
-                                  focusNode: focusNode,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nombre',
-                                    hintText: 'Ingrese el nombre',
-                                    filled: true,
-                                    fillColor: Color(0xFFF5F5F5),
-                                    border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(12)),
-                                      borderSide:
-                                          BorderSide(color: Colors.grey),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(12)),
-                                      borderSide:
-                                          BorderSide(color: Colors.grey),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(12)),
-                                      borderSide: BorderSide(
+
+                                return Container(
+                                  key: _fieldKey,
+                                  child: TextField(
+                                    controller: controller,
+                                    focusNode: focusNode,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Nombre',
+                                      hintText: 'Ingrese el nombre',
+                                      filled: true,
+                                      fillColor: Color.fromARGB(255, 255, 255, 255),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                                        borderSide: BorderSide(color: Color.fromARGB(255, 233, 233, 233)),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                                        borderSide: BorderSide(color: Color.fromARGB(255, 194, 194, 194)),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                                        borderSide: BorderSide(
                                           color: ColorSchema.primaryColor,
-                                          width: 2),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      prefixIcon: Icon(Icons.person),
                                     ),
-                                    prefixIcon: Icon(Icons.person),
+                                    style: const TextStyle(fontSize: 14),
+                                    onEditingComplete: onEditingComplete,
                                   ),
-                                  style: const TextStyle(fontSize: 16),
-                                  onEditingComplete: onEditingComplete,
+                                );
+                              },                       
+                              optionsViewBuilder: (context, onSelected, options) {
+                                // Obtener ancho del campo
+                                final renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+                                final fieldWidth = renderBox?.size.width ?? 400;
+
+                                return Align(
+                                  alignment: Alignment.topLeft,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(maxWidth: fieldWidth),
+                                    child: Material(
+                                      elevation: 4,
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: Colors.white,
+                                      child: ListView.separated(
+                                        padding: const EdgeInsets.all(8),
+                                        shrinkWrap: true,
+                                        itemCount: options.length,
+                                        separatorBuilder: (_, __) => const Divider(height: 1),
+                                        itemBuilder: (context, index) {
+                                          final customer = options.elementAt(index);
+                                          return ListTile(
+                                            leading: const Icon(Icons.person),
+                                            title: Text(
+                                              customer.razonSocial ?? 'Sin nombre',
+                                              style: const TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            subtitle: Text(
+                                              customer.numeroDocumento?.toString() ?? '',
+                                              style: const TextStyle(color: Colors.grey),
+                                            ),
+                                            onTap: () => onSelected(customer),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
                                 );
                               },
-                              optionsViewBuilder:
-                                  (context, onSelected, options) => Material(
-                                elevation: 4,
-                                borderRadius: BorderRadius.circular(12),
-                                child: ListView.separated(
-                                  padding: const EdgeInsets.all(8),
-                                  shrinkWrap: true,
-                                  itemCount: options.length,
-                                  separatorBuilder: (_, __) =>
-                                      const Divider(height: 1),
-                                  itemBuilder: (context, index) {
-                                    final customer = options.elementAt(index);
-                                    return ListTile(
-                                      title: Text(
-                                          customer.razonSocial ?? 'Sin nombre'),
-                                      subtitle: Text(customer.numeroDocumento
-                                              ?.toString() ??
-                                          ''),
-                                      onTap: () => onSelected(customer),
-                                    );
-                                  },
-                                ),
-                              ),
+
                               onSelected: (Customer selection) {
                                 ref
                                     .read(customerSaleProvider.notifier)
@@ -213,6 +228,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                               },
                             ),
                             const SizedBox(height: 30),
+                            
                             DropdownFormFieldSection(
                               label: "Tipo documento",
                               hint: "Selecciona un tipo documento",
