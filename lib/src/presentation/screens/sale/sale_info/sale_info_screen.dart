@@ -1,25 +1,177 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
+import 'package:teki_app/src/providers/auth/login.dart';
+import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 
-class SaleInfoScreen extends StatefulWidget {
+class SaleInfoScreen extends ConsumerStatefulWidget {
   const SaleInfoScreen({super.key});
 
   @override
-  State<SaleInfoScreen> createState() => _SaleInfoScreenState();
+  ConsumerState<SaleInfoScreen> createState() => _SaleInfoScreenState();
 }
 
-class _SaleInfoScreenState extends State<SaleInfoScreen> {
+class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   List<String> productTypeLote = ["Boleta", "Factura", "Nota de credito"];
   String selectedType = "Boleta";
+  String tipoDocumento = "03";
+  String vendedor = "";
+  List<String> seriesDisponibles = [];
+  String? selectedSerie;
+  String? numeroCorrelativo;
+  TextEditingController numeroController = TextEditingController();
+  TextEditingController vendedorController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    tipoDocumento = "03";
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _dateController.text = DateTime.now().toString().split(" ")[0];
+      cargarSeries();
+    });
+  }
+
+  void cargarSeries() async {
+    final user = ref.watch(authStateProvider).user;
+    final userName = user?.name ?? "User Name";
+    vendedor = userName;
+
+    final officeId = ref.read(sesionProvider).office?.id;
+    if (officeId == null) return;
+
+    final ticketNotifier = ref.read(ticketSaleProvider.notifier);
+    final series =
+        await ticketNotifier.obtenerNumerosSeries(officeId, tipoDocumento);
+
+    setState(() {
+      seriesDisponibles = series;
+      selectedSerie = series.isNotEmpty ? series.first : null;
+    });
+
+    if (selectedSerie != null) {
+      cargarNextNumber();
+    }
+  }
+
+  Future<void> _selectDate() async {
+    DateTime? _picket = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.blue, // ✅ color azul del encabezado y botones
+              onPrimary: Colors.white, // texto en encabezado
+              onSurface: Colors.black, // texto normal
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue, // ✅ color de los botones
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (_picket != null) {
+      setState(() {
+        _dateController.text = _picket.toString().split(" ")[0];
+      });
+    }
+  }
+
+  Future<void> _selectDate2() async {
+    DateTime? _picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.blue, // ✅ color azul del encabezado y botones
+              onPrimary: Colors.white, // texto en encabezado
+              onSurface: Colors.black, // texto normal
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue, // ✅ color de los botones
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (_picked != null) {
+      setState(() {
+        _dateController2.text = _picked.toString().split(" ")[0];
+      });
+    }
+  }
+
+  void cargarNextNumber() async {
+    final ticketNotifier = ref.read(ticketSaleProvider.notifier);
+    final ticket =
+        await ticketNotifier.getNextTicketNumber(tipoDocumento, selectedSerie!);
+    if (ticket != null) {
+      setState(() {
+        numeroCorrelativo = ticket.numero?.toString();
+        numeroController.text = numeroCorrelativo ?? '';
+      });
+    }
+  }
+
+  TextEditingController _dateController = TextEditingController();
+  TextEditingController _dateController2 = TextEditingController();
+
+  final Map<String, String> currencyMap = {
+    "Soles": "PEN",
+    "Dólares": "USD",
+    "Euros": "EUR",
+  };
+  final List<String> items = ["Soles", "Dólares", "Euros"];
+  String? selectedDisplay = "Soles"; // lo que se muestra
+  String? selectedValue = "PEN"; // lo que se guarda internamente
+
+  final Map<String, String> currencyMap2 = {
+    "Venta Interna [0101]": "0101",
+    "Exportación [0200]": "0200",
+    "Opreración Sujeta a Detracción [1001]": "1001",
+    "Opreración Sujeta a Percepción [2001]": "2001",
+  };
+  final List<String> itemsOperacion = [
+    "Venta Interna [0101]",
+    "Exportación [0200]",
+    "Opreración Sujeta a Detracción [1001]",
+    "Opreración Sujeta a Percepción [2001]"
+  ];
+  String? selectedDisplay2 = "Venta Interna [0101]"; // lo que se muestra
+  String? selectedValue2 = "0101"; // lo que se guarda internamente
   @override
   Widget build(BuildContext context) {
+    // final config = ref.watch(sesionProvider);
+    final ticketNotifier = ref.read(ticketSaleProvider.notifier);
+    //final ticketState = ref.watch(ticketSaleProvider);
+    // String? _selectedCurrency;
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
@@ -35,126 +187,479 @@ class _SaleInfoScreenState extends State<SaleInfoScreen> {
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(40),
-                      topRight: Radius.circular(40)),
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                        child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.receipt_long_outlined,
-                                color: ColorSchema.primaryColor,
-                                size: 70,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 15),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CustomSegmentedSelector(
-                                  label: "Tipo de comprobante (*)",
-                                  options: productTypeLote,
-                                  selected: selectedType,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      selectedType = value;
-                                    });
-                                  },
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.receipt_long_outlined,
+                                  color: ColorSchema.primaryColor,
+                                  size: 70,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 40),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DropdownFormFieldSection(
-                                    label: "Serie (*)",
-                                    hint: "Selecciona un tipo documento",
-                                    items: ["P001", "RUC", "Pasaporte"],
-                                    selectionItem: "P001"),
-                              ),
-                              SizedBox(width: 20),
-                              Expanded(
-                                child: TextFieldSection(
-                                  label: "Numero",
-                                  hint: "Razon social",
-                                  inputType: TextInputType.number,
-                                  onChanged: (value) {},
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomSegmentedSelector(
+                                    label: "Tipo de comprobante (*)",
+                                    options: productTypeLote,
+                                    selected: selectedType,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedType = value;
+                                        switch (value) {
+                                          case "Boleta":
+                                            tipoDocumento = "03";
+                                            selectedValue2 = "0101";
+                                            break;
+                                          case "Factura":
+                                            tipoDocumento = "1";
+                                            break;
+                                          case "Nota de credito":
+                                            tipoDocumento = "NV";
+                                            selectedValue2 = "";
+                                            break;
+                                        }
+                                      });
+                                      cargarSeries();
+                                    },
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 30),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DropdownFormFieldSection(
-                                    label: "Fecha (*)",
-                                    hint: "Selecciona un tipo documento",
-                                    items: ["P001", "RUC", "Pasaporte"],
-                                    selectionItem: "P001"),
-                              ),
-                              SizedBox(width: 20),
-                              Expanded(
-                                child: TextFieldSection(
-                                  label: "Vencimiento",
-                                  hint: "Razon social",
-                                  inputType: TextInputType.number,
-                                  onChanged: (value) {},
+                              ],
+                            ),
+                            const SizedBox(height: 25),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "  SERIE (*)",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                              color: Colors.grey.shade400),
+                                        ),
+                                        child: Theme(
+                                          data: Theme.of(context).copyWith(
+                                              canvasColor: Colors.white),
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<String>(
+                                              value: selectedSerie,
+                                              isExpanded: true,
+                                              hint: const Text(
+                                                  "Selecciona una serie"),
+                                              icon: const Icon(
+                                                  Icons.arrow_drop_down,
+                                                  color: Colors.black),
+                                              items: seriesDisponibles
+                                                  .map((item) =>
+                                                      DropdownMenuItem<String>(
+                                                        value: item,
+                                                        child: Text(item),
+                                                      ))
+                                                  .toList(),
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  selectedSerie = value;
+                                                });
+                                                cargarNextNumber();
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 30),
-                          DropdownFormFieldSection(
-                              label: "Tipo de operacion(*)",
-                              hint: "Selecciona un tipo documento",
-                              items: ["P001", "RUC", "Pasaporte"],
-                              selectionItem: "P001"),
-                          const SizedBox(height: 20),
-                          OtherOptions(),
-                          const SizedBox(height: 30),
-                        ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 22),
+                                    child: SizedBox(
+                                      child: TextFieldSection(
+                                        label: "Número (*)",
+                                        hint: "Número correlativo",
+                                        inputType: TextInputType.number,
+                                        controller: numeroController,
+                                        onChanged: (value) {},
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            //FECHAS
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "  FECHA(*)",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                          height:
+                                              6), // espacio entre label y campo
+                                      TextField(
+                                        controller: _dateController,
+                                        decoration: InputDecoration(
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          prefixIcon: const Icon(
+                                              Icons.calendar_today,
+                                              size: 20),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 12, horizontal: 16),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            borderSide: const BorderSide(
+                                                color: Colors.grey),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black),
+                                          ),
+                                        ),
+                                        style: const TextStyle(fontSize: 14),
+                                        readOnly: true,
+                                        onTap: _selectDate2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "  VENCIMIENTO",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                          height:
+                                              6), // espacio entre label y campo
+                                      TextField(
+                                        controller: _dateController2,
+                                        decoration: InputDecoration(
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          prefixIcon: const Icon(
+                                              Icons.calendar_today,
+                                              size: 20),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 12, horizontal: 16),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            borderSide: const BorderSide(
+                                                color: Colors.grey),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black),
+                                          ),
+                                        ),
+                                        style: const TextStyle(fontSize: 14),
+                                        readOnly: true,
+                                        onTap: _selectDate2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "  MONEDA (*)",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                          color: Colors.grey.shade400),
+                                    ),
+                                    child: Theme(
+                                      data: Theme.of(context)
+                                          .copyWith(canvasColor: Colors.white),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: selectedDisplay,
+                                          isExpanded: true,
+                                          icon: const Icon(
+                                              Icons.arrow_drop_down,
+                                              color: Colors.black),
+                                          items:
+                                              items.map(buildMenuItem).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedDisplay = value;
+                                              selectedValue = currencyMap[
+                                                  value]; // almacena pen/usd/eur
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                    height: tipoDocumento == "NV" ? 15 : 20),
+                                tipoDocumento != "NV"
+                                    ? Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            "  TIPO OPERACIÓN (*)",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                    color:
+                                                        Colors.grey.shade400),
+                                              ),
+                                              child: Theme(
+                                                data: Theme.of(context)
+                                                    .copyWith(
+                                                        canvasColor:
+                                                            Colors.white),
+                                                child:
+                                                    DropdownButtonHideUnderline(
+                                                  child: DropdownButton<String>(
+                                                    value: selectedDisplay2,
+                                                    isExpanded: true,
+                                                    icon: const Icon(
+                                                        Icons.arrow_drop_down,
+                                                        color: Colors.black),
+                                                    items: itemsOperacion
+                                                        .map(buildMenuItem2)
+                                                        .toList(),
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        selectedDisplay2 =
+                                                            value;
+                                                        selectedValue2 =
+                                                            currencyMap2[value];
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const SizedBox.shrink(),
+                                SizedBox(
+                                    height: tipoDocumento == "NV" ? 0 : 20),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                // Campo VENDEDOR (solo lectura)
+                                Expanded(
+                                  flex: 1,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "  VENDEDOR",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      TextField(
+                                        controller: TextEditingController(
+                                            text: vendedor),
+                                        enabled: false,
+                                        decoration: InputDecoration(
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                                color: Colors.grey),
+                                          ),
+                                          disabledBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                                color: Colors.grey),
+                                          ),
+                                        ),
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(
+                                    width: 16), // Espacio entre los dos campos
+
+                                // Campo N. ORDEN
+                                Expanded(
+                                  flex: 1,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "  N. ORDEN",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      TextField(
+                                        controller: vendedorController,
+                                        decoration: InputDecoration(
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                                color: Colors.white),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                                color: Colors.black),
+                                          ),
+                                        ),
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            OtherOptions(),
+                            const SizedBox(height: 30),
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
                     const SizedBox(height: 5),
                     Row(
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              print("✅ Series disponibles: $selectedSerie");
+                              print("✅ Número: ${numeroController.text}");
+                              print("Moneda seleccionada: $selectedValue");
+                              print("Fecha Inicio: ${_dateController.text}");
+                              print(
+                                  "Fecha Vencimiento: ${_dateController2.text}");
+                              print("✅ Tipo Opreacion: $selectedValue2");
+                              print("✅ Vendedor: $vendedor");
+                              print("✅ N. Orden: ${vendedorController.text}");
+                            },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  ColorSchema.primaryColor, // 🔵 Color de fondo
-                              foregroundColor:
-                                  Colors.white, // ⚪ Color del texto y del icono
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12), // altura del botón
+                              backgroundColor: ColorSchema.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    12), // 🎯 Bordes redondeados
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              elevation: 2, // sombra
+                              elevation: 2,
                             ),
                             child: Row(
-                              mainAxisSize: MainAxisSize
-                                  .min, // Para que no se estire innecesariamente
-                              children: [
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
                                 Text('Confirmar'),
-                                SizedBox(
-                                    width: 8), // Espacio entre texto e ícono
+                                SizedBox(width: 8),
                                 Icon(Icons.check_circle),
                               ],
                             ),
@@ -171,7 +676,32 @@ class _SaleInfoScreenState extends State<SaleInfoScreen> {
       ),
     );
   }
+
+  DropdownMenuItem<String> buildMenuItem(String item) => DropdownMenuItem(
+        value: item,
+        child: Text(
+          item,
+          style: const TextStyle(fontSize: 15),
+        ),
+      );
+
+  DropdownMenuItem<String> buildMenuItem2(String itemsOperacion) =>
+      DropdownMenuItem(
+        value: itemsOperacion,
+        child: Text(
+          itemsOperacion,
+          style: const TextStyle(fontSize: 15),
+        ),
+      );
 }
+
+DropdownMenuItem<String> buildMenuItem(String items) => DropdownMenuItem(
+      value: items,
+      child: Text(
+        items,
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+      ),
+    );
 
 class OtherOptions extends StatelessWidget {
   const OtherOptions({super.key});
@@ -217,282 +747,375 @@ class OtherOptions extends StatelessWidget {
   }
 }
 
+//Datos
+TextEditingController Observacion = TextEditingController();
+TextEditingController otrosAtributos = TextEditingController();
+TextEditingController Ncotizacion = TextEditingController();
+
 void showOtrosDatosModal(BuildContext context) {
+  List<Map<String, String>> otrosCampos = [
+    {"nombre": "", "descripcion": ""}
+  ];
+
+  List<Map<String, String>> guiasCampos = [
+    {"numero": "", "tipo": "Guía de remisión - Remitente"}
+  ];
+
   showGeneralDialog(
     barrierLabel: "Otros Datos",
     barrierDismissible: false,
     transitionDuration: const Duration(milliseconds: 200),
     context: context,
     pageBuilder: (context, anim1, anim2) {
-      return Stack(
-        children: [
-          // Fondo desenfocado
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(
-              color: Colors.black
-                  .withOpacity(0.1), // sin color para solo desenfocar
-            ),
-          ),
-          // Diálogo
-          Center(
-            child: Dialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Stack(
+            children: [
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                child: Container(
+                  color: Colors.black.withOpacity(0.1),
+                ),
               ),
-              child: SizedBox(
-                width: double.maxFinite,
-                height: 550,
-                child: DefaultTabController(
-                  length: 3,
-                  child: Column(
-                    children: [
-                      const TabBar(
-                        labelColor: ColorSchema.primaryColor,
-                        unselectedLabelColor: Colors.grey,
-                        indicatorColor: ColorSchema.primaryColor,
-                        tabs: [
-                          Tab(text: "Guías"),
-                          Tab(text: "Otros"),
-                          Tab(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text("Observación"),
+              Center(
+                child: Dialog(
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: SizedBox(
+                    width: double.maxFinite,
+                    height: 550,
+                    child: DefaultTabController(
+                      length: 3,
+                      child: Column(
+                        children: [
+                          const TabBar(
+                            labelColor: ColorSchema.primaryColor,
+                            unselectedLabelColor: Colors.grey,
+                            indicatorColor: ColorSchema.primaryColor,
+                            tabs: [
+                              Tab(text: "Guías"),
+                              Tab(text: "Otros"),
+                              Tab(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text("Observación"),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Expanded(
+                            child: TabBarView(
+                              children: [
+                                // TAB 1: GUÍAS
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 25, right: 10, top: 8, bottom: 0),
+                                  child: Column(
+                                    children: [
+                                      const SizedBox(height: 3),
+                                      Container(
+                                        padding:
+                                            const EdgeInsets.only(right: 10),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              guiasCampos.add({
+                                                "numero": "",
+                                                "tipo":
+                                                    "Guía de remisión - Remitente"
+                                              });
+                                            });
+                                          },
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text("Agregar",
+                                                  style: GoogleFonts.nunito(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: ColorSchema
+                                                        .primaryColor,
+                                                  )),
+                                              const Icon(Icons.add,
+                                                  color:
+                                                      ColorSchema.primaryColor,
+                                                  size: 15),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: guiasCampos.length,
+                                          itemBuilder: (context, index) {
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 4.0),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: TextFieldSection(
+                                                      label: "Guía de remisión",
+                                                      hint: "",
+                                                      inputType:
+                                                          TextInputType.text,
+                                                      onChanged: (value) {
+                                                        guiasCampos[index]
+                                                            ['numero'] = value;
+                                                      },
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 5),
+                                                  Expanded(
+                                                    child:
+                                                        DropdownFormFieldSection(
+                                                      label: "Tipo",
+                                                      hint: "",
+                                                      items: [
+                                                        "Guía de remisión-Remitente",
+                                                        "Guía de remisión-Transportista"
+                                                      ],
+                                                      selectionItem: guiasCampos[
+                                                              index]['tipo'] ??
+                                                          "Guía de remisión - Remitente",
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          guiasCampos[index]
+                                                                  ['tipo'] =
+                                                              value ?? '';
+                                                        });
+                                                      },
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.close,
+                                                        color: Colors.red,
+                                                        size: 15),
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        guiasCampos
+                                                            .removeAt(index);
+                                                      });
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // TAB 2: OTROS
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 25, right: 10, top: 8, bottom: 0),
+                                  child: Column(
+                                    children: [
+                                      const SizedBox(height: 3),
+                                      Container(
+                                        padding:
+                                            const EdgeInsets.only(right: 10),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              otrosCampos.add({
+                                                "nombre": "",
+                                                "descripcion": ""
+                                              });
+                                            });
+                                          },
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text("Agregar",
+                                                  style: GoogleFonts.nunito(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: ColorSchema
+                                                        .primaryColor,
+                                                  )),
+                                              const Icon(Icons.add,
+                                                  color:
+                                                      ColorSchema.primaryColor,
+                                                  size: 15),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: otrosCampos.length,
+                                          itemBuilder: (context, index) {
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 4.0),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: TextFieldSection(
+                                                      label: "Nombre",
+                                                      hint: "Nombre...",
+                                                      inputType:
+                                                          TextInputType.text,
+                                                      onChanged: (value) {
+                                                        otrosCampos[index]
+                                                            ['nombre'] = value;
+                                                      },
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: TextFieldSection(
+                                                      label: "Descripción",
+                                                      hint: "Descripción...",
+                                                      inputType:
+                                                          TextInputType.text,
+                                                      onChanged: (value) {
+                                                        otrosCampos[index][
+                                                                'descripcion'] =
+                                                            value;
+                                                      },
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.close,
+                                                        color: Colors.red,
+                                                        size: 15),
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        otrosCampos
+                                                            .removeAt(index);
+                                                      });
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // TAB 3: OBSERVACIÓN
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 25, right: 10, top: 8, bottom: 0),
+                                  child: Column(
+                                    children: [
+                                      Icon(Icons.more_horiz,
+                                          color: ColorSchema.primaryColor,
+                                          size: 30),
+                                      const SizedBox(height: 10),
+                                      TextFieldSection(
+                                        controller: Observacion,
+                                        label: "Observación",
+                                        hint: "Observación...",
+                                        inputType: TextInputType.text,
+                                        onChanged: (value) {},
+                                      ),
+                                      const SizedBox(height: 20),
+                                      TextFieldSection(
+                                        controller: otrosAtributos,
+                                        label: "Otros tributos",
+                                        hint: "Otros tributos...",
+                                        inputType: TextInputType.text,
+                                        onChanged: (value) {},
+                                      ),
+                                      const SizedBox(height: 20),
+                                      TextFieldSection(
+                                        controller: Ncotizacion,
+                                        label: "N. cotización",
+                                        hint: "N. cotización...",
+                                        inputType: TextInputType.number,
+                                        onChanged: (value) {},
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: 25, right: 10, top: 2, bottom: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () => {
+                                    Navigator.pop(context),
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.grey,
+                                  ),
+                                  child: const Text(
+                                    "Cancelar",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    print("Observación: ${Observacion.text}");
+                                    print(
+                                        "Otros Atributos: ${otrosAtributos.text}");
+                                    print("Observación: ${Ncotizacion.text}");
+                                    print("Guías:");
+                                    for (var guia in guiasCampos) {
+                                      print(
+                                          "- ${guia['numero']} [${guia['tipo']}]");
+                                    }
+                                    print("Otros:");
+                                    for (var campo in otrosCampos) {
+                                      print(
+                                          "- ${campo['nombre']}: ${campo['descripcion']}");
+                                    }
+                                    ResetearCampos();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: ColorSchema.primaryColor,
+                                  ),
+                                  child: const Text(
+                                    "Aceptar",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      Expanded(
-                        child: TabBarView(
-                          children: [
-                            // TAB 1: Guías
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 25, right: 10, top: 8, bottom: 0),
-                              child: Column(
-                                children: [
-                                  const SizedBox(height: 3),
-                                  Container(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: GestureDetector(
-                                      onTap: () {},
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text("Agregar",
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w600,
-                                                color: ColorSchema.primaryColor,
-                                              )),
-                                          const Icon(Icons.add,
-                                              color: ColorSchema.primaryColor,
-                                              size: 15),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: 8,
-                                      itemBuilder: (context, index) {
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 4.0),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: TextFieldSection(
-                                                  label: "Nombre",
-                                                  hint: "Razon social",
-                                                  inputType:
-                                                      TextInputType.number,
-                                                  onChanged: (value) {},
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: DropdownFormFieldSection(
-                                                  label: "Tipo",
-                                                  hint:
-                                                      "Selecciona un tipo documento",
-                                                  items: [
-                                                    "P001",
-                                                    "RUC",
-                                                    "Pasaporte"
-                                                  ],
-                                                  selectionItem: "P001",
-                                                ),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.close,
-                                                    color: Colors.red,
-                                                    size: 15),
-                                                onPressed: () {},
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // TAB 2: Otros
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 25, right: 10, top: 8, bottom: 0),
-                              child: Column(
-                                children: [
-                                  const SizedBox(height: 3),
-                                  Container(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: GestureDetector(
-                                      onTap: () {},
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text("Agregar",
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w600,
-                                                color: ColorSchema.primaryColor,
-                                              )),
-                                          const Icon(Icons.add,
-                                              color: ColorSchema.primaryColor,
-                                              size: 15),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: 4,
-                                      itemBuilder: (context, index) {
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 4.0),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: TextFieldSection(
-                                                  label: "Nombre",
-                                                  hint: "Razon social",
-                                                  inputType:
-                                                      TextInputType.number,
-                                                  onChanged: (value) {},
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: DropdownFormFieldSection(
-                                                  label: "Descripcion",
-                                                  hint:
-                                                      "Selecciona un tipo documento",
-                                                  items: [
-                                                    "P001",
-                                                    "RUC",
-                                                    "Pasaporte"
-                                                  ],
-                                                  selectionItem: "P001",
-                                                ),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.close,
-                                                    color: Colors.red,
-                                                    size: 15),
-                                                onPressed: () {},
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // TAB 3: Finales
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 25, right: 10, top: 8, bottom: 0),
-                              child: Column(
-                                children: [
-                                  Icon(Icons.more_horiz,
-                                      color: ColorSchema.primaryColor,
-                                      size: 30),
-                                  const SizedBox(height: 10),
-                                  TextFieldSection(
-                                    label: "Observacion",
-                                    hint: "Razon social",
-                                    inputType: TextInputType.number,
-                                    onChanged: (value) {},
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFieldSection(
-                                    label: "Otros tributos",
-                                    hint: "Razon social",
-                                    inputType: TextInputType.number,
-                                    onChanged: (value) {},
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TextFieldSection(
-                                    label: "N. cotización",
-                                    hint: "Razon social",
-                                    inputType: TextInputType.number,
-                                    onChanged: (value) {},
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            left: 25, right: 10, top: 2, bottom: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey,
-                              ),
-                              child: const Text(
-                                "Cancelar",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorSchema.primaryColor,
-                              ),
-                              child: const Text(
-                                "Aceptar",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       );
     },
   );
+}
+
+void ResetearCampos() {
+  Observacion.text = "";
+  Ncotizacion.text = "";
+  otrosAtributos.text = "";
 }
