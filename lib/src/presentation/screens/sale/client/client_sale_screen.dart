@@ -256,40 +256,14 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   }
                                 },
                               ),
-                              const SizedBox(height: 18),
+                              const SizedBox(height: 20),
 
-                              DropdownButtonFormField<String>(
-                                value: tipoDocumentoMap[
+                              DropdownFormFieldSection(
+                                label: "Tipo documento",
+                                hint: "Selecciona un tipo documento",
+                                items: tipoDocumentoMap.values.toList(),
+                                selectionItem: tipoDocumentoMap[
                                     _selectedTipoDocumentoValue],
-                                decoration: const InputDecoration(
-                                  labelText: 'Tipo documento',
-                                  hintText: 'Selecciona un tipo documento',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  prefixIcon: Icon(Icons.badge),
-                                  border: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(
-                                        color: Colors.blue, width: 2),
-                                  ),
-                                ),
-                                items: tipoDocumentoMap.values.map((doc) {
-                                  return DropdownMenuItem<String>(
-                                    value: doc,
-                                    child: Text(doc),
-                                  );
-                                }).toList(),
                                 onChanged: (value) {
                                   final selectedCode = tipoDocumentoMap.entries
                                       .firstWhere(
@@ -299,39 +273,17 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                     _selectedTipoDocumentoValue = selectedCode;
                                   });
                                 },
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Debe seleccionar un tipo de documento';
-                                  }
-                                  return null;
-                                },
                               ),
 
-                              const SizedBox(height: 18),
-                              TextFormField(
+                              const SizedBox(height: 20),
+                              TextFieldSection(
+                                label: "Número Documento",
                                 controller: _documentoController,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  labelText: 'Número Documento',
-                                  hintText: 'Ingrese el número de documento',
-                                  prefixIcon: Icon(Icons.edit_document),
-                                  border: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(
-                                        color: Colors.blue, width: 2),
-                                  ),
-                                ),
+                                hint: "Ingrese el número de documento",
+                                inputType: TextInputType.number,
+                                //icon: const Icon(Icons.edit_document),
+                                onChanged:
+                                    (_) {}, // Puedes enlazar con tu lógica si es necesario
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
                                     return 'Este campo es obligatorio';
@@ -340,108 +292,42 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 },
                               ),
 
-                              const SizedBox(height: 18),
-                              TextFormField(
+                              const SizedBox(height: 20),
+                              TextFieldSection(
+                                label: "Dirección fiscal",
                                 controller: _direccionController,
-                                keyboardType: TextInputType.text,
-                                maxLength: 100,
-                                decoration: const InputDecoration(
-                                  labelText: 'Dirección fiscal',
-                                  hintText: 'Ingrese su dirección fiscal',
-                                  counterText: '',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  prefixIcon: Icon(Icons.location_on),
-                                  border: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(
-                                        color: Colors.blue, width: 2),
-                                  ),
-                                ),
+                                hint: "Ingrese su dirección fiscal",
+                                inputType: TextInputType.text,
+                                //icon: const Icon(Icons.location_on),
+                                //maxLength: 100,
+                                onChanged:
+                                    (_) {}, // Puedes manejar cambios si es necesario
                                 validator: (value) {},
                               ),
 
                               const SizedBox(height: 18),
-                              TextFormField(
+                              TextFieldSection(
+                                label: "Email",
                                 controller: _emailController,
-                                keyboardType: TextInputType.text,
-                                maxLength: 100,
-                                decoration: const InputDecoration(
-                                  labelText: 'Email',
-                                  hintText: 'Ingrese su emaill',
-                                  counterText: '',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  prefixIcon: Icon(Icons.email),
-                                  border: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(
-                                        color: Colors.blue, width: 2),
-                                  ),
-                                ),
+                                hint: "Ingrese su email",
+                                inputType: TextInputType.emailAddress,
+                                //icon: const Icon(Icons.email),
+                                //maxLength: 100,
+                                onChanged:
+                                    (_) {}, // Puedes manejar cambios si lo necesitas
                                 validator: (value) {},
                               ),
-                              const SizedBox(height: 18),
-                              TextFormField(
+                              const SizedBox(height: 20),
+                              TextFieldSection(
+                                label: "Teléfono",
                                 controller: _telefonoController,
-                                keyboardType: TextInputType.phone,
-                                maxLength: 9,
-                                decoration: const InputDecoration(
-                                  labelText: 'Teléfono',
-                                  hintText: 'Ingrese su teléfono',
-                                  counterText:
-                                      '', // oculta contador de caracteres
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30)),
-                                    borderSide: BorderSide(
-                                        color: Colors.blue, width: 2),
-                                  ),
-                                  prefixIcon: Icon(Icons.phone),
-                                ),
-                                validator: (value) {
-                                  // if (value == null || value.trim().isEmpty) {
-                                  //   return 'Este campo es obligatorio';
-                                  // }
-                                  // if (value.length != 9) {
-                                  //   return 'Número no válido';
-                                  // }
-                                  // return null;
-                                },
+                                hint: "Ingrese su teléfono",
+                                inputType: TextInputType.phone,
+                                //icon: const Icon(Icons.phone),
+                                //maxLength: 9,
+                                onChanged:
+                                    (_) {}, // Puedes enlazar lógica aquí si lo necesitas
+                                validator: (value) {},
                               ),
                             ],
                           ),

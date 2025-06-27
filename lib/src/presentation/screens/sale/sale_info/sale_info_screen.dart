@@ -228,7 +228,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                             selectedValue2 = "0101";
                                             break;
                                           case "Factura":
-                                            tipoDocumento = "1";
+                                            tipoDocumento = "01";
                                             break;
                                           case "Nota de credito":
                                             tipoDocumento = "NV";
@@ -246,77 +246,39 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "  SERIE (*)",
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                              color: Colors.grey.shade400),
-                                        ),
-                                        child: Theme(
-                                          data: Theme.of(context).copyWith(
-                                              canvasColor: Colors.white),
-                                          child: DropdownButtonHideUnderline(
-                                            child: DropdownButton<String>(
-                                              value: selectedSerie,
-                                              isExpanded: true,
-                                              hint: const Text(
-                                                  "Selecciona una serie"),
-                                              icon: const Icon(
-                                                  Icons.arrow_drop_down,
-                                                  color: Colors.black),
-                                              items: seriesDisponibles
-                                                  .map((item) =>
-                                                      DropdownMenuItem<String>(
-                                                        value: item,
-                                                        child: Text(item),
-                                                      ))
-                                                  .toList(),
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  selectedSerie = value;
-                                                });
-                                                cargarNextNumber();
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  child: DropdownFormFieldSection(
+                                    label: "Serie (*)",
+                                    hint: "Selecciona una serie",
+                                    items: seriesDisponibles,
+                                    selectionItem: selectedSerie,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedSerie = value;
+                                      });
+                                      cargarNextNumber();
+                                    },
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 22),
-                                    child: SizedBox(
-                                      child: TextFieldSection(
-                                        label: "Número (*)",
-                                        hint: "Número correlativo",
-                                        inputType: TextInputType.number,
-                                        controller: numeroController,
-                                        onChanged: (value) {},
-                                      ),
-                                    ),
+                                  child: TextFieldSection(
+                                    label: "Número (*)",
+                                    hint: "Número correlativo",
+                                    inputType: TextInputType.phone,
+                                    controller: numeroController,
+                                    onChanged: (value) {},
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return 'Este campo es obligatorio';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                 ),
                               ],
                             ),
+
                             const SizedBox(height: 15),
                             //FECHAS
                             Row(
@@ -417,208 +379,69 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                               ],
                             ),
                             const SizedBox(height: 20),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "  MONEDA (*)",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                          color: Colors.grey.shade400),
-                                    ),
-                                    child: Theme(
-                                      data: Theme.of(context)
-                                          .copyWith(canvasColor: Colors.white),
-                                      child: DropdownButtonHideUnderline(
-                                        child: DropdownButton<String>(
-                                          value: selectedDisplay,
-                                          isExpanded: true,
-                                          icon: const Icon(
-                                              Icons.arrow_drop_down,
-                                              color: Colors.black),
-                                          items:
-                                              items.map(buildMenuItem).toList(),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              selectedDisplay = value;
-                                              selectedValue = currencyMap[
-                                                  value]; // almacena pen/usd/eur
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            DropdownFormFieldSection(
+                              label: "MONEDA (*)", // Sin etiqueta externa
+                              hint: "Selecciona la moneda",
+                              items:
+                                  items, // Lista de monedas visibles: ['Soles', 'Dólares', 'Euros']
+                              selectionItem: selectedDisplay,
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedDisplay = value;
+                                  selectedValue =
+                                      currencyMap[value]; // 'pen', 'usd', 'eur'
+                                });
+                              },
                             ),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SizedBox(
                                     height: tipoDocumento == "NV" ? 15 : 20),
-                                tipoDocumento != "NV"
-                                    ? Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            "  TIPO OPERACIÓN (*)",
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 12),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                border: Border.all(
-                                                    color:
-                                                        Colors.grey.shade400),
-                                              ),
-                                              child: Theme(
-                                                data: Theme.of(context)
-                                                    .copyWith(
-                                                        canvasColor:
-                                                            Colors.white),
-                                                child:
-                                                    DropdownButtonHideUnderline(
-                                                  child: DropdownButton<String>(
-                                                    value: selectedDisplay2,
-                                                    isExpanded: true,
-                                                    icon: const Icon(
-                                                        Icons.arrow_drop_down,
-                                                        color: Colors.black),
-                                                    items: itemsOperacion
-                                                        .map(buildMenuItem2)
-                                                        .toList(),
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        selectedDisplay2 =
-                                                            value;
-                                                        selectedValue2 =
-                                                            currencyMap2[value];
-                                                      });
-                                                    },
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    : const SizedBox.shrink(),
+                                if (tipoDocumento != "NV")
+                                  DropdownFormFieldSection(
+                                    label: "TIPO OPREACIÓN (*)",
+                                    hint: "Selecciona el tipo de operación",
+                                    items: itemsOperacion,
+                                    selectionItem: selectedDisplay2,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedDisplay2 = value;
+                                        selectedValue2 = currencyMap2[value];
+                                      });
+                                    },
+                                  ),
                                 SizedBox(
                                     height: tipoDocumento == "NV" ? 0 : 20),
                               ],
                             ),
                             Row(
                               children: [
-                                // Campo VENDEDOR (solo lectura)
+                                // Campo VENDEDOR solo lectura
                                 Expanded(
                                   flex: 1,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "  VENDEDOR",
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      TextField(
-                                        controller: TextEditingController(
-                                            text: vendedor),
-                                        enabled: false,
-                                        decoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: Colors.white,
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                                color: Colors.grey),
-                                          ),
-                                          disabledBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                                color: Colors.grey),
-                                          ),
-                                        ),
-                                        style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87),
-                                      ),
-                                    ],
+                                  child: TextFieldSection(
+                                    label: "VENDEDOR",
+                                    hint: "Vendedor",
+                                    controller:
+                                        TextEditingController(text: vendedor),
+                                    inputType: TextInputType.text,
+                                    isReadOnly: true,
+                                    onChanged: (_) {},
                                   ),
                                 ),
 
-                                const SizedBox(
-                                    width: 16), // Espacio entre los dos campos
+                                const SizedBox(width: 16),
 
-                                // Campo N. ORDEN
+                                // Campo N. ORDEN editable
                                 Expanded(
                                   flex: 1,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "  N. ORDEN",
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      TextField(
-                                        controller: vendedorController,
-                                        decoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: Colors.white,
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                                color: Colors.white),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                                color: Colors.black),
-                                          ),
-                                        ),
-                                        style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87),
-                                      ),
-                                    ],
+                                  child: TextFieldSection(
+                                    label: "N. ORDEN",
+                                    hint: "N. Orden",
+                                    controller: vendedorController,
+                                    inputType: TextInputType.phone,
+                                    onChanged: (_) {},
                                   ),
                                 ),
                               ],
