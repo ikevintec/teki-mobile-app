@@ -2,6 +2,7 @@ import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
 
 class CustomerSaleState {
   final List<Customer> customers;
+  final Customer customer;
   final Customer? selectedCustomer;
   final bool isLoading;
   final String? error;
@@ -12,6 +13,7 @@ class CustomerSaleState {
   final bool paginacion; // ✅ Se agregó esta línea
 
   CustomerSaleState({
+    required this.customer,
     required this.customers,
     required this.selectedCustomer,
     required this.isLoading,
@@ -20,10 +22,11 @@ class CustomerSaleState {
     required this.perPage,
     required this.filterGlobal,
     required this.totalElements,
-    required this.paginacion, // ✅ Se agregó aquí también
+    required this.paginacion,
   });
 
   CustomerSaleState copyWith({
+    Customer? customer,
     List<Customer>? customers,
     Customer? selectedCustomer,
     bool? isLoading,
@@ -32,9 +35,10 @@ class CustomerSaleState {
     int? perPage,
     String? filterGlobal,
     int? totalElements,
-    bool? paginacion, // ✅ y aquí
+    bool? paginacion,
   }) {
     return CustomerSaleState(
+      customer: customer ?? this.customer,
       customers: customers ?? this.customers,
       selectedCustomer: selectedCustomer ?? this.selectedCustomer,
       isLoading: isLoading ?? this.isLoading,

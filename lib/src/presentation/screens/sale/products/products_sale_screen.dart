@@ -46,7 +46,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
             validators: [Validators.required, Validators.min(1)]),
         'quantity': FormControl<int>(
             value: (product.cantidad ?? 1).toInt(),
-            validators: [Validators.required, Validators.min(10)]),
+            validators: [Validators.required, Validators.min(1)]),
       }));
     }
   }
@@ -486,6 +486,7 @@ void _syncFormArrayWithProvider(
               ? "Producto ${i + 1}"
               : products[i].descripcion,
           emitEvent: false);
+      control.control('quantity').markAsTouched();
       control.control('price').markAsTouched();
       control.control('description').markAsTouched();
     }

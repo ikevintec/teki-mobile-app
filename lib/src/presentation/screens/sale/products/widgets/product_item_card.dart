@@ -139,7 +139,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                         ),
                         validationMessages: {
                           ValidationMessage.minLength: (error) =>
-                              'Debe ser al menos 3 caracter',
+                              'WW',
                           ValidationMessage.required: (error) =>
                               'Nombre requerido',
                         },
@@ -165,7 +165,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                             onChanged: _onPriceChanged,
                             validationMessages: {
                               ValidationMessage.min: (error) =>
-                                  'Debe ser al menos 1',
+                                  'XX',
                             },
                           ),
                         ),

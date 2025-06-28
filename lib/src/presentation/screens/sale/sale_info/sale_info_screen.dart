@@ -8,8 +8,6 @@ import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selecto
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
-import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
-import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -22,7 +20,7 @@ class SaleInfoScreen extends ConsumerStatefulWidget {
 }
 
 class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
-  List<String> productTypeLote = ["Boleta", "Factura", "Nota de credito"];
+  List<String> productTypeLote = ["Boleta", "Factura", "N. credito"];
   String selectedType = "Boleta";
   String tipoDocumento = "03";
   String vendedor = "";
@@ -74,13 +72,13 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.blue, // ✅ color azul del encabezado y botones
-              onPrimary: Colors.white, // texto en encabezado
-              onSurface: Colors.black, // texto normal
+              primary: Colors.blue, 
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.blue, // ✅ color de los botones
+                foregroundColor: Colors.blue,
               ),
             ),
           ),

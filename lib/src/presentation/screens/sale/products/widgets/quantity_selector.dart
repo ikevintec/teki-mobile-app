@@ -127,8 +127,9 @@ class ReactiveQuantitySelector extends StatelessWidget {
         int currentValue = control.value ?? 1;
 
         void _updateQuantity(int newQuantity) {
-          control.updateValue(newQuantity);
+          control.updateValue(newQuantity,emitEvent: true);
           control.markAsTouched();
+          control.markAsDirty();
             if (onChanged != null && control is FormControl<int>) {
               onChanged!(control);
             }
@@ -157,6 +158,7 @@ class ReactiveQuantitySelector extends StatelessWidget {
                 formControlName: formControlName,
                 keyboardType: TextInputType.numberWithOptions(decimal: false),
                 onChanged: onChanged,
+                valueAccessor: IntValueAccessor(),
                 validationMessages: {
                   ValidationMessage.required: (error) => 'Cantidad requerida',
                   ValidationMessage.min: (error) => 'Debe ser al menos 1',

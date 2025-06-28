@@ -97,10 +97,9 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
                     return GestureDetector(
                       onTap: () {
                         _ignoreNextSearch = true;
-                        ref
-                            .read(productSaleProvider.notifier)
-                            .setProductsSales(product, null);
+                        ref.read(productSaleProvider.notifier).setProductsSales(product, null);
                         controller.closeView("");
+                        FocusScope.of(context).unfocus();
                       },
                       child: ItemProduct(
                         product: product,

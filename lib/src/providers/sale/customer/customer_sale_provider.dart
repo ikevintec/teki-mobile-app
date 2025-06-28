@@ -4,7 +4,6 @@ import 'package:teki_app/src/data/repositories/customer_repository_imp.dart';
 import 'package:teki_app/src/domain/repositories/customer_repository.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_state.dart';
 import 'package:teki_app/src/utils/notifications.dart';
-import 'package:teki_app/src/utils/query_params_builders.dart';
 
 final customerSaleProvider =
     StateNotifierProvider<CustomerSaleNotifier, CustomerSaleState>((ref) {
@@ -17,6 +16,7 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
 
   CustomerSaleNotifier({required this.customersRepository})
       : super(CustomerSaleState(
+          customer: Customer(),
           customers: [],
           selectedCustomer: null,
           isLoading: false,
@@ -25,23 +25,8 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
           perPage: 20,
           filterGlobal: '',
           totalElements: null,
-          paginacion: false, // ✅ nuevo campo
+          paginacion: false,
         ));
-
-  // Future<List<Customer>> getProducts(String? filter) async {
-  //   setFilterGlobal(filter);
-  //   try {
-  //     final response = await customersRepository
-  //         .getCustomers(buildProductQueryParams(state));
-  //     if (response.content != null || response.content!.isNotEmpty) {
-  //       return response.content!;
-  //     }
-  //     return [];
-  //   } catch (e) {
-  //     errorNotification(e.toString());
-  //     return [];
-  //   }
-  // }
 
   Future<List<Customer>> getCustomerss(String filtro) async {
     state = state.copyWith(isLoading: true);
@@ -74,4 +59,18 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
   void clearCustomers() {
     state = state.copyWith(customers: []);
   }
+
+  void setCustomer({ required String nombre, required  String documento, required  String direccion,required  String email, required String telefono, required String tipoDocumento}){
+    Customer customerToSet = Customer(
+      razonSocial: nombre,
+      numeroDocumento: documento,
+      direccion: direccion,
+      email: email,
+      telefono: telefono,
+      tipoDocumento: tipoDocumento 
+    );
+    state = state.copyWith(customer: customerToSet);
+
+  }
+
 }

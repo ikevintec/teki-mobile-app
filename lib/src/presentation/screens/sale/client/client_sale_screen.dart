@@ -36,7 +36,8 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     '7': 'PASAPORTE',
     'A': 'CED DIPLOMATICA IDENTIDAD',
   };
-  String? _selectedTipoDocumentoValue = '1'; // default: DNI
+
+  String? _selectedTipoDocumentoValue = '1';
 
   Future<List<Customer>> onSearchChanged(String query) async {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -56,8 +57,24 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     return completer.future;
   }
 
+final FocusNode _nombreFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    final clientProvider = ref.read(customerSaleProvider);
+    if ((clientProvider.customer.razonSocial ?? '').isNotEmpty) {
+      _nombreController.text = clientProvider.customer.razonSocial ?? '';
+      _direccionController.text = clientProvider.customer.direccion ?? '';
+      _documentoController.text = clientProvider.customer.numeroDocumento ?? '';
+      _emailController.text = clientProvider.customer.email ?? '';
+      _telefonoController.text = clientProvider.customer.telefono ?? '';
+    }
+  }
+
   @override
   void dispose() {
+    _nombreFocusNode.dispose();
     _debounce?.cancel();
     _nombreController.dispose();
     _documentoController.dispose();
@@ -111,7 +128,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                               ),
                               const SizedBox(height: 15),
 
-                              /// Autocomplete para nombre
                               Autocomplete<Customer>(
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) async {
@@ -135,15 +151,18 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 },
                                 displayStringForOption: (Customer option) =>
                                     option.razonSocial ?? 'Sin nombre',
-                                fieldViewBuilder: (context, controller,
-                                    focusNode, onEditingComplete) {
+                                fieldViewBuilder: (context, controller,_, onEditingComplete) {
+                                  if (controller.text.isEmpty && _nombreController.text.isNotEmpty) {
+                                    controller.text = _nombreController.text;
+                                  }
+
                                   _nombreController.value = controller.value;
 
                                   return Container(
                                     key: _fieldKey,
                                     child: TextField(
                                       controller: controller,
-                                      focusNode: focusNode,
+                                      focusNode: _nombreFocusNode,
                                       decoration: const InputDecoration(
                                         labelText: 'Nombre',
                                         hintText: 'Ingrese el nombre',
@@ -175,7 +194,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                         prefixIcon: Icon(Icons.person),
                                       ),
                                       style: const TextStyle(fontSize: 14),
-                                      onEditingComplete: onEditingComplete,
+                                      onEditingComplete: () {
+                                        FocusScope.of(context).unfocus(); 
+                                      },
                                     ),
                                   );
                                 },
@@ -230,6 +251,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   );
                                 },
                                 onSelected: (Customer selection) {
+                                  FocusScope.of(context).unfocus();
                                   ref
                                       .read(customerSaleProvider.notifier)
                                       .selectCustomer(selection);
@@ -349,7 +371,16 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   "telefono": _telefonoController.text,
                                   "tipoDocumento": _selectedTipoDocumentoValue
                                 };
-
+                                ref
+                                    .read(customerSaleProvider.notifier)
+                                    .setCustomer(
+                                        nombre: _nombreController.text,
+                                        direccion: _direccionController.text,
+                                        documento: _documentoController.text,
+                                        email: _emailController.text,
+                                        telefono: _telefonoController.text,
+                                        tipoDocumento:
+                                            _selectedTipoDocumentoValue ?? '');
                                 print(formData);
 
                                 Navigator.push(
