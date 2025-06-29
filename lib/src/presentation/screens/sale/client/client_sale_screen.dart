@@ -57,7 +57,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     return completer.future;
   }
 
-final FocusNode _nombreFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -74,7 +73,6 @@ final FocusNode _nombreFocusNode = FocusNode();
 
   @override
   void dispose() {
-    _nombreFocusNode.dispose();
     _debounce?.cancel();
     _nombreController.dispose();
     _documentoController.dispose();
@@ -132,26 +130,15 @@ final FocusNode _nombreFocusNode = FocusNode();
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) async {
                                   if (textEditingValue.text.trim().isEmpty) {
-                                    ref
-                                        .read(customerSaleProvider.notifier)
-                                        .clearCustomers();
-                                    _direccionController.text = "";
-                                    _documentoController.text = "";
-                                    _emailController.text = "";
-                                    _telefonoController.text = "";
-                                    _nombreController.text = "";
-                                    setState(() {
-                                      _selectedTipoDocumentoValue = "1";
-                                    });
+                                    ref.read(customerSaleProvider.notifier).clearCustomers();
                                     return const Iterable<Customer>.empty();
                                   }
 
-                                  return await onSearchChanged(
-                                      textEditingValue.text);
+                                  return await onSearchChanged(textEditingValue.text);
                                 },
                                 displayStringForOption: (Customer option) =>
                                     option.razonSocial ?? 'Sin nombre',
-                                fieldViewBuilder: (context, controller,_, onEditingComplete) {
+                                fieldViewBuilder: (context, controller,focusNode, onEditingComplete) {
                                   if (controller.text.isEmpty && _nombreController.text.isNotEmpty) {
                                     controller.text = _nombreController.text;
                                   }
@@ -162,7 +149,7 @@ final FocusNode _nombreFocusNode = FocusNode();
                                     key: _fieldKey,
                                     child: TextField(
                                       controller: controller,
-                                      focusNode: _nombreFocusNode,
+                                      focusNode: focusNode,
                                       decoration: const InputDecoration(
                                         labelText: 'Nombre',
                                         hintText: 'Ingrese el nombre',
@@ -200,13 +187,9 @@ final FocusNode _nombreFocusNode = FocusNode();
                                     ),
                                   );
                                 },
-                                optionsViewBuilder:
-                                    (context, onSelected, options) {
-                                  // Obtener ancho del campo
-                                  final renderBox = _fieldKey.currentContext
-                                      ?.findRenderObject() as RenderBox?;
-                                  final fieldWidth =
-                                      renderBox?.size.width ?? 400;
+                                optionsViewBuilder:(context, onSelected, options) {
+                                  final renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+                                  final fieldWidth = renderBox?.size.width ?? 400;
 
                                   return Align(
                                     alignment: Alignment.topLeft,
@@ -252,18 +235,11 @@ final FocusNode _nombreFocusNode = FocusNode();
                                 },
                                 onSelected: (Customer selection) {
                                   FocusScope.of(context).unfocus();
-                                  ref
-                                      .read(customerSaleProvider.notifier)
-                                      .selectCustomer(selection);
-
-                                  _documentoController.text =
-                                      selection.numeroDocumento?.toString() ??
-                                          '';
-                                  _direccionController.text =
-                                      selection.direccionCompleta ?? '';
+                                  ref.read(customerSaleProvider.notifier).selectCustomer(selection);
+                                  _documentoController.text = selection.numeroDocumento?.toString() ?? '';
+                                  _direccionController.text = selection.direccionCompleta ?? '';
                                   _emailController.text = selection.email ?? '';
-                                  _telefonoController.text =
-                                      selection.telefono ?? '';
+                                  _telefonoController.text = selection.telefono ?? '';
 
                                   // 👇 Asigna el tipo de documento según el código recibido
                                   final tipoDocCodigo =
