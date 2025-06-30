@@ -37,13 +37,14 @@ class ServicesSection extends StatelessWidget {
                       // Get.toNamed(AppRoutes.posSales);
                       Get.toNamed(AppRoutes.productsSales);
                     }),
+                    //Ver Comprobantes
                     buildServices(
                         context,
-                        "Expenses",
-                        "assets/icons/icon_image/expense.png",
+                        "Comprobantes",
+                        "assets/icons/icon_image/expense_list.png",
                         Colors.white,
                         ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.expense);
+                      Get.toNamed(AppRoutes.comprobantesVer);
                     }),
                   ],
                 ),

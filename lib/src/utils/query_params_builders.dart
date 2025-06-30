@@ -1,4 +1,3 @@
-
 Map<String, dynamic> buildProductQueryParams(dynamic state) {
   final Map<String, dynamic> params = {};
 
@@ -32,7 +31,8 @@ Map<String, dynamic> buildProductQueryParams(dynamic state) {
     safeAdd('codigoMoneda', state.codigoMoneda);
   } catch (_) {}
   try {
-    safeAdd('idCategoria', (state.idCategoria?.isNotEmpty ?? false) ? state.idCategoria : null);
+    safeAdd('idCategoria',
+        (state.idCategoria?.isNotEmpty ?? false) ? state.idCategoria : null);
   } catch (_) {}
   try {
     safeAdd('mostrarEnRestaurante', state.mostrarEnRestaurante);
@@ -52,6 +52,59 @@ Map<String, dynamic> buildProductQueryParams(dynamic state) {
   try {
     safeAdd('limit', state.limit);
   } catch (_) {}
+
+  return params;
+}
+
+Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {};
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('pageNumber', state.pageNumber);
+  safeAdd('perPage', state.perPage);
+  safeAdd('page', state.page);
+
+  try {
+    safeAdd('idVendedor', state.idVendedor);
+  } catch (_) {}
+  try {
+    safeAdd('filtroDesde', state.filtroDesde);
+  } catch (_) {}
+
+  try {
+    safeAdd('filtroHasta', state.filtroHasta);
+  } catch (_) {}
+
+  try {
+    safeAdd('idVendedor', state.idVendedor);
+  } catch (_) {}
+  try {
+    safeAdd('idPuntoVenta', state.idPuntoVenta);
+  } catch (_) {}
+  try {
+    safeAdd('filtroRucEmisor', state.filtroRucEmisor);
+  } catch (_) {}
+  try {
+    safeAdd('limit', state.limit);
+  } catch (_) {}
+  try {
+    safeAdd('paginacion', state.paginacion);
+  } catch (_) {
+    safeAdd('paginacion', true);
+  }
+  try {
+    safeAdd('filtroCanal', state.filtroCanal);
+  } catch (_) {
+    safeAdd('filtroCanal', 'PLATFORM');
+  }
+  try {
+    safeAdd('sortOrder', state.sortOrder);
+  } catch (_) {
+    safeAdd('sortOrder', '1');
+  }
 
   return params;
 }

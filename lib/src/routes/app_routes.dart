@@ -53,12 +53,14 @@ import 'package:teki_app/src/presentation/screens/tax_report/tax_report_main_scr
 import 'package:teki_app/src/presentation/screens/unit/unit_management_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/user_reports/user_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/user_role/user_role_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/ver_comprbantes.dart';
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_sections/add_warehouse_section.dart';
 import 'package:teki_app/src/presentation/screens/warehouse_reports/warehouse_reports_main_screen.dart';
 import 'package:teki_app/src/routes/middleware/auth_middleware.dart';
 
 class AppRoutes {
+  static const String comprobantesVer = "/ver_comprobantes";
   static const String onboarding = "/onboarding";
   static const String login = "/login";
   static const String register = "/register";
@@ -126,7 +128,10 @@ class AppRoutes {
     GetPage(name: register, page: () => const RegisterScreen()),
     GetPage(name: dashboard, page: () => const DashboardMainScreen()),
     GetPage(name: forgotPassword, page: () => const ForgotPasswordScreen()),
+
     GetPage(name: analytics, page: () => const AnalyticsMainScreen()),
+//Route Comprobantes
+    GetPage(name: comprobantesVer, page: () => const VerComprobanteScreen()),
     GetPage(name: sales, page: () => const SalesMainScreen()),
     GetPage(name: posSales, page: () => const POSSalesMainScreen()),
     GetPage(name: purchase, page: () => const PurchaseMainScreen()),

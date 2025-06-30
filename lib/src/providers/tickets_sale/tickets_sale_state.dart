@@ -11,6 +11,8 @@ class TicketSaleState {
   final int? totalElements;
   final bool paginacion;
   final String? errorMessage;
+  final String? filtroDesde;
+  final String? filtroHasta;
 
   TicketSaleState({
     required this.tickets,
@@ -23,6 +25,8 @@ class TicketSaleState {
     required this.totalElements,
     required this.paginacion,
     required this.errorMessage,
+    required this.filtroDesde,
+    required this.filtroHasta,
   });
 
   TicketSaleState copyWith({
@@ -36,6 +40,9 @@ class TicketSaleState {
     int? totalElements,
     bool? paginacion,
     String? errorMessage,
+    String? filtroDesde,
+    String? filtroHasta,
+
   }) {
     return TicketSaleState(
       tickets: tickets ?? this.tickets,
@@ -48,6 +55,8 @@ class TicketSaleState {
       totalElements: totalElements ?? this.totalElements,
       paginacion: paginacion ?? this.paginacion,
       errorMessage: errorMessage ?? this.errorMessage,
+      filtroDesde: filtroDesde ?? this.filtroDesde,
+      filtroHasta: filtroHasta ?? this.filtroHasta,
     );
   }
 
@@ -62,5 +71,7 @@ class TicketSaleState {
         totalElements: null,
         paginacion: false,
         errorMessage: null,
+        filtroDesde: null,
+        filtroHasta: null,
       );
 }
