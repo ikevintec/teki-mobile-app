@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/repositories/dashboard_repository_impl.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
-import 'package:intl/intl.dart';
 import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
 
 class TodayReportsSection extends StatefulWidget {
   final int idPuntoVenta;
-
   const TodayReportsSection({super.key, required this.idPuntoVenta});
 
   @override
@@ -19,83 +18,77 @@ class TodayReportsSection extends StatefulWidget {
 }
 
 class _TodayReportsSectionState extends State<TodayReportsSection> {
-  int totalClientes = 0;
-  int totalVentas = 0;
-  List<Map<String, dynamic>> montosPorMoneda = [];
-  bool loading = true;
-
   final DashboardRepositoryImpl dashboardRepository = DashboardRepositoryImpl();
+
+  int? totalClientes;
+  int? totalVentas;
+  List<Map<String, dynamic>>? montosPorMoneda;
+
+  bool loadingClientes = true;
+  bool loadingVentas = true;
+  bool loadingMontos = true;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDashboardData());
+    _loadDataPartial();
   }
 
-  @override
-  void didUpdateWidget(covariant TodayReportsSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.idPuntoVenta != widget.idPuntoVenta) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadDashboardData());
-    }
-  }
+  Future<void> _loadDataPartial() async {
+    final now = DateTime.now();
+    final filtroDesde = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    final filtroHasta = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final dateFormat = DateFormat('dd-MM-yyyy H:mm:ss');
 
-  Future<void> _loadDashboardData() async {
-    if (!mounted) return;
-
-    setState(() => loading = true);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const ScreenLoader(message: 'Cargando información'),
-    );
-
-    try {
-      final clienteResult = await dashboardRepository.getCustomerCount();
-      totalClientes = clienteResult.total;
-    } catch (e) {
-      errorNotification("Error cargando clientes");
-    }
-
-    try {
-      final ventaResult =
-          await dashboardRepository.getSalesCount(widget.idPuntoVenta);
-      totalVentas = ventaResult.total;
-    } catch (e) {
-      errorNotification("Error cargando ventas");
-    }
-
-    try {
-      final now = DateTime.now();
-      final filtroDesde = DateTime(now.year, now.month, now.day, 0, 0, 0);
-      final filtroHasta = DateTime(now.year, now.month, now.day, 23, 59, 59);
-
-      final dateFormat = DateFormat('dd-MM-yyyy H:mm:ss');
-      final formattedDesde = dateFormat.format(filtroDesde);
-      final formattedHasta = dateFormat.format(filtroHasta);
-
-      final resultMontos = await dashboardRepository.getAmountsByCurrency({
-        'filtroEstadoAnulacion': 'false',
-        'filtroDesde': formattedDesde,
-        'filtroHasta': formattedHasta,
-        'idPuntoVenta': widget.idPuntoVenta.toString(),
+    dashboardRepository.getCustomerCount().then((clienteResult) {
+      setState(() {
+        totalClientes = clienteResult.total;
+        loadingClientes = false;
       });
+    }).catchError((_) {
+      errorNotification("Error cargando clientes");
+      setState(() => loadingClientes = false);
+    });
 
-      montosPorMoneda = resultMontos;
-      print(montosPorMoneda);
-    } catch (e) {
-      errorNotification("❌ Error al mostrar la Ventas del Día");
-    }
+    dashboardRepository.getSalesCount(widget.idPuntoVenta).then((ventaResult) {
+      setState(() {
+        totalVentas = ventaResult.total;
+        loadingVentas = false;
+      });
+    }).catchError((_) {
+      errorNotification("Error cargando ventas");
+      setState(() => loadingVentas = false);
+    });
 
-    if (!mounted) return;
-    Navigator.of(context).pop();
-    setState(() => loading = false);
+    dashboardRepository.getAmountsByCurrency({
+      'filtroEstadoAnulacion': 'false',
+      'filtroDesde': dateFormat.format(filtroDesde),
+      'filtroHasta': dateFormat.format(filtroHasta),
+      'idPuntoVenta': widget.idPuntoVenta.toString(),
+    }).then((resultMontos) {
+      setState(() {
+        montosPorMoneda = resultMontos;
+        loadingMontos = false;
+      });
+    }).catchError((_) {
+      errorNotification("❌ Error al mostrar las Ventas del Día");
+      setState(() => loadingMontos = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final allLoading = loadingClientes && loadingVentas && loadingMontos;
+
+    if (allLoading) {
+      return const SizedBox(
+        height: 640, // o el valor que se ajuste a tu UI
+        child: Center(
+          child: ScreenLoader(message: 'Cargando información...'),
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
@@ -144,9 +137,8 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
               children: [
                 buildReports(
                   "Ventas del Día",
-                  loading
-                      ? "..."
-                      : montosPorMoneda.map((m) {
+                  montosPorMoneda != null
+                      ? montosPorMoneda!.map((m) {
                           final moneda = m['codigoMoneda'];
                           final monto = (m['monto'] ?? 0).toStringAsFixed(2);
                           switch (moneda) {
@@ -159,7 +151,8 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                             default:
                               return '$moneda $monto';
                           }
-                        }).join('\n'),
+                        }).join('\n')
+                      : 'No disponible',
                   Colors.white,
                   "assets/icons/icon_svg/sale_service_icon.svg",
                   screenWidth,
@@ -167,7 +160,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 ),
                 buildReports(
                   "Ventas Concretadas",
-                  loading ? "..." : "$totalVentas",
+                  totalVentas != null ? "$totalVentas" : 'No disponible',
                   Colors.white,
                   "assets/icons/icon_svg/purchase_service_icon.svg",
                   screenWidth,
@@ -175,7 +168,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 ),
                 buildReports(
                   "Clientes",
-                  loading ? "..." : "$totalClientes",
+                  totalClientes != null ? "$totalClientes" : 'No disponible',
                   Colors.white,
                   "assets/icons/icon_svg/expenses_icon.svg",
                   screenWidth,
@@ -198,9 +191,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     bool showCurrencySymbol = true,
   }) {
     return GestureDetector(
-      onTap: () {
-        Get.toNamed(AppRoutes.analytics);
-      },
+      onTap: () => Get.toNamed(AppRoutes.analytics),
       child: Container(
         width: screenWidth * 0.27,
         padding: const EdgeInsets.symmetric(vertical: 8),

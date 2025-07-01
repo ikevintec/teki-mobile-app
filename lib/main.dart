@@ -4,7 +4,10 @@ import 'package:teki_app/src/application.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 final ProviderContainer globalContainer = ProviderContainer();
-void main() async{
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
+
+void main() async {
   await Environment.intiEnvironment();
   runApp(
     UncontrolledProviderScope(

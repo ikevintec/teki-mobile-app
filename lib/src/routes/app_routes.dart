@@ -127,6 +127,7 @@ class AppRoutes {
     GetPage(name: dashboard, page: () => const DashboardMainScreen()),
     GetPage(name: forgotPassword, page: () => const ForgotPasswordScreen()),
     GetPage(name: analytics, page: () => const AnalyticsMainScreen()),
+
     GetPage(name: sales, page: () => const SalesMainScreen()),
     GetPage(name: posSales, page: () => const POSSalesMainScreen()),
     GetPage(name: purchase, page: () => const PurchaseMainScreen()),
