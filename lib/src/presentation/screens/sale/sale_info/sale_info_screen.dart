@@ -63,54 +63,25 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   }
 
   Future<void> _selectDate() async {
-    DateTime? _picket = await showDatePicker(
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    DateTime? _picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      initialDate: today,
+      firstDate: today,
       lastDate: DateTime(2100),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.blue, 
+              primary: Colors.blue,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 foregroundColor: Colors.blue,
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (_picket != null) {
-      setState(() {
-        _dateController.text = _picket.toString().split(" ")[0];
-      });
-    }
-  }
-
-  Future<void> _selectDate2() async {
-    DateTime? _picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.blue, // ✅ color azul del encabezado y botones
-              onPrimary: Colors.white, // texto en encabezado
-              onSurface: Colors.black, // texto normal
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blue, // ✅ color de los botones
               ),
             ),
           ),
@@ -228,7 +199,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                           case "Factura":
                                             tipoDocumento = "01";
                                             break;
-                                          case "Nota de credito":
+                                          case "N. credito":
                                             tipoDocumento = "NV";
                                             selectedValue2 = "";
                                             break;
@@ -268,7 +239,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                     validator: (value) {
                                       if (value == null ||
                                           value.trim().isEmpty) {
-                                        return 'Este campo es obligatorio';
+                                        return 'Campo requerido';
                                       }
                                       return null;
                                     },
@@ -322,7 +293,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                         ),
                                         style: const TextStyle(fontSize: 14),
                                         readOnly: true,
-                                        onTap: _selectDate2,
+                                        onTap: null,
                                       ),
                                     ],
                                   ),
@@ -369,7 +340,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                         ),
                                         style: const TextStyle(fontSize: 14),
                                         readOnly: true,
-                                        onTap: _selectDate2,
+                                        onTap: _selectDate,
                                       ),
                                     ],
                                   ),
@@ -574,13 +545,16 @@ TextEditingController otrosAtributos = TextEditingController();
 TextEditingController Ncotizacion = TextEditingController();
 
 void showOtrosDatosModal(BuildContext context) {
-  List<Map<String, String>> otrosCampos = [
-    {"nombre": "", "descripcion": ""}
+  List<Map<String, String>> otrosCampos = [];
+
+  List<Map<String, String>> guiasCampos = [];
+
+  List<Map<String, String>> tiposGuias = [
+    {'label': 'Remitente', 'value': '09'},
+    {'label': 'Transportista', 'value': '11'}
   ];
 
-  List<Map<String, String>> guiasCampos = [
-    {"numero": "", "tipo": "Guía de remisión - Remitente"}
-  ];
+  final formKey = GlobalKey<FormState>();
 
   showGeneralDialog(
     barrierLabel: "Otros Datos",
@@ -626,249 +600,291 @@ void showOtrosDatosModal(BuildContext context) {
                               ),
                             ],
                           ),
-                          Expanded(
-                            child: TabBarView(
-                              children: [
-                                // TAB 1: GUÍAS
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 25, right: 10, top: 8, bottom: 0),
-                                  child: Column(
-                                    children: [
-                                      const SizedBox(height: 3),
-                                      Container(
-                                        padding:
-                                            const EdgeInsets.only(right: 10),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              guiasCampos.add({
-                                                "numero": "",
-                                                "tipo":
-                                                    "Guía de remisión - Remitente"
+                          Form(
+                            key: formKey,
+                            child: Expanded(
+                              child: TabBarView(
+                                children: [
+                                  // TAB 1: GUÍAS
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 25, right: 10, top: 8, bottom: 0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 3),
+                                        Container(
+                                          padding:
+                                              const EdgeInsets.only(right: 10),
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                guiasCampos.add({
+                                                  "numero": "",
+                                                  "tipo":
+                                                      "Guía de remisión-Remitente",
+                                                });
                                               });
-                                            });
-                                          },
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text("Agregar",
+                                            },
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  "Agregar",
                                                   style: GoogleFonts.nunito(
                                                     fontSize: 15,
                                                     fontWeight: FontWeight.w600,
                                                     color: ColorSchema
                                                         .primaryColor,
-                                                  )),
-                                              const Icon(Icons.add,
-                                                  color:
-                                                      ColorSchema.primaryColor,
-                                                  size: 15),
-                                            ],
+                                                  ),
+                                                ),
+                                                const Icon(Icons.add,
+                                                    color: ColorSchema
+                                                        .primaryColor,
+                                                    size: 15),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Expanded(
-                                        child: ListView.builder(
-                                          itemCount: guiasCampos.length,
-                                          itemBuilder: (context, index) {
-                                            return Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 4.0),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: TextFieldSection(
-                                                      label: "Guía de remisión",
-                                                      hint: "",
-                                                      inputType:
-                                                          TextInputType.text,
-                                                      onChanged: (value) {
-                                                        guiasCampos[index]
-                                                            ['numero'] = value;
-                                                      },
-                                                    ),
+                                        const SizedBox(height: 20),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            child: Column(
+                                              children: List.generate(
+                                                  guiasCampos.length, (index) {
+                                                return Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(vertical: 4.0),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: TextFieldSection(
+                                                          label:
+                                                              "Guía de remisión",
+                                                          hint: "",
+                                                          inputType:
+                                                              TextInputType
+                                                                  .text,
+                                                          onChanged: (value) {
+                                                            guiasCampos[index]
+                                                                    ['numero'] =
+                                                                value;
+                                                          },
+                                                          validator: (value) {
+                                                            if (value == null ||
+                                                                value.isEmpty) {
+                                                              return 'Campo requerido';
+                                                            }
+                                                            return null;
+                                                          },
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 5),
+                                                      Expanded(
+                                                        child:
+                                                            DropdownFormFieldSection(
+                                                          label: "Tipo",
+                                                          hint: "",
+                                                          itemsMap: tiposGuias,
+                                                          labelKey: "label",
+                                                          valueKey: "value",
+                                                          selectionItem:
+                                                              guiasCampos[index]
+                                                                      [
+                                                                      'tipo'] ??
+                                                                  "Guía de remisión - Remitente",
+                                                          onChanged: (value) {
+                                                            setState(() {
+                                                              guiasCampos[index]
+                                                                      ['tipo'] =
+                                                                  value ?? '';
+                                                            });
+                                                          },
+                                                        ),
+                                                      ),
+                                                      IconButton(
+                                                        icon: const Icon(
+                                                            Icons.close,
+                                                            color: Colors.red,
+                                                            size: 15),
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            guiasCampos
+                                                                .removeAt(
+                                                                    index);
+                                                          });
+                                                        },
+                                                      ),
+                                                    ],
                                                   ),
-                                                  const SizedBox(width: 5),
-                                                  Expanded(
-                                                    child:
-                                                        DropdownFormFieldSection(
-                                                      label: "Tipo",
-                                                      hint: "",
-                                                      items: [
-                                                        "Guía de remisión-Remitente",
-                                                        "Guía de remisión-Transportista"
-                                                      ],
-                                                      selectionItem: guiasCampos[
-                                                              index]['tipo'] ??
-                                                          "Guía de remisión - Remitente",
-                                                      onChanged: (value) {
-                                                        setState(() {
-                                                          guiasCampos[index]
-                                                                  ['tipo'] =
-                                                              value ?? '';
-                                                        });
-                                                      },
-                                                    ),
-                                                  ),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                        Icons.close,
-                                                        color: Colors.red,
-                                                        size: 15),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        guiasCampos
-                                                            .removeAt(index);
-                                                      });
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
+                                                );
+                                              }),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
 
-                                // TAB 2: OTROS
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 25, right: 10, top: 8, bottom: 0),
-                                  child: Column(
-                                    children: [
-                                      const SizedBox(height: 3),
-                                      Container(
-                                        padding:
-                                            const EdgeInsets.only(right: 10),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              otrosCampos.add({
-                                                "nombre": "",
-                                                "descripcion": ""
+                                  // TAB 2: OTROS
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 25, right: 10, top: 8, bottom: 0),
+                                    child: Column(
+                                      children: [
+                                        const SizedBox(height: 3),
+                                        Container(
+                                          padding:
+                                              const EdgeInsets.only(right: 10),
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                otrosCampos.add({
+                                                  "nombre": "",
+                                                  "descripcion": ""
+                                                });
                                               });
-                                            });
-                                          },
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text("Agregar",
+                                            },
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  "Agregar",
                                                   style: GoogleFonts.nunito(
                                                     fontSize: 15,
                                                     fontWeight: FontWeight.w600,
                                                     color: ColorSchema
                                                         .primaryColor,
-                                                  )),
-                                              const Icon(Icons.add,
-                                                  color:
-                                                      ColorSchema.primaryColor,
-                                                  size: 15),
-                                            ],
+                                                  ),
+                                                ),
+                                                const Icon(Icons.add,
+                                                    color: ColorSchema
+                                                        .primaryColor,
+                                                    size: 15),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Expanded(
-                                        child: ListView.builder(
-                                          itemCount: otrosCampos.length,
-                                          itemBuilder: (context, index) {
-                                            return Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 4.0),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: TextFieldSection(
-                                                      label: "Nombre",
-                                                      hint: "Nombre...",
-                                                      inputType:
-                                                          TextInputType.text,
-                                                      onChanged: (value) {
-                                                        otrosCampos[index]
-                                                            ['nombre'] = value;
-                                                      },
-                                                    ),
+                                        const SizedBox(height: 20),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            child: Column(
+                                              children: List.generate(
+                                                  otrosCampos.length, (index) {
+                                                return Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(vertical: 4.0),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: TextFieldSection(
+                                                          label: "Nombre",
+                                                          hint: "Nombre...",
+                                                          inputType:
+                                                              TextInputType
+                                                                  .text,
+                                                          validator: (value) {
+                                                            if (value == null ||
+                                                                value.isEmpty) {
+                                                              return 'Campo requerido';
+                                                            }
+                                                            return null;
+                                                          },
+                                                          onChanged: (value) {
+                                                            otrosCampos[index]
+                                                                    ['nombre'] =
+                                                                value;
+                                                          },
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: TextFieldSection(
+                                                          label: "Descripción",
+                                                          hint:
+                                                              "Descripción...",
+                                                          inputType:
+                                                              TextInputType
+                                                                  .text,
+                                                          validator: (value) {
+                                                            if (value == null ||
+                                                                value.isEmpty) {
+                                                              return 'Campo requerido';
+                                                            }
+                                                            return null;
+                                                          },
+                                                          onChanged: (value) {
+                                                            otrosCampos[index][
+                                                                    'descripcion'] =
+                                                                value;
+                                                          },
+                                                        ),
+                                                      ),
+                                                      IconButton(
+                                                        icon: const Icon(
+                                                            Icons.close,
+                                                            color: Colors.red,
+                                                            size: 15),
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            otrosCampos
+                                                                .removeAt(
+                                                                    index);
+                                                          });
+                                                        },
+                                                      ),
+                                                    ],
                                                   ),
-                                                  const SizedBox(width: 8),
-                                                  Expanded(
-                                                    child: TextFieldSection(
-                                                      label: "Descripción",
-                                                      hint: "Descripción...",
-                                                      inputType:
-                                                          TextInputType.text,
-                                                      onChanged: (value) {
-                                                        otrosCampos[index][
-                                                                'descripcion'] =
-                                                            value;
-                                                      },
-                                                    ),
-                                                  ),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                        Icons.close,
-                                                        color: Colors.red,
-                                                        size: 15),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        otrosCampos
-                                                            .removeAt(index);
-                                                      });
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
+                                                );
+                                              }),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
 
-                                // TAB 3: OBSERVACIÓN
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 25, right: 10, top: 8, bottom: 0),
-                                  child: Column(
-                                    children: [
-                                      Icon(Icons.more_horiz,
-                                          color: ColorSchema.primaryColor,
-                                          size: 30),
-                                      const SizedBox(height: 10),
-                                      TextFieldSection(
-                                        controller: Observacion,
-                                        label: "Observación",
-                                        hint: "Observación...",
-                                        inputType: TextInputType.text,
-                                        onChanged: (value) {},
-                                      ),
-                                      const SizedBox(height: 20),
-                                      TextFieldSection(
-                                        controller: otrosAtributos,
-                                        label: "Otros tributos",
-                                        hint: "Otros tributos...",
-                                        inputType: TextInputType.text,
-                                        onChanged: (value) {},
-                                      ),
-                                      const SizedBox(height: 20),
-                                      TextFieldSection(
-                                        controller: Ncotizacion,
-                                        label: "N. cotización",
-                                        hint: "N. cotización...",
-                                        inputType: TextInputType.number,
-                                        onChanged: (value) {},
-                                      ),
-                                    ],
+                                  // TAB 3: OBSERVACIÓN
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 25, right: 10, top: 8, bottom: 0),
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.more_horiz,
+                                            color: ColorSchema.primaryColor,
+                                            size: 30),
+                                        const SizedBox(height: 10),
+                                        TextFieldSection(
+                                          controller: Observacion,
+                                          label: "Observación",
+                                          hint: "Observación...",
+                                          inputType: TextInputType.text,
+                                          onChanged: (value) {},
+                                        ),
+                                        const SizedBox(height: 20),
+                                        TextFieldSection(
+                                          controller: otrosAtributos,
+                                          label: "Otros tributos",
+                                          hint: "Otros tributos...",
+                                          inputType: TextInputType.text,
+                                          onChanged: (value) {},
+                                        ),
+                                        const SizedBox(height: 20),
+                                        TextFieldSection(
+                                          controller: Ncotizacion,
+                                          label: "N. cotización",
+                                          hint: "N. cotización...",
+                                          inputType: TextInputType.number,
+                                          onChanged: (value) {},
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -893,22 +909,28 @@ void showOtrosDatosModal(BuildContext context) {
                                 const SizedBox(width: 20),
                                 ElevatedButton(
                                   onPressed: () {
-                                    Navigator.pop(context);
-                                    print("Observación: ${Observacion.text}");
-                                    print(
-                                        "Otros Atributos: ${otrosAtributos.text}");
-                                    print("Observación: ${Ncotizacion.text}");
-                                    print("Guías:");
-                                    for (var guia in guiasCampos) {
+                                    if (formKey.currentState!.validate()) {
+                                      Navigator.pop(context);
+                                      print("Observación: ${Observacion.text}");
                                       print(
-                                          "- ${guia['numero']} [${guia['tipo']}]");
-                                    }
-                                    print("Otros:");
-                                    for (var campo in otrosCampos) {
+                                          "Otros Atributos: ${otrosAtributos.text}");
                                       print(
-                                          "- ${campo['nombre']}: ${campo['descripcion']}");
+                                          "N. cotización: ${Ncotizacion.text}");
+                                      print("Guías:");
+                                      for (var guia in guiasCampos) {
+                                        print(
+                                            "- ${guia['numero']} [${guia['tipo']}]");
+                                      }
+                                      print("Otros:");
+                                      for (var campo in otrosCampos) {
+                                        print(
+                                            "- ${campo['nombre']}: ${campo['descripcion']}");
+                                      }
+                                      ResetearCampos();
+                                    } else {
+                                      // Opcional: puedes mostrar un snackbar u otro aviso
+                                      print("Hay campos vacíos en 'Otros'");
                                     }
-                                    ResetearCampos();
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: ColorSchema.primaryColor,
