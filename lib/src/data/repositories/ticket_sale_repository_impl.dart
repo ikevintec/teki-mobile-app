@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/teki_model/totalesFormaPagos.dart';
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
 import 'package:teki_app/src/data/datasource/remote_ticket_sale.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
@@ -39,5 +40,43 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
   @override
   Future<List<Ticket>> searchTickets(Map<String, dynamic> params) {
     throw UnimplementedError(); // Implementar cuando lo necesites
+  }
+
+  @override
+  Future<List<Ticket>> getComprobantes({
+    required String filtroDesde,
+    required String filtroHasta,
+    required String rucEmisor,
+    required int idPuntoVenta,
+    required int idVendedor,
+    required int page,
+    required int size,
+  }) {
+    return datasource.getComprobantes(
+      filtroDesde: filtroDesde,
+      filtroHasta: filtroHasta,
+      rucEmisor: rucEmisor,
+      idPuntoVenta: idPuntoVenta,
+      idVendedor: idVendedor,
+      page: page,
+      size: size,
+    );
+  }
+
+  @override
+  Future<List<PaymentMethodTotal>> getTotalesPorFormaPago({
+    required String filtroDesde,
+    required String filtroHasta,
+    required String filtroRucEmisor,
+    required int idPuntoVenta,
+    required int idVendedor,
+  }) {
+    return datasource.getTotalesPorFormaPago(
+      filtroDesde: filtroDesde,
+      filtroHasta: filtroHasta,
+      filtroRucEmisor: filtroRucEmisor,
+      idPuntoVenta: idPuntoVenta,
+      idVendedor: idVendedor,
+    );
   }
 }

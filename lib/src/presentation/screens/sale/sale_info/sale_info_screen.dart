@@ -20,7 +20,7 @@ class SaleInfoScreen extends ConsumerStatefulWidget {
 }
 
 class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
-  List<String> productTypeLote = ["Boleta", "Factura", "N. credito"];
+  List<String> productTypeLote = ["Boleta", "Factura", "Nota"];
   String selectedType = "Boleta";
   String tipoDocumento = "03";
   String vendedor = "";
@@ -51,6 +51,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     final ticketNotifier = ref.read(ticketSaleProvider.notifier);
     final series =
         await ticketNotifier.obtenerNumerosSeries(officeId, tipoDocumento);
+    print(series);
 
     setState(() {
       seriesDisponibles = series;
@@ -72,7 +73,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.blue, 
+              primary: Colors.blue,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -228,7 +229,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                           case "Factura":
                                             tipoDocumento = "01";
                                             break;
-                                          case "Nota de credito":
+                                          case "Nota":
                                             tipoDocumento = "NV";
                                             selectedValue2 = "";
                                             break;
