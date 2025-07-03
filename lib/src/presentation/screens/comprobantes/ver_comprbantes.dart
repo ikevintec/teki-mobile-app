@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesFormaPagos.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/list_comprobantes.dart';
@@ -174,7 +175,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
     );
   }
 
-  Future<List<PaymentMethodTotal>> _fetchTotales() async {
+  Future<List<TotalesPorMoneda>> _fetchTotales() async {
     final desde = ref.watch(filtroDesdeProvider);
     final hasta = ref.watch(filtroHastaProvider);
 
@@ -190,7 +191,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
 
     final repo = TicketSaleRepositoryImpl();
 
-    return await repo.datasource.getTotalesPorFormaPago(
+    return await repo.getTotalesPorMoneda(
       filtroDesde: filtroDesde,
       filtroHasta: filtroHasta,
       filtroRucEmisor: ruc,
@@ -200,7 +201,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
   }
 
   Widget _buildTotalesSection() {
-    return FutureBuilder<List<PaymentMethodTotal>>(
+    return FutureBuilder<List<TotalesPorMoneda>>(
       future: _fetchTotales(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -234,6 +235,12 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: items.map((item) {
+              final total = item.totalFacturas +
+                  item.totalBoletas +
+                  item.totalNotasVenta -
+                  item.totalNotasCredito +
+                  item.totalNotasDebito;
+
               return RichText(
                 text: TextSpan(
                   style: GoogleFonts.raleway(
@@ -247,7 +254,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
                     ),
                     TextSpan(
                       text:
-                          '${simbolo(item.codigoMoneda)} ${item.monto.toStringAsFixed(2)}',
+                          '${simbolo(item.codigoMoneda)} ${total.toStringAsFixed(2)}',
                     ),
                   ],
                 ),

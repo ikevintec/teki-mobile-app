@@ -35,6 +35,18 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   bool _isInitialLoading = true;
+  String getNombreComprobante(String? tipo) {
+    switch (tipo) {
+      case '01':
+        return 'FACTURA';
+      case '03':
+        return 'BOLETA';
+      case 'NV':
+        return 'NOTA DE VENTA';
+      default:
+        return 'COMPROBANTE';
+    }
+  }
 
   DateTime? _currentDesde;
   DateTime? _currentHasta;
@@ -114,10 +126,11 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
         _currentHasta = hasta;
       });
     } catch (e) {
-      errorNotification("Error al obtener los comprobantes: $e");
+      errorNotification("Error al obtener los comprobantes");
       setState(() {
         _isInitialLoading = false;
         _isLoadingMore = false;
+        _hasMore = false; // ← importante para que deje de intentar cargar más
       });
     }
   }
@@ -165,7 +178,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
               color: ColorSchema.primaryColor,
             ),
             title: Text(
-              '${ticket.serie ?? '--'} - ${ticket.numero ?? '--'}',
+              '${ticket.serie ?? '--'} - ${ticket.numero ?? '--'} - ${getNombreComprobante(ticket.tipoComprobante)}',
               style: GoogleFonts.raleway(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,

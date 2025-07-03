@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesFormaPagos.dart';
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
@@ -193,12 +194,12 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
     } on DioException catch (e) {
       final message =
           e.response?.data['message'] ?? e.message ?? 'Error de conexión';
-      errorNotification("Error al obtener comprobantes 1: $message");
+      print("Error al obtener comprobantes 1: $message");
       return Future.error(message);
     } catch (e, stack) {
       print("❌ Excepción: $e");
       print("📍 Stack: $stack");
-      errorNotification("Error al obtener comprobantes 2: $e");
+      print("Error al obtener comprobantes 2: $e");
       return Future.error(e.toString());
     }
   }
@@ -252,6 +253,59 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       print("❌ Excepción: $e");
       print("📍 Stack: $stack");
       errorNotification("Error al obtener totales por forma de pago 2: $e");
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<List<TotalesPorMoneda>> getTotalesPorMoneda({
+    required String filtroDesde,
+    required String filtroHasta,
+    required String filtroRucEmisor,
+    required int idPuntoVenta,
+    required int idVendedor,
+  }) async {
+    try {
+      final response = await dio.get(
+        '/tickets/operations/totales',
+        queryParameters: {
+          'filtroCanal': 'PLATFORM',
+          'pageNumber': '0',
+          'perPage': '10',
+          'filtroDesde': filtroDesde,
+          'filtroHasta': filtroHasta,
+          'filtroRucEmisor': filtroRucEmisor,
+          'idPuntoVenta': idPuntoVenta,
+          'idVendedor': idVendedor,
+          'sortOrder': '1',
+          'porDetalle': 'false',
+        },
+      );
+
+      final List<dynamic> content = response.data;
+
+      return content
+          .map((json) {
+            try {
+              final fixedJson = Map<String, dynamic>.from(json);
+              return TotalesPorMoneda.fromJson(fixedJson);
+            } catch (e) {
+              print("❌ Error al convertir un total por moneda: $e");
+              print("💰 Datos problemáticos: $json");
+              return null;
+            }
+          })
+          .whereType<TotalesPorMoneda>()
+          .toList();
+    } on DioException catch (e) {
+      final message =
+          e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      errorNotification("Error al obtener totales por moneda 1: $message");
+      return Future.error(message);
+    } catch (e, stack) {
+      print("❌ Excepción: $e");
+      print("📍 Stack: $stack");
+      errorNotification("Error al obtener totales por moneda 2: $e");
       return Future.error(e.toString());
     }
   }

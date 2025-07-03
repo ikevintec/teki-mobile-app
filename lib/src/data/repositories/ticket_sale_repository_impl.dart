@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesFormaPagos.dart';
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
 import 'package:teki_app/src/data/datasource/remote_ticket_sale.dart';
@@ -72,6 +73,23 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
     required int idVendedor,
   }) {
     return datasource.getTotalesPorFormaPago(
+      filtroDesde: filtroDesde,
+      filtroHasta: filtroHasta,
+      filtroRucEmisor: filtroRucEmisor,
+      idPuntoVenta: idPuntoVenta,
+      idVendedor: idVendedor,
+    );
+  }
+
+  @override
+  Future<List<TotalesPorMoneda>> getTotalesPorMoneda({
+    required String filtroDesde,
+    required String filtroHasta,
+    required String filtroRucEmisor,
+    required int idPuntoVenta,
+    required int idVendedor,
+  }) {
+    return datasource.getTotalesPorMoneda(
       filtroDesde: filtroDesde,
       filtroHasta: filtroHasta,
       filtroRucEmisor: filtroRucEmisor,

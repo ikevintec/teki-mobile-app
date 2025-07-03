@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesFormaPagos.dart';
 import 'package:teki_app/src/data/models/response/ticket_sale_serie_numero.dart';
 
@@ -35,6 +36,14 @@ abstract class TicketsSaleRepository {
 
   /// Obtiene los totales agrupados por forma de pago
   Future<List<PaymentMethodTotal>> getTotalesPorFormaPago({
+    required String filtroDesde,
+    required String filtroHasta,
+    required String filtroRucEmisor,
+    required int idPuntoVenta,
+    required int idVendedor,
+  });
+
+  Future<List<TotalesPorMoneda>> getTotalesPorMoneda({
     required String filtroDesde,
     required String filtroHasta,
     required String filtroRucEmisor,
