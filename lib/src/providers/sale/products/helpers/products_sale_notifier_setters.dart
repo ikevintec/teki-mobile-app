@@ -219,7 +219,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     final tc = state.tipoComprobante;
     final porcentajeDescuentoGlobal = state.porcentajeDescuentoGlobal ?? 0.0;
     final porcentajeOtrosCargos = null;
-    Ticket ticket = Ticket();
+    Ticket ticket = ref.read(ticketProvider).ticket;
     ticket = ticket.copyWith(
       totalValorVentaExonerada: 0,
       totalValorVentaExportacion: 0,
@@ -237,7 +237,6 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       descuentoGlobal: 0,
       montoBaseDescuento: 0,
       totalTributosBolsas: 0,
-      otrosCargos: 0,
       montoBaseRetencion: 0,
       montoRetencion: 0,
       montoDetraccion: 0,
@@ -442,10 +441,6 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           'Precio VentaUnitario Venta: ${ticketDetailToUpdate.precioVentaUnitario}, '
           'Precio Total: ${ticketDetailToUpdate.precioTotal}');
     }
-    final otrosTributos = state.otrosTributos ?? 0.0;
-    ticket = ticket.copyWith(
-      otrosTributos: otrosTributos,
-    );
     if (porcentajeDescuentoGlobal > 0) {
       final pordesGlobal = porcentajeDescuentoGlobal / 100;
       if (ticket.totalValorVentaGravada != null) {
@@ -525,11 +520,11 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           ticket.totalValorVentaInafecta! +
           ticket.totalValorVentaExonerada! +
           ticket.totalValorVentaExportacion! +
-          ticket.totalIsc! +
-          ticket.totalIgv! +
-          ticket.totalTributosBolsas! +
-          ticket.otrosCargos! +
-          otrosTributos,
+          (ticket.totalIsc ?? 0)+
+          (ticket.totalIgv ?? 0) +
+          (ticket.totalTributosBolsas ?? 0)+
+          (ticket.otrosCargos ?? 0) +
+          (ticket.otrosTributos ?? 0),
     );
     if (state.flagRetencion) {
       ticket = ticket.copyWith(

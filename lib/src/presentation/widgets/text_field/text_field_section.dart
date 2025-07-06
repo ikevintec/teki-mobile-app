@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/utils/contstants.dart';
 
 class TextFieldSection extends StatelessWidget {
   final String label;
   final String hint;
-  final dynamic inputType;
+  final TextInputType inputType;
   final String? initialValue;
   final Function(String)? onChanged;
   final bool enabled;
@@ -16,6 +16,7 @@ class TextFieldSection extends StatelessWidget {
   final bool showBorders;
   final double? paddingHorinzontal;
   final double? fontSize;
+  final List<TextInputFormatter>? inputFormatters;
 
 
 
@@ -34,6 +35,7 @@ class TextFieldSection extends StatelessWidget {
     this.showBorders = true,
     this.paddingHorinzontal = 10,
     this.fontSize = 15,
+    this.inputFormatters
   });
 
   @override
@@ -43,6 +45,7 @@ class TextFieldSection extends StatelessWidget {
       enabled: enabled,
       readOnly: isReadOnly,
       controller: controller,
+        inputFormatters: inputType == TextInputType.number &&  (inputFormatters ?? []).isEmpty ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))] : inputFormatters,
       style: GoogleFonts.nunito(
         fontWeight: FontWeight.w600,
         fontSize: fontSize,

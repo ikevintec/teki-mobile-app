@@ -1,4 +1,3 @@
-
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 
 class AditionalField {
@@ -37,12 +36,18 @@ class AditionalField {
         ticket: json['ticket'] != null ? Ticket.fromJson(json['ticket']) : null,
         modificado: json['modificado'],
         eliminado: json['eliminado'],
-        createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+        createdOn: json['createdOn'] != null
+            ? DateTime.parse(json['createdOn'])
+            : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+        updatedOn: json['updatedOn'] != null
+            ? DateTime.parse(json['updatedOn'])
+            : null,
         deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+        deletedOn: json['deletedOn'] != null
+            ? DateTime.parse(json['deletedOn'])
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -59,4 +64,34 @@ class AditionalField {
         'deleteBy': deleteBy,
         'deletedOn': deletedOn?.toIso8601String(),
       };
+
+  AditionalField copyWith({
+    int? id,
+    String? valorCampo,
+    String? nombreCampo,
+    Ticket? ticket,
+    bool? modificado,
+    bool? eliminado,
+    DateTime? createdOn,
+    int? createdBy,
+    int? updatedBy,
+    DateTime? updatedOn,
+    int? deleteBy,
+    DateTime? deletedOn,
+  }) {
+    return AditionalField(
+      id: id ?? this.id,
+      valorCampo: valorCampo ?? this.valorCampo,
+      nombreCampo: nombreCampo ?? this.nombreCampo,
+      ticket: ticket ?? this.ticket,
+      modificado: modificado ?? this.modificado,
+      eliminado: eliminado ?? this.eliminado,
+      createdOn: createdOn ?? this.createdOn,
+      createdBy: createdBy ?? this.createdBy,
+      updatedBy: updatedBy ?? this.updatedBy,
+      updatedOn: updatedOn ?? this.updatedOn,
+      deleteBy: deleteBy ?? this.deleteBy,
+      deletedOn: deletedOn ?? this.deletedOn,
+    );
+  }
 }

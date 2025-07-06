@@ -84,6 +84,24 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       ),
                     ],
                   ),
+                  if (isExpanded)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Otros tributos",
+                        style: TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.otrosTributos ?? 0).toStringAsFixed(2)}",
+                        style: TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 if (isExpanded)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
