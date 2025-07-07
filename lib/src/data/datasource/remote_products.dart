@@ -99,8 +99,6 @@ class RemoteProducts extends ProductsDatasource {
     } catch (e) {
       return Future.error(e.toString());
     }
-    // TODO: implement getCurrency
-    throw UnimplementedError();
   }
 
   @override

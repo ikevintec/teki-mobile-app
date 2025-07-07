@@ -139,7 +139,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   @override
   Widget build(BuildContext context) {
     // final config = ref.watch(sesionProvider);
-    final ticketNotifier = ref.read(ticketSaleProvider.notifier);
+    ref.read(ticketSaleProvider.notifier);
     //final ticketState = ref.watch(ticketSaleProvider);
     // String? _selectedCurrency;
     return Scaffold(

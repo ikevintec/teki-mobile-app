@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesFormaPagos.dart';
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';

@@ -26,7 +26,7 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       // Extrae solo los valores del campo "numero" como String
       final List<String> numeros = rawList
           .map((item) => item['numero']?.toString())
-          .where((numero) => numero != null && numero!.isNotEmpty)
+          .where((numero) => numero != null && numero.isNotEmpty)
           .cast<String>()
           .toList();
 
