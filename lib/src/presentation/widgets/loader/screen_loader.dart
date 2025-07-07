@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class ScreenLoader extends StatelessWidget {
@@ -8,17 +9,18 @@ class ScreenLoader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorSchema.primaryColor, // Suave fondo temático
+      backgroundColor: ColorSchema.primaryColor,
       body: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
+                blurRadius: 25,
                 offset: const Offset(0, 10),
               ),
             ],
@@ -35,7 +37,7 @@ class ScreenLoader extends StatelessWidget {
               Text(
                 message ?? "Cargando...",
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: GoogleFonts.raleway(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,

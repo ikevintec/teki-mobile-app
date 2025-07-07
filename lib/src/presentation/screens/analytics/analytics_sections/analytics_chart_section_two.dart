@@ -1,233 +1,266 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'package:teki_app/src/data/models/teki_model/monthlySales.dart';
+import 'package:teki_app/src/domain/repositories/monthlySales_repository.dart';
+import 'package:teki_app/src/data/repositories/monthlysales_impl.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
-class LegendElement {
-  final String label;
-  final Color color;
+class AnalyticsChartSectionTwo extends StatefulWidget {
+  final int id;
 
-  LegendElement.created(this.label, this.color);
-}
+  const AnalyticsChartSectionTwo({super.key, required this.id});
 
-class LegendsListWidget extends StatelessWidget {
-  final List<LegendElement> legends;
-
-  const LegendsListWidget({super.key, required this.legends});
+  final List<Color> barColors = const [
+    Color(0xFF4A80E9), // Facturas
+    Color(0xFF44DF9D), // Boletas
+    Color(0xFFFFA641), // Notas de Venta
+    Color(0xFFEF476F), // Notas de Crédito
+    Color(0xFF6A4C93), // Notas de Débito
+  ];
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: legends.map((legend) {
-        return Row(
-          children: [
-            Container(
-              width: 16,
-              height: 16,
-              color: legend.color,
-            ),
-            const SizedBox(width: 4),
-            Text(legend.label),
-          ],
-        );
-      }).toList(),
-    );
-  }
+  State<AnalyticsChartSectionTwo> createState() =>
+      _AnalyticsChartSectionTwoState();
 }
 
-class AnalyticsChartSectionTwo extends StatelessWidget {
-  const AnalyticsChartSectionTwo({super.key});
+class _AnalyticsChartSectionTwoState extends State<AnalyticsChartSectionTwo> {
+  final double width = 8;
+  final MonthlySalesRepository repository = MonthlySalesRepositoryImpl();
 
-  final pilateColor = const Color(0xFFFFA641);
-  final cyclingColor = const Color(0xFF44DF9D);
-  final quickWorkoutColor = const Color(0xFF4A80E9);
-  final betweenSpace = 0.2;
+  late Future<List<MonthlySales>> futureSales;
 
-  BarChartGroupData generateGroupData(
-      int x, double pilates, double quickWorkout, double cycling) {
-    return BarChartGroupData(
-      x: x,
-      groupVertically: true,
-      barRods: [
-        BarChartRodData(
-          fromY: 0,
-          toY: pilates,
-          color: pilateColor,
-          width: 8,
-        ),
-        BarChartRodData(
-          fromY: pilates + betweenSpace,
-          toY: pilates + betweenSpace + quickWorkout,
-          color: quickWorkoutColor,
-          width: 8,
-        ),
-        BarChartRodData(
-          fromY: pilates + betweenSpace + quickWorkout + betweenSpace,
-          toY: pilates + betweenSpace + quickWorkout + betweenSpace + cycling,
-          color: cyclingColor,
-          width: 8,
-        ),
-      ],
-    );
+  @override
+  void initState() {
+    super.initState();
+    futureSales = repository.getSales(widget.id);
   }
 
-  Widget bottomTitles(double value, TitleMeta meta) {
-    final style = GoogleFonts.nunito(
-        textStyle: const TextStyle(
-      color: Color(0xff7589a2),
-      fontWeight: FontWeight.bold,
-      fontSize: 10,
-    ));
-    String text;
-    switch (value.toInt()) {
-      case 0:
-        text = 'JAN';
-        break;
-      case 1:
-        text = 'FEB';
-        break;
-      case 2:
-        text = 'MAR';
-        break;
-      case 3:
-        text = 'APR';
-        break;
-      case 4:
-        text = 'MAY';
-        break;
-      case 5:
-        text = 'JUN';
-        break;
-      case 6:
-        text = 'JUL';
-        break;
-      case 7:
-        text = 'AUG';
-        break;
-      case 8:
-        text = 'SEP';
-        break;
-      case 9:
-        text = 'OCT';
-        break;
-      case 10:
-        text = 'NOV';
-        break;
-      case 11:
-        text = 'DEC';
-        break;
-      default:
-        text = '';
+  @override
+  void didUpdateWidget(covariant AnalyticsChartSectionTwo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.id != widget.id) {
+      setState(() {
+        futureSales = repository.getSales(widget.id);
+      });
     }
-    return SideTitleWidget(
-      meta: TitleMeta(
-        axisSide: meta.axisSide,
-        min: 0.1,
-        max: 11.1,
-        parentAxisSize: meta.parentAxisSize,
-        axisPosition: meta.axisPosition,
-        appliedInterval: meta.appliedInterval,
-        sideTitles: meta.sideTitles,
-        rotationQuarterTurns: meta.rotationQuarterTurns,
-        formattedValue: text
-      ),
-      space: 4,
-      angle: 0,
-      child: Text(text, style: style),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Activity',
-            style: GoogleFonts.raleway(
-                textStyle: TextStyle(
-              color: ColorSchema.primaryColor.withOpacity(0.7),
-              fontSize: MediaQuery.of(context).size.width * 0.045,
-              fontWeight: FontWeight.bold,
-            )),
-          ),
-          const SizedBox(height: 8),
-          LegendsListWidget(
-            legends: [
-              LegendElement.created(
-                'Pilates     ',
-                pilateColor,
+    return FutureBuilder<List<MonthlySales>>(
+      future: futureSales,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        final data = snapshot.data ?? [];
+
+        if (data.isEmpty) {
+          return const Center(child: Text('No hay datos para mostrar.'));
+        }
+
+        final rawBarGroups = List.generate(data.length, (index) {
+          final item = data[index];
+
+          return BarChartGroupData(
+            x: index,
+            barsSpace: 2,
+            barRods: [
+              BarChartRodData(
+                toY: item.totalFacturas.toDouble(),
+                color: widget.barColors[0],
+                width: width,
               ),
-              LegendElement.created('Quick workouts    ', quickWorkoutColor),
-              LegendElement.created('Cycling     ', cyclingColor),
+              BarChartRodData(
+                toY: item.totalBoletas.toDouble(),
+                color: widget.barColors[1],
+                width: width,
+              ),
+              BarChartRodData(
+                toY: item.totalNotasVenta.toDouble(),
+                color: widget.barColors[2],
+                width: width,
+              ),
+              BarChartRodData(
+                toY: item.totalNotasCredito.toDouble(),
+                color: widget.barColors[3],
+                width: width,
+              ),
+              BarChartRodData(
+                toY: item.totalNotasDebito.toDouble(),
+                color: widget.barColors[4],
+                width: width,
+              ),
             ],
-          ),
-          const SizedBox(height: 14),
-          AspectRatio(
-            aspectRatio: 2,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceBetween,
-                titlesData: FlTitlesData(
-                  leftTitles: const AxisTitles(),
-                  rightTitles: const AxisTitles(),
-                  topTitles: const AxisTitles(),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: bottomTitles,
-                      reservedSize: 20,
+          );
+        });
+
+        return AspectRatio(
+          aspectRatio: 1.3,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Center(
+                  child: Text(
+                    'Ventas por Mes',
+                    style: GoogleFonts.raleway(
+                      textStyle: TextStyle(
+                        color: ColorSchema.primaryColor.withOpacity(0.8),
+                        fontSize: MediaQuery.of(context).size.width * 0.06,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
                     ),
                   ),
                 ),
-                barTouchData: BarTouchData(enabled: true),
-                borderData: FlBorderData(show: false),
-                gridData: const FlGridData(show: true),
-                barGroups: [
-                  generateGroupData(0, 2, 3, 2),
-                  generateGroupData(1, 2, 5, 1.7),
-                  generateGroupData(2, 1.3, 3.1, 2.8),
-                  generateGroupData(3, 3.1, 4, 3.1),
-                  generateGroupData(4, 0.8, 3.3, 3.4),
-                  generateGroupData(5, 2, 5.6, 1.8),
-                  generateGroupData(6, 1.3, 3.2, 2),
-                  generateGroupData(7, 2.3, 3.2, 3),
-                  generateGroupData(8, 2, 4.8, 2.5),
-                  generateGroupData(9, 1.2, 3.2, 2.5),
-                  generateGroupData(10, 1, 4.8, 3),
-                  generateGroupData(11, 2, 4.4, 2.8),
-                ],
-                maxY: 11 + (betweenSpace * 3),
-                extraLinesData: ExtraLinesData(
-                  horizontalLines: [
-                    HorizontalLine(
-                      y: 3.3,
-                      color: pilateColor,
-                      strokeWidth: 1,
-                      dashArray: [20, 4],
+                const SizedBox(height: 20),
+                Expanded(
+                  child: BarChart(
+                    BarChartData(
+                      maxY: _calculateMaxY(data),
+                      barTouchData: BarTouchData(
+                        touchTooltipData: BarTouchTooltipData(
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            final labels = [
+                              'Facturas',
+                              'Boletas',
+                              'Notas de Venta',
+                              'Notas de Crédito',
+                              'Notas de Débito'
+                            ];
+                            return BarTooltipItem(
+                              '${labels[rodIndex]}\n${rod.toY.toStringAsFixed(2)}',
+                              GoogleFonts.nunito(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 42,
+                            getTitlesWidget: (value, meta) {
+                              if (value.toInt() < data.length) {
+                                return SideTitleWidget(
+                                  meta: meta,
+                                  space: 8,
+                                  child: Text(
+                                    data[value.toInt()].periodo,
+                                    style: GoogleFonts.nunito(fontSize: 11),
+                                  ),
+                                );
+                              }
+                              return const SizedBox();
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                            interval: _getInterval(data),
+                            getTitlesWidget: (value, meta) {
+                              final text = value >= 1000
+                                  ? '${(value / 1000).toStringAsFixed(0)}K'
+                                  : value.toStringAsFixed(0);
+                              return SideTitleWidget(
+                                meta: meta,
+                                child: Text(
+                                  text,
+                                  style: GoogleFonts.nunito(fontSize: 11),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      gridData: FlGridData(
+                        show: true,
+                        drawHorizontalLine: true,
+                        horizontalInterval: _getInterval(data),
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: Colors.grey.withOpacity(0.3),
+                          strokeWidth: 1,
+                          dashArray: [4, 4],
+                        ),
+                        drawVerticalLine: false,
+                      ),
+                      borderData: FlBorderData(show: false),
+                      barGroups: rawBarGroups,
                     ),
-                    HorizontalLine(
-                      y: 8,
-                      color: quickWorkoutColor,
-                      strokeWidth: 1,
-                      dashArray: [20, 4],
-                    ),
-                    HorizontalLine(
-                      y: 11,
-                      color: cyclingColor,
-                      strokeWidth: 1,
-                      dashArray: [20, 4],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                Center(child: makeLegend()),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+
+  double _calculateMaxY(List<MonthlySales> data) {
+    return data
+            .map((e) => [
+                  e.totalFacturas,
+                  e.totalBoletas,
+                  e.totalNotasVenta,
+                  e.totalNotasCredito,
+                  e.totalNotasDebito,
+                ].reduce((a, b) => a > b ? a : b))
+            .reduce((a, b) => a > b ? a : b) *
+        1.2;
+  }
+
+  double _getInterval(List<MonthlySales> data) {
+    final maxY = _calculateMaxY(data);
+    if (maxY > 50000) return 10000;
+    if (maxY > 10000) return 2000;
+    if (maxY > 5000) return 1000;
+    if (maxY > 1000) return 500;
+    if (maxY > 100) return 50;
+    return 10;
+  }
+
+  Widget makeLegend() {
+    final labels = [
+      'Facturas',
+      'Boletas',
+      'Notas Venta',
+      'Notas Crédito',
+      'Notas Débito'
+    ];
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 10,
+      children: List.generate(labels.length, (index) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 10, height: 10, color: widget.barColors[index]),
+            const SizedBox(width: 4),
+            Text(labels[index], style: GoogleFonts.nunito(fontSize: 12)),
+          ],
+        );
+      }),
     );
   }
 }

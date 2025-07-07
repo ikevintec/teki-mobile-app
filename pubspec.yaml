@@ -38,6 +38,9 @@ dependencies:
   shared_preferences: ^2.5.3
   sidebarx: ^0.17.1
   url_launcher: ^6.3.1
+  intl: ^0.20.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.3
