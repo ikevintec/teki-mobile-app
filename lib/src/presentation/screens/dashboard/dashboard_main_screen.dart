@@ -9,9 +9,6 @@ import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/s
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/today_reports_section.dart';
 import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
-
-import 'package:teki_app/src/application.dart'; // Asegúrate de importar donde declaraste `routeObserver`
 
 class DashboardMainScreen extends ConsumerStatefulWidget {
   const DashboardMainScreen({super.key});

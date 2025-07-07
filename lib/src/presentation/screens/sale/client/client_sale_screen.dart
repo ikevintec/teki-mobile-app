@@ -300,7 +300,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 //maxLength: 100,
                                 onChanged:
                                     (_) {}, // Puedes manejar cambios si es necesario
-                                validator: (value) {},
+                                validator: (value) {
+                                  return null;
+                                },
                               ),
 
                               const SizedBox(height: 18),
@@ -313,7 +315,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 //maxLength: 100,
                                 onChanged:
                                     (_) {}, // Puedes manejar cambios si lo necesitas
-                                validator: (value) {},
+                                validator: (value) {
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 20),
                               TextFieldSection(
@@ -325,7 +329,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 //maxLength: 9,
                                 onChanged:
                                     (_) {}, // Puedes enlazar lógica aquí si lo necesitas
-                                validator: (value) {},
+                                validator: (value) {
+                                  return null;
+                                },
                               ),
                             ],
                           ),

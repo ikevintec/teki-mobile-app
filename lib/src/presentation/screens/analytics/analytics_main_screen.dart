@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_chart_section.dart';
 import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_chart_section_two.dart';
 import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_reports_section.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/providers/auth/login.dart';
-import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+
 
 class AnalyticsMainScreen extends ConsumerStatefulWidget {
   const AnalyticsMainScreen({super.key});
@@ -35,7 +31,6 @@ class _AnalyticsMainScreenState extends ConsumerState<AnalyticsMainScreen> {
     final id = selectedOfficeLocal?.id ?? 0;
 
     final puntosVenta = config.offices;
-    final puntoVentaNombre = selectedOfficeLocal?.nombre ?? 'No definido';
 
     return Scaffold(
       appBar: const PreferredSize(
