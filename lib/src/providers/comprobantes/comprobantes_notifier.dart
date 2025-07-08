@@ -1,6 +1,7 @@
 // tickets_sale_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
@@ -8,15 +9,17 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
 
-final comprobantesSaleProvider = StateNotifierProvider<ComprobantesNotifier, ComprobantesState>((ref) {
+final comprobantesSaleProvider =
+    StateNotifierProvider<ComprobantesNotifier, ComprobantesState>((ref) {
   final repo = TicketSaleRepositoryImpl();
-  return ComprobantesNotifier(repository: repo,ref:ref);
+  return ComprobantesNotifier(repository: repo, ref: ref);
 });
 
 class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
   final TicketsSaleRepository repository;
   final Ref ref;
-  ComprobantesNotifier({required this.repository, required this.ref}) : super(ComprobantesState.initial());
+  ComprobantesNotifier({required this.repository, required this.ref})
+      : super(ComprobantesState.initial());
 
   Future<void> fetchInitialTickets({
     required String filtroDesde,
@@ -39,8 +42,8 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
 
     await fetchMoreTickets();
   }
-  Future<void> loadFirstPage(String desde, String hasta) async{
-    
+
+  Future<void> loadFirstPage(String desde, String hasta) async {
     state = state.copyWith(
       filtroDesde: desde,
       filtroHasta: hasta,
@@ -54,7 +57,9 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
     );
 
     try {
-      final newTickets = await repository.getComprobantes(buildComprobanteQueryParams(state));
+      final newTickets =
+          await repository.getComprobantes(buildComprobanteQueryParams(state));
+      await getTotales();
 
       state = state.copyWith(
         isLoading: false,
@@ -65,7 +70,7 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
       );
     } catch (e) {
       errorNotification("Error al cargar comprobantes: $e");
-    }finally {
+    } finally {
       state = state.copyWith(isLoading: false);
     }
   }
@@ -75,9 +80,9 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
 
     state = state.copyWith(isLoading: true);
 
-
     try {
-      final newTickets = await repository.getComprobantes(buildComprobanteQueryParams(state));
+      final newTickets =
+          await repository.getComprobantes(buildComprobanteQueryParams(state));
 
       state = state.copyWith(
         isLoading: false,
@@ -88,9 +93,19 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
       );
     } catch (e) {
       errorNotification("Error al cargar comprobantes: $e");
+      state = state.copyWith(hasMore: false);
+    } finally {
       state = state.copyWith(isLoading: false);
-    }finally {
-      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> getTotales() async {
+    try {
+      final totales = await repository
+          .getTotalesPorMoneda(buildComprobanteQueryParams(state));
+      state = state.copyWith(totalesPorMoneda: totales);
+    } catch (e) {
+      errorNotification("Error al obtener totales por moneda: $e");
     }
   }
 }
@@ -109,6 +124,7 @@ class ComprobantesState {
   final int idPuntoVenta;
   final int idVendedor;
   final String filtroRucEmisor;
+  final List<TotalesPorMoneda> totalesPorMoneda;
 
   ComprobantesState({
     required this.tickets,
@@ -124,6 +140,7 @@ class ComprobantesState {
     required this.idPuntoVenta,
     required this.idVendedor,
     required this.filtroRucEmisor,
+    required this.totalesPorMoneda, // nuevo
   });
 
   factory ComprobantesState.initial() => ComprobantesState(
@@ -140,6 +157,7 @@ class ComprobantesState {
         idPuntoVenta: 0,
         idVendedor: 0,
         filtroRucEmisor: '',
+        totalesPorMoneda: [], // nuevo
       );
 
   ComprobantesState copyWith({
@@ -156,6 +174,7 @@ class ComprobantesState {
     int? idVendedor,
     int? perPage, // This is not used in the state but can be added if needed
     String? filtroRucEmisor,
+    List<TotalesPorMoneda>? totalesPorMoneda, // nuevo
   }) {
     return ComprobantesState(
       tickets: tickets ?? this.tickets,
@@ -171,6 +190,7 @@ class ComprobantesState {
       idVendedor: idVendedor ?? this.idVendedor,
       perPage: perPage ?? this.perPage, // Optional, can be used for pagination
       filtroRucEmisor: filtroRucEmisor ?? this.filtroRucEmisor,
+      totalesPorMoneda: totalesPorMoneda ?? this.totalesPorMoneda,
     );
   }
 }

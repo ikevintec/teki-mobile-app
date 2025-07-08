@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
-import 'package:teki_app/src/data/models/teki_model/totalesFormaPagos.dart';
+
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -114,7 +114,6 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
   }
 
   /// Obtiene los comprobantes según los filtros básicos
-  /// Obtiene los comprobantes según los filtros básicos
   @override
   Future<List<Ticket>> getComprobantes(Map<String, dynamic> params) async {
     try {
@@ -187,81 +186,12 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
   }
 
   @override
-  Future<List<PaymentMethodTotal>> getTotalesPorFormaPago({
-    required String filtroDesde,
-    required String filtroHasta,
-    required String filtroRucEmisor,
-    required int idPuntoVenta,
-    required int idVendedor,
-  }) async {
-    try {
-      final response = await dio.get(
-        '/tickets/operations/totales-forma-pago',
-        queryParameters: {
-          'filtroCanal': 'PLATFORM',
-          'pageNumber': '0',
-          'perPage': '10',
-          'filtroDesde': filtroDesde,
-          'filtroHasta': filtroHasta,
-          'filtroRucEmisor': filtroRucEmisor,
-          'idPuntoVenta': idPuntoVenta,
-          'idVendedor': idVendedor,
-          'sortOrder': '1',
-        },
-      );
-
-      final List<dynamic> content = response.data;
-
-      return content
-          .map((json) {
-            try {
-              final fixedJson = Map<String, dynamic>.from(json);
-              return PaymentMethodTotal.fromJson(fixedJson);
-            } catch (e) {
-              print("❌ Error al convertir un método de pago: $e");
-              print("💳 Datos problemáticos: $json");
-              return null;
-            }
-          })
-          .whereType<PaymentMethodTotal>()
-          .toList();
-    } on DioException catch (e) {
-      final message =
-          e.response?.data['message'] ?? e.message ?? 'Error de conexión';
-      errorNotification(
-          "Error al obtener totales por forma de pago 1: $message");
-      return Future.error(message);
-    } catch (e, stack) {
-      print("❌ Excepción: $e");
-      print("📍 Stack: $stack");
-      errorNotification("Error al obtener totales por forma de pago 2: $e");
-      return Future.error(e.toString());
-    }
-  }
-
-  @override
-  Future<List<TotalesPorMoneda>> getTotalesPorMoneda({
-    required String filtroDesde,
-    required String filtroHasta,
-    required String filtroRucEmisor,
-    required int idPuntoVenta,
-    required int idVendedor,
-  }) async {
+  Future<List<TotalesPorMoneda>> getTotalesPorMoneda(
+      Map<String, dynamic> params) async {
     try {
       final response = await dio.get(
         '/tickets/operations/totales',
-        queryParameters: {
-          'filtroCanal': 'PLATFORM',
-          'pageNumber': '0',
-          'perPage': '10',
-          'filtroDesde': filtroDesde,
-          'filtroHasta': filtroHasta,
-          'filtroRucEmisor': filtroRucEmisor,
-          'idPuntoVenta': idPuntoVenta,
-          'idVendedor': idVendedor,
-          'sortOrder': '1',
-          'porDetalle': 'false',
-        },
+        queryParameters: params,
       );
 
       final List<dynamic> content = response.data;
@@ -273,7 +203,6 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
               return TotalesPorMoneda.fromJson(fixedJson);
             } catch (e) {
               print("❌ Error al convertir un total por moneda: $e");
-              print("💰 Datos problemáticos: $json");
               return null;
             }
           })
