@@ -1,6 +1,4 @@
 import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
-import 'package:teki_app/src/data/models/teki_model/totalesFormaPagos.dart';
-
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 
 abstract class TicketsSaleRepository {
@@ -25,20 +23,6 @@ abstract class TicketsSaleRepository {
   /// Consulta de comprobantes con paginación obligatoria
   Future<List<Ticket>> getComprobantes(Map<String, dynamic> params);
 
-  /// Obtiene los totales agrupados por forma de pago
-  Future<List<PaymentMethodTotal>> getTotalesPorFormaPago({
-    required String filtroDesde,
-    required String filtroHasta,
-    required String filtroRucEmisor,
-    required int idPuntoVenta,
-    required int idVendedor,
-  });
-
-  Future<List<TotalesPorMoneda>> getTotalesPorMoneda({
-    required String filtroDesde,
-    required String filtroHasta,
-    required String filtroRucEmisor,
-    required int idPuntoVenta,
-    required int idVendedor,
-  });
+  Future<List<TotalesPorMoneda>> getTotalesPorMoneda(
+      Map<String, dynamic> params);
 }
