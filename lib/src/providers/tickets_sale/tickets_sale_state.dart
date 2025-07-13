@@ -13,6 +13,7 @@ class TicketSaleState {
   final String? errorMessage;
   final String? filtroDesde;
   final String? filtroHasta;
+  final List<String> numeros;
 
   TicketSaleState({
     required this.tickets,
@@ -27,6 +28,7 @@ class TicketSaleState {
     required this.errorMessage,
     required this.filtroDesde,
     required this.filtroHasta,
+    required this.numeros,
   });
 
   TicketSaleState copyWith({
@@ -42,6 +44,7 @@ class TicketSaleState {
     String? errorMessage,
     String? filtroDesde,
     String? filtroHasta,
+    List<String>? numeros,
 
   }) {
     return TicketSaleState(
@@ -57,6 +60,7 @@ class TicketSaleState {
       errorMessage: errorMessage ?? this.errorMessage,
       filtroDesde: filtroDesde ?? this.filtroDesde,
       filtroHasta: filtroHasta ?? this.filtroHasta,
+      numeros: numeros ?? this.numeros,
     );
   }
 
@@ -73,5 +77,6 @@ class TicketSaleState {
         errorMessage: null,
         filtroDesde: null,
         filtroHasta: null,
+        numeros: [],
       );
 }

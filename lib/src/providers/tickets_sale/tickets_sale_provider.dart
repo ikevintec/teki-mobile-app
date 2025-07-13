@@ -6,6 +6,7 @@ import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 // REPOSITORIO
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 
@@ -43,38 +44,35 @@ class TicketSaleNotifier extends StateNotifier<TicketSaleState> {
     }
   }
 
-  Future<Ticket?> getNextTicketNumber(String tipo, String serie) async {
+  Future<void> getNextTicketNumber() async {
     state = state.copyWith(isLoading: true);
+    final tipoComprobante = ref.read(ticketProvider).ticket.tipoComprobante ?? 'NV'; // Por defecto NV
+    final serieSelected = ref.read(ticketProvider).ticket.serie ?? '';
     try {
-      final ticket =
-          await ticketsSaleRepository.getNextTicketNumber(tipo, serie);
-
+      final numero = await ticketsSaleRepository.getNextTicketNumber(tipoComprobante, serieSelected);
+      ref.read(ticketProvider.notifier).setNumero(numero);
       state = state.copyWith(
-        selectedTicket: ticket,
         isLoading: false,
       );
-      return ticket;
     } catch (e) {
       state = state.copyWith(isLoading: false);
       errorNotification("Error al obtener número: $e");
-      return null;
     }
   }
 
-  Future<List<String>> obtenerNumerosSeries(
-      int officeId, String tipoDocumento) async {
+  Future<void> obtenerNumerosSeries() async {
+    final officeId = ref.read(sesionProvider).office?.id;
+    if (officeId == null) throw Exception("Oficina no encontrada");
+    String tipoComprobante = ref.read(ticketProvider).ticket.tipoComprobante ?? 'NV'; // Por defecto NV
     state = state.copyWith(isLoading: true);
 
     try {
       final numeros = await ticketsSaleRepository.getSeriesPorOficina(
-          officeId, tipoDocumento);
-
-      state = state.copyWith(isLoading: false);
-      return numeros;
+          officeId, tipoComprobante);
+      state = state.copyWith(isLoading: false,numeros: numeros);
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false,numeros: []);
       errorNotification("Error al obtener series: $e");
-      return [];
     }
   }
 

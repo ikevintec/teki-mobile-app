@@ -1,20 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/repositories/customer_repository_imp.dart';
 import 'package:teki_app/src/domain/repositories/customer_repository.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_state.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 final customerSaleProvider =
     StateNotifierProvider<CustomerSaleNotifier, CustomerSaleState>((ref) {
   final CustomersRepository customersRepository = CustomersRepositoryImpl();
-  return CustomerSaleNotifier(customersRepository: customersRepository);
+  return CustomerSaleNotifier(customersRepository: customersRepository, ref: ref);
 });
 
 class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
   final CustomersRepository customersRepository;
+  final Ref ref;
 
-  CustomerSaleNotifier({required this.customersRepository})
+  CustomerSaleNotifier({required this.customersRepository, required this.ref})
       : super(CustomerSaleState(
           customer: Customer(),
           customers: [],
@@ -70,7 +73,6 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
       tipoDocumento: tipoDocumento 
     );
     state = state.copyWith(customer: customerToSet);
-
   }
 
 }

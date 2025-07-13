@@ -1,17 +1,20 @@
-import 'dart:ui';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/data/static/lists.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/otros_datos.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
-import 'package:teki_app/src/providers/config/config.dart';
 
 class SaleInfoScreen extends ConsumerStatefulWidget {
   const SaleInfoScreen({super.key});
@@ -21,9 +24,7 @@ class SaleInfoScreen extends ConsumerStatefulWidget {
 }
 
 class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
-  List<String> productTypeLote = ["Boleta", "Factura", "N. credito"];
-  String selectedType = "Boleta";
-  String tipoDocumento = "03";
+  String tipoDocumento = "NV"; // Boleta
   String vendedor = "";
   List<String> seriesDisponibles = [];
   String? selectedSerie;
@@ -34,31 +35,32 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   @override
   void initState() {
     super.initState();
-    tipoDocumento = "03";
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Inicializar el tipo de documento y cargar las series disponibles
+      final notifier = ref.read(ticketProvider.notifier);
+      final provider = ref.read(ticketProvider);
+      final comprobante = provider.ticket.tipoComprobante ?? tipoDocumento;
+      notifier.setTipoComprobante(comprobante);
+      notifier.setFechaEmision(DateTime.now()); // Fecha de emisión por defecto
+      tipoDocumento = comprobante;
+
       _dateController.text = DateTime.now().toString().split(" ")[0];
       cargarSeries();
+      setVendedor();
     });
   }
 
+  List<Map<String, String>> tipoOperacionLista = tipoComprobantesVenta;
+
   void cargarSeries() async {
-    final user = ref.watch(authStateProvider).user;
-    final userName = user?.name ?? "User Name";
-    vendedor = userName;
+    await ref.read(ticketSaleProvider.notifier).obtenerNumerosSeries();
+    final ticketSaleProviderData = ref.read(ticketSaleProvider);
 
-    final officeId = ref.read(sesionProvider).office?.id;
-    if (officeId == null) return;
-
-    final ticketNotifier = ref.read(ticketSaleProvider.notifier);
-    final series =
-        await ticketNotifier.obtenerNumerosSeries(officeId, tipoDocumento);
-
-    setState(() {
-      seriesDisponibles = series;
-      selectedSerie = series.isNotEmpty ? series.first : null;
-    });
+    final series = ticketSaleProviderData.numeros;
+    selectedSerie = series.isNotEmpty ? series.first : null;
 
     if (selectedSerie != null) {
+      ref.read(ticketProvider.notifier).setSerie(selectedSerie!);
       cargarNextNumber();
     }
   }
@@ -94,54 +96,39 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     if (_picked != null) {
       setState(() {
         _dateController2.text = _picked.toString().split(" ")[0];
+        ref.read(ticketProvider.notifier).setFechaVencimiento(_picked);
       });
     }
   }
 
   void cargarNextNumber() async {
-    final ticketNotifier = ref.read(ticketSaleProvider.notifier);
-    final ticket =
-        await ticketNotifier.getNextTicketNumber(tipoDocumento, selectedSerie!);
-    if (ticket != null) {
+    await ref.read(ticketSaleProvider.notifier).getNextTicketNumber();
+    final actualNumber = ref.read(ticketProvider).ticket.numero;
+    if (actualNumber != null) {
       setState(() {
-        numeroCorrelativo = ticket.numero?.toString();
+        numeroCorrelativo = actualNumber.toString();
         numeroController.text = numeroCorrelativo ?? '';
       });
     }
+  }
+  void setVendedor() {
+    final vendedor = ref.read(authStateProvider).user?.name ?? '';
+    final id = ref.read(authStateProvider).user?.id ?? 0;
+    setState(() {
+      this.vendedor = vendedor;
+      ref.read(ticketProvider.notifier).setVendedor(User(name: vendedor,id: id));
+    });
   }
 
   TextEditingController _dateController = TextEditingController();
   TextEditingController _dateController2 = TextEditingController();
 
-  final Map<String, String> currencyMap = {
-    "Soles": "PEN",
-    "Dólares": "USD",
-    "Euros": "EUR",
-  };
-  final List<String> items = ["Soles", "Dólares", "Euros"];
-  String? selectedDisplay = "Soles"; // lo que se muestra
-  String? selectedValue = "PEN"; // lo que se guarda internamente
-
-  final Map<String, String> currencyMap2 = {
-    "Venta Interna [0101]": "0101",
-    "Exportación [0200]": "0200",
-    "Opreración Sujeta a Detracción [1001]": "1001",
-    "Opreración Sujeta a Percepción [2001]": "2001",
-  };
-  final List<String> itemsOperacion = [
-    "Venta Interna [0101]",
-    "Exportación [0200]",
-    "Opreración Sujeta a Detracción [1001]",
-    "Opreración Sujeta a Percepción [2001]"
-  ];
-  String? selectedDisplay2 = "Venta Interna [0101]"; // lo que se muestra
-  String? selectedValue2 = "0101"; // lo que se guarda internamente
+  String? tipoOperacionSelected = "0101";
   @override
   Widget build(BuildContext context) {
-    // final config = ref.watch(sesionProvider);
-    ref.read(ticketSaleProvider.notifier);
-    //final ticketState = ref.watch(ticketSaleProvider);
-    // String? _selectedCurrency;
+    final notifier = ref.read(ticketProvider.notifier);
+    final provider = ref.watch(ticketProvider);
+    final saleProvider = ref.watch(ticketSaleProvider);
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
@@ -185,27 +172,23 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: CustomSegmentedSelector(
+                                  child: CustomSegmentedSelectorMapped(
                                     label: "Tipo de comprobante (*)",
-                                    options: productTypeLote,
-                                    selected: selectedType,
+                                    dataSource: tipoComprobantesVenta,
+                                    labelKey: "label",
+                                    valueKey: "value",
+                                    initialValue:
+                                        provider.ticket.tipoComprobante ??
+                                            tipoDocumento,
                                     onChanged: (value) {
-                                      setState(() {
-                                        selectedType = value;
-                                        switch (value) {
-                                          case "Boleta":
-                                            tipoDocumento = "03";
-                                            selectedValue2 = "0101";
-                                            break;
-                                          case "Factura":
-                                            tipoDocumento = "01";
-                                            break;
-                                          case "N. credito":
-                                            tipoDocumento = "NV";
-                                            selectedValue2 = "";
-                                            break;
-                                        }
-                                      });
+                                      notifier.setTipoComprobante(value);
+                                      tipoDocumento = value;
+                                      if (value == "NV") {
+                                        tipoOperacionSelected = "";
+                                      } else {
+                                        tipoOperacionSelected = "0101";
+                                      }
+
                                       cargarSeries();
                                     },
                                   ),
@@ -219,12 +202,10 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                   child: DropdownFormFieldSection(
                                     label: "Serie (*)",
                                     hint: "Selecciona una serie",
-                                    items: seriesDisponibles,
-                                    selectionItem: selectedSerie,
+                                    items: saleProvider.numeros,
+                                    selectionItem: provider.ticket.serie,
                                     onChanged: (value) {
-                                      setState(() {
-                                        selectedSerie = value;
-                                      });
+                                      notifier.setSerie(value ?? '');
                                       cargarNextNumber();
                                     },
                                   ),
@@ -234,7 +215,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                   child: TextFieldSection(
                                     label: "Número (*)",
                                     hint: "Número correlativo",
-                                    inputType: TextInputType.phone,
+                                    inputType: TextInputType.number,
                                     controller: numeroController,
                                     onChanged: (value) {},
                                     validator: (value) {
@@ -294,7 +275,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                         ),
                                         style: const TextStyle(fontSize: 14),
                                         readOnly: true,
-                                        onTap: null,
+                                        onTap: () {},
                                       ),
                                     ],
                                   ),
@@ -348,21 +329,6 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            DropdownFormFieldSection(
-                              label: "MONEDA (*)", // Sin etiqueta externa
-                              hint: "Selecciona la moneda",
-                              items:
-                                  items, // Lista de monedas visibles: ['Soles', 'Dólares', 'Euros']
-                              selectionItem: selectedDisplay,
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedDisplay = value;
-                                  selectedValue =
-                                      currencyMap[value]; // 'pen', 'usd', 'eur'
-                                });
-                              },
-                            ),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -372,12 +338,14 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                   DropdownFormFieldSection(
                                     label: "TIPO OPREACIÓN (*)",
                                     hint: "Selecciona el tipo de operación",
-                                    items: itemsOperacion,
-                                    selectionItem: selectedDisplay2,
+                                    itemsMap: tipoOperacion,
+                                    labelKey: "label",
+                                    valueKey: "value",
+                                    selectionItem: tipoOperacionSelected,
                                     onChanged: (value) {
                                       setState(() {
-                                        selectedDisplay2 = value;
-                                        selectedValue2 = currencyMap2[value];
+                                        tipoOperacionSelected = value;
+                                        notifier.setTipoOperacion(value ?? '');
                                       });
                                     },
                                   ),
@@ -410,8 +378,10 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                     label: "N. ORDEN",
                                     hint: "N. Orden",
                                     controller: vendedorController,
-                                    inputType: TextInputType.phone,
-                                    onChanged: (_) {},
+                                    inputType: TextInputType.number,
+                                    onChanged: (value) {
+                                      notifier.setNumeroOrden(value);
+                                    },
                                   ),
                                 ),
                               ],
@@ -429,15 +399,13 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              print("✅ Series disponibles: $selectedSerie");
-                              print("✅ Número: ${numeroController.text}");
-                              print("Moneda seleccionada: $selectedValue");
-                              print("Fecha Inicio: ${_dateController.text}");
-                              print(
-                                  "Fecha Vencimiento: ${_dateController2.text}");
-                              print("✅ Tipo Opreacion: $selectedValue2");
-                              print("✅ Vendedor: $vendedor");
-                              print("✅ N. Orden: ${vendedorController.text}");
+                              ref
+                                  .read(ticketProvider.notifier)
+                                  .setTicketsData();
+                              final ticket = ref.read(ticketProvider).ticket;
+                              final jsonPretty = const JsonEncoder.withIndent('  ').convert(ticket.toJson());
+                              debugPrint("TICKET RESULTADO ");
+                              debugPrint(jsonPretty); // en lugar de print
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,
@@ -540,8 +508,6 @@ class OtherOptions extends StatelessWidget {
   }
 }
 
-
-
 void showOtrosDatosModal(BuildContext context) {
   showGeneralDialog(
     barrierLabel: "Otros Datos",
@@ -557,4 +523,3 @@ void showOtrosDatosModal(BuildContext context) {
     },
   );
 }
-

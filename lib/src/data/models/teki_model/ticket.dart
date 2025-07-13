@@ -140,6 +140,8 @@ class Ticket {
   final DateTime? deletedOn;
   final bool? isEdited;
   final String? numeroCotizacion;
+  final bool? despachoPosterior;
+  final bool? isRetencion;
 
   Ticket({
     this.id,
@@ -265,7 +267,9 @@ class Ticket {
     this.deleteBy,
     this.deletedOn,
     this.isEdited,
-    this.numeroCotizacion
+    this.numeroCotizacion,
+    this.despachoPosterior,
+    this.isRetencion,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
@@ -440,7 +444,9 @@ class Ticket {
             ? DateTime.parse(json['deletedOn'])
             : null,
         isEdited: json['isEdited'],
-        numeroCotizacion: json['numeroCotizacion']
+        numeroCotizacion: json['numeroCotizacion'],
+        despachoPosterior: json['despachoPosterior'] ?? false,
+        isRetencion: json['isRetencion'] ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -569,7 +575,9 @@ class Ticket {
         'deleteBy': deleteBy,
         'deletedOn': deletedOn?.toIso8601String(),
         'isEdited': isEdited,
-        'numeroCotizacion': numeroCotizacion
+        'numeroCotizacion': numeroCotizacion,
+        'despachoPosterior': despachoPosterior ?? false,
+        'isRetencion': isRetencion ?? false,
       };
 
 //create a copywith
@@ -697,7 +705,9 @@ class Ticket {
     int? deleteBy,
     DateTime? deletedOn,
     bool? isEdited,
-    String? numeroCotizacion
+    String? numeroCotizacion,
+    bool? despachoPosterior,
+    bool? isRetencion,
   }) {
     return Ticket(
       id: id ?? this.id,
@@ -844,7 +854,9 @@ class Ticket {
       deleteBy: deleteBy ?? this.deleteBy,
       deletedOn: deletedOn ?? this.deletedOn,
       isEdited: isEdited ?? this.isEdited,
-      numeroCotizacion: numeroCotizacion ?? this.numeroCotizacion
+      numeroCotizacion: numeroCotizacion ?? this.numeroCotizacion,
+      despachoPosterior: despachoPosterior ?? this.despachoPosterior,
+      isRetencion: isRetencion ?? this.isRetencion,
     );
   }
 }

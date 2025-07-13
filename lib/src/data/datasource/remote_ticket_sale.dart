@@ -39,10 +39,10 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
 
   /// Obtiene el siguiente número de comprobante según tipoDocumento y serie
   @override
-  Future<Ticket> getNextTicketNumber(String tipoDocumento, String serie) async {
+  Future<int> getNextTicketNumber(String tipoDocumento, String serie) async {
     try {
       final response = await dio.get(
-        '/tickets/operations/next-number', // ✅ RUTA relativa (baseUrl ya está en ApiClient)
+        '/tickets/operations/next-number',
         queryParameters: {
           'tipoDocumento': tipoDocumento,
           'serie': serie,
@@ -61,11 +61,7 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         throw Exception('Formato de respuesta inválido');
       }
 
-      return Ticket(
-        serie: serie,
-        numero: numero,
-        tipoComprobante: tipoDocumento,
-      );
+      return numero;
     } on DioException catch (e) {
       final errorMessage =
           e.response?.data['message'] ?? e.message ?? 'Error de conexión';

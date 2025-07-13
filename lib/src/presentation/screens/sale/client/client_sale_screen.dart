@@ -84,6 +84,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final clienteNotifier = ref.read(customerSaleProvider.notifier);
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
@@ -130,7 +131,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) async {
                                   if (textEditingValue.text.trim().isEmpty) {
-                                    ref.read(customerSaleProvider.notifier).clearCustomers();
+                                    clienteNotifier.clearCustomers();
                                     return const Iterable<Customer>.empty();
                                   }
 
@@ -235,7 +236,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 },
                                 onSelected: (Customer selection) {
                                   FocusScope.of(context).unfocus();
-                                  ref.read(customerSaleProvider.notifier).selectCustomer(selection);
+                                  clienteNotifier.selectCustomer(selection);
                                   _documentoController.text = selection.numeroDocumento?.toString() ?? '';
                                   _direccionController.text = selection.direccionCompleta ?? '';
                                   _emailController.text = selection.email ?? '';
@@ -345,26 +346,13 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                           child: ElevatedButton(
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
-                                final formData = {
-                                  "nombre": _nombreController.text,
-                                  "documento": _documentoController.text,
-                                  "direccion": _direccionController.text,
-                                  "email": _emailController.text,
-                                  "telefono": _telefonoController.text,
-                                  "tipoDocumento": _selectedTipoDocumentoValue
-                                };
-                                ref
-                                    .read(customerSaleProvider.notifier)
-                                    .setCustomer(
+                                clienteNotifier.setCustomer(
                                         nombre: _nombreController.text,
                                         direccion: _direccionController.text,
                                         documento: _documentoController.text,
                                         email: _emailController.text,
                                         telefono: _telefonoController.text,
-                                        tipoDocumento:
-                                            _selectedTipoDocumentoValue ?? '');
-                                print(formData);
-
+                                        tipoDocumento:_selectedTipoDocumentoValue ?? '');
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

@@ -13,7 +13,7 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
       : datasource = datasource ?? RemoteTicketSaleDatasource();
 
   @override
-  Future<Ticket> getNextTicketNumber(String tipoDocumento, String serie) {
+  Future<int> getNextTicketNumber(String tipoDocumento, String serie) {
     return datasource.getNextTicketNumber(tipoDocumento, serie);
   }
 

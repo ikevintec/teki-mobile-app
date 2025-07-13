@@ -12,7 +12,7 @@ abstract class TicketsSaleRepository {
   Future<List<String>> getSeriesPorOficina(int officeId, String tipoDocumento);
 
   /// Obtiene el siguiente número de comprobante según tipoDocumento y serie
-  Future<Ticket> getNextTicketNumber(String tipoDocumento, String serie);
+  Future<int> getNextTicketNumber(String tipoDocumento, String serie);
 
   /// Crea un nuevo ticket (venta)
   Future<Ticket> createTicket(Ticket ticket);
