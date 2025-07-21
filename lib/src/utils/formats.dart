@@ -20,7 +20,7 @@ String formatDouble(double value) {
   return value.toStringAsFixed(2); // 7.25 → 7.25
 }
 
-String formatExchange({required String moneda}){
+String formatExchange({required String moneda}) {
   switch (moneda) {
     case 'PEN':
       return 'S/. ';

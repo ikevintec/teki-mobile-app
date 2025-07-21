@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/presentation/screens/comprobantes/comprobantes_detail_modal.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen.dart/view_comprobante_screen.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 import 'package:teki_app/src/utils/contstants.dart';
-
+import 'package:teki_app/src/utils/formats.dart';
 
 class TicketListSection extends ConsumerStatefulWidget {
   const TicketListSection({super.key});
@@ -90,62 +91,88 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
 
         final ticket = tickets[index];
 
-        return Card(
-          elevation: 0.2,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          color: Colors.white,
-          child: ListTile(
-            leading: const Icon(
-              Icons.receipt_long_rounded,
-              size: 30,
-              color: ColorSchema.primaryColor,
-            ),
-            title: Text(
-              '${ticket.serie ?? '--'} - ${ticket.numero ?? '--'} - ${getNombreComprobante(ticket.tipoComprobante)}',
-              style: GoogleFonts.raleway(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
+        return Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: Colors.white,
+              child: ListTile(
+                leading: const Icon(
+                  Icons.receipt_long_rounded,
+                  size: 35,
+                  color: ColorSchema.primaryColor,
+                ),
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      getNombreComprobante(ticket.tipoComprobante),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      '${ticket.serie ?? '--'} - ${ticket.numero ?? '--'}',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 4),
+                    Text(
+                      'Fecha de emisión: ${ticket.fechaEmision?.toString() ?? "--"}',
+                      style: GoogleFonts.nunito(fontSize: 11),
+                    ),
+                    //texto to show if its Anulado or nor
+                    Text(
+                      ticket.anulado == true ? 'Anulado' : 'Emitido',
+                      style: GoogleFonts.nunito(
+                        fontSize: 11,
+                        color: ticket.anulado == true
+                            ? Colors.red
+                            : ColorSchema.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalVenta?.toStringAsFixed(2) ?? "--"}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: ColorSchema.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    //Texto para poner si es al contado o a credito
+                    Text(
+                      ticket.tipoVenta == 'CONTADO'
+                          ? 'Al contado'
+                          : 'Al crédito',
+                      style: GoogleFonts.nunito(fontSize: 11),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  //navigate to ViewComponentScreen
+                  Get.to(() => ViewComponentScreen(ticket: ticket));
+                }, // Deshabilita el tap
               ),
             ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cliente: ${ticket.denominacionReceptor ?? "Sin nombre"}',
-                  style: GoogleFonts.nunito(fontSize: 11),
-                ),
-                Text(
-                  'Emisor: ${ticket.razonSocialEmisor ?? "Sin nombre"}',
-                  style: GoogleFonts.nunito(fontSize: 11),
-                ),
-                Text(
-                  'Total: ${ticket.totalVenta?.toStringAsFixed(2) ?? "--"} ${ticket.codigoMoneda ?? ""}',
-                  style: GoogleFonts.nunito(fontSize: 11),
-                ),
-              ],
+            Divider(
+              color: Colors.grey[300]!,
+              height: 0.2,
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove_red_eye_outlined,
-                      color: ColorSchema.primaryColor),
-                  tooltip: 'Ver comprobante',
-                  onPressed: () {
-                    showTicketDetailsCustomModal(context, ticket);
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.black),
-                  tooltip: 'Editar comprobante',
-                  onPressed: () {
-                    print('Editar comprobante: ${ticket.serie}-${ticket.numero}');
-                  },
-                ),
-              ],
-            ),
-            onTap: null, // Deshabilita el tap
-          ),
+          ],
         );
       },
     );

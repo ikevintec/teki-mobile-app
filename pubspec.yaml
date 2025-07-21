@@ -62,8 +62,8 @@ flutter:
     - assets/images/logo/
     - assets/images/gif/
     - assets/icons/icon_image/
-    - assets/images/avatar/
     - assets/icons/icon_svg/
+    - assets/images/avatar/
     - assets/images/offer/
     - assets/images/products/
     - assets/images/other/

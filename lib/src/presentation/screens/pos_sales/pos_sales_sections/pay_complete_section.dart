@@ -37,7 +37,7 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Operación Exiotosa",
+                "Operación Exitosa",
                 style: GoogleFonts.raleway(
                   textStyle: const TextStyle(
                     fontSize: 28,

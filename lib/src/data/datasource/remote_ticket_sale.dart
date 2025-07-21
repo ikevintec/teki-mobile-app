@@ -82,8 +82,11 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         data: ticket.toJson(),
       );
       return Ticket.fromJson(response.data);
+    } on DioException catch (e) {
+      final message =
+          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
+      return Future.error(message);
     } catch (e) {
-      errorNotification("Error al crear ticket: $e");
       return Future.error(e.toString());
     }
   }
@@ -103,8 +106,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
 
       final data = response.data as List;
       return data.map((json) => Ticket.fromJson(json)).toList();
-   } on DioException catch (e) {
-      final message = e.response?.data?['message'] ?? 'Error desconocido del servidor';
+    } on DioException catch (e) {
+      final message =
+          e.response?.data?['message'] ?? 'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
