@@ -188,7 +188,7 @@ class ProductsSaleState {
       tipoComprobante: tipoComprobante ?? this.tipoComprobante,
       otrosTributos: otrosTributos ?? this.otrosTributos,
       porcentajeDescuentoGlobal:
-          porcentajeDescuentoGlobal ?? this.porcentajeDescuentoGlobal,
+      porcentajeDescuentoGlobal ?? this.porcentajeDescuentoGlobal,
       flagRetencion: flagRetencion ?? this.flagRetencion,
       porcentajeRetencion: porcentajeRetencion ?? this.porcentajeRetencion,
       codigoTipoOperacion: codigoTipoOperacion ?? this.codigoTipoOperacion,

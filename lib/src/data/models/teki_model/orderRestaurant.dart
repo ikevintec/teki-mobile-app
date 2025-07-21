@@ -7,6 +7,7 @@ import 'package:teki_app/src/data/models/teki_model/delivery.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class OrderRestaurant {
   final int? id;
@@ -127,12 +128,12 @@ class OrderRestaurant {
 
   factory OrderRestaurant.fromJson(Map<String, dynamic> json) => OrderRestaurant(
     id: json['id'],
-    fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : null,
-    fechaCancelacion: json['fechaCancelacion'] != null ? DateTime.parse(json['fechaCancelacion']) : null,
-    fechaRechazo: json['fechaRechazo'] != null ? DateTime.parse(json['fechaRechazo']) : null,
-    fechaAceptacion: json['fechaAceptacion'] != null ? DateTime.parse(json['fechaAceptacion']) : null,
-    fechaEnvio: json['fechaEnvio'] != null ? DateTime.parse(json['fechaEnvio']) : null,
-    fechaEntrega: json['fechaEntrega'] != null ? DateTime.parse(json['fechaEntrega']) : null,
+    fecha: json['fecha'] != null ? parseDateTimeFlexible(DateTime.parse(json['fecha'])) : null,
+    fechaCancelacion: json['fechaCancelacion'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaCancelacion'])) : null,
+    fechaRechazo: json['fechaRechazo'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaRechazo'])) : null,
+    fechaAceptacion: json['fechaAceptacion'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaAceptacion'])) : null,
+    fechaEnvio: json['fechaEnvio'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaEnvio'])) : null,
+    fechaEntrega: json['fechaEntrega'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaEntrega'])) : null,
     motivoRechazo: json['motivoRechazo'],
     tipo: json['tipo'],
     estado: json['estado'],
@@ -176,12 +177,12 @@ class OrderRestaurant {
     longitud: json['longitud'],
     slug: json['slug'],
     observacion: json['observacion'],
-    createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+    createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
     createdBy: json['createdBy'],
     updatedBy: json['updatedBy'],
-    updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+    updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
     deleteBy: json['deleteBy'],
-    deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+    deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
   );
 
   Map<String, dynamic> toJson() => {

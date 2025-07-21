@@ -17,6 +17,8 @@ class TextFieldSection extends StatelessWidget {
   final double? paddingHorinzontal;
   final double? fontSize;
   final List<TextInputFormatter>? inputFormatters;
+  final Color borderColor;
+  final FocusNode? focusNode;
 
 
 
@@ -26,6 +28,7 @@ class TextFieldSection extends StatelessWidget {
     required this.hint,
     required this.inputType,
     this.onChanged,
+    this.focusNode,
     this.initialValue,
     this.enabled = true,
     this.isReadOnly = false,
@@ -35,7 +38,8 @@ class TextFieldSection extends StatelessWidget {
     this.showBorders = true,
     this.paddingHorinzontal = 10,
     this.fontSize = 15,
-    this.inputFormatters
+    this.inputFormatters,
+    this.borderColor = const Color(0xFFE2E4E7),
   });
 
   @override
@@ -45,6 +49,7 @@ class TextFieldSection extends StatelessWidget {
       enabled: enabled,
       readOnly: isReadOnly,
       controller: controller,
+      focusNode: focusNode,
         inputFormatters: inputType == TextInputType.number &&  (inputFormatters ?? []).isEmpty ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))] : inputFormatters,
       style: GoogleFonts.nunito(
         fontWeight: FontWeight.w600,
@@ -71,10 +76,10 @@ class TextFieldSection extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           
-          borderSide: BorderSide(color: Color(0xFFE2E4E7), width: showBorders ? 1 : 0),
+          borderSide: BorderSide(color: borderColor, width: showBorders ? 1 : 0),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFFE2E4E7), width: showBorders ? 1 : 0),
+          borderSide: BorderSide(color: borderColor, width: showBorders ? 1 : 0),
           borderRadius: BorderRadius.circular(20),
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,

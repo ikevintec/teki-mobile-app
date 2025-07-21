@@ -4,6 +4,7 @@ import 'package:teki_app/src/data/models/teki_model/company.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class CashRegister {
   final int? id;
@@ -55,9 +56,9 @@ class CashRegister {
                 json['cashRegisterDetails'].map((x) => CashRegisterDetail.fromJson(x)))
             : null,
         fechaClave: json['fechaClave'],
-        fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : null,
-        fechaInicio: json['fechaInicio'] != null ? DateTime.parse(json['fechaInicio']) : null,
-        fechaCierre: json['fechaCierre'] != null ? DateTime.parse(json['fechaCierre']) : null,
+        fecha: parseDateTimeFlexible(json['fecha']),
+        fechaInicio: parseDateTimeFlexible(json['fechaInicio']),
+        fechaCierre: parseDateTimeFlexible(json['fechaCierre']),
         estadoCaja: json['estadoCaja'],
         usuario: json['usuario'] != null ? User.fromJson(json['usuario']) : null,
         usuarioCierre: json['usuarioCierre'] != null ? User.fromJson(json['usuarioCierre']) : null,

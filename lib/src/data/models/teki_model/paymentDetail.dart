@@ -1,5 +1,6 @@
 import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class PaymentDetail {
   final int? id;
@@ -10,6 +11,7 @@ class PaymentDetail {
   final String? nombre;
   final String? numeroOperacion;
   final double? monto;
+  final double? montoPagado;
   final bool? eliminado;
   final bool? modificado;
   final DateTime? createdOn;
@@ -28,6 +30,7 @@ class PaymentDetail {
     this.nombre,
     this.numeroOperacion,
     this.monto,
+    this.montoPagado,
     this.eliminado,
     this.modificado,
     this.createdOn,
@@ -47,14 +50,15 @@ class PaymentDetail {
         nombre: json['nombre'],
         numeroOperacion: json['numeroOperacion'],
         monto: (json['monto'] as num?)?.toDouble(),
+        montoPagado: (json['montoPagado'] as num?)?.toDouble(),
         eliminado: json['eliminado'],
         modificado: json['modificado'],
-        createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+        createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+        updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
         deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+        deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -66,6 +70,7 @@ class PaymentDetail {
         'nombre': nombre,
         'numeroOperacion': numeroOperacion,
         'monto': monto,
+        'montoPagado': montoPagado,
         'eliminado': eliminado,
         'modificado': modificado,
         'createdOn': createdOn?.toIso8601String(),

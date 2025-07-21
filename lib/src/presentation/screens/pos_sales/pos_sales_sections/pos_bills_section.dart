@@ -680,11 +680,13 @@ class _PosBillsSectionState extends State<PosBillsSection> {
                   child: CustomElevatedButton(
                       buttonName: "Pay Now",
                       showToast: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PayCompleteSection(
-                                    products: widget.product)));
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PayCompleteSection(
+                                identificador: "Identificador"),
+                          ),
+                        );
                       }),
                 )
               ],

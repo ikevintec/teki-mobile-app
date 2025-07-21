@@ -9,6 +9,8 @@ class CustomSwitch extends StatelessWidget {
   final String? textOff;
   final Function(bool) onChanged;
   final bool? border;
+  final bool? rightAlign;
+  final bool? small;
 
   const CustomSwitch({
     super.key,
@@ -18,6 +20,8 @@ class CustomSwitch extends StatelessWidget {
     this.textOn,
     this.textOff,
     this.border = true,
+    this.rightAlign = false,
+    this.small = false,
   });
 
   @override
@@ -26,38 +30,50 @@ class CustomSwitch extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        decoration: border!? BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: const Color(0xFFE2E4E7), width: 1),
-          borderRadius: BorderRadius.circular(20),
-        ): null,
+        decoration: border!
+            ? BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFE2E4E7), width: 1),
+                borderRadius: BorderRadius.circular(20),
+              )
+            : null,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              title ?? 'Switch',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF4B5563),
+            if (rightAlign == false)
+              Text(
+                title ?? 'Switch',
+                style: TextStyle(
+                  fontSize: small == true ? 12 : 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF4B5563),
+                ),
               ),
-            ),
             FlutterSwitch(
               activeColor: ColorSchema.primaryColor,
-              inactiveColor: const Color(0xFFC7C9CC),
-              height: 30,
-              width: 60,
-              toggleSize: 20,
+              inactiveColor: const Color.fromARGB(255, 176, 178, 181),
+              height: small == true ? 25 : 30,
+              width: small == true ? 50 : 60,
+              toggleSize: small == true ? 15 : 20,
               padding: 5,
               activeTextFontWeight: FontWeight.w500,
               inactiveTextFontWeight: FontWeight.w500,
-              valueFontSize: 14,
+              valueFontSize: small == true ? 12 : 14,
               showOnOff: true,
               inactiveText: textOff ?? "No",
               activeText: textOn ?? "Si",
               value: value,
               onToggle: onChanged,
             ),
+            if (rightAlign == true)
+              Text(
+                title ?? 'Switch',
+                style: TextStyle(
+                  fontSize: small == true ? 12 : 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF4B5563),
+                ),
+              ),
           ],
         ),
       ),

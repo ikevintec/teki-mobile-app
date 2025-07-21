@@ -1,5 +1,6 @@
 import 'package:teki_app/src/data/models/teki_model/cashRegister.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class CashRegisterActualAmount {
   final int? id;
@@ -25,7 +26,7 @@ class CashRegisterActualAmount {
         cashRegister: json['cashRegister'] != null ? CashRegister.fromJson(json['cashRegister']) : null,
         monto: (json['monto'] as num?)?.toDouble(),
         moneda: json['moneda'],
-        fechaCierre: json['fechaCierre'] != null ? DateTime.parse(json['fechaCierre']) : null,
+        fechaCierre: json['fechaCierre'] != null ? parseDateTimeFlexible(json['fechaCierre']) : null,
         usuarioCierre: json['usuarioCierre'] != null ? User.fromJson(json['usuarioCierre']) : null,
         condicionCierre: json['condicionCierre'],
       );

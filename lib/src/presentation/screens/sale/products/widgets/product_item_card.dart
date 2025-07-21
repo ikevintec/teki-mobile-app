@@ -175,12 +175,12 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                               IconButton(
                                 onPressed: () {
                                   showCustomModal(
-                                      context,
-                                      ModalProductView(
+                                    context: context,
+                                    child: ModalProductView(
                                           product: widget
                                               .productTicketDetail.producto!),
-                                      "Ver Producto",
-                                      false);
+                                    tittle: "Ver Producto",
+                                    allowButtons: false);
                                 },
                                 icon: Icon(Icons.visibility,
                                     color: ColorSchema.primaryColor, size: 15),

@@ -4,6 +4,7 @@ import 'package:teki_app/src/data/models/teki_model/purchase.dart';
 import 'package:teki_app/src/data/models/teki_model/quotation.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class CashRegisterDetail {
   final int? id;
@@ -58,7 +59,7 @@ class CashRegisterDetail {
     ticket: json['ticket'] != null ? Ticket.fromJson(json['ticket']) : null,
     quotation: json['quotation'] != null ? Quotation.fromJson(json['quotation']) : null,
     compra: json['compra'] != null ? Purchase.fromJson(json['compra']) : null,
-    fechaMovimiento: json['fechaMovimiento'] != null ? DateTime.parse(json['fechaMovimiento']) : null,
+    fechaMovimiento:parseDateTimeFlexible(json['fechaMovimiento']),
     usuario: json['usuario'] != null ? User.fromJson(json['usuario']) : null,
     postCierre: json['postCierre'],
     estado: json['estado'],

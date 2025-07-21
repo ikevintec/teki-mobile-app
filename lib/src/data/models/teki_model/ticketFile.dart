@@ -1,5 +1,6 @@
 import 'package:teki_app/src/data/models/teki_model/fileStorage.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class TicketFile {
   final int? id;
@@ -43,12 +44,12 @@ class TicketFile {
         orden: json['orden'],
         modificado: json['modificado'],
         eliminado: json['eliminado'],
-        createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+        createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+        updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
         deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+        deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
       );
 
   Map<String, dynamic> toJson() => {

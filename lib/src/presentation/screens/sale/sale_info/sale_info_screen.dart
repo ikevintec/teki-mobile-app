@@ -1,13 +1,12 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/static/lists.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/otros_datos.dart';
+import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_widget.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
+import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
@@ -399,13 +398,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              ref
-                                  .read(ticketProvider.notifier)
-                                  .setTicketsData();
-                              final ticket = ref.read(ticketProvider).ticket;
-                              final jsonPretty = const JsonEncoder.withIndent('  ').convert(ticket.toJson());
-                              debugPrint("TICKET RESULTADO ");
-                              debugPrint(jsonPretty); // en lugar de print
+                              ref.read(ticketProvider.notifier).setTicketsData();
+                              showCustomModal(context:context,child: PaymentWidget(),tittle:  '', showButtoms: false,scrolleable: false, allowButtons: true);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,

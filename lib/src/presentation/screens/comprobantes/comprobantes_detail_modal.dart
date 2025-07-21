@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/presentation/screens/viewer/pdf_viewer_screen.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 /// Muestra el modal personalizado con los detalles del comprobante
 void showTicketDetailsCustomModal(BuildContext context, Ticket ticket) {
   showCustomModal(
-    context,
-    _TicketDetailContent(ticket),
-    'Detalle del Comprobante',
-    false,
+    context: context,
+    child:_TicketDetailContent(ticket),
+    tittle: 'Detalle del Comprobante',
+    allowButtons: false,
   );
 }
 
@@ -108,19 +110,34 @@ class _TicketDetailContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildPdfIconButton(
+              icon: Icons.description,
+              label: 'Ver PDF',
+              onPressed: () {
+                Get.to(() => PdfViewerScreen(
+                  uuid: ticket.uuid!,
+                  fileName: ticket.identificadorDocumento!,
+                ));
+              },
+            ),
+            const SizedBox(width: 40),
+            _buildPdfIconButton(
+              icon: Icons.confirmation_number,
+              label: 'Ver Ticket',
+              onPressed: () {
+                Get.to(() => PdfViewerScreen(
+                  uuid: ticket.uuid!,
+                  fileName: ticket.identificadorDocumento!,
+                  fileSize: 'TICKET',
+                ));
+              },
+            ),
+          ],
+        )
 
-        // Botón cerrar
-        // Align(
-        //   alignment: Alignment.centerRight,
-        //   child: TextButton.icon(
-        //     onPressed: () => Navigator.pop(context),
-        //     style: TextButton.styleFrom(
-        //       foregroundColor: Colors.black,
-        //     ),
-        //     icon: const Icon(Icons.close),
-        //     label: const Text("Cerrar"),
-        //   ),
-        // ),
       ],
     );
   }
@@ -142,3 +159,27 @@ class _TicketDetailContent extends StatelessWidget {
     );
   }
 }
+
+Widget _buildPdfIconButton({
+  required IconData icon,
+  required String label,
+  required VoidCallback onPressed,
+}) {
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      IconButton(
+        icon: Icon(icon),
+        tooltip: label,
+        color: ColorSchema.primaryColor,
+        iconSize: 30,
+        onPressed: onPressed,
+      ),
+      Text(
+        label,
+        style: const TextStyle(fontSize: 12, color: Colors.black54),
+      )
+    ],
+  );
+}
+

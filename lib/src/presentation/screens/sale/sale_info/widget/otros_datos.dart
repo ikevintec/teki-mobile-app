@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/aditionalField.dart';
@@ -9,7 +8,7 @@ import 'package:teki_app/src/data/models/teki_model/guiaRelacionada.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
-import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
+import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';  
 import 'package:teki_app/src/utils/contstants.dart';
 
 class OtrosDatosWidget extends ConsumerStatefulWidget {
@@ -111,7 +110,7 @@ class _OtrosDatosWidgetState extends ConsumerState<OtrosDatosWidget>
   @override
   Widget build(BuildContext context) {
     final notifier = ref.read(ticketSaleProvider.notifier);
-
+    final size = MediaQuery.of(context).size;
     return Stack(
       children: [
         BackdropFilter(
@@ -127,8 +126,8 @@ class _OtrosDatosWidgetState extends ConsumerState<OtrosDatosWidget>
               borderRadius: BorderRadius.circular(16),
             ),
             child: SizedBox(
-              width: double.maxFinite,
-              height: 550,
+        width: size.width * 0.9,
+        height: size.height * 0.7,
               child: Column(
                 children: [
                   TabBar(

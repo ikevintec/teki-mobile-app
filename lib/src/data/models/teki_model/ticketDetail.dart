@@ -1,8 +1,11 @@
+import 'dart:ffi';
+
 import 'package:teki_app/src/data/models/teki_model/batchProductSale.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketDispatchDetail.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class TicketDetail {
   final int? id;
@@ -69,6 +72,7 @@ class TicketDetail {
   final double? porcentajeDescuentoGlobal;
   final double? porcentajeOtrosCargos;
   final String? monedaOriginal;
+  final Double ? interes;
 
   
 
@@ -136,6 +140,7 @@ class TicketDetail {
     this.porcentajeDescuentoGlobal,
     this.porcentajeOtrosCargos,
     this.monedaOriginal,
+    this.interes
   });
 
   factory TicketDetail.fromJson(Map<String, dynamic> json) => TicketDetail(
@@ -188,17 +193,18 @@ class TicketDetail {
     lotes: json['lotes'] != null ? List<BatchProductSale>.from(json['lotes'].map((x) => BatchProductSale.fromJson(x))) : null,
     despachos: json['despachos'] != null ? List<TicketDispatchDetail>.from(json['despachos'].map((x) => TicketDispatchDetail.fromJson(x))) : null,
     estadoDespacho: json['estadoDespacho'],
-    fechaInicioPlan: json['fechaInicioPlan'] != null ? DateTime.parse(json['fechaInicioPlan']) : null,
+    fechaInicioPlan: json['fechaInicioPlan'] != null ? parseDateTimeFlexible(json['fechaInicioPlan']) : null,
     modificado: json['modificado'],
     eliminado: json['eliminado'],
-    createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+    createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
     createdBy: json['createdBy'],
     updatedBy: json['updatedBy'],
-    updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+    updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
     deleteBy: json['deleteBy'],
-    deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
-    porcentajeDescuentoGlobal: json['porcentajeDescuentoGlobal'] ? json['porcentajeDescuentoGlobal'].toDouble() : null,
-    montoOriginal: json['montoOriginal'] ? json['montoOriginal'] : null,
+    deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
+    porcentajeDescuentoGlobal: json['porcentajeDescuentoGlobal']?.toDouble(),
+    montoOriginal: json['montoOriginal']?.toDouble(),
+    interes: json['interes']?.toDouble(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -237,17 +243,21 @@ class TicketDetail {
     'codigoTipoAfectacionIgv': codigoTipoAfectacionIgv,
     'valorVenta': valorVenta,
     'precioTotal': precioTotal,
-    'montoBaseDescuento': montoBaseDescuento,
-    'porcentajeDescuento': porcentajeDescuento,
-    'descuento': descuento,
-    'codigoDescuento': codigoDescuento,
+    //descuento
+    if(descuento != null)'descuento': descuento,
+    if(descuento != null)'montoBaseDescuento': montoBaseDescuento,
+    if(descuento != null)'porcentajeDescuento': porcentajeDescuento,
+    if(descuento != null)'codigoDescuento': "00",
+
+    //interes
+    if(interes != null) 'interes': interes,
     'esAnticipo': esAnticipo,
     'estado': estado,
     'uuid': uuid,
     'uuidRelated': uuidRelated,
     'ticket': ticket?.toJson(),
     'producto': producto?.toJson(),
-    'comandaDetalle': comandaDetalle?.toJson(),
+    if(comandaDetalle != null)'comandaDetalle': comandaDetalle?.toJson(),
     'lotes': lotes?.map((x) => x.toJson()).toList(),
     'despachos': despachos?.map((x) => x.toJson()).toList(),
     'estadoDespacho': estadoDespacho,

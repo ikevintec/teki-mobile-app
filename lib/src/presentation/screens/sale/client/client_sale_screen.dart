@@ -23,6 +23,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   final _direccionController = TextEditingController();
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
+  int? id;
 
   final GlobalKey _fieldKey = GlobalKey();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -241,6 +242,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   _direccionController.text = selection.direccionCompleta ?? '';
                                   _emailController.text = selection.email ?? '';
                                   _telefonoController.text = selection.telefono ?? '';
+                                  id = selection.id;
 
                                   // 👇 Asigna el tipo de documento según el código recibido
                                   final tipoDocCodigo =
@@ -347,6 +349,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
                                 clienteNotifier.setCustomer(
+                                        id: id,
                                         nombre: _nombreController.text,
                                         direccion: _direccionController.text,
                                         documento: _documentoController.text,

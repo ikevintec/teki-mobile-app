@@ -14,6 +14,7 @@ import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFile.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class Ticket {
   final int? id;
@@ -277,12 +278,8 @@ class Ticket {
         serie: json['serie'],
         numero: json['numero'],
         fechaEmision: json['fechaEmision'],
-        fechaEmisionDate: json['fechaEmisionDate'] != null
-            ? DateTime.parse(json['fechaEmisionDate'])
-            : null,
-        fechaVencimientoDate: json['fechaVencimientoDate'] != null
-            ? DateTime.parse(json['fechaVencimientoDate'])
-            : null,
+        fechaEmisionDate: parseDateTimeFlexible(json['fechaEmisionDate']),
+        fechaVencimientoDate: parseDateTimeFlexible(json['fechaVencimientoDate']),
         horaEmision: json['horaEmision'],
         tipoComprobante: json['tipoComprobante'],
         codigoMoneda: json['codigoMoneda'],
@@ -430,19 +427,13 @@ class Ticket {
             ? CashRegisterDetail.fromJson(json['movimientoCaja'])
             : null,
         intentosSendSummary: json['intentosSendSummary'],
-        createdOn: json['createdOn'] != null
-            ? DateTime.parse(json['createdOn'])
-            : null,
+        createdOn: parseDateTimeFlexible(json['createdOn']),
         adelanto: json['adelanto'],
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null
-            ? DateTime.parse(json['updatedOn'])
-            : null,
+        updatedOn: parseDateTimeFlexible(json['updatedOn']),
         deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null
-            ? DateTime.parse(json['deletedOn'])
-            : null,
+        deletedOn: parseDateTimeFlexible(json['deletedOn']),
         isEdited: json['isEdited'],
         numeroCotizacion: json['numeroCotizacion'],
         despachoPosterior: json['despachoPosterior'] ?? false,
@@ -463,7 +454,7 @@ class Ticket {
         'codigoTipoOperacion': codigoTipoOperacion,
         'rucEmisor': rucEmisor,
         'razonSocialEmisor': razonSocialEmisor,
-        'codigoLocalAnexoEmisor': codigoLocalAnexoEmisor,
+        if(codigoLocalAnexoEmisor != null) 'codigoLocalAnexoEmisor': codigoLocalAnexoEmisor,
         'tipoDocumentoReceptor': tipoDocumentoReceptor,
         'numeroDocumentoReceptor': numeroDocumentoReceptor,
         'denominacionReceptor': denominacionReceptor,

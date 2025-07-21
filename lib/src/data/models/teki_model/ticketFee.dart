@@ -1,5 +1,6 @@
 import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class TicketFee {
   final int? id;
@@ -41,8 +42,8 @@ class TicketFee {
   factory TicketFee.fromJson(Map<String, dynamic> json) => TicketFee(
         id: json['id'],
         numero: json['numero'],
-        fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : null,
-        fechaPago: json['fechaPago'] != null ? DateTime.parse(json['fechaPago']) : null,
+        fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
+        fechaPago: json['fechaPago'] != null ? parseDateTimeFlexible(json['fechaPago']) : null,
         monto: (json['monto'] as num?)?.toDouble(),
         ticket: json['ticket'] != null ? Ticket.fromJson(json['ticket']) : null,
         accountReceivable: json['accountReceivable'] != null
@@ -51,12 +52,12 @@ class TicketFee {
         estadoCredito: json['estadoCredito'],
         modificado: json['modificado'],
         eliminado: json['eliminado'],
-        createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+        createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+        updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
         deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+        deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
       );
 
   Map<String, dynamic> toJson() => {

@@ -2,6 +2,7 @@ import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class Check {
   final int? id;
@@ -38,7 +39,7 @@ class Check {
 
   factory Check.fromJson(Map<String, dynamic> json) => Check(
         id: json['id'],
-        fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : null,
+        fecha: json['fecha'] != null ? parseDateTimeFlexible(DateTime.parse(json['fecha'])) : null,
         items: json['items'] != null
             ? List<CommandDetail>.from(json['items'].map((x) => CommandDetail.fromJson(x)))
             : null,
@@ -47,12 +48,12 @@ class Check {
         comprobante: json['comprobante'] != null ? Ticket.fromJson(json['comprobante']) : null,
         pagado: json['pagado'],
         eliminado: json['eliminado'],
-        createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+        createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+        updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
         deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+        deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
       );
 
   Map<String, dynamic> toJson() => {

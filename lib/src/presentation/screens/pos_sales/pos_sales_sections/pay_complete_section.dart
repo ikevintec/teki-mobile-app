@@ -1,14 +1,15 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_sections/invoice_section.dart';
 import 'package:teki_app/src/presentation/widgets/button/custom_elevated_button.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 
 class PayCompleteSection extends StatefulWidget {
-  final dynamic products;
+  final String identificador;
 
-  const PayCompleteSection({super.key, required this.products});
+  const PayCompleteSection({super.key, required this.identificador});
 
   @override
   State<PayCompleteSection> createState() => _PayCompleteSectionState();
@@ -36,7 +37,7 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Purchase Complete",
+                "Operación Exiotosa",
                 style: GoogleFonts.raleway(
                   textStyle: const TextStyle(
                     fontSize: 28,
@@ -62,7 +63,7 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
               ),
               const SizedBox(height: 10),
               Text(
-                "Thank You!",
+                "Venta registrada!",
                 style: GoogleFonts.raleway(
                   textStyle: TextStyle(
                     fontWeight: FontWeight.w600,
@@ -77,7 +78,7 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    "Order Number",
+                    "Identificador de comprobante",
                     style: GoogleFonts.raleway(
                       textStyle: const TextStyle(
                         fontWeight: FontWeight.w600,
@@ -87,7 +88,7 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
                     ),
                   ),
                   Text(
-                    generateRandomNumber(),
+                    widget.identificador,
                     style: GoogleFonts.nunito(
                       textStyle: const TextStyle(
                         fontWeight: FontWeight.w500,
@@ -102,14 +103,8 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
               const SizedBox(height: 20),
               // Styled button
               CustomElevatedButton(
-                  buttonName: "Invoice",
-                  showToast: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                InvoiceSection(products: widget.products)));
-                  }),
+                  buttonName: "Volver",
+                  showToast: () {Get.toNamed(AppRoutes.dashboard);},),
             ],
           ),
         ),

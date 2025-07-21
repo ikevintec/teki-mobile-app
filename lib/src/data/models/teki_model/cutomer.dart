@@ -1,4 +1,5 @@
 import 'package:teki_app/src/data/models/teki_model/company.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class Customer {
   final int? id;
@@ -68,11 +69,7 @@ class Customer {
         genero: json['genero'],
         telefono: json['telefono'],
         giro: json['giro'],
-        fechaNacimiento: json['fechaNacimiento'] != null
-            ? (json['fechaNacimiento'] is int
-                ? DateTime.fromMillisecondsSinceEpoch(json['fechaNacimiento'])
-                : DateTime.parse(json['fechaNacimiento']))
-            : null,
+        fechaNacimiento: parseDateTimeFlexible(json['fechaNacimiento']),
         referido: json['referido'],
         expediente: json['expediente'],
         tipoDireccion: json['tipoDireccion'],
@@ -95,32 +92,33 @@ class Customer {
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'idIntegration': idIntegration,
+        if(id != null) 'id': id,
+        if(idIntegration != null) 'idIntegration': idIntegration,
         'tipoDocumento': tipoDocumento,
         'numeroDocumento': numeroDocumento,
         'razonSocial': razonSocial,
-        'genero': genero,
+        if(genero != null) 'genero': genero,
         'telefono': telefono,
-        'giro': giro,
-        'fechaNacimiento': fechaNacimiento?.toIso8601String(),
-        'referido': referido,
-        'expediente': expediente,
-        'tipoDireccion': tipoDireccion,
-        'direccionCompleta': direccionCompleta,
+        if(giro != null) 'giro': giro,
+        if(fechaNacimiento != null) 'fechaNacimiento': fechaNacimiento?.toIso8601String(),
+        if(referido != null)'referido': referido,
+        if(expediente != null)'expediente': expediente,
+        if(tipoDireccion != null) 'tipoDireccion': tipoDireccion,
+        if(direccionCompleta != null) 'direccionCompleta': direccionCompleta,
         'direccion': direccion,
         'numero': numero,
         'numeroDepartamento': numeroDepartamento,
         'referencia': referencia,
-        'codigoDepartamento': codigoDepartamento,
-        'codigoProvincia': codigoProvincia,
-        'codigoDistrito': codigoDistrito,
-        'latitud': latitud,
-        'longitud': longitud,
-        'codigoCiudad': codigoCiudad,
+        if(codigoDepartamento != null) 'codigoDepartamento': codigoDepartamento,
+        if(codigoProvincia != null)'codigoProvincia': codigoProvincia,
+        if(codigoDistrito != null)'codigoDistrito': codigoDistrito,
+        if(latitud != null)'latitud': latitud,
+        if(longitud != null)'longitud': longitud,
+        if(codigoCiudad != null)'codigoCiudad': codigoCiudad,
         'email': email,
-        'empresa': empresa?.toJson(),
-        'estado': estado,
-        'porDefecto': porDefecto,
+        if(empresa != null)'empresa': empresa?.toJson(),
+        if(estado != null)'estado': estado,
+        if(porDefecto != null)'porDefecto': porDefecto,
       };
+
 }

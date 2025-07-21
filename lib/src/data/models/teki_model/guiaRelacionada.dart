@@ -1,4 +1,5 @@
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class GuiaRelacionada {
   final int? id;
@@ -38,16 +39,16 @@ class GuiaRelacionada {
         modificado: json['modificado'],
         eliminado: json['eliminado'],
         createdOn: json['createdOn'] != null
-            ? DateTime.parse(json['createdOn'])
+            ? parseDateTimeFlexible(json['createdOn'])
             : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
         updatedOn: json['updatedOn'] != null
-            ? DateTime.parse(json['updatedOn'])
+            ? parseDateTimeFlexible(json['updatedOn'])
             : null,
         deleteBy: json['deleteBy'],
         deletedOn: json['deletedOn'] != null
-            ? DateTime.parse(json['deletedOn'])
+            ? parseDateTimeFlexible(json['deletedOn'])
             : null,
       );
 

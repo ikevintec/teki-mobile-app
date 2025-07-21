@@ -1,6 +1,7 @@
 import 'package:teki_app/src/data/models/teki_model/company.dart';
 import 'package:teki_app/src/data/models/teki_model/lounge.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class Table {
   final int? id;
@@ -54,9 +55,9 @@ class Table {
         salon: json['salon'] != null ? Lounge.fromJson(json['salon']) : null,
         multiMesa: json['multiMesa'],
         mesaUnida: json['mesaUnida'],
-        fechaUnion: json['fechaUnion'] != null ? DateTime.parse(json['fechaUnion']) : null,
+        fechaUnion: json['fechaUnion'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaUnion'])) : null,
         unidoPor: json['unidoPor'] != null ? User.fromJson(json['unidoPor']) : null,
-        fechaSeparacion: json['fechaSeparacion'] != null ? DateTime.parse(json['fechaSeparacion']) : null,
+        fechaSeparacion: json['fechaSeparacion'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaSeparacion'])) : null,
         separadoPor: json['separadoPor'] != null ? User.fromJson(json['separadoPor']) : null,
         mesaConformada: json['mesaConformada'] != null ? Table.fromJson(json['mesaConformada']) : null,
         mesasUnidas: json['mesasUnidas'] != null
@@ -64,12 +65,12 @@ class Table {
             : null,
         mesasUnidasHistorico: json['mesasUnidasHistorico'],
         estado: json['estado'],
-        createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+        createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+        updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
         deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+        deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
       );
 
   Map<String, dynamic> toJson() => {

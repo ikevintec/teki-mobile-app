@@ -1,10 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
-import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/repositories/customer_repository_imp.dart';
 import 'package:teki_app/src/domain/repositories/customer_repository.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_state.dart';
-import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 final customerSaleProvider =
@@ -63,8 +61,9 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
     state = state.copyWith(customers: []);
   }
 
-  void setCustomer({ required String nombre, required  String documento, required  String direccion,required  String email, required String telefono, required String tipoDocumento}){
+  void setCustomer({required int? id, required String nombre, required  String documento, required  String direccion,required  String email, required String telefono, required String tipoDocumento}){
     Customer customerToSet = Customer(
+      id: id,
       razonSocial: nombre,
       numeroDocumento: documento,
       direccion: direccion,

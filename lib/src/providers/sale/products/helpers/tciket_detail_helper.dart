@@ -29,7 +29,7 @@ TicketDetail getTicketDetail(
     tieneImpuestoBolsas: product.tieneImpuestoBolsas ?? false,
     porcentajeDescuentoGlobal: 0,
     porcentajeOtrosCargos:
-        product.tipoProducto == 'PLAN' ? product.porcentajeOtrosCargos : null,
+    product.tipoProducto == 'PLAN' ? product.porcentajeOtrosCargos : null,
     esAnticipo: null,
     producto: product,
     despachos: [],
