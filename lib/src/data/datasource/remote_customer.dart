@@ -30,7 +30,6 @@ class RemoteCustomers extends CustomersDatasource {
       final response = await dio.get('/customers', queryParameters: params);
       final data = response.data;
 
-      // ✅ Manejo especial si devuelve una lista directamente
       if (data is List) {
         final customers = data.map((e) => Customer.fromJson(e)).toList();
 
@@ -48,7 +47,6 @@ class RemoteCustomers extends CustomersDatasource {
         );
       }
 
-      // ✅ Si devuelve en formato paginado
       return CustomerResponse.fromJson(data);
     } catch (e) {
       errorNotification(e.toString());

@@ -143,7 +143,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                 ),
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalVenta?.toStringAsFixed(2) ?? "--"}',
@@ -153,6 +153,16 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    if (ticket.totalValorVentaGratuita != null &&
+                        ticket.totalValorVentaGratuita! > 0)
+                      Text(
+                        '(${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalValorVentaGratuita?.toStringAsFixed(2) ?? "--"})',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: ColorSchema.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     //Texto para poner si es al contado o a credito
                     Text(
                       ticket.tipoVenta == 'CONTADO'

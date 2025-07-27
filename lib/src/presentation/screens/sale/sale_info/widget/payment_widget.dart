@@ -94,7 +94,8 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     DateTime fechaBase;
     if (fechaCredito.isNotEmpty) {
       // Tomar la última fecha existente y sumarle los días
-      fechaBase = DateTime.parse(fechaCredito.last.text).add(Duration(days: dias));
+      fechaBase =
+          DateTime.parse(fechaCredito.last.text).add(Duration(days: dias));
     } else {
       // No hay cuotas aún, partir desde hoy
       fechaBase = DateTime.now().add(Duration(days: dias));
@@ -175,7 +176,8 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       return;
     }
     if (cuotas.any((c) => c.monto! <= 0)) {
-      errorNotification("Todos los montos de las cuotas deben ser mayores a cero");
+      errorNotification(
+          "Todos los montos de las cuotas deben ser mayores a cero");
       return;
     }
     if (cuotas.any((c) => c.fecha == null)) {
@@ -183,20 +185,19 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       return;
     }
     provider.setCuotas(cuotas);
-    
   }
 
-  void procesoContado(){
+  void procesoContado() {
     final provider = ref.read(ticketProvider.notifier);
     provider.setMovimientoCaja(
-      total : total,
+      total: total,
       pagado: montoPagadoController.text,
       cambio: cambioDisponible.toStringAsFixed(2),
       numOperacion: numeroOperacion.text,
-      metodoPago:  selectedPaymentMethod ?? PaymentMethod(),
+      metodoPago: selectedPaymentMethod ?? PaymentMethod(),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -278,7 +279,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                                       return 'Monto requerido';
                                     }
                                     final value = double.tryParse(p0);
-                                    if (value == null || value <= 0) {
+                                    if (value == null || value < 0) {
                                       return 'Monto invalido';
                                     }
                                     return null;
@@ -483,7 +484,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                     onPressed: () async {
                       final notifier = ref.read(ticketProvider.notifier);
                       final isContado = _tabController.index == 0;
-                      if (isContado && selectedPaymentMethod == null){
+                      if (isContado && selectedPaymentMethod == null) {
                         errorNotification("Debe seleccionar un método de pago");
                         return;
                       }
@@ -497,20 +498,25 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                         procesoCredito();
                       }
                       final ticket = ref.read(ticketProvider).ticket;
-                      final jsonPretty = const JsonEncoder.withIndent('  ').convert(ticket.toJson());
+                      final jsonPretty = const JsonEncoder.withIndent('  ')
+                          .convert(ticket.toJson());
                       debugPrint("TICKET RESULTADO ");
                       debugPrint(jsonPretty); // en lugar de print
-                      final Ticket? ticketResponse = await notifier.createTicket();                      
-                      if (ticketResponse != null) {                        
-                      //reseteamos los providers
-                      ref.invalidate(ticketProvider);
-                      ref.invalidate(productSaleProvider);
-                      ref.invalidate(customerSaleProvider);
+                      final Ticket? ticketResponse =
+                          await notifier.createTicket();
+                      if (ticketResponse != null) {
+                        //reseteamos los providers
+                        ref.invalidate(ticketProvider);
+                        ref.invalidate(productSaleProvider);
+                        ref.invalidate(customerSaleProvider);
                         Navigator.push(
                             // ignore: use_build_context_synchronously
                             context,
                             MaterialPageRoute(
-                                builder: (context) => PayCompleteSection(identificador: "${ticketResponse.serie}-${ticketResponse.numero}",)));
+                                builder: (context) => PayCompleteSection(
+                                      identificador:
+                                          "${ticketResponse.serie}-${ticketResponse.numero}",
+                                    )));
                       }
                       // continuar
                     },

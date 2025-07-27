@@ -35,7 +35,7 @@ class ViewComponentScreen extends StatelessWidget {
                     IconButton(
                       onPressed: () {},
                       icon: Image.asset(
-                        'assets/icons/icon_image/whatsapp.png',
+                        'assets/icons/icon_image/whatsap.png',
                         width: 28,
                         height: 28,
                       ),

@@ -58,7 +58,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     return completer.future;
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -127,7 +126,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 ],
                               ),
                               const SizedBox(height: 15),
-
                               Autocomplete<Customer>(
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) async {
@@ -136,12 +134,15 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                     return const Iterable<Customer>.empty();
                                   }
 
-                                  return await onSearchChanged(textEditingValue.text);
+                                  return await onSearchChanged(
+                                      textEditingValue.text);
                                 },
                                 displayStringForOption: (Customer option) =>
                                     option.razonSocial ?? 'Sin nombre',
-                                fieldViewBuilder: (context, controller,focusNode, onEditingComplete) {
-                                  if (controller.text.isEmpty && _nombreController.text.isNotEmpty) {
+                                fieldViewBuilder: (context, controller,
+                                    focusNode, onEditingComplete) {
+                                  if (controller.text.isEmpty &&
+                                      _nombreController.text.isNotEmpty) {
                                     controller.text = _nombreController.text;
                                   }
 
@@ -184,14 +185,17 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                       ),
                                       style: const TextStyle(fontSize: 14),
                                       onEditingComplete: () {
-                                        FocusScope.of(context).unfocus(); 
+                                        FocusScope.of(context).unfocus();
                                       },
                                     ),
                                   );
                                 },
-                                optionsViewBuilder:(context, onSelected, options) {
-                                  final renderBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
-                                  final fieldWidth = renderBox?.size.width ?? 400;
+                                optionsViewBuilder:
+                                    (context, onSelected, options) {
+                                  final renderBox = _fieldKey.currentContext
+                                      ?.findRenderObject() as RenderBox?;
+                                  final fieldWidth =
+                                      renderBox?.size.width ?? 400;
 
                                   return Align(
                                     alignment: Alignment.topLeft,
@@ -238,13 +242,16 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 onSelected: (Customer selection) {
                                   FocusScope.of(context).unfocus();
                                   clienteNotifier.selectCustomer(selection);
-                                  _documentoController.text = selection.numeroDocumento?.toString() ?? '';
-                                  _direccionController.text = selection.direccionCompleta ?? '';
+                                  _documentoController.text =
+                                      selection.numeroDocumento?.toString() ??
+                                          '';
+                                  _direccionController.text =
+                                      selection.direccionCompleta ?? '';
                                   _emailController.text = selection.email ?? '';
-                                  _telefonoController.text = selection.telefono ?? '';
+                                  _telefonoController.text =
+                                      selection.telefono ?? '';
                                   id = selection.id;
 
-                                  // 👇 Asigna el tipo de documento según el código recibido
                                   final tipoDocCodigo =
                                       selection.tipoDocumento?.toString();
                                   if (tipoDocCodigo != null &&
@@ -258,13 +265,12 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 },
                               ),
                               const SizedBox(height: 20),
-
                               DropdownFormFieldSection(
                                 label: "Tipo documento",
                                 hint: "Selecciona un tipo documento",
                                 items: tipoDocumentoMap.values.toList(),
                                 selectionItem: tipoDocumentoMap[
-                                    _selectedTipoDocumentoValue],
+                                    _selectedTipoDocumentoValue ?? ''],
                                 onChanged: (value) {
                                   final selectedCode = tipoDocumentoMap.entries
                                       .firstWhere(
@@ -275,7 +281,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   });
                                 },
                               ),
-
                               const SizedBox(height: 20),
                               TextFieldSection(
                                 label: "Número Documento",
@@ -292,7 +297,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   return null;
                                 },
                               ),
-
                               const SizedBox(height: 20),
                               TextFieldSection(
                                 label: "Dirección fiscal",
@@ -307,7 +311,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   return null;
                                 },
                               ),
-
                               const SizedBox(height: 18),
                               TextFieldSection(
                                 label: "Email",
@@ -349,13 +352,14 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
                                 clienteNotifier.setCustomer(
-                                        id: id,
-                                        nombre: _nombreController.text,
-                                        direccion: _direccionController.text,
-                                        documento: _documentoController.text,
-                                        email: _emailController.text,
-                                        telefono: _telefonoController.text,
-                                        tipoDocumento:_selectedTipoDocumentoValue ?? '');
+                                    id: id,
+                                    nombre: _nombreController.text,
+                                    direccion: _direccionController.text,
+                                    documento: _documentoController.text,
+                                    email: _emailController.text,
+                                    telefono: _telefonoController.text,
+                                    tipoDocumento:
+                                        _selectedTipoDocumentoValue ?? '');
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

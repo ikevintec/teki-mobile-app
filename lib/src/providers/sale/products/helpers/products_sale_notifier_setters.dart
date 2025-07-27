@@ -221,8 +221,19 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     final porcentajeOtrosCargos = null;
     Ticket ticket = ref.read(ticketProvider).ticket;
     ticket = ticket.copyWith(
+      //estas variables al final deben evaluarse y enviarse nulas si estan en 0 despues de calcular el total
+      totalValorVentaExonerada: null,
+      totalValorVentaExportacion: null,
+      totalValorVentaGravada: null,
+      totalValorVentaInafecta: null,
+      totalValorVentaGratuita: null,
+      totalValorBaseIsc: null,
+      totalValorBaseIgv: null,
+      totalIsc: null,
+      totalDescuento: null,
+      totalTributosBolsas: null,
+      //estas variables deben ser calculadas al final
       totalValorVenta: 0,
-      totalIgv: 0,
       totalVenta: 0,
       descuentoPorItem: 0,
       descuentoGlobal: 0,
@@ -349,18 +360,20 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
         porcentajeTributoVentaGratuita: null,
       );
-      final valorAgrgador = (ticketDetailToUpdate.valorVenta! * agregador);
+      final valorAgrgador =
+          ((ticketDetailToUpdate.valorVenta ?? 0) * agregador);
       if (tipoIgv['codigoRelacionado'] == '1001') {
         ticket = ticket.copyWith(
           totalValorVentaGravada:
               (ticket.totalValorVentaGravada ?? 0) + valorAgrgador,
           totalValorBaseIgv: (ticket.totalValorBaseIgv ?? 0) + valorAgrgador,
-          totalIgv: ticket.totalIgv! + (ticketDetailToUpdate.igv! * agregador),
+          totalIgv:
+              (ticket.totalIgv ?? 0) + (ticketDetailToUpdate.igv! * agregador),
         );
       } else if (tipoIgv['codigoRelacionado'] == '1002') {
         ticket = ticket.copyWith(
           totalValorVentaInafecta:
-              (ticket.totalValorVentaInafecta??0) + valorAgrgador,
+              (ticket.totalValorVentaInafecta ?? 0) + valorAgrgador,
         );
         ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
           montoBaseInafecto: ticketDetailToUpdate.valorVenta!,
@@ -404,7 +417,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         );
         ticket = ticket.copyWith(
           totalTributosOperacionGratuita:
-              (ticket.totalTributosOperacionGratuita ?? 0 )+
+              (ticket.totalTributosOperacionGratuita ?? 0) +
                   (ticketDetailToUpdate.tributoVentaGratuita ?? 0),
         );
       }
@@ -433,8 +446,10 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     }
     if (porcentajeDescuentoGlobal > 0) {
       final pordesGlobal = porcentajeDescuentoGlobal / 100;
-      if (ticket.totalValorVentaGravada != null && ticket.totalValorVentaGravada! > 0) {
-        final descuentoGravada = (ticket.totalValorVentaGravada ??0) * pordesGlobal;
+      if (ticket.totalValorVentaGravada != null &&
+          ticket.totalValorVentaGravada! > 0) {
+        final descuentoGravada =
+            (ticket.totalValorVentaGravada ?? 0) * pordesGlobal;
         ticket = ticket.copyWith(
           montoBaseDescuento: (ticket.totalValorVentaGravada ?? 0),
           totalValorVentaGravada:
@@ -443,18 +458,20 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           descuentoGlobal: ticket.descuentoGlobal! + descuentoGravada,
         );
       }
-      if (ticket.totalValorVentaInafecta != null && ticket.totalValorVentaInafecta! > 0) {
+      if (ticket.totalValorVentaInafecta != null &&
+          ticket.totalValorVentaInafecta! > 0) {
         final descuentoInafecta =
             (ticket.totalValorVentaInafecta ?? 0) * pordesGlobal;
         ticket = ticket.copyWith(
           montoBaseDescuento: ticket.totalValorVentaInafecta ?? 0,
           totalValorVentaInafecta:
               (ticket.totalValorVentaInafecta ?? 0) - descuentoInafecta,
-          totalDescuento: (ticket.totalDescuento??0) + descuentoInafecta,
+          totalDescuento: (ticket.totalDescuento ?? 0) + descuentoInafecta,
           descuentoGlobal: ticket.descuentoGlobal! + descuentoInafecta,
         );
       }
-      if (ticket.totalValorVentaExonerada != null && ticket.totalValorVentaExonerada! > 0) {
+      if (ticket.totalValorVentaExonerada != null &&
+          ticket.totalValorVentaExonerada! > 0) {
         final descuentoExonerada =
             (ticket.totalValorVentaExonerada ?? 0) * pordesGlobal;
         ticket = ticket.copyWith(
@@ -471,9 +488,10 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
               ((ticket.totalValorBaseIgv ?? 0) * pordesGlobal),
         );
       }
-      if (ticket.totalIgv != null) {
+      if (ticket.totalIgv != null && ticket.totalIgv! > 0) {
         ticket = ticket.copyWith(
-          totalIgv: ticket.totalIgv! - (ticket.totalIgv! * pordesGlobal),
+          totalIgv:
+              (ticket.totalIgv ?? 0) - ((ticket.totalIgv ?? 0) * pordesGlobal),
         );
       }
       if (ticket.totalValorBaseIsc != null) {
@@ -484,7 +502,8 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       }
       if (ticket.totalIsc != null && ticket.totalIsc! > 0) {
         ticket = ticket.copyWith(
-          totalIsc: (ticket.totalIsc ?? 0) - ((ticket.totalIsc ?? 0) * pordesGlobal),
+          totalIsc:
+              (ticket.totalIsc ?? 0) - ((ticket.totalIsc ?? 0) * pordesGlobal),
         );
       }
       ticket = ticket.copyWith(porcentajeDescuento: pordesGlobal);
@@ -495,7 +514,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           (ticket.totalValorVentaExonerada ?? 0) +
           (ticket.totalValorVentaExportacion ?? 0),
     );
-    if (porcentajeOtrosCargos != null ) {
+    if (porcentajeOtrosCargos != null) {
       ticket = ticket.copyWith(
         otrosCargos: ticket.totalValorVenta! * (porcentajeOtrosCargos / 100),
       );
@@ -510,9 +529,9 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           (ticket.totalValorVentaInafecta ?? 0) +
           (ticket.totalValorVentaExonerada ?? 0) +
           (ticket.totalValorVentaExportacion ?? 0) +
-          (ticket.totalIsc ?? 0)+
+          (ticket.totalIsc ?? 0) +
           (ticket.totalIgv ?? 0) +
-          (ticket.totalTributosBolsas ?? 0)+
+          (ticket.totalTributosBolsas ?? 0) +
           (ticket.otrosCargos ?? 0) +
           (ticket.otrosTributos ?? 0),
     );
@@ -537,7 +556,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         montoDetraccion: tipoCambioDetraccion,
       );
     }
-    if (ticket.totalDescuento == null && ticket.totalDescuento! < 1) {
+    if (ticket.totalDescuento == null && (ticket.totalDescuento ?? 0) < 1) {
       ticket = ticket.copyWith(
         totalDescuento: null,
         montoBaseDescuento: null,
@@ -545,6 +564,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         codigoDescuento: null,
       );
     }
+
     ref.read(ticketProvider.notifier).updateTicket(ticket);
     print('Total Venta: ${ticket.totalVenta}, '
         'Total Igv: ${ticket.totalIgv}, '

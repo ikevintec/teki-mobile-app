@@ -571,8 +571,7 @@ class Ticket {
         'isRetencion': isRetencion ?? false,
       };
 
-//create a copywith
-  copyWith({
+  Ticket copyWith({
     int? id,
     String? serie,
     int? numero,
@@ -743,7 +742,7 @@ class Ticket {
       totalValorVentaExonerada:
           totalValorVentaExonerada ?? this.totalValorVentaExonerada,
       totalValorVentaGratuita:
-          totalValorVentaGratuita ?? this.totalValorVentaGratuita,
+          totalValorVentaGratuita,
       totalValorBaseIsc: totalValorBaseIsc ?? this.totalValorBaseIsc,
       totalValorBaseIgv: totalValorBaseIgv ?? this.totalValorBaseIgv,
       totalValorVentaGravadaIvap:
