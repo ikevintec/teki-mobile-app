@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/general/optional.dart';
 import 'package:teki_app/src/data/models/teki_model/aditionalField.dart';
 import 'package:teki_app/src/data/models/teki_model/anticipo.dart';
 import 'package:teki_app/src/data/models/teki_model/attachedCompany.dart';
@@ -602,7 +603,7 @@ class Ticket {
     double? totalValorVentaGravada,
     double? totalValorVentaInafecta,
     double? totalValorVentaExonerada,
-    double? totalValorVentaGratuita,
+    Optional<double?>? totalValorVentaGratuita,
     double? totalValorBaseIsc,
     double? totalValorBaseIgv,
     double? totalValorVentaGravadaIvap,
@@ -741,8 +742,9 @@ class Ticket {
           totalValorVentaInafecta ?? this.totalValorVentaInafecta,
       totalValorVentaExonerada:
           totalValorVentaExonerada ?? this.totalValorVentaExonerada,
-      totalValorVentaGratuita:
-          totalValorVentaGratuita,
+      totalValorVentaGratuita: totalValorVentaGratuita?.hasValue == true
+        ? totalValorVentaGratuita!.value
+        : this.totalValorVentaGratuita,
       totalValorBaseIsc: totalValorBaseIsc ?? this.totalValorBaseIsc,
       totalValorBaseIgv: totalValorBaseIgv ?? this.totalValorBaseIgv,
       totalValorVentaGravadaIvap:

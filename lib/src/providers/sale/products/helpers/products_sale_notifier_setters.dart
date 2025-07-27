@@ -8,6 +8,7 @@ import 'package:teki_app/src/providers/sale/products/helpers/tciket_detail_helpe
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:teki_app/src/data/models/general/optional.dart';
 
 mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   Ref get ref;
@@ -226,7 +227,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       totalValorVentaExportacion: null,
       totalValorVentaGravada: null,
       totalValorVentaInafecta: null,
-      totalValorVentaGratuita: null,
+      totalValorVentaGratuita: const Optional.of(null),
       totalValorBaseIsc: null,
       totalValorBaseIgv: null,
       totalIsc: null,
@@ -408,8 +409,9 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           );
         }
         ticket = ticket.copyWith(
-          totalValorVentaGratuita:
-              (ticket.totalValorVentaGratuita ?? 0) + valorAgrgador,
+          totalValorVentaGratuita: Optional.of(
+            (ticket.totalValorVentaGratuita ?? 0) + valorAgrgador,
+          ),
         );
         ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
           montoBaseGratuito: ticketDetailToUpdate.valorVenta,
@@ -573,4 +575,5 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         'Total Detraction: ${ticket.montoDetraccion}'
         'Ticket: ${ticket.toJson()}, ');
   }
+
 }
