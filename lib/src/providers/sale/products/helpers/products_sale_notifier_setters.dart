@@ -222,28 +222,25 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     final porcentajeOtrosCargos = null;
     Ticket ticket = ref.read(ticketProvider).ticket;
     ticket = ticket.copyWith(
-      //estas variables al final deben evaluarse y enviarse nulas si estan en 0 despues de calcular el total
-      totalValorVentaExonerada: null,
-      totalValorVentaExportacion: null,
-      totalValorVentaGravada: null,
-      totalValorVentaInafecta: null,
-      totalValorVentaGratuita: const Optional.of(null),
-      totalValorBaseIsc: null,
-      totalValorBaseIgv: null,
-      totalIsc: null,
-      totalDescuento: null,
-      totalTributosBolsas: null,
-      //estas variables deben ser calculadas al final
+      totalValorVentaExonerada: 0,
+      totalValorVentaExportacion: 0,
+      totalValorVentaGravada: 0,
+      totalValorVentaInafecta: 0,
+      totalValorVentaGratuita: 0,
+      totalValorBaseIsc: 0,
+      totalValorBaseIgv: 0,
       totalValorVenta: 0,
+      totalIsc: 0,
+      totalIgv: 0,
       totalVenta: 0,
+      totalDescuento: 0,
       descuentoPorItem: 0,
       descuentoGlobal: 0,
       montoBaseDescuento: 0,
+      totalTributosBolsas: 0,
       montoBaseRetencion: 0,
       montoRetencion: 0,
       montoDetraccion: 0,
-      totalAnticipos: 0,
-      totalTributosOperacionGratuita: null,
     );
     for (var i = 0; i < state.productsSales.length; i++) {
       TicketDetail ticketDetailToUpdate = state.productsSales[i];
@@ -409,9 +406,8 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           );
         }
         ticket = ticket.copyWith(
-          totalValorVentaGratuita: Optional.of(
-            (ticket.totalValorVentaGratuita ?? 0) + valorAgrgador,
-          ),
+          totalValorVentaGratuita:
+              (ticket.totalValorVentaGratuita ?? 0) + valorAgrgador,
         );
         ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
           montoBaseGratuito: ticketDetailToUpdate.valorVenta,

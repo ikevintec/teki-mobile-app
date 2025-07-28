@@ -23,6 +23,15 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
 
     return Container(
       padding: const EdgeInsets.only(top: 5, bottom: 15, left: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(
+            width: 0.4,
+            color: ColorSchema.primaryColor,
+          ),
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,12 +47,16 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       "Total",
                       style: TextStyle(
                         fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: ColorSchema.primaryColor,
                       ),
                     ),
                     Text(
                       "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.totalVenta ?? 0).toStringAsFixed(2)}",
                       style: TextStyle(
                         fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: ColorSchema.primaryColor,
                       ),
                     ),
                   ],
@@ -84,7 +97,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       ),
                     ],
                   ),
-                  if (isExpanded)
+                if (isExpanded)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -116,6 +129,26 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                         "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.totalIgv ?? 0).toStringAsFixed(2)}",
                         style: TextStyle(
                           fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                if ((providerTicket.ticket.totalValorVentaGratuita ?? 0) > 0)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Gratuita",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.totalValorVentaGratuita ?? 0).toStringAsFixed(2)}",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],

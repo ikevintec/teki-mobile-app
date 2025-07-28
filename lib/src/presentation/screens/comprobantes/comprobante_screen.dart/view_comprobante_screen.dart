@@ -73,30 +73,42 @@ class ViewComponentScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          _buildDetailRow(
-                            "Serie",
-                            ticket.serie ?? '--',
-                          ),
-                          _buildDetailRow(
-                            "Numero",
-                            ticket.numero.toString(),
-                          ),
-                          _buildDetailRow(
-                            "Fecha de emisión",
-                            ticket.fechaEmision ?? '--',
-                          ),
-                          _buildDetailRow(
-                            "Hora de emisión",
-                            ticket.horaEmision ?? '--',
-                          ),
-                          _buildDetailRow(
-                            "Tipo",
-                            ticket.tipoVenta ?? '--',
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            childAspectRatio: 6, // Ajusta según tu diseño
+                            children: [
+                              _buildDetailRow(
+                                "Tipo",
+                                formatTipoComprobante(
+                                    ticket.tipoComprobante ?? ''),
+                              ),
+                              _buildDetailRow(
+                                "Serie",
+                                ticket.serie ?? '--',
+                              ),
+                              _buildDetailRow(
+                                "Número",
+                                ticket.numero?.toString() ?? '--',
+                              ),
+                              _buildDetailRow(
+                                "Fecha",
+                                ticket.fechaEmision ?? '--',
+                              ),
+                              _buildDetailRow(
+                                "Hora",
+                                ticket.horaEmision ?? '--',
+                              ),
+                              _buildDetailRow(
+                                "Tipo Pago",
+                                ticket.tipoVenta ?? '--',
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 18),
                           Divider(color: Colors.grey[300]),
                           const SizedBox(height: 10),
-
                           // Datos del cliente
                           Text(
                             "Cliente",
@@ -112,14 +124,23 @@ class ViewComponentScreen extends StatelessWidget {
                             "Nombre",
                             ticket.denominacionReceptor ?? "Sin nombre",
                           ),
-                          _buildDetailRow(
-                            "Genero",
-                            ticket.cliente?.genero ?? "--",
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            childAspectRatio: 6, // Ajusta según tu diseño
+                            children: [
+                              _buildDetailRow(
+                                "Genero",
+                                ticket.cliente?.genero ?? "--",
+                              ),
+                              _buildDetailRow(
+                                "Teléfono",
+                                ticket.telefonoReceptor ?? '--',
+                              ),
+                            ],
                           ),
-                          _buildDetailRow(
-                            "Teléfono",
-                            ticket.telefonoReceptor ?? '--',
-                          ),
+
                           _buildDetailRow(
                             "Email",
                             ticket.emailReceptor?.isNotEmpty == true
@@ -172,25 +193,51 @@ class ViewComponentScreen extends StatelessWidget {
                       color: const Color.fromARGB(255, 217, 239, 255),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
-                        Text(
-                          'Total',
-                          style: GoogleFonts.nunito(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total',
+                              style: GoogleFonts.nunito(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                            Text(
+                              '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")} ${ticket.totalVenta?.toStringAsFixed(2) ?? "--"}',
+                              style: GoogleFonts.nunito(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")} ${ticket.totalVenta?.toStringAsFixed(2) ?? "--"}',
-                          style: GoogleFonts.nunito(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+                        if ((ticket.totalValorVentaGratuita ?? 0) > 0)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Gratuita',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                              Text(
+                                '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")} ${ticket.totalValorVentaGratuita?.toStringAsFixed(2) ?? "--"}',
+                                style: GoogleFonts.nunito(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
                       ],
                     ),
                   ),

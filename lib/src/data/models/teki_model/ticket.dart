@@ -603,7 +603,7 @@ class Ticket {
     double? totalValorVentaGravada,
     double? totalValorVentaInafecta,
     double? totalValorVentaExonerada,
-    Optional<double?>? totalValorVentaGratuita,
+    double? totalValorVentaGratuita,
     double? totalValorBaseIsc,
     double? totalValorBaseIgv,
     double? totalValorVentaGravadaIvap,
@@ -742,9 +742,8 @@ class Ticket {
           totalValorVentaInafecta ?? this.totalValorVentaInafecta,
       totalValorVentaExonerada:
           totalValorVentaExonerada ?? this.totalValorVentaExonerada,
-      totalValorVentaGratuita: totalValorVentaGratuita?.hasValue == true
-        ? totalValorVentaGratuita!.value
-        : this.totalValorVentaGratuita,
+      totalValorVentaGratuita:
+          totalValorVentaGratuita ?? this.totalValorVentaGratuita,
       totalValorBaseIsc: totalValorBaseIsc ?? this.totalValorBaseIsc,
       totalValorBaseIgv: totalValorBaseIgv ?? this.totalValorBaseIgv,
       totalValorVentaGravadaIvap:

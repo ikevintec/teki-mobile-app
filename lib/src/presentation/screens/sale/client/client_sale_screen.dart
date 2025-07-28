@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/sale_info_screen.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
@@ -345,6 +346,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                       ),
                     ),
                     const SizedBox(height: 5),
+                    SummaryBarSales(),
                     Row(
                       children: [
                         Expanded(

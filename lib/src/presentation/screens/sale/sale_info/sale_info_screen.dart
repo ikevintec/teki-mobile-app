@@ -5,6 +5,7 @@ import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/static/lists.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/otros_datos.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_widget.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
@@ -110,12 +111,15 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
       });
     }
   }
+
   void setVendedor() {
     final vendedor = ref.read(authStateProvider).user?.name ?? '';
     final id = ref.read(authStateProvider).user?.id ?? 0;
     setState(() {
       this.vendedor = vendedor;
-      ref.read(ticketProvider.notifier).setVendedor(User(name: vendedor,id: id));
+      ref
+          .read(ticketProvider.notifier)
+          .setVendedor(User(name: vendedor, id: id));
     });
   }
 
@@ -393,13 +397,22 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                       ),
                     ),
                     const SizedBox(height: 5),
+                    SummaryBarSales(),
                     Row(
                       children: [
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              ref.read(ticketProvider.notifier).setTicketsData();
-                              showCustomModal(context:context,child: PaymentWidget(),tittle:  '', showButtoms: false,scrolleable: false, allowButtons: true);
+                              ref
+                                  .read(ticketProvider.notifier)
+                                  .setTicketsData();
+                              showCustomModal(
+                                  context: context,
+                                  child: PaymentWidget(),
+                                  tittle: '',
+                                  showButtoms: false,
+                                  scrolleable: false,
+                                  allowButtons: true);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,

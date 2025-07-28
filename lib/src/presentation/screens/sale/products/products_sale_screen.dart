@@ -217,108 +217,129 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                       ),
                     ),
 
+                    Container(
+                      padding: const EdgeInsets.only(
+                          top: 20, bottom: 10, left: 20, right: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(40),
+                            topRight: Radius.circular(40)),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(
+                                top: 3, bottom: 5, left: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                SizedBox(
+                                  width: 100,
+                                  child: DropdownFormFieldSection(
+                                    label: "",
+                                    hint: "Elige una moneda",
+                                    items: ref
+                                        .watch(productSaleProvider)
+                                        .currencies
+                                        .map((c) => c.codigoMoneda!)
+                                        .toList(),
+                                    selectionItem:
+                                        provider.currency!.codigoMoneda,
+                                    onChanged: (value) {
+                                      notifier.setCurrency(value!);
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 160,
+                                  child: CustomSwitch(
+                                    title: "Inc. IGV",
+                                    border: false,
+                                    value: provider.incIgv,
+                                    onChanged: notifier.setIncIgv,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.only(
-                            top: 20, bottom: 10, left: 20, right: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(40),
-                              topRight: Radius.circular(40)),
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.only(
-                                  top: 3, bottom: 5, left: 16),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  SizedBox(
-                                    width: 100,
-                                    child: DropdownFormFieldSection(
-                                      label: "",
-                                      hint: "Elige una moneda",
-                                      items: ref
-                                          .watch(productSaleProvider)
-                                          .currencies
-                                          .map((c) => c.codigoMoneda!)
-                                          .toList(),
-                                      selectionItem:
-                                          provider.currency!.codigoMoneda,
-                                      onChanged: (value) {
-                                        notifier.setCurrency(value!);
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 160,
-                                    child: CustomSwitch(
-                                      title: "Inc. IGV",
-                                      border: false,
-                                      value: provider.incIgv,
-                                      onChanged: notifier.setIncIgv,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: products.isEmpty
-                                  ? Center(
-                                      child: Text(
-                                          "Aun no hay productos seleccionados"),
-                                    )
-                                  : ReactiveFormArray(
-                                      formArray:
-                                          form.control('products') as FormArray,
-                                      builder: (context, formArray, child) {
-                                        final controls = formArray.controls;
-                                        final visibleItems =
-                                            products.length < controls.length
-                                                ? products.length
-                                                : controls.length;
-                                        return Stack(
-                                          children: [
-                                            ListView.builder(
-                                              controller: _scrollController,
-                                              itemCount: visibleItems,
-                                              itemBuilder: (context, index) {
-                                                final formGroup =
-                                                    formArray.controls[index]
-                                                        as FormGroup;
-                                                return ProductItemCard(
-                                                  key: ValueKey(
-                                                      'product_$index-${Random().nextInt(100000)}'),
-                                                  productTicketDetail:
-                                                      products[index],
-                                                  index: index,
-                                                  formGroup: formGroup,
-                                                ) as Widget;
-                                              },
+                        color: Colors.white,
+                        child: products.isEmpty
+                            ? Center(
+                                child:
+                                    Text("Aun no hay productos seleccionados"),
+                              )
+                            : ReactiveFormArray(
+                                formArray:
+                                    form.control('products') as FormArray,
+                                builder: (context, formArray, child) {
+                                  final controls = formArray.controls;
+                                  final visibleItems =
+                                      products.length < controls.length
+                                          ? products.length
+                                          : controls.length;
+                                  return Stack(
+                                    children: [
+                                      ListView.builder(
+                                        controller: _scrollController,
+                                        itemCount: visibleItems,
+                                        itemBuilder: (context, index) {
+                                          final formGroup = formArray
+                                              .controls[index] as FormGroup;
+                                          return Dismissible(
+                                            key: ValueKey(
+                                                'product_$index-${Random().nextInt(100000)}'),
+                                            direction:
+                                                DismissDirection.endToStart,
+                                            background: Container(
+                                              alignment: Alignment.centerRight,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20),
+                                              color: Colors.redAccent,
+                                              child: const Icon(Icons.delete,
+                                                  color: Colors.white),
                                             ),
-                                            if (_showScrollHint)
-                                              Positioned(
-                                                bottom: 0,
-                                                left: 0,
-                                                right: 0,
-                                                child: Center(
-                                                  child: Icon(
-                                                      Icons.keyboard_arrow_down,
-                                                      size: 28,
-                                                      color: ColorSchema
-                                                          .primaryColor),
-                                                ),
-                                              ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                            ),
-                          ],
-                        ),
+                                            onDismissed: (direction) {
+                                              ref
+                                                  .read(productSaleProvider
+                                                      .notifier)
+                                                  .removeProductSale(index);
+                                            },
+                                            child: ProductItemCard(
+                                              key: ValueKey(
+                                                  'product_$index-${Random().nextInt(100000)}'),
+                                              productTicketDetail:
+                                                  products[index],
+                                              index: index,
+                                              formGroup: formGroup,
+                                            ) as Widget,
+                                          );
+                                        },
+                                      ),
+                                      if (_showScrollHint)
+                                        Positioned(
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          child: Center(
+                                            child: Icon(
+                                                Icons.keyboard_arrow_down,
+                                                size: 28,
+                                                color:
+                                                    ColorSchema.primaryColor),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
                       ),
                     ),
 
@@ -328,11 +349,6 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                       //add border top
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        border: Border(
-                          top: BorderSide(
-                            width: 0.4,
-                          ),
-                        ),
                       ),
                       child: Column(
                         children: [

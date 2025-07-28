@@ -1,3 +1,5 @@
+import 'package:teki_app/src/data/static/lists.dart';
+
 DateTime? parseDateTimeFlexible(dynamic value) {
   if (value == null) return null;
   if (value is int) {
@@ -33,4 +35,11 @@ String formatExchange({required String moneda}) {
     default:
       return moneda; // Retorna el código de moneda si no coincide con los casos anteriores
   }
+}
+
+String formatTipoComprobante(String tipoComprobante) {
+  List<Map<String, String>> lista = tipoComprobantesVenta;
+  Map<String, String> item =
+      lista.firstWhere((item) => item['value'] == tipoComprobante);
+  return item['label2'] ?? '';
 }

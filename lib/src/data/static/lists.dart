@@ -138,14 +138,14 @@ final List<Map<String, dynamic>> catalogo07 = [
 ];
 
 final List<Map<String, String>> tipoComprobantesVenta = [
-  {'label': 'Factura', 'value': '01'},
-  {'label': 'Boleta', 'value': '03'},
-  {'label': 'N. credito', 'value': 'NV'},
+  {'label': 'Factura', 'label2': 'Factura', 'value': '01'},
+  {'label': 'Boleta', 'label2': 'Boleta', 'value': '03'},
+  {'label': 'N. credito', 'label2': 'Nota de venta', 'value': 'NV'},
 ];
 
-  final List<Map<String, String>> tipoOperacion = [
-    {"label": "Venta Interna [0101]", "value": "0101"},
-    {"label": "Exportación [0200]", "value": "0200"},
-    {"label": "Opreración Sujeta a Detracción [1001]", "value": "1001"},
-    {"label": "Opreración Sujeta a Percepción [2001]", "value": "2001"}
-  ];
+final List<Map<String, String>> tipoOperacion = [
+  {"label": "Venta Interna [0101]", "value": "0101"},
+  {"label": "Exportación [0200]", "value": "0200"},
+  {"label": "Opreración Sujeta a Detracción [1001]", "value": "1001"},
+  {"label": "Opreración Sujeta a Percepción [2001]", "value": "2001"}
+];

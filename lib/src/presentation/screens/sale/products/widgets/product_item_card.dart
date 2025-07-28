@@ -67,23 +67,12 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
       clipBehavior: Clip.none,
       children: [
         Container(
-          margin: const EdgeInsets.only(bottom: 15, top: 10, right: 5),
+          // margin: const EdgeInsets.only(bottom: 15, top: 10, right: 5),
           padding: const EdgeInsets.only(
-            left: 10,
-            right: 10,
+            left: 30,
+            right: 30,
             top: 0,
-            bottom: 0,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            bottom: 30,
           ),
           child: ReactiveForm(
             formGroup: widget.formGroup,
@@ -109,7 +98,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 15),
                 Expanded(
                     child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,8 +127,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                           ),
                         ),
                         validationMessages: {
-                          ValidationMessage.minLength: (error) =>
-                              'WW',
+                          ValidationMessage.minLength: (error) => 'WW',
                           ValidationMessage.required: (error) =>
                               'Nombre requerido',
                         },
@@ -164,8 +152,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                             ),
                             onChanged: _onPriceChanged,
                             validationMessages: {
-                              ValidationMessage.min: (error) =>
-                                  'XX',
+                              ValidationMessage.min: (error) => 'XX',
                             },
                           ),
                         ),
@@ -175,12 +162,12 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                               IconButton(
                                 onPressed: () {
                                   showCustomModal(
-                                    context: context,
-                                    child: ModalProductView(
+                                      context: context,
+                                      child: ModalProductView(
                                           product: widget
                                               .productTicketDetail.producto!),
-                                    tittle: "Ver Producto",
-                                    allowButtons: false);
+                                      tittle: "Ver Producto",
+                                      allowButtons: false);
                                 },
                                 icon: Icon(Icons.visibility,
                                     color: ColorSchema.primaryColor, size: 15),
@@ -212,22 +199,28 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
           ),
         ),
         Positioned(
-          right: 0,
-          top: 5,
+          right: -3,
+          top: 55,
           child: Material(
-            color: Colors.red,
-            shape: const CircleBorder(),
-            elevation: 1,
+            color: Colors.transparent,
+            borderRadius:
+                const BorderRadius.horizontal(left: Radius.circular(30)),
             child: InkWell(
-              customBorder: const CircleBorder(),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(30)),
               onTap: () {
-                ref
-                    .read(productSaleProvider.notifier)
-                    .removeProductSale(widget.index);
+                // ref.read(productSaleProvider.notifier).removeProductSale(widget.index);
               },
-              child: const Padding(
-                padding: EdgeInsets.all(7),
-                child: Icon(Icons.close, size: 10, color: Colors.white),
+              child: Container(
+                width: 30,
+                height: 30,
+                decoration: const BoxDecoration(
+                  color: Colors.redAccent,
+                  borderRadius:
+                      BorderRadius.horizontal(left: Radius.circular(30)),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded,
+                    size: 12, color: Colors.white),
               ),
             ),
           ),

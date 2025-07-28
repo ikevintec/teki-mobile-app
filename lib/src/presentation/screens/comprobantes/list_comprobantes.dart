@@ -39,19 +39,6 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
     super.dispose();
   }
 
-  String getNombreComprobante(String? tipo) {
-    switch (tipo) {
-      case '01':
-        return 'FACTURA';
-      case '03':
-        return 'BOLETA';
-      case 'NV':
-        return 'NOTA DE VENTA';
-      default:
-        return 'COMPROBANTE';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = ref.watch(comprobantesSaleProvider);
@@ -106,7 +93,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      getNombreComprobante(ticket.tipoComprobante),
+                      formatTipoComprobante(ticket.tipoComprobante ?? ''),
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
@@ -158,7 +145,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                       Text(
                         '(${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalValorVentaGratuita?.toStringAsFixed(2) ?? "--"})',
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: ColorSchema.primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
