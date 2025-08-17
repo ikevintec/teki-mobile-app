@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/list_comprobantes.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/filter_actions.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/widgets/clean_filters_button.dart';
 
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 
@@ -32,6 +33,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
     provider.loadFirstPage(desde: desde, hasta: hasta);
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,7 +57,13 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: FilterActions()
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FilterActions(),
+                CleanFiltersButton(),
+              ],
+            ),
           ),
           const SizedBox(height: 2),
           Padding(
@@ -64,14 +72,6 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTotalesSection(),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Comprobantes:",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -108,7 +108,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
     }
 
     return Align(
-      alignment: Alignment.centerRight,
+      alignment: Alignment.centerLeft,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: items.map((item) {
@@ -122,8 +122,8 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: RichText(
               text: TextSpan(
-                style: GoogleFonts.raleway(
-                  fontSize: 15,
+                style: GoogleFonts.roboto(
+                  fontSize: 14,
                   color: Colors.black,
                 ),
                 children: [

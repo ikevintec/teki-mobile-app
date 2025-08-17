@@ -43,7 +43,15 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
     await fetchMoreTickets();
   }
 
-  Future<void> loadFirstPage({required String desde, required String hasta}) async {
+  Future<void> loadFirstPage({
+    required String desde, 
+    required String hasta,
+    String? serie,
+    String? numero,
+    List<String>? tiposComprobante,
+    List<String>? metodosPago,
+    String? estado,
+  }) async {
     state = state.copyWith(
       filtroDesde: desde,
       filtroHasta: hasta,
@@ -54,6 +62,12 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
       hasMore: true,
       isLoading: true,
       pageNumber: 0,
+      // Nuevos filtros adicionales
+      filtroSerie: serie, // Permitir strings vacíos igual que en updateFilters
+      filtroNumero: numero, // Permitir strings vacíos igual que en updateFilters
+      filtroTipoComprobante: tiposComprobante?.isNotEmpty == true ? tiposComprobante : null,
+      idMetodoPago: metodosPago?.isNotEmpty == true ? metodosPago : null,
+      filtroEstado: estado,
     );
 
     try {
@@ -73,6 +87,48 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
     } finally {
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  // Método para actualizar filtros sin hacer búsqueda inmediata
+  void updateFilters({
+    String? serie,
+    String? numero,
+    List<String>? tiposComprobante,
+    List<String>? metodosPago,
+    String? estado,
+  }) {
+    state = state.copyWith(
+      filtroSerie: serie, // Permitir strings vacíos
+      filtroNumero: numero, // Permitir strings vacíos
+      filtroTipoComprobante: tiposComprobante?.isNotEmpty == true ? tiposComprobante : null,
+      idMetodoPago: metodosPago?.isNotEmpty == true ? metodosPago : null,
+      filtroEstado: estado,
+    );
+  }
+
+  // Método para limpiar filtros adicionales (mantiene fechas)
+  Future<void> clearAdditionalFilters() async {
+    // Hacer búsqueda manteniendo solo las fechas actuales
+    state = ComprobantesState(
+      tickets: [],
+      isLoading: true,
+      hasMore: true,
+      pageNumber: 0,
+      page: 0,
+      perPage: state.perPage,
+      limit: state.limit,
+      filtroDesde: state.filtroDesde,
+      filtroHasta: state.filtroHasta,
+      ruc: state.ruc,
+      idPuntoVenta: state.idPuntoVenta,
+      idVendedor: state.idVendedor,
+      filtroRucEmisor: state.filtroRucEmisor,
+      totalesPorMoneda: [],
+    );
+    await loadFirstPage(
+      desde: state.filtroDesde,
+      hasta: state.filtroHasta,
+    );
   }
 
   Future<void> fetchMoreTickets() async {
@@ -125,6 +181,12 @@ class ComprobantesState {
   final int idVendedor;
   final String filtroRucEmisor;
   final List<TotalesPorMoneda> totalesPorMoneda;
+  // Nuevos filtros adicionales
+  final String? filtroSerie;
+  final String? filtroNumero;
+  final List<String>? filtroTipoComprobante;
+  final List<String>? idMetodoPago;
+  final String? filtroEstado;
 
   ComprobantesState({
     required this.tickets,
@@ -140,7 +202,13 @@ class ComprobantesState {
     required this.idPuntoVenta,
     required this.idVendedor,
     required this.filtroRucEmisor,
-    required this.totalesPorMoneda, // nuevo
+    required this.totalesPorMoneda,
+    // Nuevos filtros adicionales
+    this.filtroSerie,
+    this.filtroNumero,
+    this.filtroTipoComprobante,
+    this.idMetodoPago,
+    this.filtroEstado,
   });
 
   factory ComprobantesState.initial() => ComprobantesState(
@@ -157,7 +225,13 @@ class ComprobantesState {
         idPuntoVenta: 0,
         idVendedor: 0,
         filtroRucEmisor: '',
-        totalesPorMoneda: [], // nuevo
+        totalesPorMoneda: [],
+        // Nuevos filtros adicionales inicializados como null
+        filtroSerie: null,
+        filtroNumero: null,
+        filtroTipoComprobante: null,
+        idMetodoPago: null,
+        filtroEstado: null,
       );
 
   ComprobantesState copyWith({
@@ -172,9 +246,15 @@ class ComprobantesState {
     String? ruc,
     int? idPuntoVenta,
     int? idVendedor,
-    int? perPage, // This is not used in the state but can be added if needed
+    int? perPage,
     String? filtroRucEmisor,
-    List<TotalesPorMoneda>? totalesPorMoneda, // nuevo
+    List<TotalesPorMoneda>? totalesPorMoneda,
+    // Nuevos filtros adicionales
+    String? filtroSerie,
+    String? filtroNumero,
+    List<String>? filtroTipoComprobante,
+    List<String>? idMetodoPago,
+    String? filtroEstado,
   }) {
     return ComprobantesState(
       tickets: tickets ?? this.tickets,
@@ -188,9 +268,15 @@ class ComprobantesState {
       ruc: ruc ?? this.ruc,
       idPuntoVenta: idPuntoVenta ?? this.idPuntoVenta,
       idVendedor: idVendedor ?? this.idVendedor,
-      perPage: perPage ?? this.perPage, // Optional, can be used for pagination
+      perPage: perPage ?? this.perPage,
       filtroRucEmisor: filtroRucEmisor ?? this.filtroRucEmisor,
       totalesPorMoneda: totalesPorMoneda ?? this.totalesPorMoneda,
+      // Nuevos filtros adicionales
+      filtroSerie: filtroSerie ?? this.filtroSerie,
+      filtroNumero: filtroNumero ?? this.filtroNumero,
+      filtroTipoComprobante: filtroTipoComprobante ?? this.filtroTipoComprobante,
+      idMetodoPago: idMetodoPago ?? this.idMetodoPago,
+      filtroEstado: filtroEstado ?? this.filtroEstado,
     );
   }
 }

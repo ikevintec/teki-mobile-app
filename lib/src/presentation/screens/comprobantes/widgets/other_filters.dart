@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/selector/multi_selector.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
+import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
-class OtherFilters extends StatefulWidget {
-  final Function(Map<String, dynamic>)? onFiltersChanged;
+class OtherFilters extends ConsumerStatefulWidget {
+  final VoidCallback? onApplyFilters;
   
   const OtherFilters({
     super.key,
-    this.onFiltersChanged,
+    this.onApplyFilters,
   });
 
   @override
-  State<OtherFilters> createState() => _OtherFiltersState();
+  ConsumerState<OtherFilters> createState() => _OtherFiltersState();
 }
 
-class _OtherFiltersState extends State<OtherFilters> {
+class _OtherFiltersState extends ConsumerState<OtherFilters> {
   final TextEditingController _serieController = TextEditingController();
   final TextEditingController _numeroController = TextEditingController();
   
@@ -27,27 +29,36 @@ class _OtherFiltersState extends State<OtherFilters> {
 
   // Datos para los selectores múltiples
   final List<Map<String, String>> _paymentMethods = [
-    {'label': 'Efectivo', 'value': 'EFECTIVO'},
-    {'label': 'Tarjeta de Crédito', 'value': 'TARJETA_CREDITO'},
-    {'label': 'Tarjeta de Débito', 'value': 'TARJETA_DEBITO'},
-    {'label': 'Transferencia', 'value': 'TRANSFERENCIA'},
-    {'label': 'Yape', 'value': 'YAPE'},
-    {'label': 'Plin', 'value': 'PLIN'},
-    {'label': 'BIM', 'value': 'BIM'},
-    {'label': 'Cheque', 'value': 'CHEQUE'},
-    {'label': 'Depósito en Cuenta', 'value': 'DEPOSITO'},
+    {'label': 'Efectivo', 'value': '1'},
+    {'label': 'Tarjeta de Crédito', 'value': '2'},
+    {'label': 'Tarjeta de Débito', 'value': '3'},
+    {'label': 'Transferencia', 'value': '4'},
+    {'label': 'Yape', 'value': '10'},
+    {'label': 'Plin', 'value': '11'},
+    {'label': 'BIM', 'value': '12'},
+    {'label': 'Cheque', 'value': '5'},
+    {'label': 'Depósito en Cuenta', 'value': '6'},
   ];
 
   final List<Map<String, String>> _documentTypes = [
-    {'label': 'Boleta de Venta', 'value': 'BOLETA'},
-    {'label': 'Factura', 'value': 'FACTURA'},
-    {'label': 'Nota de Crédito', 'value': 'NOTA_CREDITO'},
-    {'label': 'Nota de Débito', 'value': 'NOTA_DEBITO'},
-    {'label': 'Guía de Remisión', 'value': 'GUIA_REMISION'},
-    {'label': 'Recibo por Honorarios', 'value': 'RECIBO_HONORARIOS'},
+    {'label': 'Boleta de Venta', 'value': '03'},
+    {'label': 'Factura', 'value': '01'},
+    {'label': 'Nota de Crédito', 'value': '07'},
+    {'label': 'Nota de Débito', 'value': '08'},
+    {'label': 'Guía de Remisión', 'value': '09'},
+    {'label': 'Recibo por Honorarios', 'value': 'NV'},
   ];
 
   final List<String> _statusOptions = ['Todos', 'Activos', 'Anulados'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar con los valores del provider en el próximo frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFiltersFromProvider();
+    });
+  }
 
   @override
   void dispose() {
@@ -56,15 +67,35 @@ class _OtherFiltersState extends State<OtherFilters> {
     super.dispose();
   }
 
-  void _onFilterChanged() {
-    final filters = {
-      'serie': _serieController.text.trim(),
-      'numero': _numeroController.text.trim(),
-      'paymentMethods': _selectedPaymentMethods,
-      'documentTypes': _selectedDocumentTypes,
-      'status': _selectedStatus,
-    };
-    widget.onFiltersChanged?.call(filters);
+  void _loadFiltersFromProvider() {
+    final currentState = ref.read(comprobantesSaleProvider);
+    
+    // Actualizar los controladores de texto
+    _serieController.text = currentState.filtroSerie ?? '';
+    _numeroController.text = currentState.filtroNumero ?? '';
+    
+    // Actualizar los selectores múltiples
+    setState(() {
+      _selectedDocumentTypes = currentState.filtroTipoComprobante ?? [];
+      _selectedPaymentMethods = currentState.idMetodoPago ?? [];
+      _selectedStatus = currentState.filtroEstado ?? 'Todos';
+    });
+  }
+
+
+
+  void _applyFilters() {
+    // Aplicar filtros al provider y hacer búsqueda
+    ref.read(comprobantesSaleProvider.notifier).updateFilters(
+      serie: _serieController.text.trim(),
+      numero: _numeroController.text.trim(),
+      tiposComprobante: _selectedDocumentTypes.isNotEmpty ? _selectedDocumentTypes : null,
+      metodosPago: _selectedPaymentMethods.isNotEmpty 
+          ? _selectedPaymentMethods 
+          : null,
+      estado: _selectedStatus, // "Todos", "Activos", o "Anulados"
+    );
+    widget.onApplyFilters?.call();
   }
 
   @override
@@ -86,7 +117,7 @@ class _OtherFiltersState extends State<OtherFilters> {
                   hint: 'Ej. F001, B001',
                   inputType: TextInputType.text,
                   controller: _serieController,
-                  onChanged: (_) => _onFilterChanged(),
+                  onChanged: (_) {}, // Solo cambio local, no actualizar provider
                 ),
               ),
               const SizedBox(width: 16),
@@ -96,7 +127,7 @@ class _OtherFiltersState extends State<OtherFilters> {
                   hint: 'Ej. 000123',
                   inputType: TextInputType.number,
                   controller: _numeroController,
-                  onChanged: (_) => _onFilterChanged(),
+                  onChanged: (_) {}, // Solo cambio local, no actualizar provider
                 ),
               ),
             ],
@@ -113,7 +144,7 @@ class _OtherFiltersState extends State<OtherFilters> {
               setState(() {
                 _selectedPaymentMethods = values;
               });
-              _onFilterChanged();
+              // Solo cambio local, no actualizar provider hasta Aplicar
             },
           ),
           const SizedBox(height: 16),
@@ -128,7 +159,7 @@ class _OtherFiltersState extends State<OtherFilters> {
               setState(() {
                 _selectedDocumentTypes = values;
               });
-              _onFilterChanged();
+              // Solo cambio local, no actualizar provider hasta Aplicar
             },
           ),
           const SizedBox(height: 20),
@@ -154,7 +185,7 @@ class _OtherFiltersState extends State<OtherFilters> {
                   setState(() {
                     _selectedStatus = value;
                   });
-                  _onFilterChanged();
+                  // No llamar _updateLocalFilters() aquí para evitar actualizaciones prematuras
                 },
               ),
             ],
@@ -189,7 +220,7 @@ class _OtherFiltersState extends State<OtherFilters> {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-              onPressed: _onFilterChanged,
+              onPressed: _applyFilters,
               style: ElevatedButton.styleFrom(
               backgroundColor: ColorSchema.primaryColor,
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),

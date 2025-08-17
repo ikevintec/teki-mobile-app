@@ -6,7 +6,7 @@ class WhatsappHelper {
   /// Genera la URL del PDF 
   static String getUrlPdf(Ticket ticket, String size) {
     final baseUrl = Environment.apiUrl;
-    return 'http://localhost:8080/public/pdf/tickets/${ticket.uuid}/${ticket.identificadorDocumento}?tipo=$size';
+    return '$baseUrl/public/pdf/tickets/${ticket.uuid}/${ticket.identificadorDocumento}?tipo=$size';
   }
 
   /// Transforma el tipo de comprobante a texto legible

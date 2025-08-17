@@ -106,5 +106,46 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
     safeAdd('sortOrder', '1');
   }
 
+  // Nuevos filtros adicionales
+  try {
+    safeAdd('filtroSerie', state.filtroSerie);
+  } catch (_) {}
+  try {
+    safeAdd('filtroNumero', state.filtroNumero);
+  } catch (_) {}
+  try {
+    // Para filtros múltiples como filtroTipoComprobante, se agregan múltiples parámetros
+    if (state.filtroTipoComprobante != null && state.filtroTipoComprobante.isNotEmpty) {
+      for (String tipo in state.filtroTipoComprobante) {
+        if (!params.containsKey('filtroTipoComprobante')) {
+          params['filtroTipoComprobante'] = [];
+        }
+        params['filtroTipoComprobante'].add(tipo);
+      }
+    }
+  } catch (_) {}
+  try {
+    // Para filtros múltiples como idMetodoPago, se agregan múltiples parámetros
+    if (state.idMetodoPago != null && state.idMetodoPago.isNotEmpty) {
+      for (String metodo in state.idMetodoPago) {
+        if (!params.containsKey('idMetodoPago')) {
+          params['idMetodoPago'] = [];
+        }
+        params['idMetodoPago'].add(metodo);
+      }
+    }
+  } catch (_) {}
+  try {
+    // Convertir filtroEstado string a filtroEstadoAnulacion booleano
+    if (state.filtroEstado != null && state.filtroEstado.toLowerCase() != 'todos') {
+      if (state.filtroEstado.toLowerCase() == 'activos') {
+        safeAdd('filtroEstadoAnulacion', false); // false = NO anulado = activo
+      } else if (state.filtroEstado.toLowerCase() == 'anulados') {
+        safeAdd('filtroEstadoAnulacion', true); // true = anulado
+      }
+    }
+    // Si es "Todos" o null, no agregar el parámetro
+  } catch (_) {}
+
   return params;
 }

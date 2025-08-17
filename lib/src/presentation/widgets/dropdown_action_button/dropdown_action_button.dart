@@ -388,7 +388,7 @@ class _DropdownOverlay extends StatelessWidget {
 
   Size _calculateDropdownSize() {
     // Estimate dropdown size based on options
-    const minWidth = 150.0;
+    // const minWidth = 150.0;
     const maxWidth = 200.0;
     const itemHeight = 48.0; // padding + text height
     
