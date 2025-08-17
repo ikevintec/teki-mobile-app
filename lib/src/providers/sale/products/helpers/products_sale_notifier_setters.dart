@@ -8,7 +8,6 @@ import 'package:teki_app/src/providers/sale/products/helpers/tciket_detail_helpe
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
-import 'package:teki_app/src/data/models/general/optional.dart';
 
 mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   Ref get ref;
@@ -79,6 +78,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         productsSales: List.from(state.productsSales)
           ..[existingProductIndex] = updatedTicketDetail,
       );
+      calculoTotal(); // Recalcular totales cuando se actualiza cantidad de producto existente
       return;
     }
     state = state.copyWith(

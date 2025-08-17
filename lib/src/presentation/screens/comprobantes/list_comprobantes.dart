@@ -161,7 +161,8 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                 ),
                 onTap: () {
                   //navigate to ViewComponentScreen
-                  Get.to(() => ViewComponentScreen(ticket: ticket));
+                  Get.to(() => ViewComponentScreen(ticket: ticket,
+                      id: ticket.id ?? -1));
                 }, // Deshabilita el tap
               ),
             ),

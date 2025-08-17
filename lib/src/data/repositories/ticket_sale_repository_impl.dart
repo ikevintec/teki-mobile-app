@@ -34,7 +34,7 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
 
   @override
   Future<Ticket> getTicketById(int id) {
-    throw UnimplementedError(); // Implementar cuando lo necesites
+    return datasource.getTicketById(id);
   }
 
   @override

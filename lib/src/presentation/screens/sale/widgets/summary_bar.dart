@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
@@ -52,7 +51,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       ),
                     ),
                     Text(
-                      "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.totalVenta ?? 0).toStringAsFixed(2)}",
+                      "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.totalVenta ?? 0).toStringAsFixed(2)}",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -72,7 +71,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.totalValorVentaGravada ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.totalValorVentaGravada ?? 0).toStringAsFixed(2)}",
                         style: TextStyle(
                           fontSize: 12,
                         ),
@@ -90,7 +89,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.otrosCargos ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.otrosCargos ?? 0).toStringAsFixed(2)}",
                         style: TextStyle(
                           fontSize: 12,
                         ),
@@ -108,7 +107,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.otrosTributos ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.otrosTributos ?? 0).toStringAsFixed(2)}",
                         style: TextStyle(
                           fontSize: 12,
                         ),
@@ -126,7 +125,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.totalIgv ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.totalIgv ?? 0).toStringAsFixed(2)}",
                         style: TextStyle(
                           fontSize: 12,
                         ),
@@ -145,7 +144,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${(providerTicket.ticket.totalValorVentaGratuita ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.totalValorVentaGratuita ?? 0).toStringAsFixed(2)}",
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

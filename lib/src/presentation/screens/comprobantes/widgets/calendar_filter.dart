@@ -210,7 +210,7 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
 
     return Container(
       // color: ColorSchema.primaryColor,
-      padding: const EdgeInsets.only(bottom: 0, top: 15),
+      padding: const EdgeInsets.only(bottom: 0, top: 0),
       child: Row(
         children: [
           Expanded(

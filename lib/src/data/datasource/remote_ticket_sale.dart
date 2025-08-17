@@ -222,4 +222,19 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       return Future.error(e.toString());
     }
   }
+  @override
+  Future<Ticket> getTicketById(int id) async {
+    try {
+      final response = await dio.get(
+        '/tickets/$id',
+      );
+      return Ticket.fromJson(response.data);
+    } on DioException catch (e) {
+      final message =
+          e.response?.data?['message'] ?? 'Error desconocido del servidor';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
 }

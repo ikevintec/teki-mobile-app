@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:teki_app/src/presentation/screens/comprobantes/list_comprobantes.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/widgets/filter_actions.dart';
 
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 
@@ -28,7 +29,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
         range.start.year, range.start.month, range.start.day, 0, 0, 0));
     final hasta = DateFormat('dd-MM-yyyy H:mm:ss').format(
         DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59));
-    provider.loadFirstPage(desde, hasta);
+    provider.loadFirstPage(desde: desde, hasta: hasta);
   }
 
   @override
@@ -43,11 +44,18 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
       ),
       body: Column(
         children: [
-          CustomDatePicker(
-            onDateSelected: (range) {
-              print("Selected range: ${range.start} - ${range.end}");
-              _handleDateRangeChanged(range);
-            },
+          Padding(
+            padding: const EdgeInsets.only( top: 8.0),
+            child: CustomDatePicker(
+              onDateSelected: (range) {
+                print("Selected range: ${range.start} - ${range.end}");
+                _handleDateRangeChanged(range);
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: FilterActions()
           ),
           const SizedBox(height: 2),
           Padding(

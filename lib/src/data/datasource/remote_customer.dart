@@ -104,7 +104,7 @@ class RemoteCustomers extends CustomersDatasource {
 
       // Si devuelve un objeto con 'content'
       final customerResponse = CustomerResponse.fromJson(data);
-      return customerResponse.content ?? [];
+      return customerResponse.content;
     } catch (e) {
       errorNotification(e.toString());
       return [];

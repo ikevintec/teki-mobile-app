@@ -43,7 +43,7 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
     await fetchMoreTickets();
   }
 
-  Future<void> loadFirstPage(String desde, String hasta) async {
+  Future<void> loadFirstPage({required String desde, required String hasta}) async {
     state = state.copyWith(
       filtroDesde: desde,
       filtroHasta: hasta,

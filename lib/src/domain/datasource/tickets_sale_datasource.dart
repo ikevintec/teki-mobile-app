@@ -14,6 +14,7 @@ abstract class TicketSaleDatasource {
   Future<List<String>> getSeriesPorOficina(int officeId, String tipoDocumento);
   Future<List<Ticket>> getComprobantes(Map<String, dynamic> params);
 
-  Future<List<TotalesPorMoneda>> getTotalesPorMoneda(
-      Map<String, dynamic> params);
+  Future<List<TotalesPorMoneda>> getTotalesPorMoneda(Map<String, dynamic> params);
+
+  Future<Ticket> getTicketById(int id);
 }
