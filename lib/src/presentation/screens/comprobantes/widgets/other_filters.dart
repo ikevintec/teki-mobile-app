@@ -5,6 +5,7 @@ import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.
 import 'package:teki_app/src/presentation/widgets/selector/multi_selector.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class OtherFilters extends ConsumerStatefulWidget {
@@ -26,26 +27,13 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
   List<String> _selectedPaymentMethods = [];
   List<String> _selectedDocumentTypes = [];
   String _selectedStatus = 'Todos';
-
-  // Datos para los selectores múltiples
-  final List<Map<String, String>> _paymentMethods = [
-    {'label': 'Efectivo', 'value': '1'},
-    {'label': 'Tarjeta de Crédito', 'value': '2'},
-    {'label': 'Tarjeta de Débito', 'value': '3'},
-    {'label': 'Transferencia', 'value': '4'},
-    {'label': 'Yape', 'value': '10'},
-    {'label': 'Plin', 'value': '11'},
-    {'label': 'BIM', 'value': '12'},
-    {'label': 'Cheque', 'value': '5'},
-    {'label': 'Depósito en Cuenta', 'value': '6'},
-  ];
+  List<Map<String, String>> _paymentMethods = [];
 
   final List<Map<String, String>> _documentTypes = [
     {'label': 'Boleta de Venta', 'value': '03'},
     {'label': 'Factura', 'value': '01'},
     {'label': 'Nota de Crédito', 'value': '07'},
     {'label': 'Nota de Débito', 'value': '08'},
-    {'label': 'Guía de Remisión', 'value': '09'},
     {'label': 'Recibo por Honorarios', 'value': 'NV'},
   ];
 
@@ -56,6 +44,7 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
     super.initState();
     // Inicializar con los valores del provider en el próximo frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPaymentMethods();
       _loadFiltersFromProvider();
     });
   }
@@ -65,6 +54,24 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
     _serieController.dispose();
     _numeroController.dispose();
     super.dispose();
+  }
+
+  void _loadPaymentMethods() {
+    final sesionState = ref.read(sesionProvider);
+    final configCompany = sesionState.config;
+    
+    if (configCompany?.formasPago != null) {
+      setState(() {
+        _paymentMethods = configCompany!.formasPago!
+            .where((fp) => 
+                (fp.formaPago == 'EFECTIVO' || fp.tipoMovimiento == 'INGRESO'))
+            .map((fp) => {
+                'label': fp.nombre ?? '',
+                'value': fp.id?.toString() ?? ''
+            })
+            .toList();
+      });
+    }
   }
 
   void _loadFiltersFromProvider() {
