@@ -1,13 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
+import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 import 'package:teki_app/src/data/repositories/currency_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/currency_repository.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
+import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/products_sale_notifier_setters.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
 
@@ -74,7 +79,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     }
   }
 
-  void loadInitialData() async {
+  void loadInitialData(int? id) async {
     if (state.currencies.isNotEmpty) return;
     setLoading(true);
     try {
@@ -84,7 +89,19 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
           currencies: response,
           currency: response[0],
         );
-        
+      }
+      if (id != null) {
+        final comprobanteNotifier = ref.read(comprobanteProvider.notifier);
+        // Cargar el comprobante y sus datos relacionados
+        final customerNotifier = ref.read(customerSaleProvider.notifier);
+        final productsSaleNotifier = ref.read(productSaleProvider.notifier);
+        final ticketSaleNotifier = ref.read(ticketProvider.notifier);
+        // Cargar el comprobante por ID
+        Ticket comprobante = await comprobanteNotifier.fetchComprobanteById(id);
+        ticketSaleNotifier.updateTicket(comprobante);
+        customerNotifier.setCustomerEntity(comprobante.cliente?? Customer());
+        productsSaleNotifier.setProductsSaleEntity(comprobante.items ?? []);
+        ticketSaleNotifier.setEdited(true);
       }
     } catch (e) {
       setError(e.toString());

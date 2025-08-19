@@ -73,24 +73,6 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
     }
   }
 
-  /// Crea un nuevo ticket de venta
-  @override
-  Future<Ticket> createTicket(Ticket ticket) async {
-    try {
-      final response = await dio.post(
-        '/tickets',
-        data: ticket.toJson(),
-      );
-      return Ticket.fromJson(response.data);
-    } on DioException catch (e) {
-      final message =
-          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
-      return Future.error(message);
-    } catch (e) {
-      return Future.error(e.toString());
-    }
-  }
-
   /// Obtiene los tickets existentes por tipoDocumento y serie
   @override
   Future<List<Ticket>> getTicketNumeros(
@@ -222,6 +204,7 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       return Future.error(e.toString());
     }
   }
+  
   @override
   Future<Ticket> getTicketById(int id) async {
     try {
@@ -232,6 +215,43 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
     } on DioException catch (e) {
       final message =
           e.response?.data?['message'] ?? 'Error desconocido del servidor';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+  
+
+  /// Crea un nuevo ticket de venta
+  @override
+  Future<Ticket> createTicket(Ticket ticket) async {
+    try {
+      final response = await dio.post(
+        '/tickets',
+        data: ticket.toJson(),
+      );
+      return Ticket.fromJson(response.data);
+    } on DioException catch (e) {
+      final message =
+          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  /// Actualizar un ticket existente
+  @override
+  Future<Ticket> updateTicket(Ticket ticket) async {
+    try {
+      final response = await dio.put(
+        '/tickets',
+        data: ticket.toJson(),
+      );
+      return Ticket.fromJson(response.data);
+    } on DioException catch (e) {
+      final message =
+          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());

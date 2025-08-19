@@ -59,6 +59,11 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     }
   }
 
+  void setProductsSaleEntity(List<TicketDetail> productsSales) {
+    state = state.copyWith(productsSales: productsSales);
+    calculoTotal();
+  }
+
   void setProductsSales(Product productsSales, int? index) {
     final existingProductIndex = index ??
         state.productsSales.indexWhere(

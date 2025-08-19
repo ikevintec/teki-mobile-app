@@ -162,7 +162,9 @@ Widget _buildErrorScreen(String message) {
           _buildInfoItem("Número", ticket.numero?.toString() ?? '--', Icons.tag),
           _buildInfoItem("Fecha", ticket.fechaEmision ?? '--', Icons.calendar_today),
           _buildInfoItem("Hora", ticket.horaEmision ?? '--', Icons.access_time),
+          _buildInfoItem("Incluye IGV", ticket.incIgv == true ? 'Sí' : 'No', Icons.access_time),
           _buildInfoItem("Tipo Pago", ticket.tipoVenta ?? '--', Icons.payment),
+          _buildInfoItem("Estado SUNAT", formatEstadoSunat(ticket.estadoSunat ?? '-'), Icons.content_paste_search),
         ]),
       ],
     );
@@ -176,6 +178,8 @@ Widget _buildErrorScreen(String message) {
         _buildFullWidthInfoItem("Nombre", ticket.denominacionReceptor ?? "Sin nombre", Icons.person_outline),
         const SizedBox(height: 12),
         _buildInfoGrid([
+          _buildInfoItem("Tipo Documento", ticket.cliente?.tipoDocumento ?? '--', Icons.document_scanner),
+          _buildInfoItem("Numero Documento", ticket.cliente?.numeroDocumento ?? '--', Icons.phone),
           _buildInfoItem("Género", ticket.cliente?.genero ?? "--", Icons.wc),
           _buildInfoItem("Teléfono", ticket.telefonoReceptor ?? '--', Icons.phone),
         ]),
@@ -237,7 +241,7 @@ Widget _buildErrorScreen(String message) {
     
     return DropdownActionButton(
       options: options,
-      label: 'Enviar',
+      label: '',
       icon: Icons.share,
       style: DropdownActionButtonStyle.elevated,
       enabled: options.any((option) => option.enabled),
@@ -274,7 +278,7 @@ Widget _buildErrorScreen(String message) {
     
     return DropdownActionButton(
       options: options,
-      label: 'Ver Docs',
+      label: '',
       icon: Icons.description,
       style: DropdownActionButtonStyle.elevated,
       enabled: true,
@@ -304,7 +308,7 @@ Widget _buildErrorScreen(String message) {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
             decoration: BoxDecoration(
               color:  Colors.blueAccent.withOpacity(0.2),
               borderRadius: const BorderRadius.only(
@@ -324,7 +328,7 @@ Widget _buildErrorScreen(String message) {
                   title,
                   style: GoogleFonts.nunito(
                     fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                    fontSize: 16,
                     color: ColorSchema.primaryColor,
                   ),
                 ),
@@ -406,6 +410,7 @@ Widget _buildErrorScreen(String message) {
       ),
     );
   }
+  
   Widget _buildFullWidthInfoItem(String label, String value, IconData icon) {
     return Container(
       width: double.infinity,

@@ -20,7 +20,8 @@ import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class ProductsSaleScreen extends ConsumerStatefulWidget {
-  const ProductsSaleScreen({super.key});
+  final int? id;
+  const ProductsSaleScreen({super.key,this.id});
 
   @override
   ConsumerState<ProductsSaleScreen> createState() => _ProductsSaleScreenState();
@@ -85,7 +86,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
 
     final providerProductSale = ref.read(productSaleProvider.notifier);
     Future.microtask(() {
-      providerProductSale.loadInitialData();
+      providerProductSale.loadInitialData(widget.id);
       // Esperar al primer frame y luego evaluar si se necesita mostrar la flecha
       WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollHint());
     });

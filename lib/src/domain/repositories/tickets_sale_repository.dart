@@ -17,6 +17,9 @@ abstract class TicketsSaleRepository {
   /// Crea un nuevo ticket (venta)
   Future<Ticket> createTicket(Ticket ticket);
 
+  /// Actualiza un ticket existente
+  Future<Ticket> updateTicket(Ticket ticket); 
+
   /// Obtiene un ticket por su ID
   Future<Ticket> getTicketById(int id);
 

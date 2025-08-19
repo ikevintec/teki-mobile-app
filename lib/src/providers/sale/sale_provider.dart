@@ -159,7 +159,11 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     state = TicketProvider(ticket: Ticket());
   }
 
-  Future<Ticket?> createTicket() async {
+  void setEdited(bool isEdited) {
+    state = state.copyWith(isEdit: isEdited);
+  }
+
+  Future<Ticket?> proceessTicket() async {
     try {
       Ticket ticketToSend = Ticket(
         serie: state.ticket.serie,
@@ -314,7 +318,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
         despachoPosterior: state.ticket.despachoPosterior,
         isRetencion: state.ticket.isRetencion,
       );
-      
+      if (state.isEdit && ticketToSend.id != null) {
+        return await ticketsSaleRepository.updateTicket(ticketToSend);
+      }
       return await ticketsSaleRepository.createTicket(ticketToSend);
     } catch (e) {
       errorNotification("Error al crear el ticket: $e");
@@ -325,12 +331,15 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
 
 class TicketProvider {
   final Ticket ticket;
-  TicketProvider({required this.ticket});
+  final bool isEdit;
+  TicketProvider({required this.ticket, this.isEdit = false});
   TicketProvider copyWith({
     Ticket? ticket,
+    bool? isEdit,
   }) {
     return TicketProvider(
       ticket: ticket ?? this.ticket,
+      isEdit: isEdit ?? this.isEdit,
     );
   }
 }

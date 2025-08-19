@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
-class ServicesSection extends StatelessWidget {
+class ServicesSection extends ConsumerWidget {
   const ServicesSection({super.key});
 
+  void openNewSale(WidgetRef ref) {
+    final ticket = ref.read(ticketProvider);
+    if (ticket.isEdit) {
+      ref.invalidate(ticketProvider);
+      ref.invalidate(productSaleProvider);
+      ref.invalidate(customerSaleProvider);
+    }
+    Get.toNamed(AppRoutes.productsSales);
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.only(left: 30, right: 30, top: 30),
       child: Column(
@@ -34,8 +48,8 @@ class ServicesSection extends StatelessWidget {
                         "assets/icons/icon_image/pos.png",
                         Colors.grey.shade100,
                         ColorSchema.primaryColor, () {
-                      // Get.toNamed(AppRoutes.posSales);
-                      Get.toNamed(AppRoutes.productsSales);
+                          // Get.toNamed(AppRoutes.posSales);
+                          openNewSale(ref);
                     }),
                     //Ver Comprobantes
                     buildServices(

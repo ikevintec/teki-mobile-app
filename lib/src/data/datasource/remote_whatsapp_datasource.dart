@@ -124,7 +124,7 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
   @override
   Future<WhatsappResponse> evolutionSendMedia(WhatsappEvolutionMediaRequest request) async {
     try {
-      final res = await _whatsappClient.post(
+      await _whatsappClient.post(
         '/whatsapp/evolution/send-media',
         data: request.toJson(),
         options: Options(headers: _headersWithHideLoader),

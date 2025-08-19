@@ -74,4 +74,8 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
     state = state.copyWith(customer: customerToSet);
   }
 
+  void setCustomerEntity(Customer customer) {
+    state = state.copyWith(customer: customer);
+  }
+
 }

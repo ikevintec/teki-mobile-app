@@ -502,8 +502,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                           .convert(ticket.toJson());
                       debugPrint("TICKET RESULTADO ");
                       debugPrint(jsonPretty); // en lugar de print
-                      final Ticket? ticketResponse =
-                          await notifier.createTicket();
+                      final Ticket? ticketResponse = await notifier.proceessTicket();
                       if (ticketResponse != null) {
                         //reseteamos los providers
                         ref.invalidate(ticketProvider);

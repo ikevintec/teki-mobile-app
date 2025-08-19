@@ -15,10 +15,10 @@ class ComprobanteNotifier extends StateNotifier<ComprobanteState> {
   ComprobanteNotifier({required this.repository, required this.ref})
       : super(ComprobanteState.initial());
 
-    Future<void> fetchComprobanteById(int id) async {
+    Future<Ticket> fetchComprobanteById(int id) async {
     // Avoid refetching if we already have the same ticket loaded
     if (state.id == id && (state.ticket.id ?? 0) > 0 && !state.isLoading) {
-      return;
+      return state.ticket;
     }
 
     state = state.copyWith(isLoading: true, id: id);
@@ -26,11 +26,15 @@ class ComprobanteNotifier extends StateNotifier<ComprobanteState> {
     try {
       final ticket = await repository.getTicketById(id);
       state = state.copyWith(ticket: ticket, isLoading: false);
+      return ticket;
     } catch (e) {
       state = state.copyWith(isLoading: false);
       errorNotification("Error al cargar el comprobante: $e");
+      return Future.error(e.toString());
     }
   }
+
+  // metodo para 
 
   void clearState() {
     state = ComprobanteState.initial();

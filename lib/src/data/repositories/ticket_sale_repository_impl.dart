@@ -52,4 +52,9 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
       Map<String, dynamic> params) {
     return datasource.getTotalesPorMoneda(params);
   }
+  
+  @override
+  Future<Ticket> updateTicket(Ticket ticket) {
+    return datasource.updateTicket(ticket);
+  }
 }

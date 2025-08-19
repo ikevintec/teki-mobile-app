@@ -8,6 +8,9 @@ abstract class TicketSaleDatasource {
   /// Crea un nuevo ticket de venta
   Future<Ticket> createTicket(Ticket ticket);
 
+  /// Actualiza un ticket existente
+  Future<Ticket> updateTicket(Ticket ticket);
+
   /// Obtiene los tickets por tipoDocumento y serie
   Future<List<Ticket>> getTicketNumeros(String tipoDocumento, String serie);
 

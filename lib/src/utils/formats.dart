@@ -37,6 +37,21 @@ String formatExchange({required String moneda}) {
   }
 }
 
+  String formatEstadoSunat(String? value) {
+    switch (value) {
+      case 'ACEPT':
+        return 'Aceptado';
+      case 'RECHA':
+        return 'Rechazado';
+      case 'ANULA':
+        return 'Anulado';
+      case 'N_ENV':
+        return 'No enviado';
+      default:
+        return '-';
+    }
+  }
+
 String formatTipoComprobante(String tipoComprobante) {
   List<Map<String, String>> lista = tipoComprobantesVenta;
   Map<String, String> item =
