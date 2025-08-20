@@ -206,9 +206,8 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     final notifier = ref.read(ticketProvider.notifier);
     return Center(
       child: Container(
-        width: size.width * 0.9,
+        width: size.width * 1,
         height: size.height * 0.8,
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),

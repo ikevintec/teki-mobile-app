@@ -14,6 +14,7 @@ class ServicesSection extends ConsumerWidget {
   void openNewSale(WidgetRef ref) {
     final ticket = ref.read(ticketProvider);
     if (ticket.isEdit) {
+      // Limpiar completamente todos los providers para nueva venta
       ref.invalidate(ticketProvider);
       ref.invalidate(productSaleProvider);
       ref.invalidate(customerSaleProvider);

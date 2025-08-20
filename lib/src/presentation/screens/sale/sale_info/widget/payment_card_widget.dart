@@ -33,25 +33,27 @@ class PaymentCardWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (paymentMethod.formaPago == "EFECTIVO")
-                Image.asset(
-                  getImageFromPayment(paymentMethod.formaPago ?? ''),
-                  width: 50,
-                  height: 50,
-                ),
+              Image.asset(
+                getImageFromPayment(paymentMethod.formaPago ?? ''),
+                width: 50,
+                height: 50,
+              ),
               if (paymentMethod.formaPago != "EFECTIVO")
-                SvgPicture.asset(
-                  getImageFromPayment(paymentMethod.tipoTarjeta ?? ''),
-                  width: 50,
-                  height: 50,
-                ),
+              SvgPicture.asset(
+                getImageFromPayment(paymentMethod.tipoTarjeta ?? ''),
+                width: 50,
+                height: 50,
+              ),
               const SizedBox(height: 8.0),
               Text(
-                paymentMethod.nombre ?? '',
-                style: TextStyle(
-                  fontSize: 14.0,
-                  color: isSelecelted ? Colors.blue : Colors.black,
-                ),
-                textAlign: TextAlign.center,
+              paymentMethod.nombre ?? '',
+              style: TextStyle(
+                fontSize: 14.0,
+                color: isSelecelted ? Colors.blue : Colors.black,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
               ),
             ],
           ),

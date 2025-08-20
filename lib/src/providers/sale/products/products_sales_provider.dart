@@ -80,16 +80,20 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   }
 
   void loadInitialData(int? id) async {
-    if (state.currencies.isNotEmpty) return;
     setLoading(true);
     try {
-      final response = await currencyRepository.getCurrencies();
-      if (response.isNotEmpty) {
-        state = state.copyWith(
-          currencies: response,
-          currency: response[0],
-        );
+      // Cargar currencies solo si no existen o si no se está editando
+      if (state.currencies.isEmpty) {
+        final response = await currencyRepository.getCurrencies();
+        if (response.isNotEmpty) {
+          state = state.copyWith(
+            currencies: response,
+            currency: response[0],
+          );
+        }
       }
+      
+      // Cargar datos de edición independientemente del estado de currencies
       if (id != null) {
         final comprobanteNotifier = ref.read(comprobanteProvider.notifier);
         // Cargar el comprobante y sus datos relacionados

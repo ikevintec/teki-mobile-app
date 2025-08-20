@@ -36,15 +36,42 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Inicializar el tipo de documento y cargar las series disponibles
+      // Cargar datos iniciales del ticketProvider
       final notifier = ref.read(ticketProvider.notifier);
       final provider = ref.read(ticketProvider);
+      
+      // Cargar tipo de comprobante desde el provider
       final comprobante = provider.ticket.tipoComprobante ?? tipoDocumento;
-      notifier.setTipoComprobante(comprobante);
-      notifier.setFechaEmision(DateTime.now()); // Fecha de emisión por defecto
       tipoDocumento = comprobante;
+      
+      // Cargar fecha de emisión desde el provider o usar la actual
+      final fechaEmision = provider.ticket.fechaEmisionDate ?? DateTime.now();
+      notifier.setFechaEmision(fechaEmision);
+      _dateController.text = fechaEmision.toString().split(" ")[0];
+      
+      // Cargar tipo de comprobante 
+      notifier.setTipoComprobante(comprobante);
 
-      _dateController.text = DateTime.now().toString().split(" ")[0];
+      // Cargar fecha de vencimiento si existe en el provider
+      if (provider.ticket.fechaVencimientoDate != null) {
+        _dateController2.text = provider.ticket.fechaVencimientoDate.toString().split(" ")[0];
+      }
+      
+      // Cargar tipo de operación desde el provider
+      if (provider.ticket.codigoTipoOperacion != null) {
+        tipoOperacionSelected = provider.ticket.codigoTipoOperacion;
+      }
+      
+      // Cargar número de orden desde el provider
+      if (provider.ticket.ordenCompra != null) {
+        vendedorController.text = provider.ticket.ordenCompra!;
+      }
+      
+      // Cargar serie y número desde el provider si existen
+      if (provider.ticket.serie != null) {
+        selectedSerie = provider.ticket.serie;
+      }
+      
       cargarSeries();
       setVendedor();
     });
@@ -101,7 +128,20 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     }
   }
 
+  void _clearExpirationDate() {
+    setState(() {
+      _dateController2.clear();
+      ref.read(ticketProvider.notifier).setFechaVencimiento(DateTime.now());
+    });
+  }
+
   void cargarNextNumber() async {
+    final provider = ref.read(ticketProvider);
+    if (provider.ticket.numero != null) {
+        numeroCorrelativo = provider.ticket.numero.toString();
+        numeroController.text = numeroCorrelativo!;
+    return;
+    }
     await ref.read(ticketSaleProvider.notifier).getNextTicketNumber();
     final actualNumber = ref.read(ticketProvider).ticket.numero;
     if (actualNumber != null) {
@@ -307,6 +347,16 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                           prefixIcon: const Icon(
                                               Icons.calendar_today,
                                               size: 20),
+                                          suffixIcon: _dateController2.text.isNotEmpty
+                                              ? IconButton(
+                                                  icon: const Icon(
+                                                    Icons.clear,
+                                                    size: 20,
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                  onPressed: _clearExpirationDate,
+                                                )
+                                              : null,
                                           contentPadding:
                                               const EdgeInsets.symmetric(
                                                   vertical: 12, horizontal: 16),
