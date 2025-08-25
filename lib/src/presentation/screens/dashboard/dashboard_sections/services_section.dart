@@ -58,15 +58,15 @@ class ServicesSection extends ConsumerWidget {
                         "assets/icons/icon_image/pos.png",
                         Colors.grey.shade100,
                         ColorSchema.primaryColor, () {
-                          // Get.toNamed(AppRoutes.posSales);
-                          openNewSale(ref);
+                      // Get.toNamed(AppRoutes.posSales);
+                      openNewSale(ref);
                     }),
                   ],
                 ),
                 const SizedBox(
                   height: 40,
                 ),
-                                Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     buildServices(
@@ -75,9 +75,9 @@ class ServicesSection extends ConsumerWidget {
                         "assets/icons/icon_image/customer.png",
                         Colors.white,
                         ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.analytics);
+                      Get.toNamed(AppRoutes.customer);
                     }),
-                                        buildServices(
+                    buildServices(
                         context,
                         "Stats",
                         "assets/icons/icon_image/trading.png",
@@ -85,7 +85,7 @@ class ServicesSection extends ConsumerWidget {
                         ColorSchema.primaryColor, () {
                       Get.toNamed(AppRoutes.analytics);
                     }),
-                                        buildServices(
+                    buildServices(
                         context,
                         "Ajustes",
                         "assets/icons/icon_image/user_management.png",
