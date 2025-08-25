@@ -8,6 +8,7 @@ import 'package:teki_app/src/providers/sale/products/helpers/tciket_detail_helpe
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:uuid/uuid.dart';
 
 mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   Ref get ref;
@@ -59,8 +60,11 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     }
   }
 
-  void setProductsSaleEntity(List<TicketDetail> productsSales) {
-    state = state.copyWith(productsSales: productsSales);
+  void setProductsSaleEntity(List<TicketDetail> productsSales, {String? monedaOrigen}) {
+    final updatedProductsSales = productsSales.map((product) {
+      return product.copyWith(monedaOriginal: monedaOrigen ?? product.monedaOriginal);
+    }).toList();
+    state = state.copyWith(productsSales: updatedProductsSales);
     calculoTotal();
   }
 
@@ -124,12 +128,14 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           index: i,
           sesion: ref.read(sesionProvider));
       if (state.productsSales[i].producto != null) {
+        final precioCompra = state.productsSales[i].precioCompraUnitario ?? 
+                             state.productsSales[i].producto!.precioCompraUnidad ?? 0;
         state = setPurchasePriceExchange(
             currencies: state.currencies,
             currency: state.currency!,
             monedaOrigen: monedaOriginal,
             monedaDestino: codigoMoneda,
-            monto: state.productsSales[i].producto!.precioCompraUnidad ?? 0,
+            monto: precioCompra,
             state: state,
             index: i,
             sesion: ref.read(sesionProvider));
@@ -195,6 +201,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   }
 
   void createItemForm() {
+    const uuid = Uuid();
     TicketDetail ticketDetail = TicketDetail(
       producto: null,
       codigoProducto: null,
@@ -211,6 +218,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       montoOriginal: 0.0,
       esAnticipo: false,
       igv: 0.0,
+      uuid: uuid.v4(),
     );
     state = state.copyWith(
       productsSales: [...state.productsSales, ticketDetail],
@@ -222,6 +230,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     final igvConfig = ref.watch(sesionProvider).config!.igv!;
     double porcentajeRecargoPorItem =
         ref.watch(sesionProvider).config!.porcentajeRecargoPorItem!;
+    // ignore: unused_local_variable
     final tc = state.tipoComprobante;
     final porcentajeDescuentoGlobal = state.porcentajeDescuentoGlobal ?? 0.0;
     final porcentajeOtrosCargos = null;
@@ -522,6 +531,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         otrosCargos: ticket.totalValorVenta! * (porcentajeOtrosCargos / 100),
       );
     }
+    // ignore: unnecessary_null_comparison
     if (porcentajeRecargoPorItem != null) {
       ticket = ticket.copyWith(
         otrosCargos: ticket.totalValorVenta! * (porcentajeRecargoPorItem / 100),

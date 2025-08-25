@@ -6,7 +6,9 @@ import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class SummaryBarSales extends ConsumerStatefulWidget {
-  const SummaryBarSales({super.key});
+  final bool showOnlyTotal;
+
+  const SummaryBarSales({super.key, this.showOnlyTotal = false});
 
   @override
   ConsumerState<SummaryBarSales> createState() => _SummaryBarSalesState();
@@ -27,7 +29,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
         border: Border(
           top: BorderSide(
             width: 0.4,
-            color: ColorSchema.primaryColor,
+            color: providerTicket.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
           ),
         ),
       ),
@@ -47,7 +49,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: ColorSchema.primaryColor,
+                        color: providerTicket.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
                       ),
                     ),
                     Text(
@@ -55,12 +57,12 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: ColorSchema.primaryColor,
+                        color: providerTicket.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
                       ),
                     ),
                   ],
                 ),
-                if (isExpanded)
+                if (!widget.showOnlyTotal && isExpanded)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -78,7 +80,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       ),
                     ],
                   ),
-                if (isExpanded)
+                if (!widget.showOnlyTotal && isExpanded)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -96,7 +98,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       ),
                     ],
                   ),
-                if (isExpanded)
+                if (!widget.showOnlyTotal && isExpanded)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -114,7 +116,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       ),
                     ],
                   ),
-                if (isExpanded)
+                if (!widget.showOnlyTotal && isExpanded)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -132,7 +134,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       ),
                     ],
                   ),
-                if ((providerTicket.ticket.totalValorVentaGratuita ?? 0) > 0)
+                if (!widget.showOnlyTotal && (providerTicket.ticket.totalValorVentaGratuita ?? 0) > 0)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -155,22 +157,23 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.only(left: 10),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  isExpanded = !isExpanded;
-                });
-              },
-              child: Icon(
-                isExpanded
-                    ? Icons.keyboard_arrow_up
-                    : Icons.keyboard_arrow_down,
-                color: ColorSchema.primaryColor,
+          if (!widget.showOnlyTotal)
+            Container(
+              padding: const EdgeInsets.only(left: 10),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    isExpanded = !isExpanded;
+                  });
+                },
+                child: Icon(
+                  isExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  color: providerTicket.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

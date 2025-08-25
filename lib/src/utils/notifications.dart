@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
-void successNotification(String message, {bool fromTop = true}) {
+void successNotification(
+  String message, {
+  bool fromTop = true,
+  Duration duration = const Duration(seconds: 2),
+}) {
   Get.snackbar(
     'Éxito',
     message,
-    duration: const Duration(seconds: 2),
+    duration: duration,
     colorText: Colors.white,
     backgroundColor: Colors.green,
     icon: const Icon(
@@ -17,11 +21,15 @@ void successNotification(String message, {bool fromTop = true}) {
   );
 }
 
-void errorNotification(String message, {bool fromTop = true}) {
+void errorNotification(
+  String message, {
+  bool fromTop = true,
+  Duration duration = const Duration(seconds: 4),
+}) {
   Get.snackbar(
     'Error',
     message,
-    duration: const Duration(seconds: 4),
+    duration: duration,
     colorText: Colors.white,
     backgroundColor: Colors.red,
     icon: const Icon(
@@ -32,11 +40,15 @@ void errorNotification(String message, {bool fromTop = true}) {
   );
 }
 
-void infoNotification(String message, {bool fromTop = true}) {
+void infoNotification(
+  String message, {
+  bool fromTop = true,
+  Duration duration = const Duration(seconds: 2),
+}) {
   Get.snackbar(
     'Información',
     message,
-    duration: const Duration(seconds: 2),
+    duration: duration,
     colorText: Colors.white,
     backgroundColor: ColorSchema.primaryColor,
     icon: const Icon(
@@ -47,11 +59,15 @@ void infoNotification(String message, {bool fromTop = true}) {
   );
 }
 
-void warningNotification(String message, {bool fromTop = true}) {
+void warningNotification(
+  String message, {
+  bool fromTop = true,
+  Duration duration = const Duration(seconds: 2),
+}) {
   Get.snackbar(
     'Advertencia',
     message,
-    duration: const Duration(seconds: 2),
+    duration: duration,
     colorText: Colors.white,
     backgroundColor: Colors.orangeAccent,
     icon: const Icon(

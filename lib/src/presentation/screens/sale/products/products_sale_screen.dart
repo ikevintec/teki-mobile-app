@@ -15,6 +15,7 @@ import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -121,6 +122,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final notifier = ref.read(productSaleProvider.notifier);
     final isLoading = provider.isLoading;
     final products = provider.productsSales;
+    final ticketP = ref.watch(ticketProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncFormArrayWithProvider(products, form, provider.incIgv, () {
         _scrollController.animateTo(
@@ -377,7 +379,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: ColorSchema.primaryColor,
+                                    backgroundColor: ticketP.isEdit ? Colors.deepOrange: ColorSchema.primaryColor,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 12),
@@ -389,7 +391,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text('Continuar'),
+                                      Text(ticketP.isEdit ? "Continuar Edición" : "Continuar"),
                                       SizedBox(width: 8),
                                       Icon(Icons.arrow_forward_ios),
                                     ],

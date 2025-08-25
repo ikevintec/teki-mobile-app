@@ -8,8 +8,9 @@ import 'package:teki_app/src/routes/app_routes.dart';
 
 class PayCompleteSection extends StatefulWidget {
   final String identificador;
+  final bool isEdit;
 
-  const PayCompleteSection({super.key, required this.identificador});
+  const PayCompleteSection({super.key, required this.identificador, this.isEdit = false});
 
   @override
   State<PayCompleteSection> createState() => _PayCompleteSectionState();
@@ -37,7 +38,7 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Operación Exitosa",
+                widget.isEdit ? "Edición Exitosa" : "Operación Exitosa",
                 style: GoogleFonts.raleway(
                   textStyle: const TextStyle(
                     fontSize: 28,
@@ -63,7 +64,7 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
               ),
               const SizedBox(height: 10),
               Text(
-                "Venta registrada!",
+                widget.isEdit ? "Venta editada!" : "Venta registrada!",
                 style: GoogleFonts.raleway(
                   textStyle: TextStyle(
                     fontWeight: FontWeight.w600,

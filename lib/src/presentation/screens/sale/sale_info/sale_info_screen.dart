@@ -12,9 +12,11 @@ import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selecto
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
+import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 class SaleInfoScreen extends ConsumerStatefulWidget {
   const SaleInfoScreen({super.key});
@@ -172,6 +174,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     final notifier = ref.read(ticketProvider.notifier);
     final provider = ref.watch(ticketProvider);
     final saleProvider = ref.watch(ticketSaleProvider);
+    final ticketP = ref.watch(ticketProvider);
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
@@ -223,7 +226,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                     initialValue:
                                         provider.ticket.tipoComprobante ??
                                             tipoDocumento,
-                                    onChanged: (value) {
+                                    disabled: provider.isEdit,
+                                    onChanged:  (value) {
                                       notifier.setTipoComprobante(value);
                                       tipoDocumento = value;
                                       if (value == "NV") {
@@ -246,6 +250,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                     label: "Serie (*)",
                                     hint: "Selecciona una serie",
                                     items: saleProvider.numeros,
+                                    readOnly: provider.isEdit,
                                     selectionItem: provider.ticket.serie,
                                     onChanged: (value) {
                                       notifier.setSerie(value ?? '');
@@ -259,8 +264,14 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                     label: "Número (*)",
                                     hint: "Número correlativo",
                                     inputType: TextInputType.number,
+                                    isReadOnly: provider.isEdit ,
                                     controller: numeroController,
-                                    onChanged: (value) {},
+                                    onChanged: (value) {
+                                      final numero = int.tryParse(value);
+                                      if (numero != null) {
+                                      notifier.setNumero(numero);
+                                      }
+                                    },
                                     validator: (value) {
                                       if (value == null ||
                                           value.trim().isEmpty) {
@@ -453,6 +464,12 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
+                              final clientProvider  = ref.read(customerSaleProvider);
+                                if ((clientProvider.customer.numeroDocumento?.length ?? 0) < 11 && tipoDocumento == "01") {
+                                warningNotification("Debe seleccionar un cliente con RUC para emitir una factura.");
+                                Navigator.of(context).pop();
+                                return;
+                                }
                               ref
                                   .read(ticketProvider.notifier)
                                   .setTicketsData();
@@ -465,7 +482,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                   allowButtons: true);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorSchema.primaryColor,
+                              backgroundColor: ticketP.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
@@ -475,8 +492,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Text('Confirmar'),
+                              children: [
+                                Text('Confirmar ${ticketP.isEdit ? 'Edición' : ''}'),
                                 SizedBox(width: 8),
                                 Icon(Icons.check_circle),
                               ],

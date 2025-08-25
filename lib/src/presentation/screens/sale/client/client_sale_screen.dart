@@ -8,6 +8,7 @@ import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class ClientSaleScreen extends ConsumerStatefulWidget {
@@ -86,6 +87,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   @override
   Widget build(BuildContext context) {
     final clienteNotifier = ref.read(customerSaleProvider.notifier);
+    final ticketP = ref.watch(ticketProvider);
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
@@ -371,7 +373,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorSchema.primaryColor,
+                              backgroundColor: ticketP.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
@@ -381,8 +383,8 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Text('Continuar'),
+                              children: [
+                                Text(ticketP.isEdit ? 'Continuar Edición' : 'Continuar'),
                                 SizedBox(width: 8),
                                 Icon(Icons.arrow_forward_ios),
                               ],

@@ -16,11 +16,6 @@ class ComprobanteNotifier extends StateNotifier<ComprobanteState> {
       : super(ComprobanteState.initial());
 
     Future<Ticket> fetchComprobanteById(int id) async {
-    // Avoid refetching if we already have the same ticket loaded
-    if (state.id == id && (state.ticket.id ?? 0) > 0 && !state.isLoading) {
-      return state.ticket;
-    }
-
     state = state.copyWith(isLoading: true, id: id);
 
     try {

@@ -104,7 +104,10 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         Ticket comprobante = await comprobanteNotifier.fetchComprobanteById(id);
         ticketSaleNotifier.updateTicket(comprobante);
         customerNotifier.setCustomerEntity(comprobante.cliente?? Customer());
-        productsSaleNotifier.setProductsSaleEntity(comprobante.items ?? []);
+        productsSaleNotifier.setProductsSaleEntity(comprobante.items ?? [], monedaOrigen: comprobante.codigoMoneda);
+        productsSaleNotifier.setIncIgv( comprobante.incIgv ?? true);
+        productsSaleNotifier.setCurrency( comprobante.codigoMoneda ?? 'PEN');
+
         ticketSaleNotifier.setEdited(true);
       }
     } catch (e) {

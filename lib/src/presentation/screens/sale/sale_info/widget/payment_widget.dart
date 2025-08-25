@@ -7,6 +7,7 @@ import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
 import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_sections/pay_complete_section.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_card_widget.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -14,7 +15,6 @@ import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
-import 'package:teki_app/src/utils/formats.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
@@ -53,19 +53,78 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final providerTicket = ref.watch(ticketProvider);
+      final ticket = providerTicket.ticket;
+      final isEdit = providerTicket.isEdit;
+      
       total = double.parse(
-          (providerTicket.ticket.totalVenta ?? 0).toStringAsFixed(2));
+          (ticket.totalVenta ?? 0).toStringAsFixed(2));
       montoPagadoController.text = total.toStringAsFixed(2);
-      currency = providerTicket.ticket.codigoMoneda ?? 'PEN';
+      currency = ticket.codigoMoneda ?? 'PEN';
       final sesion = ref.read(sesionProvider);
       paymentMethods = sesion.config?.formasPago ?? [];
-      diasCredito.text = "30";
+      
+      // Si es edición, cargar datos existentes
+      if (isEdit) {
+        _loadExistingPaymentData(ticket);
+      } else {
+        // Valores por defecto para nueva venta
+        diasCredito.text = "30";
+      }
+      
       setState(() {});
     });
   }
 
   double get cambioDisponible =>
       (double.tryParse(montoPagadoController.text) ?? 0) - total;
+
+  void _loadExistingPaymentData(Ticket ticket) {
+    // Cargar datos de pago al contado si existe movimientoCaja
+    if (ticket.movimientoCaja != null && ticket.movimientoCaja!.pagos != null && ticket.movimientoCaja!.pagos!.isNotEmpty) {
+      final pago = ticket.movimientoCaja!.pagos!.first;
+      
+      // Buscar el método de pago correspondiente
+      selectedPaymentMethod = paymentMethods.firstWhere(
+        (p) => p.id == pago.metodoPago?.id,
+        orElse: () => pago.metodoPago ?? PaymentMethod(),
+      );
+      
+      if (selectedPaymentMethod != null) {
+        selectedPaymentId = selectedPaymentMethod!.id ?? -1;
+        montoPagadoController.text = (pago.montoPagado ?? pago.monto ?? 0).toStringAsFixed(2);
+        numeroOperacion.text = pago.numeroOperacion ?? '';
+      }
+      
+      // Mantener en tab de contado
+      _tabController.index = 0;
+    }
+    
+    // Cargar datos de crédito si existen cuotas
+    if (ticket.cuotas != null && ticket.cuotas!.isNotEmpty) {
+      diasCredito.text = (ticket.diasCredito ?? 0).toString();
+      
+      // Cargar cuotas existentes
+      fechaCredito.clear();
+      montoCredito.clear();
+      
+      for (var cuota in ticket.cuotas!) {
+        fechaCredito.add(TextEditingController(
+          text: DateFormat('yyyy-MM-dd').format(cuota.fecha ?? DateTime.now())
+        ));
+        montoCredito.add(TextEditingController(
+          text: (cuota.monto ?? 0).toStringAsFixed(2)
+        ));
+      }
+      
+      // Cambiar a tab de crédito
+      _tabController.index = 1;
+    }
+    
+    // Si no hay ningún dato de pago, establecer valores por defecto
+    if (ticket.movimientoCaja == null && (ticket.cuotas == null || ticket.cuotas!.isEmpty)) {
+      diasCredito.text = (ticket.diasCredito ?? 30).toString();
+    }
+  }
 
   List<PaymentMethod> getFilteredPaymentMethods() {
     final efectivo = paymentMethods.firstWhere(
@@ -204,6 +263,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     final visiblePaymentMethods = getFilteredPaymentMethods();
     final ticket = ref.watch(ticketProvider).ticket;
     final notifier = ref.read(ticketProvider.notifier);
+    final ticketP = ref.watch(ticketProvider);
     return Center(
       child: Container(
         width: size.width * 1,
@@ -432,55 +492,14 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                 ],
               ),
             ),
-            Divider(
-              color: ColorSchema.primaryColor,
-            ),
-            Container(
-              padding: const EdgeInsets.only(
-                  top: 0, bottom: 10, right: 16, left: 16),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Total a pagar",
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: ColorSchema.primaryColor)),
-                      Text(
-                          "${formatExchange(moneda: currency)} ${(total).toStringAsFixed(2)}",
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: ColorSchema.primaryColor)),
-                    ],
-                  ),
-                  if (cambioDisponible > 0 && _tabController.index == 0)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Cambio",
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red)),
-                        Text(
-                            "${formatExchange(moneda: currency)} ${(cambioDisponible).toStringAsFixed(2)}",
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red)),
-                      ],
-                    ),
-                ],
-              ),
-            ),
+            SummaryBarSales(showOnlyTotal: true,),
+
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
+                      final ticketEdited = ticketP.isEdit;
                       final notifier = ref.read(ticketProvider.notifier);
                       final isContado = _tabController.index == 0;
                       if (isContado && selectedPaymentMethod == null) {
@@ -499,7 +518,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                       final ticket = ref.read(ticketProvider).ticket;
                       final jsonPretty = const JsonEncoder.withIndent('  ')
                           .convert(ticket.toJson());
-                      debugPrint("TICKET RESULTADO ");
+                      // debugPrint("TICKET RESULTADO ");
                       debugPrint(jsonPretty); // en lugar de print
                       final Ticket? ticketResponse = await notifier.proceessTicket();
                       if (ticketResponse != null) {
@@ -512,14 +531,14 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                             context,
                             MaterialPageRoute(
                                 builder: (context) => PayCompleteSection(
-                                      identificador:
-                                          "${ticketResponse.serie}-${ticketResponse.numero}",
+                                      identificador:"${ticketResponse.serie}-${ticketResponse.numero}",
+                                      isEdit: ticketEdited,
                                     )));
                       }
                       // continuar
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorSchema.primaryColor,
+                      backgroundColor: ticketP.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(

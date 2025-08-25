@@ -98,7 +98,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     Ticket ticketToUpdate = state.ticket.copyWith(
       items: productSaleProviderData.productsSales,
       incIgv: productSaleProviderData.incIgv,
-      tipoComprobante: productSaleProviderData.tipoComprobante,
+      // tipoComprobante: productSaleProviderData.tipoComprobante,
       codigoMoneda: productSaleProviderData.currency?.codigoMoneda,
       cliente: clienteSaleProviderData.customer,
       tipoDocumentoReceptor: clienteSaleProviderData.customer.tipoDocumento,
@@ -247,7 +247,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
         porcentajeRetencion: state.ticket.porcentajeRetencion,
         montoBaseDescuento: state.ticket.montoBaseDescuento,
         porcentajeDescuento: state.ticket.porcentajeDescuento,
-        totalDescuento: state.ticket.totalDescuento,
+        totalDescuento: state.ticket.totalDescuento == 0
+                ? null
+                : state.ticket.totalDescuento,
         descuentoGlobal: state.ticket.descuentoGlobal,
         descuentoPorItem: state.ticket.descuentoPorItem,
         codigoDescuento: state.ticket.codigoDescuento,
