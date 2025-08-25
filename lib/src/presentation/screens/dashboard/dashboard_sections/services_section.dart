@@ -25,7 +25,7 @@ class ServicesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-      padding: const EdgeInsets.only(left: 30, right: 30, top: 30),
+      padding: const EdgeInsets.only(left: 30, right: 30, top: 50),
       child: Column(
         children: [
           Container(
@@ -43,15 +43,6 @@ class ServicesSection extends ConsumerWidget {
                         ColorSchema.primaryColor, () {
                       Get.toNamed(AppRoutes.products);
                     }),
-                    buildServices(
-                        context,
-                        "Venta",
-                        "assets/icons/icon_image/pos.png",
-                        Colors.grey.shade100,
-                        ColorSchema.primaryColor, () {
-                          // Get.toNamed(AppRoutes.posSales);
-                          openNewSale(ref);
-                    }),
                     //Ver Comprobantes
                     buildServices(
                         context,
@@ -61,103 +52,51 @@ class ServicesSection extends ConsumerWidget {
                         ColorSchema.primaryColor, () {
                       Get.toNamed(AppRoutes.comprobantesVer);
                     }),
+                    buildServices(
+                        context,
+                        "Venta",
+                        "assets/icons/icon_image/pos.png",
+                        Colors.grey.shade100,
+                        ColorSchema.primaryColor, () {
+                          // Get.toNamed(AppRoutes.posSales);
+                          openNewSale(ref);
+                    }),
                   ],
                 ),
                 const SizedBox(
-                  height: 30,
+                  height: 40,
                 ),
-                Row(
+                                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     buildServices(
                         context,
-                        "Trading",
+                        "Clientes",
+                        "assets/icons/icon_image/customer.png",
+                        Colors.white,
+                        ColorSchema.primaryColor, () {
+                      Get.toNamed(AppRoutes.analytics);
+                    }),
+                                        buildServices(
+                        context,
+                        "Stats",
                         "assets/icons/icon_image/trading.png",
                         Colors.white,
                         ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.posSales);
+                      Get.toNamed(AppRoutes.analytics);
                     }),
-                    buildServices(
+                                        buildServices(
                         context,
-                        "Expense",
-                        "assets/icons/icon_image/expense_list.png",
-                        Colors.grey.shade100,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.expenseList);
-                    }),
-                    buildServices(
-                        context,
-                        "Peoples",
-                        "assets/icons/icon_image/customer.png",
-                        Colors.grey.shade100,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.customer);
-                    }),
-                  ],
-                ),
-                const SizedBox(
-                  height: 30,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    buildServices(
-                        context,
-                        "Sale",
-                        "assets/icons/icon_image/sales_list.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.sales);
-                    }),
-                    buildServices(
-                        context,
-                        "Purchase",
-                        "assets/icons/icon_image/purchase_list.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.purchase);
-                    }),
-                    buildServices(
-                        context,
-                        "Product",
-                        "assets/icons/icon_image/products_list.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.products);
-                    }),
-                  ],
-                ),
-                const SizedBox(
-                  height: 30,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    buildServices(
-                        context,
-                        "Manage",
+                        "Ajustes",
                         "assets/icons/icon_image/user_management.png",
                         Colors.white,
                         ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.management);
-                    }),
-                    buildServices(
-                        context,
-                        "Report",
-                        "assets/icons/icon_image/reports.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.report);
-                    }),
-                    buildServices(
-                        context,
-                        "Warehouse",
-                        "assets/icons/icon_image/warehouse.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.warehouse);
+                      Get.toNamed(AppRoutes.settings);
                     }),
                   ],
+                ),
+                const SizedBox(
+                  height: 30,
                 ),
               ],
             ),
@@ -185,7 +124,7 @@ class ServicesSection extends ConsumerWidget {
                     serviceIcon,
                   ),
                   color: serviceImageColor,
-                  size: 45,
+                  size: 55,
                 )
               ]),
               const SizedBox(
@@ -195,7 +134,7 @@ class ServicesSection extends ConsumerWidget {
                 service,
                 style: GoogleFonts.nunito(
                     textStyle: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width * 0.03)),
+                        fontSize: MediaQuery.of(context).size.width * 0.035)),
               )
             ],
           )

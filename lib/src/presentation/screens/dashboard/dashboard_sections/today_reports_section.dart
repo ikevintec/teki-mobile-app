@@ -91,24 +91,31 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       margin: const EdgeInsets.only(left: 16, right: 16, top: 30),
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(1, 5),
+            color: Colors.black.withOpacity(0.08),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            ColorSchema.primaryColor,
+            Colors.blue[400]!,
+          ],
+        ),
       ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -116,25 +123,31 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                   "Reportes diario",
                   style: GoogleFonts.raleway(
                     textStyle: TextStyle(
-                      fontSize: screenWidth * 0.05,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF333333),
+                      fontSize: screenWidth * 0.06,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
-                IconButton(
-                  onPressed: () => Get.toNamed(AppRoutes.analytics),
-                  icon: const Icon(Icons.arrow_forward_ios),
-                  iconSize: 15,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconButton(
+                    onPressed: () => Get.toNamed(AppRoutes.analytics),
+                    icon: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                    iconSize: 16,
+                    padding: const EdgeInsets.all(8),
+                  ),
                 ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
                 buildReports(
                   "Ventas",
                   montosPorMoneda != null
@@ -176,7 +189,6 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 ),
               ],
             ),
-          ),
         ],
       ),
     );
@@ -194,16 +206,16 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
       onTap: () => Get.toNamed(AppRoutes.analytics),
       child: Container(
         width: screenWidth * 0.27,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: reportColor,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
+              color: Colors.black.withOpacity(0.05),
+              spreadRadius: 0,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -211,38 +223,52 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
-                color: Colors.white54,
-                borderRadius: BorderRadius.circular(50),
+                color: ColorSchema.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(
+                  color: ColorSchema.primaryColor.withOpacity(0.2),
+                  width: 1,
+                ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
+              child: Center(
                 child: SvgPicture.asset(
                   reportIcon,
-                  color: ColorSchema.primaryColor,
-                  width: 30,
+                  colorFilter: ColorFilter.mode(
+                    ColorSchema.primaryColor,
+                    BlendMode.srcIn,
+                  ),
+                  width: 24,
+                  height: 24,
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             Text(
               title,
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.nunito(
                 textStyle: TextStyle(
-                  fontSize: screenWidth * 0.035,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF333333),
+                  fontSize: screenWidth * 0.032,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF555555),
+                  height: 1.2,
                 ),
               ),
             ),
+            const SizedBox(height: 6),
             Text.rich(
               TextSpan(
                 style: GoogleFonts.nunito(
                   textStyle: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: screenWidth * 0.035,
-                    color: const Color(0xFF333333),
+                    fontWeight: FontWeight.w800,
+                    fontSize: screenWidth * 0.03,
+                    color: const Color(0xFF1F1F1F),
+                    height: 1.1,
                   ),
                 ),
                 children: [
@@ -251,6 +277,8 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 ],
               ),
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

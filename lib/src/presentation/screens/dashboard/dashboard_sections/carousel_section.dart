@@ -21,11 +21,13 @@ class CarouselSection extends StatelessWidget {
           scrollDirection: Axis.horizontal,
         ),
         items: [
-          "assets/images/offer/banner.png",
-          "assets/images/offer/banner.png",
-          "assets/images/offer/banner.png",
-          "assets/images/offer/banner.png",
-          "assets/images/offer/banner.png",
+          "assets/images/offer/imagen1.png",
+          "assets/images/offer/imagen2.png",
+          "assets/images/offer/imagen1.png",
+          "assets/images/offer/imagen2.png",
+          "assets/images/offer/imagen1.png",
+          "assets/images/offer/imagen2.png",
+
         ].map((i) {
           return Builder(
             builder: (BuildContext context) {

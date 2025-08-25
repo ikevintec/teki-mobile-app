@@ -496,9 +496,9 @@ void _syncFormArrayWithProvider(
       }
       final precioControl = control.control('price').value;
       if (precioControl != precio && incIgv) {
-        control.control('price').updateValue(precio, emitEvent: true);
+        control.control('price').updateValue(precio);
       } else if (precioControl != precioUnitario && !incIgv) {
-        control.control('price').updateValue(precioUnitario, emitEvent: true);
+        control.control('price').updateValue(precioUnitario);
       }
       control.control('description').updateValue(
           products[i].descripcion == ''

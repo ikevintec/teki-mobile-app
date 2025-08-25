@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -17,9 +18,11 @@ class SettingsScreen extends ConsumerWidget {
     final selectedSaleStation = config.saleStation;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configuración'),
-        centerTitle: true,
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(60),
+        child: CustomAppBar (
+          navigateName: "Configuración",
+        ),
       ),
       body: Container(
         width: double.infinity,

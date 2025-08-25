@@ -1,13 +1,14 @@
 import 'dart:async';
-import 'dart:io';
+// import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:get/get.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/product-list_section.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/search_field.dart';
-import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
+import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
+// import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
 import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_floating_action_button.dart';
 import 'package:teki_app/src/providers/products/profucts.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
@@ -73,54 +74,60 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
     return Scaffold(
       key: _key,
-      endDrawer: DashboardDrawer(routeName: "Products", controller: controller),
-      appBar: isSmallScreen
-          ? AppBar(
-              elevation: 0,
-              backgroundColor: ColorSchema.primaryColor,
-              automaticallyImplyLeading: true,
-              centerTitle: true,
-              surfaceTintColor: Colors.white,
-              title: Text(
-                "Productos",
-                style: GoogleFonts.raleway(
-                  color: Colors.white,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ),
-              leading: IconButton(
-                color: Colors.white,
-                onPressed: () {
-                  Get.back();
-                },
-                icon: const Icon(
-                  color: Colors.white,
-                  Icons.keyboard_arrow_left,
-                  size: 30,
-                ),
-              ),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 5.0),
-                  child: IconButton(
-                    onPressed: () {
-                      if (!Platform.isAndroid && !Platform.isIOS) {
-                        controller.setExtended(true);
-                      }
-                      if (_key.currentState != null) {
-                        _key.currentState?.openEndDrawer();
-                      }
-                    },
-                    icon: const Icon(
-                      color: Colors.white,
-                      Icons.menu,
-                      size: 30,
-                    ),
-                  ),
-                )
-              ],
-            )
-          : null,
+      // endDrawer: DashboardDrawer(routeName: "Products", controller: controller),
+      // appBar: isSmallScreen
+      //     ? AppBar(
+      //         elevation: 0,
+      //         backgroundColor: ColorSchema.primaryColor,
+      //         automaticallyImplyLeading: true,
+      //         centerTitle: true,
+      //         surfaceTintColor: Colors.white,
+      //         title: Text(
+      //           "Productos",
+      //           style: GoogleFonts.raleway(
+      //             color: Colors.white,
+      //             textStyle: const TextStyle(fontWeight: FontWeight.w500),
+      //           ),
+      //         ),
+      //         leading: IconButton(
+      //           color: Colors.white,
+      //           onPressed: () {
+      //             Get.back();
+      //           },
+      //           icon: const Icon(
+      //             color: Colors.white,
+      //             Icons.keyboard_arrow_left,
+      //             size: 30,
+      //           ),
+      //         ),
+      //         actions: [
+      //           Padding(
+      //             padding: const EdgeInsets.only(right: 5.0),
+      //             child: IconButton(
+      //               onPressed: () {
+      //                 if (!Platform.isAndroid && !Platform.isIOS) {
+      //                   controller.setExtended(true);
+      //                 }
+      //                 if (_key.currentState != null) {
+      //                   _key.currentState?.openEndDrawer();
+      //                 }
+      //               },
+      //               icon: const Icon(
+      //                 color: Colors.white,
+      //                 Icons.menu,
+      //                 size: 30,
+      //               ),
+      //             ),
+      //           )
+      //         ],
+      //       )
+      //     : null,
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(60),
+        child: CustomAppBar(
+          navigateName: "Productos",
+        ),
+      ),
       body: RefreshIndicator(
         color: ColorSchema.primaryColor,
         onRefresh: () async {

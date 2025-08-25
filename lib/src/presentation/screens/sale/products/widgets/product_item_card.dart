@@ -6,6 +6,7 @@ import 'package:reactive_forms/reactive_forms.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_product_view.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/quantity_selector.dart';
+import 'package:teki_app/src/presentation/widgets/form/smart_price_value_accessor.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -140,7 +141,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard> {
                           width: 120,
                           child: ReactiveTextField<double>(
                             formControlName: 'price',
-                            valueAccessor: DoubleValueAccessor(),
+                            valueAccessor: SmartPriceValueAccessor(),
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               labelText: provider.incIgv
