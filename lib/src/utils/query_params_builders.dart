@@ -115,7 +115,8 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   } catch (_) {}
   try {
     // Para filtros múltiples como filtroTipoComprobante, se agregan múltiples parámetros
-    if (state.filtroTipoComprobante != null && state.filtroTipoComprobante.isNotEmpty) {
+    if (state.filtroTipoComprobante != null &&
+        state.filtroTipoComprobante.isNotEmpty) {
       for (String tipo in state.filtroTipoComprobante) {
         if (!params.containsKey('filtroTipoComprobante')) {
           params['filtroTipoComprobante'] = [];
@@ -137,7 +138,8 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   } catch (_) {}
   try {
     // Convertir filtroEstado string a filtroEstadoAnulacion booleano
-    if (state.filtroEstado != null && state.filtroEstado.toLowerCase() != 'todos') {
+    if (state.filtroEstado != null &&
+        state.filtroEstado.toLowerCase() != 'todos') {
       if (state.filtroEstado.toLowerCase() == 'activos') {
         safeAdd('filtroEstadoAnulacion', false); // false = NO anulado = activo
       } else if (state.filtroEstado.toLowerCase() == 'anulados') {
@@ -162,9 +164,15 @@ Map<String, dynamic> buildCustomersQueryParams(dynamic state) {
   safeAdd('perPage', state.perPage);
   safeAdd('sortField', state.sortField);
   safeAdd('sortOrder', state.sortOrder);
-  safeAdd('filtro', state.filtro);
-  safeAdd('telefono', state.telefono);
-  safeAdd('email', state.email);
+  try {
+    safeAdd('filtro', state.filtro);
+  } catch (_) {}
+  try {
+    safeAdd('telefono', state.telefono);
+  } catch (_) {}
+  try {
+    safeAdd('email', state.email);
+  } catch (_) {}
 
   return params;
 }

@@ -18,7 +18,7 @@ class CustomersStateNotifier extends StateNotifier<CustomersState> {
       : super(CustomersState.initial());
 
   Future<void> loadFirstPage() async {
-    state = CustomersState.initial();
+    resetPagination();
     state = state.copyWith(isLoading: true);
     try {
       final customers = await customersRepository.getCustomers(buildCustomersQueryParams(state));
@@ -28,19 +28,23 @@ class CustomersStateNotifier extends StateNotifier<CustomersState> {
     } finally {
       setLoading(false);
     }
-
   }
 
   Future<void> loadMorePages() async {
+    if (state.hasMore == false) return;
     if (state.isLoading == true) return;
     if (state.totalElements != null && state.customers!.length >= state.totalElements!) {
-      state = state.copyWith(paginacion: false);
+      setHasMore(false);
       return;
     }
-
-    state = state.copyWith(isLoading: true, pageNumber: state.pageNumber + 1);
+    setLoading(true);
+    setPageNumber(state.pageNumber + 1);
     try {
       final customers = await customersRepository.getCustomers(buildCustomersQueryParams(state));
+      if (customers.content.isEmpty) {
+        setHasMore(false);
+        return;
+      }
       final allCustomers = [...?state.customers, ...customers.content];
       setCustomers(allCustomers);
     } catch (e) {
@@ -48,6 +52,14 @@ class CustomersStateNotifier extends StateNotifier<CustomersState> {
     } finally {
       setLoading(false);
     }
+  }
+
+  void setPageNumber(int pageNumber) {
+    state = state.copyWith(pageNumber: pageNumber);
+  }
+
+  void setHasMore(bool hasMore) {
+    state = state.copyWith(hasMore: hasMore);
   }
 
   void setLoading(bool isLoading) {
@@ -78,6 +90,15 @@ class CustomersStateNotifier extends StateNotifier<CustomersState> {
     state = CustomersState.initial();
   }
 
+  void resetPagination() {
+    state = state.copyWith(
+      pageNumber: 0,
+      hasMore: true,
+      totalElements: null,
+      paginacion: true,
+    );
+  }
+
 }
 
 
@@ -86,11 +107,14 @@ class CustomersState{
   final bool? isLoading;
   final int pageNumber;
   final int perPage;
-  final String filtro;
+  final String? filtro;
   final int? totalElements;
   final bool paginacion;
-  final String telefono;
-  final String email;
+  final String? telefono;
+  final String? email;
+  final String? sortField;
+  final int? sortOrder;
+  final bool? hasMore;
 
   CustomersState({
     required this.customers,
@@ -102,6 +126,9 @@ class CustomersState{
     required this.paginacion,
     required this.telefono,
     required this.email,
+    required this.sortField,
+    required this.sortOrder,
+    required this.hasMore,
   });
 
   CustomersState copyWith({
@@ -114,6 +141,10 @@ class CustomersState{
     bool? paginacion,
     String? telefono,
     String? email,
+    String? sortField,
+    int? sortOrder,
+    bool? hasMore,
+
   }) {
     return CustomersState(
       customers: customers ?? this.customers,
@@ -125,6 +156,9 @@ class CustomersState{
       paginacion: paginacion ?? this.paginacion,
       telefono: telefono ?? this.telefono,
       email: email ?? this.email,
+      sortField: sortField ?? this.sortField,
+      sortOrder: sortOrder ?? this.sortOrder,
+      hasMore: hasMore ?? this.hasMore,
     );
   }
 
@@ -135,10 +169,13 @@ class CustomersState{
       pageNumber: 0,
       perPage: 10,
       totalElements: null,
-      paginacion: false,
-      filtro: '',
-      telefono: '',
-      email: '',
+      paginacion: true,
+      filtro: null,
+      telefono: null,
+      email: null,
+      sortField: null,
+      sortOrder: 1,
+      hasMore: true,
     );
   }
 

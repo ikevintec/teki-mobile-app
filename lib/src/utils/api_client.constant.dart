@@ -13,17 +13,17 @@ class ApiClient {
       sendTimeout: const Duration(seconds: 10),
     ),
   )..interceptors.addAll([
-      // LogInterceptor(
-      //   request: true,
-      //   requestHeader: true,
-      //   responseHeader: true,
-      //   error: true,
-      //   requestBody: true,
-      //   responseBody: true,
-      //   logPrint: (obj) {
-      //     print('--->: $obj');
-      //   },
-      // ),
+      LogInterceptor(
+        request: true,
+        requestHeader: true,
+        responseHeader: true,
+        error: true,
+        requestBody: true,
+        responseBody: true,
+        logPrint: (obj) {
+          print('--->: $obj');
+        },
+      ),
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final prefs = await SharedPreferences.getInstance();
