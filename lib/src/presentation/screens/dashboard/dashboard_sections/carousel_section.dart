@@ -21,12 +21,12 @@ class CarouselSection extends StatelessWidget {
           scrollDirection: Axis.horizontal,
         ),
         items: [
-          "assets/images/offer/imagen1.png",
-          "assets/images/offer/imagen2.png",
-          "assets/images/offer/imagen1.png",
-          "assets/images/offer/imagen2.png",
-          "assets/images/offer/imagen1.png",
-          "assets/images/offer/imagen2.png",
+          "assets/images/offer/imagen4.jpeg",
+          "assets/images/offer/imagen5.jpeg",
+          "assets/images/offer/imagen4.jpeg",
+          "assets/images/offer/imagen5.jpeg",
+          "assets/images/offer/imagen4.jpeg",
+          "assets/images/offer/imagen5.jpeg",
 
         ].map((i) {
           return Builder(
@@ -37,6 +37,9 @@ class CarouselSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8.0),
                   child: Image.asset(
                     i,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
                   ),
                 ),
               );
