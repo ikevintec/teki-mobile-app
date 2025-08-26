@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class CustomerDetailsScreen extends StatelessWidget {
   final Customer customer;
@@ -28,7 +29,7 @@ class CustomerDetailsScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _buildInfoSection("Información Personal", [
                 _buildInfoItem("Razón Social", customer.razonSocial),
-                _buildInfoItem("Tipo de Documento", customer.tipoDocumento),
+                _buildInfoItem("Tipo de Documento", formatTipoDocumento(customer.tipoDocumento ?? '')),
                 _buildInfoItem("Número de Documento", customer.numeroDocumento),
               ]),
               const SizedBox(height: 16),

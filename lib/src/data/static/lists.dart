@@ -149,3 +149,12 @@ final List<Map<String, String>> tipoOperacion = [
   {"label": "Opreración Sujeta a Detracción [1001]", "value": "1001"},
   {"label": "Opreración Sujeta a Percepción [2001]", "value": "2001"}
 ];
+
+final List<Map<String, String>> tipoDocumento = [
+    {'value': '0', 'label': 'DOC NO DOM SIN RUC'},
+    {'value': '1', 'label': 'DNI'},
+    {'value': '4', 'label': 'CARNET DE EXT.'},
+    {'value': '6', 'label': 'RUC'},
+    {'value': '7', 'label': 'PASAPORTE'},
+    {'value': 'A', 'label': 'CED DIPLOMATICA IDENTIDAD'},
+  ];

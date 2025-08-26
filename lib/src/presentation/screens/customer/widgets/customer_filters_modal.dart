@@ -169,6 +169,8 @@ class _CustomerFiltersModalState extends ConsumerState<CustomerFiltersModal> {
               ),
             ],
           ),
+          const SizedBox(height: 20),
+        
         ],
       ),
     );

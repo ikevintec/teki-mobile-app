@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:teki_app/src/utils/contstants.dart';
 
 class ProfileInfoRow extends StatelessWidget {
-  final String iconPath;
+  final IconData icon;
   final String label;
   final String value;
 
   const ProfileInfoRow({
     super.key,
-    required this.iconPath,
+    required this.icon,
     required this.label,
     required this.value,
   });
@@ -20,9 +20,18 @@ class ProfileInfoRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            SvgPicture.asset(
-              iconPath,
-              width: 30,
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: ColorSchema.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: ColorSchema.primaryColor,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 15),
             Column(

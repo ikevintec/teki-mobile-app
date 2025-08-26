@@ -1,45 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/presentation/screens/profile/profile_section/edit_profile_section.dart';
 import 'package:teki_app/src/presentation/screens/profile/profile_section/profile_info_row.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
-class ProfileMainScreen extends StatefulWidget {
+class ProfileMainScreen extends ConsumerStatefulWidget {
   const ProfileMainScreen({super.key});
 
   @override
-  State<ProfileMainScreen> createState() => _ProfileMainScreenState();
+  ConsumerState<ProfileMainScreen> createState() => _ProfileMainScreenState();
 }
 
-class _ProfileMainScreenState extends State<ProfileMainScreen> {
+class _ProfileMainScreenState extends ConsumerState<ProfileMainScreen> {
   @override
   Widget build(BuildContext context) {
+    final sesionState = ref.watch(sesionProvider);
+    final user = sesionState.login.user;
+    final company = sesionState.companySelected;
+    
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF4D7CEB), Colors.white],
+            colors: [ColorSchema.primaryColor, Color.fromARGB(255, 135, 217, 255)],
           ),
         ),
         child: Stack(
           children: [
-            Padding(
+            SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: SingleChildScrollView(
-                child: Column(
+              child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 50),
-                    const Center(
+                    const SizedBox(height: 70),
+                    Center(
                       child: CircleAvatar(
                         radius: 70,
                         backgroundColor: Colors.transparent,
-                        backgroundImage:
-                            AssetImage("assets/images/avatar/avatar.png"),
+                        backgroundImage: user?.avatarUrl?.isNotEmpty == true
+                            ? NetworkImage(user!.avatarUrl!)
+                            : const AssetImage("assets/images/avatar/avatar.png") as ImageProvider,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -47,7 +52,7 @@ class _ProfileMainScreenState extends State<ProfileMainScreen> {
                       child: Column(
                         children: [
                           Text(
-                            "Shane Watson",
+                            user?.name ?? "Sin nombre",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
                               textStyle: const TextStyle(
@@ -57,7 +62,7 @@ class _ProfileMainScreenState extends State<ProfileMainScreen> {
                             ),
                           ),
                           Text(
-                            "Admin User",
+                            user?.cargo ?? "Usuario",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
                               textStyle: const TextStyle(
@@ -86,7 +91,7 @@ class _ProfileMainScreenState extends State<ProfileMainScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Account Info",
+                              "Información de la Cuenta",
                               style: GoogleFonts.inter(
                                 textStyle: const TextStyle(
                                   fontWeight: FontWeight.w600,
@@ -95,105 +100,107 @@ class _ProfileMainScreenState extends State<ProfileMainScreen> {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            const ProfileInfoRow(
-                              iconPath:
-                                  "assets/icons/icon_svg/profile_name.svg",
-                              label: "Name",
-                              value: "Shane Watson",
+                            ProfileInfoRow(
+                              icon: Icons.person_outline,
+                              label: "Nombre",
+                              value: user?.name ?? "Sin nombre",
                             ),
-                            const ProfileInfoRow(
-                              iconPath:
-                                  "assets/icons/icon_svg/profile_phone.svg",
-                              label: "Phone",
-                              value: "+02 259 857 654",
+                            ProfileInfoRow(
+                              icon: Icons.phone_outlined,
+                              label: "Teléfono",
+                              value: company?.telefono ?? "Sin teléfono",
                             ),
-                            const ProfileInfoRow(
-                              iconPath:
-                                  "assets/icons/icon_svg/profile_email.svg",
-                              label: "Email",
-                              value: "shane@example.com",
+                            ProfileInfoRow(
+                              icon: Icons.email_outlined,
+                              label: "Correo",
+                              value: company?.email ?? "Sin email",
                             ),
-                            const ProfileInfoRow(
-                              iconPath:
-                                  "assets/icons/icon_svg/profile_gender.svg",
-                              label: "Gender",
-                              value: "Male",
+                            ProfileInfoRow(
+                              icon: Icons.account_circle_outlined,
+                              label: "Usuario",
+                              value: user?.username ?? "Sin usuario",
                             ),
-                            const ProfileInfoRow(
-                              iconPath:
-                                  "assets/icons/icon_svg/profile_role.svg",
-                              label: "Role",
-                              value: "Admin",
+                            ProfileInfoRow(
+                              icon: Icons.badge_outlined,
+                              label: "Rol",
+                              value: user?.cargo ?? "Sin rol",
                             ),
-                            const ProfileInfoRow(
-                              iconPath:
-                                  "assets/icons/icon_svg/profile_company.svg",
-                              label: "Company",
-                              value: "teki_app",
+                            ProfileInfoRow(
+                              icon: Icons.business_outlined,
+                              label: "Compañia",
+                              value: company?.razonSocial ?? "Sin empresa",
                             ),
-                            const ProfileInfoRow(
-                              iconPath:
-                                  "assets/icons/icon_svg/profile_address.svg",
-                              label: "Address",
-                              value: "5874 Street Park, New York, USA",
+                            ProfileInfoRow(
+                              icon: Icons.location_on_outlined,
+                              label: "Dirección",
+                              value: sesionState.office?.direccionCompleta ?? "Sin dirección",
                             ),
                           ],
                         ),
                       ),
                     ),
                     const SizedBox(height: 30),
-                    Center(
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.38,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            buildShowModalBottomSheet(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            backgroundColor: ColorSchema.primaryColor,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SvgPicture.asset(
-                                "assets/icons/icon_svg/edit_icon.svg",
-                                color: Colors.white70,
-                                width: 15,
-                              ),
-                              const SizedBox(
-                                width: 8,
-                              ),
-                              Text(
-                                "Edit Profile",
-                                style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    // Center(
+                    //   child: SizedBox(
+                    //     width: MediaQuery.of(context).size.width * 0.38,
+                    //     child: ElevatedButton(
+                    //       onPressed: () {
+                    //         buildShowModalBottomSheet(context);
+                    //       },
+                    //       style: ElevatedButton.styleFrom(
+                    //         padding: const EdgeInsets.symmetric(vertical: 15),
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: BorderRadius.circular(8),
+                    //         ),
+                    //         backgroundColor: ColorSchema.primaryColor,
+                    //       ),
+                    //       child: Row(
+                    //         mainAxisAlignment: MainAxisAlignment.center,
+                    //         children: [
+                    //           SvgPicture.asset(
+                    //             "assets/icons/icon_svg/edit_icon.svg",
+                    //             colorFilter: const ColorFilter.mode(Colors.white70, BlendMode.srcIn),
+                    //             width: 15,
+                    //           ),
+                    //           const SizedBox(
+                    //             width: 8,
+                    //           ),
+                    //           Text(
+                    //             "Edit Profile",
+                    //             style: GoogleFonts.inter(
+                    //               color: Colors.white,
+                    //               fontSize: 16,
+                    //               fontWeight: FontWeight.w600,
+                    //             ),
+                    //           )
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    const SizedBox(height: 50),
                   ],
                 ),
-              ),
             ),
             Positioned(
-                top: 30,
-                child: IconButton(
-                  onPressed: () {
-                    Get.back();
-                  },
-                  icon: const Icon(Icons.keyboard_arrow_left),
-                  color: Colors.white,
-                  iconSize: 30,
+                left: 10,
+                child: SafeArea(
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(
+                      Icons.arrow_back_ios,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    style: IconButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                    ),
+                  ),
                 ))
           ],
         ),
@@ -201,23 +208,23 @@ class _ProfileMainScreenState extends State<ProfileMainScreen> {
     );
   }
 
-  void buildShowModalBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(12),
-            topRight: Radius.circular(12),
-          ),
-        ),
-        isScrollControlled: true,
-        context: context,
-        builder: (_) {
-          return SizedBox(
-            height: MediaQuery.of(context).size.height * 0.9,
-            child: const EditProfileSection(),
-          );
-        });
-  }
+  // void buildShowModalBottomSheet(BuildContext context) {
+  //   showModalBottomSheet(
+  //       backgroundColor: Colors.white,
+  //       elevation: 0,
+  //       shape: const RoundedRectangleBorder(
+  //         borderRadius: BorderRadius.only(
+  //           topLeft: Radius.circular(12),
+  //           topRight: Radius.circular(12),
+  //         ),
+  //       ),
+  //       isScrollControlled: true,
+  //       context: context,
+  //       builder: (_) {
+  //         return SizedBox(
+  //           height: MediaQuery.of(context).size.height * 0.9,
+  //           child: const EditProfileSection(),
+  //         );
+  //       });
+  // }
 }

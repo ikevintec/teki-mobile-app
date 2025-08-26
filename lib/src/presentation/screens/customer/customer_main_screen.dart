@@ -10,6 +10,8 @@ import 'package:teki_app/src/presentation/screens/customer/customer_sections/cus
 import 'package:teki_app/src/providers/customers/customers.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
+import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class CustomerMainScreen extends ConsumerStatefulWidget {
   const CustomerMainScreen({super.key});
@@ -234,12 +236,12 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Icon(
                     Icons.person_outline,
-                    color: const Color(0xFF6B7280),
+                    color: ColorSchema.primaryColor,
                     size: 18,
                   ),
                 ),
@@ -261,7 +263,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                       if (customer.tipoDocumento?.isNotEmpty == true) ...[
                         const SizedBox(height: 2),
                         Text(
-                          customer.tipoDocumento!,
+                          formatTipoDocumento(customer.tipoDocumento ?? ''),
                           style: GoogleFonts.nunito(
                             color: const Color(0xFF9CA3AF),
                             fontSize: 12,
@@ -277,15 +279,15 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: ColorSchema.primaryColor,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       customer.numeroDocumento!,
                       style: GoogleFonts.nunito(
-                        color: const Color(0xFF92400E),
-                        fontWeight: FontWeight.w500,
-                        fontSize: 11,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -389,7 +391,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                   icon: Icon(
                     Icons.visibility_outlined,
                     size: 18,
-                    color: const Color(0xFF6B7280),
+                    color: ColorSchema.primaryColor,
                   ),
                   padding: const EdgeInsets.all(8),
                 ),

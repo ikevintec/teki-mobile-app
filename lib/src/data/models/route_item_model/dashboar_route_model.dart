@@ -53,7 +53,7 @@ final List<Map<String, dynamic>> DashboardRouteModel = <Map<String, dynamic>>[
   // },
   {
     'icon': "assets/icons/icon_svg/profile.svg",
-    'label': 'Profile',
+    'label': 'Perfil',
     'route': AppRoutes.profile
   },
 ];
