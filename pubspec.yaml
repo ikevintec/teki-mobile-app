@@ -39,7 +39,7 @@ dependencies:
   shared_preferences: ^2.5.3
   sidebarx: ^0.17.1
   url_launcher: ^6.3.1
-  intl: ^0.20.0
+  intl: ^0.19.0
   syncfusion_flutter_pdfviewer: ^30.1.40
   uuid: ^4.5.1
   flutter_localizations:
@@ -52,7 +52,7 @@ dev_dependencies:
     sdk: flutter
 
 flutter_launcher_icons:
-  image_path: "assets/images/logo/icon.png"
+  image_path: "assets/images/logo/icon_no_alpha.png"
   android: true
   ios: true
 

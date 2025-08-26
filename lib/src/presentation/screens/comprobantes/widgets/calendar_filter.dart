@@ -254,7 +254,7 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
                               ? ColorSchema.primaryColor
                               : Colors.grey[100],
                           borderRadius: BorderRadius.circular(12),
-                          border: BoxBorder.all(color: Colors.white)),
+                          border: Border.all(color: Colors.white)),
                       child: Center(
                         child: Text(
                           text,
