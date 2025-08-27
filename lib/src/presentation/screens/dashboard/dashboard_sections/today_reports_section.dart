@@ -7,7 +7,6 @@ import 'package:teki_app/src/data/repositories/dashboard_repository_impl.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
-import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
 
 class TodayReportsSection extends StatefulWidget {
   final int idPuntoVenta;
@@ -79,16 +78,6 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final allLoading = loadingClientes && loadingVentas && loadingMontos;
-
-    if (allLoading) {
-      return const SizedBox(
-        height: 640, // o el valor que se ajuste a tu UI
-        child: Center(
-          child: ScreenLoader(message: 'Cargando información...'),
-        ),
-      );
-    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -150,22 +139,24 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
             children: [
                 buildReports(
                   "Ventas",
-                  montosPorMoneda != null
-                      ? montosPorMoneda!.map((m) {
-                          final moneda = m['codigoMoneda'];
-                          final monto = (m['monto'] ?? 0).toStringAsFixed(2);
-                          switch (moneda) {
-                            case 'PEN':
-                              return 'S/. $monto';
-                            case 'USD':
-                              return '\$ $monto';
-                            case 'EUR':
-                              return '€ $monto';
-                            default:
-                              return '$moneda $monto';
-                          }
-                        }).join('\n')
-                      : '0',
+                  loadingMontos
+                      ? "---"
+                      : montosPorMoneda != null
+                          ? montosPorMoneda!.map((m) {
+                              final moneda = m['codigoMoneda'];
+                              final monto = (m['monto'] ?? 0).toStringAsFixed(2);
+                              switch (moneda) {
+                                case 'PEN':
+                                  return 'S/. $monto';
+                                case 'USD':
+                                  return '\$ $monto';
+                                case 'EUR':
+                                  return '€ $monto';
+                                default:
+                                  return '$moneda $monto';
+                              }
+                            }).join('\n')
+                          : '---',
                   Colors.white,
                   "assets/icons/icon_svg/sale_service_icon.svg",
                   screenWidth,
@@ -173,7 +164,11 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 ),
                 buildReports(
                   "Ventas Concretadas",
-                  totalVentas != null ? "$totalVentas" : '0',
+                  loadingVentas
+                      ? "---"
+                      : totalVentas != null
+                          ? "$totalVentas"
+                          : '---',
                   Colors.white,
                   "assets/icons/icon_svg/purchase_service_icon.svg",
                   screenWidth,
@@ -181,7 +176,11 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 ),
                 buildReports(
                   "Clientes",
-                  totalClientes != null ? "$totalClientes" : '0',
+                  loadingClientes
+                      ? "---"
+                      : totalClientes != null
+                          ? "$totalClientes"
+                          : '---',
                   Colors.white,
                   "assets/icons/icon_svg/expenses_icon.svg",
                   screenWidth,
@@ -194,7 +193,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     );
   }
 
-  GestureDetector buildReports(
+  Container buildReports(
     String title,
     String amount,
     Color reportColor,
@@ -202,9 +201,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     double screenWidth, {
     bool showCurrencySymbol = true,
   }) {
-    return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.analytics),
-      child: Container(
+    return Container(
         width: screenWidth * 0.27,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
@@ -282,7 +279,6 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

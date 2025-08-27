@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sidebarx/sidebarx.dart';
 import 'package:teki_app/main.dart';
-import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/carousel_section.dart';
+// import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/carousel_section.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/header_section.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/services_section.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/today_reports_section.dart';
@@ -60,7 +60,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
           children: [
             TodayReportsSection(key: todayReportKey, idPuntoVenta: id ?? 0),
             const ServicesSection(),
-            const CarouselSection(),
+            // const CarouselSection(),
           ],
         ),
       ),

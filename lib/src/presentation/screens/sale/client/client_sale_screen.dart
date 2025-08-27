@@ -297,6 +297,34 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   if (value == null || value.trim().isEmpty) {
                                     return 'Este campo es obligatorio';
                                   }
+                                  
+                                  // Validaciones específicas por tipo de documento
+                                  final tipoDoc = _selectedTipoDocumentoValue;
+                                  final documento = value.trim();
+                                  
+                                  switch (tipoDoc) {
+                                    case '1': // DNI
+                                      if (!RegExp(r'^\d{8}$').hasMatch(documento)) {
+                                        return 'DNI debe tener exactamente 8 dígitos';
+                                      }
+                                      break;
+                                    case '6': // RUC
+                                      if (!RegExp(r'^\d{11}$').hasMatch(documento)) {
+                                        return 'RUC debe tener exactamente 11 dígitos';
+                                      }
+                                      break;
+                                    case '4': // CARNET DE EXTRANJERÍA
+                                      if (!RegExp(r'^\d{9}$').hasMatch(documento)) {
+                                        return 'Carnet de extranjería debe tener 9 dígitos';
+                                      }
+                                      break;
+                                    case '7': // PASAPORTE
+                                      if (!RegExp(r'^[A-Za-z0-9]{8,12}$').hasMatch(documento)) {
+                                        return 'Pasaporte debe tener entre 8 y 12 caracteres alfanuméricos';
+                                      }
+                                      break;
+                                  }
+                                  
                                   return null;
                                 },
                               ),

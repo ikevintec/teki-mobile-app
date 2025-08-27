@@ -165,8 +165,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     });
   }
 
-  TextEditingController _dateController = TextEditingController();
-  TextEditingController _dateController2 = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _dateController2 = TextEditingController();
 
   String? tipoOperacionSelected = "0101";
   @override
