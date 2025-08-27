@@ -482,7 +482,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                   allowButtons: true);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ticketP.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
+                              backgroundColor: ColorSchema.primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(

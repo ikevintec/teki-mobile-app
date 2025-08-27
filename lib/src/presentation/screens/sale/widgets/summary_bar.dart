@@ -29,7 +29,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
         border: Border(
           top: BorderSide(
             width: 0.4,
-            color: providerTicket.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
+            color: ColorSchema.primaryColor,
           ),
         ),
       ),
@@ -49,7 +49,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: providerTicket.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
+                        color: ColorSchema.primaryColor,
                       ),
                     ),
                     Text(
@@ -57,7 +57,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: providerTicket.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
+                        color: ColorSchema.primaryColor,
                       ),
                     ),
                   ],
@@ -170,7 +170,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                   isExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
-                  color: providerTicket.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
+                  color: ColorSchema.primaryColor,
                 ),
               ),
             ),

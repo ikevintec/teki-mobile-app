@@ -123,14 +123,40 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final isLoading = provider.isLoading;
     final products = provider.productsSales;
     final ticketP = ref.watch(ticketProvider);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncFormArrayWithProvider(products, form, provider.incIgv, () {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: Duration(milliseconds: 500),
-          curve: Curves.easeOut,
-        );
-      });
+    ref.listen(productSaleProvider, (previous, next) {
+      bool quantityChanged = false;
+      
+      // Verificar si cambió la cantidad de algún producto
+      if (previous != null && previous.productsSales.length == next.productsSales.length) {
+        for (int i = 0; i < next.productsSales.length; i++) {
+          if (i < previous.productsSales.length && 
+              next.productsSales[i].cantidad != previous.productsSales[i].cantidad) {
+              quantityChanged = true;
+              break;
+          }
+        }
+      }
+      
+      final currencyChanged = next.currency != previous?.currency && next.currency != null;
+      final incIgvChanged = next.incIgv != previous?.incIgv;
+      final productsLengthChanged = next.productsSales.length != previous?.productsSales.length;
+      // quantityChanged ya está definido arriba
+
+      final shouldSyncForm = 
+          currencyChanged ||
+          incIgvChanged ||
+          productsLengthChanged ||
+          quantityChanged;
+
+      if (shouldSyncForm) {
+        _syncFormArrayWithProvider(next.productsSales, form, next.incIgv, () {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 500),
+            curve: Curves.easeOut,
+          );
+        });
+      }
     });
     return Scaffold(
       appBar: const PreferredSize(
@@ -379,7 +405,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: ticketP.isEdit ? Colors.deepOrange: ColorSchema.primaryColor,
+                                    backgroundColor: ColorSchema.primaryColor,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 12),
@@ -491,13 +517,10 @@ void _syncFormArrayWithProvider(
       final cantidad = (products[i].cantidad ?? 1).toInt();
       final precio = products[i].precioVentaUnitario ?? 0.0;
       final precioUnitario = products[i].valorUnitario ?? 0.0;
-      if (control.control('quantity').value != cantidad) {
         control.control('quantity').updateValue(cantidad);
-      }
-      final precioControl = control.control('price').value;
-      if (precioControl != precio && incIgv) {
+      if (incIgv) {
         control.control('price').updateValue(precio);
-      } else if (precioControl != precioUnitario && !incIgv) {
+      } else if (!incIgv) {
         control.control('price').updateValue(precioUnitario);
       }
       control.control('description').updateValue(

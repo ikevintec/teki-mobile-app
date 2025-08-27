@@ -538,7 +538,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                       // continuar
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ticketP.isEdit ? Colors.deepOrange : ColorSchema.primaryColor,
+                      backgroundColor: ColorSchema.primaryColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -548,8 +548,8 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text('Finalizar Pago'),
+                      children: [
+                        Text( ticketP.isEdit ? 'Finalizar Edición' : 'Finalizar Pago'),
                         SizedBox(width: 8),
                         Icon(Icons.check_circle),
                       ],
