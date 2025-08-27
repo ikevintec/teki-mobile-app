@@ -12,14 +12,16 @@ import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
 import 'package:teki_app/src/presentation/widgets/dropdown_action_button/dropdown_action_button.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class ViewComponentScreen extends ConsumerStatefulWidget {
   final Ticket ticket;
   final int? id;
+  final bool fromSale;
 
-  const ViewComponentScreen({super.key, required this.ticket, this.id});
+  const ViewComponentScreen({super.key, required this.ticket, this.id, this.fromSale = false});
 
   @override
   ConsumerState<ViewComponentScreen> createState() => _ViewComponentScreenState();
@@ -48,7 +50,7 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
     }
 
     if (widget.id != null && !provider.isLoading && (provider.ticket.id ?? 0) <= 0) {
-      return _buildErrorScreen("Comprobante no encontrado.");
+      return _buildErrorScreen("Comprobante no encontrado.", widget.fromSale);
     }
 
     return Scaffold(
@@ -56,6 +58,7 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
         preferredSize: const Size.fromHeight(60),
         child: CustomAppBar(
           navigateName: "Detalle del comprobante",
+          navigateRoute: widget.fromSale ? AppRoutes.dashboard : null,
         ),
       ),
       backgroundColor: Colors.white,
@@ -110,12 +113,13 @@ Ticket _getTicketToDisplay(ComprobanteState provider, Ticket defaultTicket, int?
 }
 
 // Helper method to build error screen
-Widget _buildErrorScreen(String message) {
+Widget _buildErrorScreen(String message, bool fromSale) {
   return Scaffold(
     appBar: PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: CustomAppBar(
         navigateName: "Detalle del comprobante",
+        navigateRoute: fromSale ? AppRoutes.dashboard : null,
       ),
     ),
     body: Center(
@@ -137,7 +141,13 @@ Widget _buildErrorScreen(String message) {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => Get.back(),
+            onPressed: () {
+              if (fromSale) {
+                Get.offAllNamed(AppRoutes.dashboard);
+              } else {
+                Get.back();
+              }
+            },
             child: const Text('Volver'),
           ),
         ],

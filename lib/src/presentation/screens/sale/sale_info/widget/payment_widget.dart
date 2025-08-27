@@ -2,10 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
-import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_sections/pay_complete_section.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen.dart/view_comprobante_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_card_widget.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
@@ -499,7 +500,6 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      final ticketEdited = ticketP.isEdit;
                       final notifier = ref.read(ticketProvider.notifier);
                       final isContado = _tabController.index == 0;
                       if (isContado && selectedPaymentMethod == null) {
@@ -526,14 +526,11 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                         ref.invalidate(ticketProvider);
                         ref.invalidate(productSaleProvider);
                         ref.invalidate(customerSaleProvider);
-                        Navigator.push(
-                            // ignore: use_build_context_synchronously
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PayCompleteSection(
-                                      identificador:"${ticketResponse.serie}-${ticketResponse.numero}",
-                                      isEdit: ticketEdited,
-                                    )));
+                        successNotification(ticketP.isEdit ?  "Venta editada con éxito" : "Venta registrada con éxito");
+                        Get.off(() => ViewComponentScreen(
+                          ticket: ticketResponse,
+                          fromSale: true,
+                        ));
                       }
                       // continuar
                     },
