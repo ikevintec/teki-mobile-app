@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -17,6 +15,7 @@ import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
@@ -123,40 +122,14 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final isLoading = provider.isLoading;
     final products = provider.productsSales;
     final ticketP = ref.watch(ticketProvider);
-    ref.listen(productSaleProvider, (previous, next) {
-      bool quantityChanged = false;
-      
-      // Verificar si cambió la cantidad de algún producto
-      if (previous != null && previous.productsSales.length == next.productsSales.length) {
-        for (int i = 0; i < next.productsSales.length; i++) {
-          if (i < previous.productsSales.length && 
-              next.productsSales[i].cantidad != previous.productsSales[i].cantidad) {
-              quantityChanged = true;
-              break;
-          }
-        }
-      }
-      
-      final currencyChanged = next.currency != previous?.currency && next.currency != null;
-      final incIgvChanged = next.incIgv != previous?.incIgv;
-      final productsLengthChanged = next.productsSales.length != previous?.productsSales.length;
-      // quantityChanged ya está definido arriba
-
-      final shouldSyncForm = 
-          currencyChanged ||
-          incIgvChanged ||
-          productsLengthChanged ||
-          quantityChanged;
-
-      if (shouldSyncForm) {
-        _syncFormArrayWithProvider(next.productsSales, form, next.incIgv, () {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: Duration(milliseconds: 500),
-            curve: Curves.easeOut,
-          );
-        });
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncFormArrayWithProvider(products, form, provider.incIgv, () {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+        );
+      });
     });
     return Scaffold(
       appBar: const PreferredSize(
@@ -321,34 +294,36 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                         itemBuilder: (context, index) {
                                           final formGroup = formArray
                                               .controls[index] as FormGroup;
-                                          return Dismissible(
-                                            key: ValueKey(
-                                                'product_$index-${Random().nextInt(100000)}'),
-                                            direction:
-                                                DismissDirection.endToStart,
-                                            background: Container(
-                                              alignment: Alignment.centerRight,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 20),
-                                              color: Colors.redAccent,
-                                              child: const Icon(Icons.delete,
-                                                  color: Colors.white),
-                                            ),
-                                            onDismissed: (direction) {
-                                              ref
-                                                  .read(productSaleProvider
-                                                      .notifier)
-                                                  .removeProductSale(index);
-                                            },
-                                            child: ProductItemCard(
-                                              key: ValueKey(
-                                                  'product_$index-${Random().nextInt(100000)}'),
-                                              productTicketDetail:
-                                                  products[index],
-                                              index: index,
-                                              formGroup: formGroup,
-                                            ) as Widget,
+                                          return Column(
+                                            children: [
+                                              DismissibleActionWidget(
+                                                actions: [
+                                                  DismissibleActionData(
+                                                    type: DismissibleActionType.edit,
+                                                    label: 'Eliminar',
+                                                    icon: Icons.delete,
+                                                    backgroundColor: Colors.redAccent,
+                                                    onTap: () {
+                                                      // Agregar delay para permitir que la animación se complete
+                                                      Future.delayed(const Duration(milliseconds: 150), () {
+                                                        ref
+                                                            .read(productSaleProvider
+                                                                .notifier)
+                                                            .removeProductSale(index);
+                                                      });
+                                                    },
+                                                  ),
+                                                ],
+                                                child: ProductItemCard(
+                                                  key: UniqueKey(),
+                                                  productTicketDetail:
+                                                      products[index],
+                                                  index: index,
+                                                  formGroup: formGroup,
+                                                ),
+                                              ),
+                                              SizedBox(height: 30),
+                                            ],
                                           );
                                         },
                                       ),
@@ -517,10 +492,13 @@ void _syncFormArrayWithProvider(
       final cantidad = (products[i].cantidad ?? 1).toInt();
       final precio = products[i].precioVentaUnitario ?? 0.0;
       final precioUnitario = products[i].valorUnitario ?? 0.0;
+      if (control.control('quantity').value != cantidad) {
         control.control('quantity').updateValue(cantidad);
-      if (incIgv) {
+      }
+      final precioControl = control.control('price').value;
+      if (precioControl != precio && incIgv) {
         control.control('price').updateValue(precio);
-      } else if (!incIgv) {
+      } else if (precioControl != precioUnitario && !incIgv) {
         control.control('price').updateValue(precioUnitario);
       }
       control.control('description').updateValue(
