@@ -19,21 +19,27 @@ class DashboardHeaderSection extends ConsumerWidget {
     final username = user?.username ?? "User Username";
     final avatarUrl = user?.avatarUrl;
     return Container(
+      
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-            ColorSchema.primaryColor,
-            ColorSchema.primaryColor,
+            const Color.fromARGB(255, 19, 94, 232),
+            Colors.blue[400]!,
           ],
         ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(65),
+          bottomRight: Radius.circular(65),
+        )
       ),
       child: Padding(
         padding: const EdgeInsets.only(
-          top: 30,
+          top: 50,
           left: 10,
           right: 16,
+          bottom: 20,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

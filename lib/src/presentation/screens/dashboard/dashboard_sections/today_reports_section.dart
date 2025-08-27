@@ -80,23 +80,23 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      margin: const EdgeInsets.only(left: 16, right: 16, top: 30),
+        padding: const EdgeInsets.only(right: 16, left: 16, top: 20, bottom: 35),
+        margin: const EdgeInsets.only(left: 16, right: 16, top: 0),
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            spreadRadius: 0,
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 14,
+            offset: const Offset(0, 10),
           ),
         ],
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(25),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            ColorSchema.primaryColor,
+            const Color.fromARGB(255, 15, 78, 193),
             Colors.blue[400]!,
           ],
         ),
@@ -109,13 +109,12 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Reportes diario",
+                  "Reportes Diario",
                   style: GoogleFonts.raleway(
                     textStyle: TextStyle(
                       fontSize: screenWidth * 0.06,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
-                      letterSpacing: 0.5,
                     ),
                   ),
                 ),

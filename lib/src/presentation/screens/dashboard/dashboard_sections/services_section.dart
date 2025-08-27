@@ -8,8 +8,33 @@ import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
-class ServicesSection extends ConsumerWidget {
-  const ServicesSection({super.key});
+class ServicesSection extends ConsumerStatefulWidget {
+  // Parámetro dinámico para controlar las columnas del grid
+  static const int gridColumnsCount = 2;
+  // Prop para mostrar/ocultar el navigation bar
+  final bool showNavigationBar;
+  
+  const ServicesSection({super.key, this.showNavigationBar = false});
+
+  @override
+  ConsumerState<ServicesSection> createState() => _ServicesSectionState();
+}
+
+class _ServicesSectionState extends ConsumerState<ServicesSection> {
+  int _selectedIndex = 0;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void openNewSale(WidgetRef ref) {
     final ticket = ref.read(ticketProvider);
@@ -22,86 +47,222 @@ class ServicesSection extends ConsumerWidget {
     Get.toNamed(AppRoutes.productsSales);
   }
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  // Lista de servicios para Venta
+  List<Map<String, dynamic>> getVentaServicesList(WidgetRef ref) {
+    return [
+      {
+        'title': 'Productos',
+        'icon': 'assets/icons/icon_image/products.png',
+        'action': () => Get.toNamed(AppRoutes.products),
+      },
+      {
+        'title': 'Comprobantes',
+        'icon': 'assets/icons/icon_image/expense_list.png',
+        'action': () => Get.toNamed(AppRoutes.comprobantesVer),
+      },
+      {
+        'title': 'Ventas',
+        'icon': 'assets/icons/icon_image/pos.png',
+        'action': () => openNewSale(ref),
+      },
+      {
+        'title': 'Clientes',
+        'icon': 'assets/icons/icon_image/customer.png',
+        'action': () => Get.toNamed(AppRoutes.customer),
+      },
+      {
+        'title': 'Stats',
+        'icon': 'assets/icons/icon_image/trading.png',
+        'action': () => Get.toNamed(AppRoutes.analytics),
+      },
+      {
+        'title': 'Ajustes',
+        'icon': 'assets/icons/icon_image/user_management.png',
+        'action': () => Get.toNamed(AppRoutes.settings),
+      },
+    ];
+  }
+
+  // Lista de servicios para Restaurant
+  List<Map<String, dynamic>> getRestaurantServicesList(WidgetRef ref) {
+    return [
+      {
+        'title': 'Pedidos',
+        'icon': 'assets/icons/icon_image/pos.png',
+        'action': () => openNewSale(ref), // Placeholder
+      },
+      {
+        'title': 'Cocina',
+        'icon': 'assets/icons/icon_image/expense_list.png',
+        'action': () => Get.toNamed(AppRoutes.comprobantesVer), // Placeholder
+      },
+      {
+        'title': 'Reportes',
+        'icon': 'assets/icons/icon_image/trading.png',
+        'action': () => Get.toNamed(AppRoutes.analytics),
+      },
+      {
+        'title': 'Config',
+        'icon': 'assets/icons/icon_image/user_management.png',
+        'action': () => Get.toNamed(AppRoutes.settings),
+      },
+    ];
+  }
+
+  // Método para construir una página de servicios
+  Widget _buildServicesPage(List<Map<String, dynamic>> services) {
     return Container(
-      padding: const EdgeInsets.only(left: 30, right: 30, top: 50),
-      child: Column(
-        children: [
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: ServicesSection.gridColumnsCount,
+          crossAxisSpacing: 15,
+          mainAxisSpacing: 13,
+          childAspectRatio: 1.3,
+        ),
+        itemCount: services.length,
+        itemBuilder: (context, index) {
+          final service = services[index];
+          return buildServices(
+            context,
+            service['title'],
+            service['icon'],
+            Colors.white,
+            ColorSchema.primaryColor,
+            service['action'],
+          );
+        },
+      ),
+    );
+  }
+
+  // Navegar a página específica
+  void _navigateToPage(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Área scrolleable de servicios con PageView
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 30),
+            child: widget.showNavigationBar 
+                ? PageView(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _selectedIndex = index;
+                      });
+                    },
+                    children: [
+                      // Página de Venta
+                      SingleChildScrollView(
+                        child: _buildServicesPage(getVentaServicesList(ref)),
+                      ),
+                      // Página de Restaurant
+                      SingleChildScrollView(
+                        child: _buildServicesPage(getRestaurantServicesList(ref)),
+                      ),
+                    ],
+                  )
+                : SingleChildScrollView(
+                    child: _buildServicesPage(getVentaServicesList(ref)),
+                  ),
+          ),
+        ),
+        // Bottom Navigation Bar (solo si showNavigationBar es true)
+        if (widget.showNavigationBar)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
+            height: 70,
+            margin: const EdgeInsets.fromLTRB(25, 0, 25, 30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(35),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 14,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    buildServices(
-                        context,
-                        "Productos",
-                        "assets/icons/icon_image/products.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.products);
-                    }),
-                    //Ver Comprobantes
-                    buildServices(
-                        context,
-                        "Comprobantes",
-                        "assets/icons/icon_image/expense_list.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.comprobantesVer);
-                    }),
-                    buildServices(
-                        context,
-                        "Venta",
-                        "assets/icons/icon_image/pos.png",
-                        Colors.grey.shade100,
-                        ColorSchema.primaryColor, () {
-                      // Get.toNamed(AppRoutes.posSales);
-                      openNewSale(ref);
-                    }),
-                  ],
+                _buildNavItem(
+                  icon: Icons.store,
+                  label: 'Venta',
+                  isSelected: _selectedIndex == 0,
+                  onTap: () => _navigateToPage(0),
                 ),
-                const SizedBox(
-                  height: 30,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    buildServices(
-                        context,
-                        "Clientes",
-                        "assets/icons/icon_image/customer.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.customer);
-                    }),
-                    buildServices(
-                        context,
-                        "Stats",
-                        "assets/icons/icon_image/trading.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.analytics);
-                    }),
-                    buildServices(
-                        context,
-                        "Ajustes",
-                        "assets/icons/icon_image/user_management.png",
-                        Colors.white,
-                        ColorSchema.primaryColor, () {
-                      Get.toNamed(AppRoutes.settings);
-                    }),
-                  ],
-                ),
-                const SizedBox(
-                  height: 30,
+                _buildNavItem(
+                  icon: Icons.restaurant,
+                  label: 'Restaurante',
+                  isSelected: _selectedIndex == 1,
+                  onTap: () => _navigateToPage(1),
                 ),
               ],
             ),
           ),
-        ],
+      ],
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 50,
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(25),
+            color: isSelected 
+                ? ColorSchema.primaryColor.withOpacity(0.1) 
+                : Colors.transparent,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: isSelected 
+                    ? ColorSchema.primaryColor 
+                    : Colors.grey.shade500,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: GoogleFonts.nunito(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected 
+                      ? ColorSchema.primaryColor 
+                      : Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -110,35 +271,49 @@ class ServicesSection extends ConsumerWidget {
       Color serviceColor, Color serviceImageColor, Function onPressed) {
     return InkWell(
       onTap: () => onPressed(),
-      child: Column(
-        children: [
-          Column(
-            children: [
-              Stack(alignment: Alignment.center, children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                ),
-                ImageIcon(
-                  AssetImage(
-                    serviceIcon,
-                  ),
-                  color: serviceImageColor,
-                  size: 55,
-                )
-              ]),
-              const SizedBox(
-                height: 5,
+      child: Container(
+        margin: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(alignment: Alignment.center, children: [
+              SizedBox(
+                height: 70,
               ),
-              Text(
-                service,
-                style: GoogleFonts.nunito(
-                    textStyle: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width * 0.035)),
+              ImageIcon(
+                AssetImage(serviceIcon),
+                color: serviceImageColor,
+                size: 45,
               )
-            ],
-          )
-        ],
+            ]),
+            Text(
+              service,
+              style: GoogleFonts.nunito(
+                textStyle: TextStyle(
+                  fontSize: MediaQuery.of(context).size.width * 0.035,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              textAlign: TextAlign.center,
+            )
+          ],
+        ),
       ),
     );
   }

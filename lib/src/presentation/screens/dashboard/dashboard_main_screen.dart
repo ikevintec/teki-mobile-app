@@ -53,30 +53,49 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
     return Scaffold(
       key: _key,
       drawer: DashboardDrawer(routeName: "Dashboard", controller: controller),
-      body: Container(
-        color: Colors.white70,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            TodayReportsSection(key: todayReportKey, idPuntoVenta: id ?? 0),
-            const ServicesSection(),
-            // const CarouselSection(),
-          ],
-        ),
-      ),
-      appBar: isSmallScreen
-          ? PreferredSize(
-              preferredSize: const Size.fromHeight(90),
-              child: DashboardHeaderSection(
-                openDrawer: () {
-                  if (!Platform.isAndroid && !Platform.isIOS) {
-                    controller.setExtended(true);
-                  }
-                  _key.currentState?.openDrawer();
-                },
+      body: Stack(
+        children: [
+          // Fondo y servicios
+          Container(
+            color: const Color(0xFFF8FAFC),
+            child: Column(
+              children: [
+                // Espacio para el header
+                const SizedBox(height: 400),
+                // Sección de servicios con scroll interno
+                const Expanded(
+                  child: ServicesSection(showNavigationBar: true),
+                ),
+              ],
+            ),
+          ),
+          // Header
+          if (isSmallScreen)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SizedBox(
+                height: 190,
+                child: DashboardHeaderSection(
+                  openDrawer: () {
+                    if (!Platform.isAndroid && !Platform.isIOS) {
+                      controller.setExtended(true);
+                    }
+                    _key.currentState?.openDrawer();
+                  },
+                ),
               ),
-            )
-          : null,
+            ),
+          // Sección de reportes - por encima de todo
+          Positioned(
+            top:165, // Posición para que se superponga al header
+            left: 0,
+            right: 0,
+            child: TodayReportsSection(key: todayReportKey, idPuntoVenta: id ?? 0),
+          ),
+        ],
+      ),
     );
   }
 }
