@@ -34,7 +34,7 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
     {'label': 'Factura', 'value': '01'},
     {'label': 'Nota de Crédito', 'value': '07'},
     {'label': 'Nota de Débito', 'value': '08'},
-    {'label': 'Recibo por Honorarios', 'value': 'NV'},
+    {'label': 'Nota de venta', 'value': 'NV'},
   ];
 
   final List<String> _statusOptions = ['Todos', 'Activos', 'Anulados'];

@@ -85,10 +85,9 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                     const SizedBox(height: 16),
                     _buildClienteSection(ticketToShow),
                     const SizedBox(height: 16),
-                    _buildEmisorSection(ticketToShow),
+                    // _buildEmisorSection(ticketToShow),
+                    _buildItemsSection(_buildProductsSection(ticketToShow)),
                     const SizedBox(height: 16),
-                    _buildProductsSection(ticketToShow),
-                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -168,13 +167,13 @@ Widget _buildErrorScreen(String message, bool fromSale) {
       children: [
         _buildInfoGrid([
           _buildInfoItem("Tipo", formatTipoComprobante(ticket.tipoComprobante ?? ''), Icons.description),
+          _buildInfoItem("Estado SUNAT", formatEstadoSunat(ticket.estadoSunat ?? '-'), Icons.content_paste_search),
+          // _buildInfoItem("Incluye IGV", ticket.incIgv == true ? 'Sí' : 'No', Icons.access_time),
           _buildInfoItem("Serie", ticket.serie ?? '--', Icons.numbers),
           _buildInfoItem("Número", ticket.numero?.toString() ?? '--', Icons.tag),
           _buildInfoItem("Fecha", ticket.fechaEmision ?? '--', Icons.calendar_today),
           _buildInfoItem("Hora", ticket.horaEmision ?? '--', Icons.access_time),
-          _buildInfoItem("Incluye IGV", ticket.incIgv == true ? 'Sí' : 'No', Icons.access_time),
           _buildInfoItem("Tipo Pago", ticket.tipoVenta ?? '--', Icons.payment),
-          _buildInfoItem("Estado SUNAT", formatEstadoSunat(ticket.estadoSunat ?? '-'), Icons.content_paste_search),
         ]),
       ],
     );
@@ -188,9 +187,7 @@ Widget _buildErrorScreen(String message, bool fromSale) {
         _buildFullWidthInfoItem("Nombre", ticket.denominacionReceptor ?? "Sin nombre", Icons.person_outline),
         const SizedBox(height: 12),
         _buildInfoGrid([
-          _buildInfoItem("Tipo Documento", ticket.cliente?.tipoDocumento ?? '--', Icons.document_scanner),
-          _buildInfoItem("Numero Documento", ticket.cliente?.numeroDocumento ?? '--', Icons.phone),
-          _buildInfoItem("Género", ticket.cliente?.genero ?? "--", Icons.wc),
+          _buildInfoItem(formatTipoDocumento(ticket.cliente?.tipoDocumento ?? '--'), ticket.cliente?.numeroDocumento ?? '--', Icons.domain_verification),
           _buildInfoItem("Teléfono", ticket.telefonoReceptor ?? '--', Icons.phone),
         ]),
         const SizedBox(height: 12),
@@ -200,7 +197,17 @@ Widget _buildErrorScreen(String message, bool fromSale) {
       ],
     );
   }
+    Widget _buildItemsSection(Widget items) {
+    return _buildInfoCard(
+      title: "Items",
+      icon: Icons.list,
+      children: [
+        items
+      ],
+    );
+  }
 
+  // ignore: unused_element
   Widget _buildEmisorSection(Ticket ticket) {
     return _buildInfoCard(
       title: "Emisor",
@@ -362,7 +369,7 @@ Widget _buildErrorScreen(String message, bool fromSale) {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 3.0, // Adjusted for more compact height
+      childAspectRatio: 2.8, // Adjusted for more compact height
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
       children: items,

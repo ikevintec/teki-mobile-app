@@ -98,7 +98,10 @@ class ProductGeneralSection extends HookConsumerWidget {
                     onChanged: (value) => notifier.setTipoProducto(value!),
                   ),
                 ),
+
+                if(formProvider.validacionLote)
                 const SizedBox(width: 8),
+                if(formProvider.validacionLote)
                 IntrinsicWidth(
                   child: CustomSegmentedSelector(
                     label: "Tipo de Producto",
@@ -265,6 +268,7 @@ class ProductGeneralSection extends HookConsumerWidget {
                 ),
               ),
             ),
+            
             if (unidadesDiferentes) const SizedBox(height: 10),
             if (unidadesDiferentes)
               Container(

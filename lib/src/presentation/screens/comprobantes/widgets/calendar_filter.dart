@@ -61,6 +61,8 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
       firstDate: DateTime(now.year - 5),
       lastDate: DateTime(now.year + 5),
       locale: const Locale('es'),
+      // keyboardType: TextInputType.datetime,
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -82,7 +84,7 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: ColorSchema.primaryColor,
+                foregroundColor: Colors.white,
               ),
             ),
             textTheme: const TextTheme(
