@@ -31,6 +31,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     with TickerProviderStateMixin {
   late FocusNode _priceFocusNode;
   late FocusNode _descriptionFocusNode;
+  late TextEditingController _priceController;
+  late TextEditingController _descriptionController;
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
   bool _isPriceFocused = false;
@@ -41,6 +43,16 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     super.initState();
     _priceFocusNode = FocusNode();
     _descriptionFocusNode = FocusNode();
+    
+    // Inicializar el controller con el valor actual del precio
+    final priceControl = widget.formGroup.control('price') as FormControl<double>;
+    final initialPrice = priceControl.value ?? 0.0;
+    _priceController = TextEditingController(text: initialPrice.toString());
+    
+    // Inicializar el controller con el valor actual de la descripción
+    final descriptionControl = widget.formGroup.control('description') as FormControl<String>;
+    final initialDescription = descriptionControl.value ?? '';
+    _descriptionController = TextEditingController(text: initialDescription);
     
     // Configurar animación de shake
     _shakeController = AnimationController(
@@ -65,12 +77,28 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
       setState(() {
         _isPriceFocused = _priceFocusNode.hasFocus;
       });
+      
+      // Seleccionar todo el texto cuando el campo de precio recibe focus
+      if (_priceFocusNode.hasFocus) {
+        _priceController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _priceController.text.length,
+        );
+      }
     });
     
     _descriptionFocusNode.addListener(() {
       setState(() {
         _isDescriptionFocused = _descriptionFocusNode.hasFocus;
       });
+      
+      // Seleccionar todo el texto cuando el campo de descripción recibe focus
+      if (_descriptionFocusNode.hasFocus) {
+        _descriptionController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _descriptionController.text.length,
+        );
+      }
     });
   }
 
@@ -95,6 +123,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   void dispose() {
     _priceFocusNode.dispose();
     _descriptionFocusNode.dispose();
+    _priceController.dispose();
+    _descriptionController.dispose();
     _shakeController.dispose();
     super.dispose();
   }
@@ -160,6 +190,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                         keyboardType: TextInputType.name,
                         textInputAction: TextInputAction.next,
                         focusNode: _descriptionFocusNode,
+                        controller: _descriptionController,
                         onSubmitted: (control) {
                           // Cambiar focus al campo de precio al presionar Enter
                           _priceFocusNode.requestFocus();
@@ -202,6 +233,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                             textInputAction: TextInputAction.done,
                             inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
                             focusNode: _priceFocusNode,
+                            controller: _priceController,
                             decoration: InputDecoration(
                               labelText: provider.incIgv
                                   ? 'Precio Venta'
