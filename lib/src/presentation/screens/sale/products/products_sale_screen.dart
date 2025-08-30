@@ -7,9 +7,11 @@ import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 import 'package:teki_app/src/presentation/screens/sale/client/client_sale_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/product_item_card.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/search_products.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_product_view.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
+import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
@@ -298,6 +300,39 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                             children: [
                                               DismissibleActionWidget(
                                                 actions: [
+                                                  if (products[index].producto != null)
+                                                    DismissibleActionData(
+                                                      type: DismissibleActionType.edit,
+                                                      label: 'Ver',
+                                                      icon: Icons.visibility,
+                                                      backgroundColor: ColorSchema.primaryColor,
+                                                      onTap: () {
+                                                        showCustomModal(
+                                                          context: context,
+                                                          child: ModalProductView(
+                                                            product: products[index].producto!
+                                                          ),
+                                                          tittle: "Ver Producto",
+                                                          allowButtons: false
+                                                        );
+                                                      },
+                                                    ),
+                                                  DismissibleActionData(
+                                                    type: DismissibleActionType.edit,
+                                                    label: 'Config',
+                                                    icon: Icons.settings,
+                                                    backgroundColor: ColorSchema.primaryColor.withOpacity(0.8),
+                                                    onTap: () {
+                                                      // Aquí puedes agregar la lógica de configuración del producto
+                                                      // Por ahora, solo muestra un mensaje
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text('Configuraciones del producto'),
+                                                          backgroundColor: ColorSchema.primaryColor,
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
                                                   DismissibleActionData(
                                                     type: DismissibleActionType.edit,
                                                     label: 'Eliminar',

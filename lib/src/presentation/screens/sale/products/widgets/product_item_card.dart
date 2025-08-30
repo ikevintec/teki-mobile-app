@@ -261,27 +261,6 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                             },
                           ),
                         ),
-                        Row(
-                          children: [
-                            if (widget.productTicketDetail.producto != null)
-                              IconButton(
-                                onPressed: () {
-                                  showCustomModal(
-                                      context: context,
-                                      child: ModalProductView(
-                                          product: widget
-                                              .productTicketDetail.producto!),
-                                      tittle: "Ver Producto",
-                                      allowButtons: false);
-                                },
-                                icon: Icon(Icons.visibility,
-                                    color: ColorSchema.primaryColor, size: 15),
-                              ),
-                            const SizedBox(width: 10),
-                            // Icon(Icons.settings,
-                            //     color: ColorSchema.primaryColor, size: 15),
-                          ],
-                        ),
                       ],
                     ),
                   ],
