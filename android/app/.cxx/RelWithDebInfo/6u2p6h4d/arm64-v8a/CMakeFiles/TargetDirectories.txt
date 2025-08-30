@@ -1,2 +1,0 @@
-C:/Users/user/Desktop/inventual/inventual-flutter-package/inventual_flutter/android/app/.cxx/RelWithDebInfo/6u2p6h4d/arm64-v8a/CMakeFiles/edit_cache.dir
-C:/Users/user/Desktop/inventual/inventual-flutter-package/inventual_flutter/android/app/.cxx/RelWithDebInfo/6u2p6h4d/arm64-v8a/CMakeFiles/rebuild_cache.dir

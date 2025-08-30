@@ -2,7 +2,7 @@ name: teki_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.2
+version: 1.0.5+5
 
 environment:
   sdk: '>=3.2.4 <4.0.0'
@@ -16,16 +16,16 @@ dependencies:
   curved_navigation_bar: ^1.0.6
   dio: ^5.8.0+1
   expansion_tile_card: ^3.0.0
-  fl_chart: ^0.71.0
+  fl_chart: ^1.0.0
   flutter:
     sdk: flutter
-  flutter_dotenv: ^5.2.1
+  flutter_dotenv: ^6.0.0
   flutter_easy_faq: ^1.0.1
   flutter_hooks: ^0.21.2
   flutter_onboarding_slider: ^1.0.11
   flutter_riverpod: ^2.6.1
   flutter_rounded_date_picker: ^3.0.4
-  flutter_slidable: ^3.1.1
+  flutter_slidable: ^4.0.1
   flutter_svg: ^2.0.9
   flutter_switch: ^0.3.2
   get: ^4.6.6
@@ -47,7 +47,7 @@ dependencies:
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.3
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
 

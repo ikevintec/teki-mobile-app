@@ -61,7 +61,7 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
         'action': () => Get.toNamed(AppRoutes.comprobantesVer),
       },
       {
-        'title': 'Nueva Ventas',
+        'title': 'Nueva Venta',
         'icon': 'assets/icons/icon_image/pos.png',
         'action': () => openNewSale(ref),
       },

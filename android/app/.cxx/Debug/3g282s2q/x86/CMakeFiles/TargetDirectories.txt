@@ -1,2 +1,0 @@
-C:/Users/user/Documents/enterprice/teki-mobile-app/android/app/.cxx/Debug/3g282s2q/x86/CMakeFiles/edit_cache.dir
-C:/Users/user/Documents/enterprice/teki-mobile-app/android/app/.cxx/Debug/3g282s2q/x86/CMakeFiles/rebuild_cache.dir

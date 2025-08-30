@@ -46,3 +46,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/app/build/
+/android/build/
+/android/.gradle/
+android/.gradle/
+**/android/**/build/
+
+# iOS builds and archives
+**/ios/build/
+**/ios/Runner.app
+**/ios/Runner.app.dSYM/
+**/ios/DerivedData/
+**/ios/*.xcarchive
+**/ios/Runner/GeneratedPluginRegistrant.*
+build/ios/
