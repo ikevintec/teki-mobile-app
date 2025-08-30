@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
+import 'package:teki_app/src/presentation/screens/product/sections/precios_compra_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/formularios/product_form.dart';
@@ -48,6 +49,7 @@ class ProductPreciosSection extends HookConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const PreciosCompraSection(),
                 Row(
                   children: [
                     const Icon(Icons.monetization_on,
@@ -206,6 +208,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                       hint: "",
                       controller: precioController,
                       inputType: TextInputType.number,
+                      showDoneButton: true,
                       onChanged: (value) {
                         if (value.isEmpty) return;
                         ref
@@ -255,6 +258,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                         hint: "Unidades al mayoreo",
                         controller: unidadesMayoreoController,
                         inputType: TextInputType.number,
+                        showDoneButton: true,
                         onChanged: (value) {
                           ref
                               .read(productFormProvider.notifier)

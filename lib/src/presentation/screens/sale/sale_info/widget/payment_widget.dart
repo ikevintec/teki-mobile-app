@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -43,6 +44,13 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
 
   final formKeyContado = GlobalKey<FormState>();
   final formKeyCredito = GlobalKey<FormState>();
+  
+  // FocusNodes para detectar cuando hay inputs enfocados
+  final FocusNode montoPagadoFocus = FocusNode();
+  final FocusNode numeroOperacionFocus = FocusNode();
+  final FocusNode diasCreditoFocus = FocusNode();
+  bool _hasInputFocus = false;
+  Timer? _expandTimer;
 
   @override
   void initState() {
@@ -51,6 +59,11 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     _tabController.addListener(() {
       setState(() {});
     });
+    
+    // Agregar listeners a los FocusNodes
+    montoPagadoFocus.addListener(_onFocusChange);
+    numeroOperacionFocus.addListener(_onFocusChange);
+    diasCreditoFocus.addListener(_onFocusChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final providerTicket = ref.watch(ticketProvider);
@@ -74,6 +87,45 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       
       setState(() {});
     });
+  }
+
+  @override
+  void dispose() {
+    _expandTimer?.cancel();
+    montoPagadoFocus.removeListener(_onFocusChange);
+    numeroOperacionFocus.removeListener(_onFocusChange);
+    diasCreditoFocus.removeListener(_onFocusChange);
+    
+    montoPagadoFocus.dispose();
+    numeroOperacionFocus.dispose();
+    diasCreditoFocus.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    final hasAnyFocus = montoPagadoFocus.hasFocus || 
+                       numeroOperacionFocus.hasFocus || 
+                       diasCreditoFocus.hasFocus;
+    
+    if (_hasInputFocus != hasAnyFocus) {
+      if (hasAnyFocus) {
+        // Si gana focus, cambiar inmediatamente (contraer)
+        _expandTimer?.cancel();
+        setState(() {
+          _hasInputFocus = true;
+        });
+      } else {
+        // Si pierde focus, esperar antes de expandir
+        _expandTimer?.cancel();
+        _expandTimer = Timer(const Duration(milliseconds: 150), () {
+          if (mounted) {
+            setState(() {
+              _hasInputFocus = false;
+            });
+          }
+        });
+      }
+    }
   }
 
   double get cambioDisponible =>
@@ -265,10 +317,14 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     final ticket = ref.watch(ticketProvider).ticket;
     final notifier = ref.read(ticketProvider.notifier);
     final ticketP = ref.watch(ticketProvider);
+    
+    // Usar detección de focus en lugar de teclado
+    final containerHeight = _hasInputFocus ? size.height * 0.5 : size.height * 0.7;
+    
     return Center(
       child: Container(
         width: size.width * 1,
-        height: size.height * 0.8,
+        height: containerHeight,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -333,6 +389,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                                   hint: 'Cantidad pagado',
                                   inputType: TextInputType.number,
                                   controller: montoPagadoController,
+                                  focusNode: montoPagadoFocus,
                                   onChanged: (value) => setState(() {}),
                                   validator: (p0) {
                                     if (p0 == null || p0.isEmpty) {
@@ -358,6 +415,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                                     hint: 'Número de operación',
                                     inputType: TextInputType.number,
                                     controller: numeroOperacion,
+                                    focusNode: numeroOperacionFocus,
                                   ),
                                 ),
                               ],
@@ -410,6 +468,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                                     hint: 'Ingrese días',
                                     inputType: TextInputType.text,
                                     controller: diasCredito,
+                                    focusNode: diasCreditoFocus,
                                     onChanged: (_) {},
                                     validator: (p0) =>
                                         (p0 == null || p0.isEmpty)
@@ -494,7 +553,6 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
               ),
             ),
             SummaryBarSales(showOnlyTotal: true,),
-
             Row(
               children: [
                 Expanded(

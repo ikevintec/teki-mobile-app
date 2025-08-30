@@ -200,6 +200,39 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     );
   }
 
+  void syncAllProductsFromForms(List<Map<String, dynamic>> formsData) {
+    // Sincronizar todos los productos sin re-renders individuales
+    final updatedProducts = <TicketDetail>[];
+    
+    for (int i = 0; i < state.productsSales.length; i++) {
+      final existingTicketDetail = state.productsSales[i];
+      final formData = formsData[i];
+      
+      final precio = formData['price'] as double? ?? existingTicketDetail.precioVentaUnitario ?? 0.0;
+      final description = formData['description'] as String? ?? existingTicketDetail.descripcion ?? '';
+      
+      final updatedTicketDetail = state.incIgv
+          ? existingTicketDetail.copyWith(
+              precioVentaUnitario: precio,
+              montoOriginal: precio,
+              monedaOriginal: state.currency!.codigoMoneda,
+              descripcion: description,
+            )
+          : existingTicketDetail.copyWith(
+              valorUnitario: precio,
+              montoOriginal: precio,
+              monedaOriginal: state.currency!.codigoMoneda,
+              descripcion: description,
+            );
+      
+      updatedProducts.add(updatedTicketDetail);
+    }
+    
+    // Solo una actualización del estado al final
+    state = state.copyWith(productsSales: updatedProducts);
+    calculoTotal();
+  }
+
   void createItemForm() {
     const uuid = Uuid();
     TicketDetail ticketDetail = TicketDetail(

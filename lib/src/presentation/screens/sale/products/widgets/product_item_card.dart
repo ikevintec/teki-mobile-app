@@ -33,6 +33,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   late FocusNode _descriptionFocusNode;
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
+  bool _isPriceFocused = false;
+  bool _isDescriptionFocused = false;
 
   @override
   void initState() {
@@ -58,20 +60,20 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
       }
     });
     
-    // Listener para detectar cuando el campo de precio pierde el focus
+    // Listeners para detectar focus y mostrar botón de unfocus en iOS
     _priceFocusNode.addListener(() {
-      if (!_priceFocusNode.hasFocus) {
-        _onPriceChanged(widget.formGroup.control('price') as AbstractControl<double>);
-      }
+      setState(() {
+        _isPriceFocused = _priceFocusNode.hasFocus;
+      });
     });
     
-    // Listener para detectar cuando el campo de descripción pierde el focus
     _descriptionFocusNode.addListener(() {
-      if (!_descriptionFocusNode.hasFocus) {
-        _onDescriptionChanged(widget.formGroup.control('description') as AbstractControl<String>);
-      }
+      setState(() {
+        _isDescriptionFocused = _descriptionFocusNode.hasFocus;
+      });
     });
   }
+
 
   void _onPriceChanged(AbstractControl<double> control) {
     control.markAsTouched();
@@ -99,6 +101,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
 
   @override
   Widget build(BuildContext context) {
+    final isIos = Theme.of(context).platform == TargetPlatform.iOS;
     final provider = ref.watch(productSaleProvider.select((state) => (
       currency: state.currency,
       incIgv: state.incIgv,
@@ -155,16 +158,30 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                       ReactiveTextField<String>(
                         formControlName: 'description',
                         keyboardType: TextInputType.name,
+                        textInputAction: TextInputAction.next,
                         focusNode: _descriptionFocusNode,
-                        onSubmitted: _onDescriptionChanged,
+                        onSubmitted: (control) {
+                          // Cambiar focus al campo de precio al presionar Enter
+                          _priceFocusNode.requestFocus();
+                        },
                         style: const TextStyle(
                           color: Colors.black, // Texto en color negro
                         ),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           isDense: true, // Reduce altura vertical
-                          contentPadding: EdgeInsets.symmetric(
+                          contentPadding: const EdgeInsets.symmetric(
                             vertical: 0, // ↓ Espacio vertical mínimo
                           ),
+                          suffixIcon: (isIos && _isDescriptionFocused)
+                              ? GestureDetector(
+                                  onTap: () => FocusScope.of(context).unfocus(),
+                                  child: const Icon(
+                                    Icons.keyboard_hide,
+                                    size: 15,
+                                    color: Colors.grey,
+                                  ),
+                                )
+                              : null,
                         ),
                         validationMessages: {
                           ValidationMessage.minLength: (error) => 'Minimo 3 caracteres',
@@ -177,11 +194,12 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         SizedBox(
-                          width: 120,
+                          width: 160,
                           child: ReactiveTextField<double>(
                             formControlName: 'price',
                             valueAccessor: SmartPriceValueAccessor(),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            textInputAction: TextInputAction.done,
                             inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
                             focusNode: _priceFocusNode,
                             decoration: InputDecoration(
@@ -191,8 +209,21 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                               prefixText: formatExchange(
                                   moneda: provider.currency!
                                       .codigoMoneda!), // ← Aquí colocas tu prefijo
+                              suffixIcon: (isIos && _isPriceFocused)
+                                  ? GestureDetector(
+                                      onTap: () => FocusScope.of(context).unfocus(),
+                                      child: const Icon(
+                                        Icons.keyboard_hide,
+                                        size: 15,
+                                        color: Colors.grey,
+                                      ),
+                                    )
+                                  : null,
                             ),
-                            onSubmitted: _onPriceChanged,
+                            onSubmitted: (control) {
+                              // Cerrar teclado al presionar Done
+                              FocusScope.of(context).unfocus();
+                            },
                             validationMessages: {
                               ValidationMessage.min: (error) => 'Minimo 0',
                             },
@@ -230,6 +261,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                     if (value.value == null || value.value! < 1) {
                       return;
                     }
+                    _onDescriptionChanged(widget.formGroup.control('description') as AbstractControl<String>);
+                    _onPriceChanged(widget.formGroup.control('price') as AbstractControl<double>);
                     ref
                         .read(productSaleProvider.notifier)
                         .setCantidadProductSale(

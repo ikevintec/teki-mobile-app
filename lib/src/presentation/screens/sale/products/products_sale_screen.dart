@@ -29,9 +29,9 @@ class ProductsSaleScreen extends ConsumerStatefulWidget {
 
 class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
   Timer? _debounce; // Timer para debounce
+  late FocusNode _listFocusNode; // Focus node para toda la lista
 
   final ScrollController _scrollController = ScrollController();
-  bool _showScrollHint = false;
 
   void _initializeFormArray() {
     final products = ref.read(productSaleProvider).productsSales;
@@ -52,48 +52,47 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     }
   }
 
-  void _updateScrollHint() {
-    if (!_scrollController.hasClients) return;
-
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-
-    final shouldShowHint = currentScroll < maxScroll;
-
-    if (shouldShowHint != _showScrollHint) {
-      setState(() {
-        _showScrollHint = shouldShowHint;
-      });
-    }
-  }
 
   @override
   void initState() {
     super.initState();
+    _listFocusNode = FocusNode();
     _initializeFormArray();
-    _scrollController.addListener(() {
-      if (!_scrollController.hasClients) return;
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      final currentScroll = _scrollController.position.pixels;
-
-      final shouldShowHint = currentScroll < maxScroll;
-      if (shouldShowHint != _showScrollHint) {
-        setState(() {
-          _showScrollHint = shouldShowHint;
-        });
+    
+    // Listener para detectar cuando se pierde el focus de toda la lista
+    _listFocusNode.addListener(() {
+      if (!_listFocusNode.hasFocus) {
+        _syncAllProductsToProvider();
       }
     });
-
+    
     final providerProductSale = ref.read(productSaleProvider.notifier);
     Future.microtask(() {
       providerProductSale.loadInitialData(widget.id);
-      // Esperar al primer frame y luego evaluar si se necesita mostrar la flecha
-      WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollHint());
     });
+  }
+  
+  void _syncAllProductsToProvider() {
+    // Recopilar todos los datos de los formularios
+    final formArray = form.control('products') as FormArray;
+    final formsData = <Map<String, dynamic>>[];
+    
+    for (int i = 0; i < formArray.controls.length; i++) {
+      final formGroup = formArray.controls[i] as FormGroup;
+      formsData.add({
+        'price': formGroup.control('price').value ?? 0.0,
+        'description': formGroup.control('description').value ?? '',
+        'quantity': formGroup.control('quantity').value ?? 1,
+      });
+    }
+    
+    // Llamar al método global del provider
+    ref.read(productSaleProvider.notifier).syncAllProductsFromForms(formsData);
   }
 
   @override
   void dispose() {
+    _listFocusNode.dispose();
     _debounce?.cancel();
     _scrollController.dispose();
     super.dispose();
@@ -277,10 +276,12 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                 child:
                                     Text("Aun no hay productos seleccionados"),
                               )
-                            : ReactiveFormArray(
-                                formArray:
-                                    form.control('products') as FormArray,
-                                builder: (context, formArray, child) {
+                            : Focus(
+                                focusNode: _listFocusNode,
+                                child: ReactiveFormArray(
+                                  formArray:
+                                      form.control('products') as FormArray,
+                                  builder: (context, formArray, child) {
                                   final controls = formArray.controls;
                                   final visibleItems =
                                       products.length < controls.length
@@ -327,23 +328,11 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                           );
                                         },
                                       ),
-                                      if (_showScrollHint)
-                                        Positioned(
-                                          bottom: 0,
-                                          left: 0,
-                                          right: 0,
-                                          child: Center(
-                                            child: Icon(
-                                                Icons.keyboard_arrow_down,
-                                                size: 28,
-                                                color:
-                                                    ColorSchema.primaryColor),
-                                          ),
-                                        ),
                                     ],
                                   );
                                 },
                               ),
+                            ),
                       ),
                     ),
 
