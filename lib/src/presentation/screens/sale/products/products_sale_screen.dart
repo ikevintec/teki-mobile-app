@@ -357,7 +357,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                   formGroup: formGroup,
                                                 ),
                                               ),
-                                              SizedBox(height: 30),
+                                              SizedBox(height: 3),
                                             ],
                                           );
                                         },

@@ -3,10 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
-import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_product_view.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/quantity_selector.dart';
 import 'package:teki_app/src/presentation/widgets/form/smart_price_value_accessor.dart';
-import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -37,6 +35,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   late Animation<double> _shakeAnimation;
   bool _isPriceFocused = false;
   bool _isDescriptionFocused = false;
+  bool _isPriceEditMode = false;
 
   @override
   void initState() {
@@ -76,6 +75,10 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     _priceFocusNode.addListener(() {
       setState(() {
         _isPriceFocused = _priceFocusNode.hasFocus;
+        // Salir del modo edición cuando pierde el focus
+        if (!_priceFocusNode.hasFocus) {
+          _isPriceEditMode = false;
+        }
       });
       
       // Seleccionar todo el texto cuando el campo de precio recibe focus
@@ -226,40 +229,72 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                       children: [
                         SizedBox(
                           width: 160,
-                          child: ReactiveTextField<double>(
-                            formControlName: 'price',
-                            valueAccessor: SmartPriceValueAccessor(),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            textInputAction: TextInputAction.done,
-                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                            focusNode: _priceFocusNode,
-                            controller: _priceController,
-                            decoration: InputDecoration(
-                              labelText: provider.incIgv
-                                  ? 'Precio Venta'
-                                  : 'Valor unitario',
-                              prefixText: formatExchange(
-                                  moneda: provider.currency!
-                                      .codigoMoneda!), // ← Aquí colocas tu prefijo
-                              suffixIcon: (isIos && _isPriceFocused)
-                                  ? GestureDetector(
-                                      onTap: () => FocusScope.of(context).unfocus(),
-                                      child: const Icon(
-                                        Icons.keyboard_hide,
-                                        size: 15,
-                                        color: Colors.grey,
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            onSubmitted: (control) {
-                              // Cerrar teclado al presionar Done
-                              FocusScope.of(context).unfocus();
-                            },
-                            validationMessages: {
-                              ValidationMessage.min: (error) => 'Minimo 0',
-                            },
-                          ),
+                          child: _isPriceEditMode 
+                            ? ReactiveTextField<double>(
+                                formControlName: 'price',
+                                valueAccessor: SmartPriceValueAccessor(),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                textInputAction: TextInputAction.done,
+                                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
+                                focusNode: _priceFocusNode,
+                                controller: _priceController,
+                                decoration: InputDecoration(
+                                  labelText: provider.incIgv
+                                      ? 'Precio Venta'
+                                      : 'Valor unitario',
+                                  prefixText: formatExchange(
+                                      moneda: provider.currency!
+                                          .codigoMoneda!), // ← Aquí colocas tu prefijo
+                                  suffixIcon: (isIos && _isPriceFocused)
+                                      ? GestureDetector(
+                                          onTap: () => FocusScope.of(context).unfocus(),
+                                          child: const Icon(
+                                            Icons.keyboard_hide,
+                                            size: 15,
+                                            color: Colors.grey,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                onSubmitted: (control) {
+                                  // Cerrar teclado al presionar Done
+                                  FocusScope.of(context).unfocus();
+                                },
+                                validationMessages: {
+                                  ValidationMessage.min: (error) => 'Mínimo 1',
+                                  ValidationMessage.required: (error) => 'Precio requerido',
+                                },
+                              )
+                            : GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _isPriceEditMode = true;
+                                  });
+                                  // Dar focus al campo después de un frame
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    _priceFocusNode.requestFocus();
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+                                  child: ReactiveFormConsumer(
+                                    builder: (context, form, child) {
+                                      final priceControl = form.control('price') as FormControl<double>;
+                                      final priceValue = priceControl.value ?? 0.0;
+                                      final hasError = priceControl.hasErrors && priceControl.touched;
+                                      
+                                      return Text(
+                                        '${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${priceValue.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: hasError ? Colors.red : Colors.black,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
                         ),
                       ],
                     ),
