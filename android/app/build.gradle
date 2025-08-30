@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.inventual.inventual"
-    compileSdkVersion 35
+    compileSdk 36
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -46,9 +46,9 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion flutter.minSdkVersion
-        targetSdkVersion 35
-        versionCode 1
-        versionName "1.0.2"
+        targetSdkVersion 36
+        versionCode 6
+        versionName "1.0.6"
     }
 
     buildTypes {
