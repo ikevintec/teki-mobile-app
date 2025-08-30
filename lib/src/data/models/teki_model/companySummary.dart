@@ -27,14 +27,14 @@ class Companysummary {
 
   factory Companysummary.fromJson(Map<String, dynamic> json) => Companysummary(
         id: json['id'],
-        uuid: json['uuid'],
-        razonSocial: json['razonSocial'],
-        nombreComercial: json['nombreComercial'],
-        representante: json['representante'],
-        telefono: json['telefono'],
-        email: json['email'],
-        ruc: json['ruc'],
-        direccion: json['direccion'],
+        uuid: json['uuid'].toString(),
+        razonSocial: json['razonSocial'].toString(),
+        nombreComercial: json['nombreComercial'].toString(),
+        representante: json['representante'].toString(),
+        telefono: json['telefono'].toString(),
+        email: json['email'].toString(),
+        ruc: json['ruc'].toString(),
+        direccion: json['direccion'].toString(),
         esProduccion: json['esProduccion'],
         integracionApi: json['integracionApi'],
       );

@@ -31,6 +31,12 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
           .toList();
 
       return numeros;
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      errorNotification("Error al obtener series por oficina: $e");
+      return Future.error(e.toString());
     } catch (e) {
       errorNotification("Error al obtener series por oficina: $e");
       return Future.error(e.toString());
@@ -63,6 +69,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
 
       return numero;
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final errorMessage =
           e.response?.data['message'] ?? e.message ?? 'Error de conexión';
       errorNotification(errorMessage);
@@ -89,6 +98,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       final data = response.data as List;
       return data.map((json) => Ticket.fromJson(json)).toList();
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data?['message'] ?? 'Error desconocido del servidor';
       return Future.error(message);
@@ -157,6 +169,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
           .whereType<Ticket>()
           .toList();
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data['message'] ?? e.message ?? 'Error de conexión';
       print("Error al obtener comprobantes 1: $message");
@@ -193,6 +208,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
           .whereType<TotalesPorMoneda>()
           .toList();
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data['message'] ?? e.message ?? 'Error de conexión';
       errorNotification("Error al obtener totales por moneda 1: $message");
@@ -213,6 +231,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       );
       return Ticket.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data?['message'] ?? 'Error desconocido del servidor';
       return Future.error(message);
@@ -232,6 +253,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       );
       return Ticket.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
       return Future.error(message);
@@ -250,6 +274,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       );
       return Ticket.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
       return Future.error(message);

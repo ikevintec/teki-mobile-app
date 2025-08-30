@@ -17,6 +17,9 @@ class RemoteMonthlySalesDatasource extends MonthlySalesRepositoryDatasource {
           .map((json) => MonthlySales.fromJson(json))
           .toList();
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message = e.response?.data['message'] ?? 'Error de conexión';
       return Future.error(message);
     } catch (e) {

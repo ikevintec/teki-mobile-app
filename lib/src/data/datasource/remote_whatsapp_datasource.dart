@@ -92,6 +92,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
         success: true,
         message: 'Mensaje enviado correctamente',
       );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al enviar mensaje: $e',
+      );
     } catch (e) {
       return WhatsappResponse(
         success: false,
@@ -113,6 +121,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
         success: true,
         message: 'Documento enviado correctamente'
       );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al enviar documento: $e',
+      );
     } catch (e) {
       return WhatsappResponse(
         success: false,
@@ -133,6 +149,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
       return WhatsappResponse(
         success: true,
         message: 'Media enviado correctamente',
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al enviar media: $e',
       );
     } catch (e) {
       return WhatsappResponse(
@@ -156,6 +180,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
         success: data['sended'] ?? false,
         message: data['sended'] ? 'Mensaje enviado correctamente' : 'Error al enviar mensaje'
       );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al enviar mensaje por socket: $e',
+      );
     } catch (e) {
       return WhatsappResponse(
         success: false,
@@ -177,6 +209,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
         success: true,
         message: 'Sesión cerrada correctamente'      
         );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al cerrar sesión: $e',
+      );
     } catch (e) {
       return WhatsappResponse(
         success: false,
@@ -194,6 +234,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
         success: true,
         message: 'Instancia obtenida correctamente',
       );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al obtener instancia: $e',
+      );
     } catch (e) {
       return WhatsappResponse(
         success: false,
@@ -210,6 +258,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
       return WhatsappResponse(
         success: true,
         message: 'Estado obtenido correctamente',
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al obtener estado: $e',
       );
     } catch (e) {
       return WhatsappResponse(
@@ -231,6 +287,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
         success: true,
         message: 'Instancia conectada correctamente',
       );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al conectar instancia: $e',
+      );
     } catch (e) {
       return WhatsappResponse(
         success: false,
@@ -250,6 +314,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
       return WhatsappResponse(
         success: true,
         message: 'Instancia desconectada correctamente',
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al desconectar instancia: $e',
       );
     } catch (e) {
       return WhatsappResponse(
@@ -271,6 +343,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
         success: true,
         message: 'Instancia creada correctamente',
       );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al crear instancia: $e',
+      );
     } catch (e) {
       return WhatsappResponse(
         success: false,
@@ -287,6 +367,14 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
       return WhatsappResponse(
         success: true,
         message: 'Instancia eliminada correctamente',
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al eliminar instancia: $e',
       );
     } catch (e) {
       return WhatsappResponse(

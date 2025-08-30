@@ -15,6 +15,9 @@ class RemoteCustomers extends CustomersDatasource {
           await dio.get('/customers/$id'); // ✅ Corregido: era /products/$id
       return Customer.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final errorMessage =
           e.response?.data['message'] ?? e.message ?? 'Error de conexión';
       return Future.error(errorMessage);
@@ -48,6 +51,18 @@ class RemoteCustomers extends CustomersDatasource {
       }
 
       return CustomerResponse.fromJson(data);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      
+      String responseMessage = 'Error de conexión';
+      if (e.response != null) {
+        responseMessage = e.response?.data['message'] ?? 'Error de conexión';
+      } else {
+        responseMessage = e.message ?? 'Error de conexión';
+      }
+      return Future.error(responseMessage);
     } catch (e) {
       errorNotification(e.toString());
       return CustomerResponse(
@@ -70,6 +85,11 @@ class RemoteCustomers extends CustomersDatasource {
     try {
       final response = await dio.post('/customers', data: customer.toJson());
       return Customer.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return Future.error(e.toString());
     } catch (e) {
       return Future.error(e.toString());
     }
@@ -80,6 +100,11 @@ class RemoteCustomers extends CustomersDatasource {
     try {
       final response = await dio.put('/customers', data: customer.toJson());
       return Customer.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return Future.error(e.toString());
     } catch (e) {
       return Future.error(e.toString());
     }
@@ -105,6 +130,12 @@ class RemoteCustomers extends CustomersDatasource {
       // Si devuelve un objeto con 'content'
       final customerResponse = CustomerResponse.fromJson(data);
       return customerResponse.content;
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      errorNotification(e.toString());
+      return [];
     } catch (e) {
       errorNotification(e.toString());
       return [];

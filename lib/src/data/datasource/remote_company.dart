@@ -11,6 +11,9 @@ class RemoteCompany extends CompanyDatasource {
       final response = await dio.get('/root/companies/$id');
       return Company.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       String errorMessage = 'Error de conexión';
       if (e.response != null) {
         errorMessage = e.response?.data['message'] ?? 'Error de conexión';

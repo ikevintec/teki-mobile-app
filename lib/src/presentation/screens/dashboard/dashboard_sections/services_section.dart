@@ -51,9 +51,9 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
   List<Map<String, dynamic>> getVentaServicesList(WidgetRef ref) {
     return [
       {
-        'title': 'Productos',
-        'icon': 'assets/icons/icon_image/products.png',
-        'action': () => Get.toNamed(AppRoutes.products),
+        'title': 'Nueva Venta',
+        'icon': 'assets/icons/icon_image/pos.png',
+        'action': () => openNewSale(ref),
       },
       {
         'title': 'Comprobantes',
@@ -61,9 +61,9 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
         'action': () => Get.toNamed(AppRoutes.comprobantesVer),
       },
       {
-        'title': 'Nueva Venta',
-        'icon': 'assets/icons/icon_image/pos.png',
-        'action': () => openNewSale(ref),
+        'title': 'Productos',
+        'icon': 'assets/icons/icon_image/products.png',
+        'action': () => Get.toNamed(AppRoutes.products),
       },
       {
         'title': 'Clientes',

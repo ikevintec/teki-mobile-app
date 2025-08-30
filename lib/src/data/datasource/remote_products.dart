@@ -14,6 +14,9 @@ class RemoteProducts extends ProductsDatasource {
       final response = await dio.get('/products/$id');
       return Product.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       String errorMessage = 'Error de conexión';
       if (e.response != null) {
         errorMessage = e.response?.data['message'] ?? 'Error de conexión';
@@ -32,6 +35,9 @@ class RemoteProducts extends ProductsDatasource {
       final response = await dio.get('/products', queryParameters: params);
       return ProductResponse.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       String errorMessage = 'Error de conexión';
 
       if (e.response != null) {
@@ -96,6 +102,11 @@ class RemoteProducts extends ProductsDatasource {
           .map((currency) => Currency.fromJson(currency))
           .toList();
       return currencies;
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return Future.error(e.toString());
     } catch (e) {
       return Future.error(e.toString());
     }
@@ -106,6 +117,11 @@ class RemoteProducts extends ProductsDatasource {
     try {
       final response = await dio.post('/products', data: product.toJson());
       return Product.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return Future.error(e.toString());
     } catch (e) {
       return Future.error(e.toString());
     }
@@ -116,6 +132,11 @@ class RemoteProducts extends ProductsDatasource {
     try {
       final response = await dio.put('/products', data: product.toJson());
       return Product.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return Future.error(e.toString());
     } catch (e) {
       return Future.error(e.toString());
     }

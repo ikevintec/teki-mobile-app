@@ -14,6 +14,9 @@ class RemoteCurrencies implements CurrencyDatasource {
           .toList();
       return currencies;
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       if (e.response != null) {
         return Future.error(e.response?.data['message']);
       } else {

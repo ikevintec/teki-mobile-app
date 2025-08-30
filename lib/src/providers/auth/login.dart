@@ -15,17 +15,15 @@ import 'package:teki_app/src/domain/repositories/config_repository.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repositoy.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/services/key_values_storage_impl.dart';
+import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 // Creación del Provider que gestionará los cambios de estado
-final authStateProvider =
-    StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
+final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
   final AuthRepository authRepository = AuthRepositoryImpl();
-  final SaleStationRepository saleStationRepository =
-      SaleStationRepositoryImpl();
+  final SaleStationRepository saleStationRepository = SaleStationRepositoryImpl();
   final ConfigRepository configRepository = ConfigRepositoryImpl();
-  final KeyValueStorageServiceImpl keyvalueStorage =
-      KeyValueStorageServiceImpl();
+  final KeyValueStorageServiceImpl keyvalueStorage = KeyValueStorageServiceImpl();
 
   return AuthStateNotifier(
     ref: ref,
@@ -68,10 +66,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       await keyvalueStorage.setKeyValue('access_token', response.accessToken);
       await keyvalueStorage.setKeyValue('login', jsonEncode(response.toJson()));
       await setConfigProvider(ref, response, saleStationRepository);
-      ConfigCompany configCompany =
-          await setConfigCompanies(ref, configRepository);
-      await keyvalueStorage.setKeyValue(
-          'configCompany', jsonEncode(configCompany.toJson()));
+
+      ConfigCompany configCompany = await setConfigCompanies(ref, configRepository);
+      await keyvalueStorage.setKeyValue('configCompany', jsonEncode(configCompany.toJson()));
+      
+      // Resetear el flag de logout para permitir nuevas sesiones
+      ApiClient.resetLogoutFlag();
+      
       successNotification('Sesion iniciada');
       Get.offAllNamed('/dashboard');
     } on DioException catch (e) {
@@ -220,7 +221,7 @@ Future<void> setConfigProvider(
     return Future.error(
         'Error al obtener los puntos de venta: ${e.response?.data['message'] ?? 'Error de conexión'}');
   } catch (e) {
-    return Future.error('Error al obtener Los Sale Station: ${e.toString()}');
+    return Future.error('Error al obtener los puntos de venta: ${e.toString()}');
   }
   if (saleStations.isEmpty) {
     return Future.error('No se encontraron puntos de venta para la empresa.');
@@ -228,13 +229,12 @@ Future<void> setConfigProvider(
   ref.read(sesionProvider.notifier).setFullConfig(login, saleStations);
 }
 
-Future<ConfigCompany> setConfigCompanies(
-    Ref ref, ConfigRepository configRepository) async {
+Future<ConfigCompany> setConfigCompanies(Ref ref, ConfigRepository configRepository) async {
   ConfigCompany configCompany = ConfigCompany();
   try {
     configCompany = await configRepository.getConfigValue();
   } catch (e) {
-    return Future.error('Error al obtener la configuracion ${e.toString()}');
+    return Future.error('Error al obtener la configuración de la empresa: ${e.toString()}');
   }
 
   ref.read(sesionProvider.notifier).setConfigCompany(configCompany);

@@ -16,6 +16,11 @@ class RemoteSalestation extends SaleStationDataSource {
       }
       return saleStations;
     } on DioException catch (e) {
+      // Si es un error de sesión expirada, no procesarlo aquí
+      if (e.message == 'SESSION_EXPIRED') {
+        return Future.error('Sesión expirada');
+      }
+      
       String responseMessage = 'Error de conexión';
       if (e.response != null) {
         responseMessage = e.response?.data['message'] ?? 'Error de conexión';

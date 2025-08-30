@@ -77,7 +77,7 @@ class ProductScreen extends HookConsumerWidget {
             ),
       bottomNavigationBar: CurvedNavigationBar(
         index: selectedTabIndex.value,
-        height: 60.0,
+        height: 75.0,
         backgroundColor: Colors.transparent, // Fondo detrás de la barra
         color: ColorSchema.primaryColor, // Color de la barra (fondo)
         buttonBackgroundColor:

@@ -245,8 +245,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                         .currencies
                                         .map((c) => c.codigoMoneda!)
                                         .toList(),
-                                    selectionItem:
-                                        provider.currency!.codigoMoneda,
+                                    selectionItem: provider.currency?.codigoMoneda,
                                     onChanged: (value) {
                                       notifier.setCurrency(value!);
                                     },

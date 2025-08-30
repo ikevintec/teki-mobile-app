@@ -21,6 +21,9 @@ class RemoteMovementMonth extends MovementMonthRepositoryDatasource {
       }
       return movements;
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       String responseMessage = 'Error de conexión';
       if (e.response != null) {
         responseMessage = e.response?.data['message'] ?? 'Error de conexión';

@@ -13,6 +13,9 @@ class RemoteConfigDatasource extends ConfigDatasource {
       ConfigCompany config = ConfigCompany.fromJson(reponse.data);
       return config;
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       if (e.response != null) {
         errorNotification(e.response?.data['message']);
       } else {

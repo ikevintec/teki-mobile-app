@@ -20,7 +20,7 @@ class SaleStation {
 
   factory SaleStation.fromJson(Map<String, dynamic> json) => SaleStation(
     id: json['id'] != null ? int.tryParse(json['id'].toString()) : null,
-    nombre: json['nombre'],
+    nombre: json['nombre']?.toString(),
     puntoVenta: json['puntoVenta'] != null ? Office.fromJson(json['puntoVenta']) : null,
     impresoraComprobante: json['impresoraComprobante'] != null ? Printer.fromJson(json['impresoraComprobante']) : null,
     impresoraCuentaRestaurante: json['impresoraCuentaRestaurante'] != null ? Printer.fromJson(json['impresoraCuentaRestaurante']) : null,

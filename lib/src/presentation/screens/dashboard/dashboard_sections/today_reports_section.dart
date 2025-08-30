@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:teki_app/src/data/repositories/dashboard_repository_impl.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
-import 'package:teki_app/src/utils/notifications.dart';
 
 class TodayReportsSection extends StatefulWidget {
   final int idPuntoVenta;
@@ -44,8 +43,8 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
         totalClientes = clienteResult.total;
         loadingClientes = false;
       });
-    }).catchError((_) {
-      errorNotification("Error cargando clientes");
+    }).catchError((error) {
+      printError(info: "❌ Error al cargar clientes: ${error.toString()}");
       setState(() => loadingClientes = false);
     });
 
@@ -70,7 +69,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
         loadingMontos = false;
       });
     }).catchError((_) {
-      errorNotification("❌ Error al mostrar las Ventas del Día");
+      printError(info: "❌ Error al mostrar las Ventas del Día: $_");
       setState(() => loadingMontos = false);
     });
   }

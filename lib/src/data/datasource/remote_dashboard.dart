@@ -20,6 +20,9 @@ class RemoteDashboardDatasource implements DashboardDatasource {
 
       return TotalCounter.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data['message'] ?? e.message ?? 'Error de conexión';
       return Future.error('❌ Ventas: $message');
@@ -39,6 +42,9 @@ class RemoteDashboardDatasource implements DashboardDatasource {
 
       return TotalCounter.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data['message'] ?? e.message ?? 'Error de conexión';
       return Future.error('❌ Clientes: $message');
@@ -127,6 +133,9 @@ class RemoteDashboardDatasource implements DashboardDatasource {
 
       return result;
     } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
       final message =
           e.response?.data['message'] ?? e.message ?? 'Error al obtener montos';
       return Future.error('❌ Montos por moneda: $message');
