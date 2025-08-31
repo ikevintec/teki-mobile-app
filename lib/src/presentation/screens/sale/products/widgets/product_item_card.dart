@@ -90,11 +90,11 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
       }
     });
     
-    _descriptionFocusNode.addListener(() {
+        _descriptionFocusNode.addListener(() {
       setState(() {
         _isDescriptionFocused = _descriptionFocusNode.hasFocus;
       });
-      
+
       // Seleccionar todo el texto cuando el campo de descripción recibe focus
       if (_descriptionFocusNode.hasFocus) {
         _descriptionController.selection = TextSelection(
@@ -103,6 +103,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
         );
       }
     });
+
+
   }
 
 
@@ -122,6 +124,14 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
         .setDescriptionProductSale(widget.index, value ?? '');
   }
 
+  void _onQuantityChanged(AbstractControl<int> control) {
+    control.markAsTouched();
+    final value = control.value ?? 1;
+    ref
+        .read(productSaleProvider.notifier)
+        .setCantidadProductSale(widget.index, value.toDouble());
+  }
+
   @override
   void dispose() {
     _priceFocusNode.dispose();
@@ -135,10 +145,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   @override
   Widget build(BuildContext context) {
     final isIos = Theme.of(context).platform == TargetPlatform.iOS;
-    final provider = ref.watch(productSaleProvider.select((state) => (
-      currency: state.currency,
-      incIgv: state.incIgv,
-    )));
+    final provider = ref.watch(productSaleProvider);
+    
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -227,6 +235,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Control de precio
                         SizedBox(
                           width: 160,
                           child: _isPriceEditMode 
@@ -296,25 +305,19 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                 ),
                               ),
                         ),
+                        // Control de cantidad
+                        QuantityControl(
+                          formGroup: widget.formGroup,
+                          onQuantityChanged: () {
+                            final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+                            _onQuantityChanged(quantityControl);
+                          },
+                        ),
                       ],
                     ),
                   ],
                 )),
-                const SizedBox(width: 10),
-                ReactiveQuantitySelector(
-                  formControlName: 'quantity',
-                  onChanged: (value) {
-                    if (value.value == null || value.value! < 1) {
-                      return;
-                    }
-                    _onDescriptionChanged(widget.formGroup.control('description') as AbstractControl<String>);
-                    _onPriceChanged(widget.formGroup.control('price') as AbstractControl<double>);
-                    ref
-                        .read(productSaleProvider.notifier)
-                        .setCantidadProductSale(
-                            widget.index, (value.value ?? 1).toDouble());
-                  },
-                ),
+
               ],
             ),
           ),
@@ -354,5 +357,212 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
         ),
       ],
     );
+  }
+}
+
+// Widget personalizado para el control de cantidad
+class QuantityControl extends StatefulWidget {
+  final FormGroup formGroup;
+  final VoidCallback onQuantityChanged;
+
+  const QuantityControl({
+    Key? key,
+    required this.formGroup,
+    required this.onQuantityChanged,
+  }) : super(key: key);
+
+  @override
+  State<QuantityControl> createState() => _QuantityControlState();
+}
+
+class _QuantityControlState extends State<QuantityControl> {
+  bool _isEditMode = false;
+  late TextEditingController _controller;
+  final GlobalKey _containerKey = GlobalKey();
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+    _controller = TextEditingController(text: (quantityControl.value ?? 1).toString());
+    _focusNode = FocusNode();
+    
+    // NO agregar ningún listener de focus - permitir que el TextField 
+    // pierda y gane focus libremente sin afectar el estado del control
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _updateQuantity(int newValue) {
+    if (newValue > 0) {
+      final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+      quantityControl.value = newValue;
+      _controller.text = newValue.toString();
+      widget.onQuantityChanged();
+    }
+  }
+
+  void _increment() {
+    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+    final currentValue = quantityControl.value ?? 1;
+    _updateQuantity(currentValue + 1);
+  }
+
+  void _decrement() {
+    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+    final currentValue = quantityControl.value ?? 1;
+    if (currentValue > 1) {
+      _updateQuantity(currentValue - 1);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _isEditMode
+        ? Container(
+            key: _containerKey,
+            width: 140, // Aumentamos un poco el ancho para el ícono OK
+            height: 32,
+            child: Material(
+              color: Colors.transparent,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Botón menos
+                  Material(
+                    color: ColorSchema.primaryColor,
+                    borderRadius: BorderRadius.circular(4),
+                    child: InkWell(
+                      onTap: _decrement,
+                      borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        child: const Icon(
+                          Icons.remove,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  // Campo de entrada
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: const BorderSide(color: Colors.grey, width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(color: ColorSchema.primaryColor, width: 1),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      ),
+                      onChanged: (value) {
+                        final intValue = int.tryParse(value);
+                        if (intValue != null && intValue > 0) {
+                          _updateQuantity(intValue);
+                        }
+                      },
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  // Botón más
+                  Material(
+                    color: ColorSchema.primaryColor,
+                    borderRadius: BorderRadius.circular(4),
+                    child: InkWell(
+                      onTap: _increment,
+                      borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  // Botón OK para confirmar y cerrar
+                  Material(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(4),
+                    child: InkWell(
+                      onTap: () {
+                        // Solo cerrar el modo edición - el focus no importa
+                        setState(() {
+                          _isEditMode = false;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : GestureDetector(
+            onTap: () {
+              setState(() {
+                _isEditMode = true;
+              });
+              // No dar focus automáticamente - que el usuario decida si quiere usar el teclado
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ReactiveFormConsumer(
+                builder: (context, form, child) {
+                  final quantityControl = form.control('quantity') as FormControl<int>;
+                  final quantityValue = quantityControl.value ?? 1;
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.shopping_basket, color: ColorSchema.primaryColor, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        quantityValue.toString(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: ColorSchema.primaryColor,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          );
   }
 }
