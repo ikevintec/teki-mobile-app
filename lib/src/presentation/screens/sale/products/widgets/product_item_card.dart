@@ -376,9 +376,7 @@ class QuantityControl extends StatefulWidget {
 }
 
 class _QuantityControlState extends State<QuantityControl> {
-  bool _isEditMode = false;
   late TextEditingController _controller;
-  final GlobalKey _containerKey = GlobalKey();
   late FocusNode _focusNode;
 
   @override
@@ -387,9 +385,6 @@ class _QuantityControlState extends State<QuantityControl> {
     final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
     _controller = TextEditingController(text: (quantityControl.value ?? 1).toString());
     _focusNode = FocusNode();
-    
-    // NO agregar ningún listener de focus - permitir que el TextField 
-    // pierda y gane focus libremente sin afectar el estado del control
   }
 
   @override
@@ -409,160 +404,106 @@ class _QuantityControlState extends State<QuantityControl> {
   }
 
   void _increment() {
-    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
-    final currentValue = quantityControl.value ?? 1;
-    _updateQuantity(currentValue + 1);
+    setState(() {
+      final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+      final currentValue = quantityControl.value ?? 1;
+      _updateQuantity(currentValue + 1);
+    });
   }
 
   void _decrement() {
-    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
-    final currentValue = quantityControl.value ?? 1;
-    if (currentValue > 1) {
-      _updateQuantity(currentValue - 1);
-    }
+    setState(() {
+      final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+      final currentValue = quantityControl.value ?? 1;
+      if (currentValue > 1) {
+        _updateQuantity(currentValue - 1);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return _isEditMode
-        ? Container(
-            key: _containerKey,
-            width: 140, // Aumentamos un poco el ancho para el ícono OK
-            height: 32,
-            child: Material(
-              color: Colors.transparent,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Botón menos
-                  Material(
-                    color: ColorSchema.primaryColor,
-                    borderRadius: BorderRadius.circular(4),
-                    child: InkWell(
-                      onTap: _decrement,
-                      borderRadius: BorderRadius.circular(4),
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        child: const Icon(
-                          Icons.remove,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
+    return Container(
+      width: 120,
+      height: 32,
+      child: Material(
+        color: Colors.transparent,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Botón menos
+            Material(
+              color: ColorSchema.primaryColor,
+              borderRadius: BorderRadius.circular(4),
+              child: InkWell(
+                onTap: _decrement,
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  child: const Icon(
+                    Icons.remove,
+                    color: Colors.white,
+                    size: 16,
                   ),
-                  const SizedBox(width: 4),
-                  // Campo de entrada
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(4),
-                          borderSide: const BorderSide(color: Colors.grey, width: 1),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(4),
-                          borderSide: BorderSide(color: ColorSchema.primaryColor, width: 1),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      ),
-                      onChanged: (value) {
-                        final intValue = int.tryParse(value);
-                        if (intValue != null && intValue > 0) {
-                          _updateQuantity(intValue);
-                        }
-                      },
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  // Botón más
-                  Material(
-                    color: ColorSchema.primaryColor,
-                    borderRadius: BorderRadius.circular(4),
-                    child: InkWell(
-                      onTap: _increment,
-                      borderRadius: BorderRadius.circular(4),
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  // Botón OK para confirmar y cerrar
-                  Material(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(4),
-                    child: InkWell(
-                      onTap: () {
-                        // Solo cerrar el modo edición - el focus no importa
-                        setState(() {
-                          _isEditMode = false;
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(4),
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        child: const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          )
-        : GestureDetector(
-            onTap: () {
-              setState(() {
-                _isEditMode = true;
-              });
-              // No dar focus automáticamente - que el usuario decida si quiere usar el teclado
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ReactiveFormConsumer(
-                builder: (context, form, child) {
-                  final quantityControl = form.control('quantity') as FormControl<int>;
-                  final quantityValue = quantityControl.value ?? 1;
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.shopping_basket, color: ColorSchema.primaryColor, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        quantityValue.toString(),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: ColorSchema.primaryColor,
-                        ),
-                      ),
-                    ],
-                  );
+            const SizedBox(width: 4),
+            // Campo de entrada
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide(color: ColorSchema.primaryColor, width: 1),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    final intValue = int.tryParse(value);
+                    if (intValue != null && intValue > 0) {
+                      _updateQuantity(intValue);
+                    } else if (value.isEmpty || intValue == 0) {
+                      _updateQuantity(1);
+                    }
+                  });
                 },
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
             ),
-          );
+            const SizedBox(width: 4),
+            // Botón más
+            Material(
+              color: ColorSchema.primaryColor,
+              borderRadius: BorderRadius.circular(4),
+              child: InkWell(
+                onTap: _increment,
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
