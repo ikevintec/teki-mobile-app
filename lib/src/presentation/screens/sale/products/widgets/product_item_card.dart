@@ -146,12 +146,12 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   Widget build(BuildContext context) {
     final isIos = Theme.of(context).platform == TargetPlatform.iOS;
     final provider = ref.watch(productSaleProvider);
-    
-    return Stack(
+
+    final card = Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
-          // margin: const EdgeInsets.only(bottom: 15, top: 10, right: 5),
+          margin: const EdgeInsets.only(top: 8, bottom: 8),
           padding: const EdgeInsets.only(
             left: 30,
             right: 35,
@@ -238,7 +238,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                         // Control de precio
                         SizedBox(
                           width: 160,
-                          child: _isPriceEditMode 
+                          child: _isPriceEditMode
                             ? ReactiveTextField<double>(
                                 formControlName: 'price',
                                 valueAccessor: SmartPriceValueAccessor(),
@@ -291,7 +291,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                       final priceControl = form.control('price') as FormControl<double>;
                                       final priceValue = priceControl.value ?? 0.0;
                                       final hasError = priceControl.hasErrors && priceControl.touched;
-                                      
+
                                       return Text(
                                         '${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${priceValue.toStringAsFixed(2)}',
                                         style: TextStyle(
@@ -324,7 +324,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
         ),
         Positioned(
           right: -4,
-          top: 50,
+          top: 0,
+          bottom: 0,
           child: AnimatedBuilder(
             animation: _shakeAnimation,
             builder: (context, child) {
@@ -354,6 +355,20 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
               );
             },
           ),
+        ),
+      ],
+    );
+
+    // Divider casi imperceptible entre items
+    return Column(
+      children: [
+        card,
+        Divider(
+          height: 2,
+          thickness: 0.5,
+          color: Colors.grey[200],
+          indent: 20,
+          endIndent: 20,
         ),
       ],
     );
