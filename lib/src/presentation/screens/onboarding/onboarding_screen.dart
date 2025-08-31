@@ -18,7 +18,7 @@ class OnboardingScreen extends StatelessWidget {
         top: false,
         child: OnBoardingSlider(
           pageBackgroundColor: Colors.white,
-          finishButtonText: "Iniciar sesion",
+          finishButtonText: "Iniciar Sesión",
           onFinish: () {
             Get.toNamed(AppRoutes.login);
           },
@@ -123,7 +123,7 @@ class OnboardingScreen extends StatelessWidget {
                     height: screenHeight * 0.5,
                   ),
                   Text(
-                    'Facil de usar',
+                    'Fácil de usar',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.raleway(
                         textStyle: TextStyle(

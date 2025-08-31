@@ -141,7 +141,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
       ),
       body: isLoading
           ? ScreenLoader(
-              message: 'Cargando Informacion',
+              message: 'Cargando Información',
             )
           : ReactiveForm(
               formGroup: form,

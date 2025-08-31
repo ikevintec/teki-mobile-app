@@ -10,7 +10,7 @@ class HorizontalCustomerReportTableSection extends StatelessWidget {
     if (customerReportModel.isEmpty) {
       return const Center(
         child: Text(
-          'No data available',
+          'No hay datos disponibles',
           style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black54),
         ),
@@ -44,7 +44,7 @@ class HorizontalCustomerReportTableSection extends StatelessWidget {
           columns: [
             DataColumn(
               label: Text(
-                'Date',
+                'Fecha',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),
@@ -72,7 +72,7 @@ class HorizontalCustomerReportTableSection extends StatelessWidget {
             ),
             DataColumn(
               label: Text(
-                'Charge',
+                'Monto',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),

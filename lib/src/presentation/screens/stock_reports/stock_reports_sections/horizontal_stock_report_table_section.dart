@@ -88,7 +88,7 @@ class HorizontalStockReportTableSection extends StatelessWidget {
             ),
             DataColumn(
               label: Text(
-                'Received',
+                'Entradas',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),
@@ -104,7 +104,7 @@ class HorizontalStockReportTableSection extends StatelessWidget {
             ),
             DataColumn(
               label: Text(
-                'Sales',
+                'Ventas',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),
@@ -112,7 +112,7 @@ class HorizontalStockReportTableSection extends StatelessWidget {
             ),
             DataColumn(
               label: Text(
-                'Closing Stock',
+                'Stock Final',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),

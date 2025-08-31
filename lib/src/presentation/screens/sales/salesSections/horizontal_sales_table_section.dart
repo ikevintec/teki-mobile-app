@@ -123,28 +123,28 @@ class _HorizontalSalesTableSectionState
             ),
             DataColumn(
               label: Text(
-                'Grand Total',
+                'Total General',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
             DataColumn(
               label: Text(
-                'Paid',
+                'Pagado',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
             DataColumn(
               label: Text(
-                'Due',
+                'Pendiente',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
             DataColumn(
               label: Text(
-                'Action',
+                'Acción',
                 style: GoogleFonts.raleway(
                     textStyle: const TextStyle(fontWeight: FontWeight.bold)),
               ),

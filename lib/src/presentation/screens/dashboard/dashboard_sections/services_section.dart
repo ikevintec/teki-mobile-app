@@ -71,7 +71,7 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
         'action': () => Get.toNamed(AppRoutes.customer),
       },
       {
-        'title': 'Stats',
+        'title': 'Estadísticas',
         'icon': 'assets/icons/icon_image/trading.png',
         'action': () => Get.toNamed(AppRoutes.analytics),
       },
@@ -102,7 +102,7 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
         'action': () => Get.toNamed(AppRoutes.analytics),
       },
       {
-        'title': 'Config',
+        'title': 'Configuración',
         'icon': 'assets/icons/icon_image/user_management.png',
         'action': () => Get.toNamed(AppRoutes.settings),
       },

@@ -125,7 +125,7 @@ class _SaleGenerateInvoiceSectionState
                     ),
                     DataColumn(
                       label: Text(
-                        'Unit Price',
+                        'Precio Unitario',
                         style: GoogleFonts.raleway(
                             textStyle:
                                 const TextStyle(fontWeight: FontWeight.bold)),
@@ -149,7 +149,7 @@ class _SaleGenerateInvoiceSectionState
                     ),
                     DataColumn(
                       label: Text(
-                        'Discount',
+                        'Descuento',
                         style: GoogleFonts.raleway(
                             textStyle:
                                 const TextStyle(fontWeight: FontWeight.bold)),
@@ -157,7 +157,7 @@ class _SaleGenerateInvoiceSectionState
                     ),
                     DataColumn(
                       label: Text(
-                        'Sub Total',
+                        'Subtotal',
                         style: GoogleFonts.raleway(
                             textStyle:
                                 const TextStyle(fontWeight: FontWeight.bold)),
@@ -222,7 +222,7 @@ class _SaleGenerateInvoiceSectionState
                       ],
                     ),
                     DataRow(cells: [
-                      DataCell(Text('Total=',
+                      DataCell(Text('Total:',
                           style: GoogleFonts.raleway(
                               textStyle: const TextStyle(
                                   fontWeight: FontWeight.bold)))),
@@ -277,7 +277,7 @@ class _SaleGenerateInvoiceSectionState
                       const DataCell(Text('+3 (2%)')),
                     ]),
                     DataRow(cells: [
-                      DataCell(Text('Grand Total =',
+                      DataCell(Text('Total General:',
                           style: GoogleFonts.raleway(
                               textStyle: const TextStyle(
                                   fontWeight: FontWeight.bold)))),
