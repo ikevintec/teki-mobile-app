@@ -89,7 +89,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
       }
     });
     
-        _descriptionFocusNode.addListener(() {
+    _descriptionFocusNode.addListener(() {
       setState(() {
         _isDescriptionFocused = _descriptionFocusNode.hasFocus;
       });
@@ -110,17 +110,13 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   void _onPriceChanged(AbstractControl<double> control) {
     control.markAsTouched();
     final value = control.value;
-    ref
-        .read(productSaleProvider.notifier)
-        .setPrecioProductSale(widget.index, value ?? 0.0);
+    ref.read(productSaleProvider.notifier).setPrecioProductSale(widget.index, value ?? 0.0);
   }
 
   void _onDescriptionChanged(AbstractControl<String> control) {
     control.markAsTouched();
     final value = control.value;
-    ref
-        .read(productSaleProvider.notifier)
-        .setDescriptionProductSale(widget.index, value ?? '');
+    ref.read(productSaleProvider.notifier).setDescriptionProductSale(widget.index, value ?? '');
   }
 
   void _onQuantityChanged(AbstractControl<int> control) {
@@ -309,6 +305,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                           formGroup: widget.formGroup,
                           onQuantityChanged: () {
                             final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+                            _onDescriptionChanged(widget.formGroup.control('description') as AbstractControl<String>);
+                            _onPriceChanged(widget.formGroup.control('price') as AbstractControl<double>);
                             _onQuantityChanged(quantityControl);
                           },
                         ),
@@ -399,6 +397,14 @@ class _QuantityControlState extends State<QuantityControl> {
     final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
     _controller = TextEditingController(text: (quantityControl.value ?? 1).toString());
     _focusNode = FocusNode();
+
+    // Cambiar el listener para que solo se ejecute cuando PIERDE el focus
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus) {
+        // Solo validar cuando pierde el focus
+        _validateAndUpdateFromText();
+      }
+    });
   }
 
   @override
@@ -406,6 +412,16 @@ class _QuantityControlState extends State<QuantityControl> {
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _validateAndUpdateFromText() {
+    final text = _controller.text;
+    final intValue = int.tryParse(text);
+    if (intValue != null && intValue > 0) {
+      _updateQuantity(intValue);
+    } else {
+      _updateQuantity(1);
+    }
   }
 
   void _updateQuantity(int newValue) {
@@ -418,26 +434,22 @@ class _QuantityControlState extends State<QuantityControl> {
   }
 
   void _increment() {
-    setState(() {
-      final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
-      final currentValue = quantityControl.value ?? 1;
-      _updateQuantity(currentValue + 1);
-    });
+    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+    final currentValue = quantityControl.value ?? 1;
+    _updateQuantity(currentValue + 1);
   }
 
   void _decrement() {
-    setState(() {
-      final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
-      final currentValue = quantityControl.value ?? 1;
-      if (currentValue > 1) {
-        _updateQuantity(currentValue - 1);
-      }
-    });
+    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+    final currentValue = quantityControl.value ?? 1;
+    if (currentValue > 1) {
+      _updateQuantity(currentValue - 1);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 120,
       height: 32,
       child: Material(
@@ -452,7 +464,7 @@ class _QuantityControlState extends State<QuantityControl> {
               child: InkWell(
                 onTap: _decrement,
                 borderRadius: BorderRadius.circular(4),
-                child: Container(
+                child: SizedBox(
                   width: 24,
                   height: 24,
                   child: const Icon(
@@ -475,23 +487,17 @@ class _QuantityControlState extends State<QuantityControl> {
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(4),
-                    borderSide: BorderSide(color: ColorSchema.primaryColor, width: 1),
+                    borderSide: BorderSide(color: ColorSchema.primaryColor),
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    final intValue = int.tryParse(value);
-                    if (intValue != null && intValue > 0) {
-                      _updateQuantity(intValue);
-                    } else if (value.isEmpty || intValue == 0) {
-                      _updateQuantity(1);
-                    }
-                  });
+                onSubmitted: (value) {
+                  // Validar cuando el usuario presiona Enter
+                  _validateAndUpdateFromText();
                 },
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
@@ -504,7 +510,7 @@ class _QuantityControlState extends State<QuantityControl> {
               child: InkWell(
                 onTap: _increment,
                 borderRadius: BorderRadius.circular(4),
-                child: Container(
+                child: SizedBox(
                   width: 24,
                   height: 24,
                   child: const Icon(

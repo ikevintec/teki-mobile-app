@@ -7,6 +7,7 @@ import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_floating_action_button.dart';
 import 'package:teki_app/src/presentation/screens/customer/widgets/customer_filters_modal.dart';
 import 'package:teki_app/src/presentation/screens/customer/customer_sections/customer_details_screen.dart';
+import 'package:teki_app/src/presentation/screens/customer/customer_sections/create_customer_section.dart';
 import 'package:teki_app/src/providers/customers/customers.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
@@ -32,12 +33,12 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
       ref.read(customersProvider.notifier).clearState();
       ref.read(customersProvider.notifier).loadFirstPage();
     });
-    
+
     _scrollController.addListener(() {
       final state = ref.read(customersProvider);
       final reachedEnd = _scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 300;
-      
+
       if (reachedEnd && state.paginacion && !state.isLoading!) {
         ref.read(customersProvider.notifier).loadMorePages();
       }
@@ -77,8 +78,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   bool _hasActiveFilters() {
     final state = ref.read(customersProvider);
     return (state.filtro?.isNotEmpty == true) ||
-           (state.telefono?.isNotEmpty == true) ||
-           (state.email?.isNotEmpty == true);
+        (state.telefono?.isNotEmpty == true) ||
+        (state.email?.isNotEmpty == true);
   }
 
   @override
@@ -159,7 +160,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
         ),
       ),
       floatingActionButton: const CustomFloatingActionButton(
-          buttonName: "Create Customer", routeName: AppRoutes.addCustomer),
+          buttonName: "Crear Cliente", routeName: AppRoutes.addCustomer),
     );
   }
 
@@ -277,7 +278,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                 if (customer.numeroDocumento?.isNotEmpty == true) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     decoration: BoxDecoration(
                       color: ColorSchema.primaryColor,
                       borderRadius: BorderRadius.circular(6),
@@ -298,102 +300,121 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if ((customer.email?.isNotEmpty == true) || 
-                    (customer.telefono?.isNotEmpty == true) || 
-                    (customer.direccionCompleta?.isNotEmpty == true)) 
+                if ((customer.email?.isNotEmpty == true) ||
+                    (customer.telefono?.isNotEmpty == true) ||
+                    (customer.direccionCompleta?.isNotEmpty == true))
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                        if (customer.email?.isNotEmpty == true) ...[
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.email_outlined,
-                                size: 14,
-                                color: const Color(0xFF9CA3AF),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  customer.email!,
+                          if (customer.email?.isNotEmpty == true) ...[
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.email_outlined,
+                                  size: 14,
+                                  color: const Color(0xFF9CA3AF),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    customer.email!,
+                                    style: GoogleFonts.nunito(
+                                      color: const Color(0xFF6B7280),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (customer.telefono?.isNotEmpty == true ||
+                                customer.direccionCompleta?.isNotEmpty == true)
+                              const SizedBox(height: 6),
+                          ],
+                          if (customer.telefono?.isNotEmpty == true) ...[
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.phone_outlined,
+                                  size: 14,
+                                  color: const Color(0xFF9CA3AF),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  customer.telefono!,
                                   style: GoogleFonts.nunito(
                                     color: const Color(0xFF6B7280),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w400,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
-                          ),
-                          if (customer.telefono?.isNotEmpty == true || customer.direccionCompleta?.isNotEmpty == true) 
-                            const SizedBox(height: 6),
-                        ],
-                        if (customer.telefono?.isNotEmpty == true) ...[
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.phone_outlined,
-                                size: 14,
-                                color: const Color(0xFF9CA3AF),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                customer.telefono!,
-                                style: GoogleFonts.nunito(
-                                  color: const Color(0xFF6B7280),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
+                              ],
+                            ),
+                            if (customer.direccionCompleta?.isNotEmpty == true)
+                              const SizedBox(height: 6),
+                          ],
+                          if (customer.direccionCompleta?.isNotEmpty ==
+                              true) ...[
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  size: 14,
+                                  color: const Color(0xFF9CA3AF),
                                 ),
-                              ),
-                            ],
-                          ),
-                          if (customer.direccionCompleta?.isNotEmpty == true) 
-                            const SizedBox(height: 6),
-                        ],
-                        if (customer.direccionCompleta?.isNotEmpty == true) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 14,
-                                color: const Color(0xFF9CA3AF),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  customer.direccionCompleta!,
-                                  style: GoogleFonts.nunito(
-                                    color: const Color(0xFF6B7280),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    customer.direccionCompleta!,
+                                    style: GoogleFonts.nunito(
+                                      color: const Color(0xFF6B7280),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  ) else const Spacer(),
+                  )
+                else
+                  const Spacer(),
                 const SizedBox(width: 12),
-                IconButton(
-                  onPressed: () {
-                    Get.to(() => CustomerDetailsScreen(customer: customer));
-                  },
-                  icon: Icon(
-                    Icons.visibility_outlined,
-                    size: 18,
-                    color: ColorSchema.primaryColor,
-                  ),
-                  padding: const EdgeInsets.all(8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Get.to(() => CustomerDetailsScreen(customer: customer));
+                      },
+                      icon: Icon(
+                        Icons.visibility_outlined,
+                        size: 18,
+                        color: ColorSchema.primaryColor,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Get.to(
+                            () => AddCustomerSection(customerId: customer.id));
+                      },
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: Colors.orange.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -25,6 +25,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   final _direccionController = TextEditingController();
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
+  TextEditingController? _autocompleteController;
   int? id;
 
   final GlobalKey _fieldKey = GlobalKey();
@@ -82,6 +83,30 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     _emailController.dispose();
     _telefonoController.dispose();
     super.dispose();
+  }
+
+  void updateCustomerDisplay(Customer customer) {
+    ref.read(customerSaleProvider.notifier).selectCustomer(customer);
+    
+    final customerName = customer.razonSocial ?? '';
+    
+    _nombreController.text = customerName;
+    if (_autocompleteController != null) {
+      _autocompleteController!.text = customerName;
+    }
+    
+    _documentoController.text = customer.numeroDocumento ?? '';
+    _direccionController.text = customer.direccionCompleta ?? '';
+    _emailController.text = customer.email ?? '';
+    _telefonoController.text = customer.telefono ?? '';
+
+    final tipoDocCodigo = customer.tipoDocumento?.toString();
+    if (tipoDocCodigo != null &&
+        tipoDocumentoMap.containsKey(tipoDocCodigo)) {
+      setState(() {
+        _selectedTipoDocumentoValue = tipoDocCodigo;
+      });
+    }
   }
 
   @override
@@ -144,8 +169,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                     option.razonSocial ?? 'Sin nombre',
                                 fieldViewBuilder: (context, controller,
                                     focusNode, onEditingComplete) {
-                                  if (controller.text.isEmpty &&
-                                      _nombreController.text.isNotEmpty) {
+                                  _autocompleteController = controller;
+                                  
+                                  if (controller.text.isEmpty && _nombreController.text.isNotEmpty) {
                                     controller.text = _nombreController.text;
                                   }
 
@@ -244,27 +270,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 },
                                 onSelected: (Customer selection) {
                                   FocusScope.of(context).unfocus();
-                                  clienteNotifier.selectCustomer(selection);
-                                  _documentoController.text =
-                                      selection.numeroDocumento?.toString() ??
-                                          '';
-                                  _direccionController.text =
-                                      selection.direccionCompleta ?? '';
-                                  _emailController.text = selection.email ?? '';
-                                  _telefonoController.text =
-                                      selection.telefono ?? '';
-                                  id = selection.id;
-
-                                  final tipoDocCodigo =
-                                      selection.tipoDocumento?.toString();
-                                  if (tipoDocCodigo != null &&
-                                      tipoDocumentoMap
-                                          .containsKey(tipoDocCodigo)) {
-                                    setState(() {
-                                      _selectedTipoDocumentoValue =
-                                          tipoDocCodigo;
-                                    });
-                                  }
+                                  updateCustomerDisplay(selection);
                                 },
                               ),
                               const SizedBox(height: 20),
@@ -291,8 +297,39 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 hint: "Ingrese el número de documento",
                                 inputType: TextInputType.number,
                                 //icon: const Icon(Icons.edit_document),
-                                onChanged:
-                                    (_) {}, // Puedes enlazar con tu lógica si es necesario
+                                onChanged: (value) async {
+                                  value = value.trim();
+                                  if (value.isEmpty) {
+                                    return;
+                                  }
+                                    // Validar y buscar cliente según el tipo de documento y su longitud
+                                    final tipoDoc = _selectedTipoDocumentoValue;
+                                    if (tipoDoc == '6' && value.length == 11) {
+                                    // RUC
+                                    final customers = await ref.read(customerSaleProvider.notifier).getCustomerss(value);
+                                    if (customers.isNotEmpty) {
+                                      updateCustomerDisplay(customers.first);
+                                    }
+                                    } else if (tipoDoc == '1' && value.length == 8) {
+                                    // DNI
+                                    final customers = await ref.read(customerSaleProvider.notifier).getCustomerss(value);
+                                    if (customers.isNotEmpty) {
+                                      updateCustomerDisplay(customers.first);
+                                    }
+                                    } else if (tipoDoc == '4' && value.length == 9) {
+                                    // CARNET DE EXT.
+                                    final customers = await ref.read(customerSaleProvider.notifier).getCustomerss(value);
+                                    if (customers.isNotEmpty) {
+                                      updateCustomerDisplay(customers.first);
+                                    }
+                                    } else if (tipoDoc == '7' && value.length >= 8 && value.length <= 12) {
+                                    // PASAPORTE
+                                    final customers = await ref.read(customerSaleProvider.notifier).getCustomerss(value);
+                                    if (customers.isNotEmpty) {
+                                      updateCustomerDisplay(customers.first);
+                                    }
+                                    }
+                                }, // Puedes enlazar con tu lógica si es necesario
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
                                     return 'Este campo es obligatorio';

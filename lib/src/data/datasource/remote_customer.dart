@@ -12,7 +12,7 @@ class RemoteCustomers extends CustomersDatasource {
   Future<Customer> getCustomerById(int id) async {
     try {
       final response =
-          await dio.get('/customers/$id'); // ✅ Corregido: era /products/$id
+          await dio.get('/customers/$id');
       return Customer.fromJson(response.data);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
