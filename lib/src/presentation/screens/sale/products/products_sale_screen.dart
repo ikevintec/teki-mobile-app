@@ -60,7 +60,6 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     super.initState();
     _listFocusNode = FocusNode();
     _initializeFormArray();
-    
     // Listener para detectar cuando se pierde el focus de toda la lista
     _listFocusNode.addListener(() {
       if (!_listFocusNode.hasFocus) {
@@ -71,6 +70,10 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final providerProductSale = ref.read(productSaleProvider.notifier);
     Future.microtask(() {
       providerProductSale.loadInitialData(widget.id);
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusManager.instance.primaryFocus?.unfocus();
     });
   }
   
@@ -321,7 +324,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                     type: DismissibleActionType.edit,
                                                     label: 'Config',
                                                     icon: Icons.settings,
-                                                    backgroundColor: ColorSchema.primaryColor.withOpacity(0.8),
+                                                    backgroundColor: ColorSchema.primaryColor.withValues(alpha: 0.8),
                                                     onTap: () {
                                                       // Aquí puedes agregar la lógica de configuración del producto
                                                       // Por ahora, solo muestra un mensaje
@@ -355,9 +358,10 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                       products[index],
                                                   index: index,
                                                   formGroup: formGroup,
+                                                  onQuantityChanged: _syncAllProductsToProvider,
                                                 ),
                                               ),
-                                              SizedBox(height: 3),
+                                              SizedBox(height:10),
                                             ],
                                           );
                                         },
@@ -379,7 +383,11 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                       ),
                       child: Column(
                         children: [
-                          SummaryBarSales(),
+                          Builder(
+                            builder: (context) => SummaryBarSales(
+                              isProcessingTotal: FocusScope.of(context).hasFocus,
+                            ),
+                          ),
                           Row(
                             children: [
                               Expanded(

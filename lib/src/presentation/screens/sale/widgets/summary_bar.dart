@@ -7,8 +7,9 @@ import 'package:teki_app/src/utils/formats.dart';
 
 class SummaryBarSales extends ConsumerStatefulWidget {
   final bool showOnlyTotal;
+  final bool isProcessingTotal;
 
-  const SummaryBarSales({super.key, this.showOnlyTotal = false});
+  const SummaryBarSales({super.key, this.showOnlyTotal = false, this.isProcessingTotal = false});
 
   @override
   ConsumerState<SummaryBarSales> createState() => _SummaryBarSalesState();
@@ -22,7 +23,15 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
     final providerTicket = ref.watch(ticketProvider);
     final provider = ref.watch(productSaleProvider);
 
-    return Container(
+    return widget.isProcessingTotal ? Center(child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: const Icon(Icons.keyboard_arrow_down_outlined, size: 20, color: ColorSchema.primaryColor),
+      ),
+    )) : Container(
       padding: const EdgeInsets.only(top: 5, bottom: 15, left: 16),
       decoration: BoxDecoration(
         color: Colors.white,

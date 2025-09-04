@@ -210,6 +210,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       
       final precio = formData['price'] as double? ?? existingTicketDetail.precioVentaUnitario ?? 0.0;
       final description = formData['description'] as String? ?? existingTicketDetail.descripcion ?? '';
+      final quantity = double.tryParse(formData['quantity'].toString()) ?? existingTicketDetail.cantidad ?? 1.0;
       
       final updatedTicketDetail = state.incIgv
           ? existingTicketDetail.copyWith(
@@ -217,12 +218,14 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
               montoOriginal: precio,
               monedaOriginal: state.currency!.codigoMoneda,
               descripcion: description,
+              cantidad: quantity,
             )
           : existingTicketDetail.copyWith(
               valorUnitario: precio,
               montoOriginal: precio,
               monedaOriginal: state.currency!.codigoMoneda,
               descripcion: description,
+              cantidad: quantity,
             );
       
       updatedProducts.add(updatedTicketDetail);
