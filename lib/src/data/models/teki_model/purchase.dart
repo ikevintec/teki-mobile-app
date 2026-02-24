@@ -5,6 +5,7 @@ import 'package:teki_app/src/data/models/teki_model/purchaseDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
 import 'package:teki_app/src/data/models/teki_model/supplier.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class Purchase {
   final int? id;
@@ -59,7 +60,7 @@ class Purchase {
     id: json['id'],
     tipoComprobante: json['tipoComprobante'],
     comprobante: json['comprobante'],
-    fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : null,
+    fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
     numeroDocumentoProveedor: json['numeroDocumentoProveedor'],
     nombreProveedor: json['nombreProveedor'],
     proveedor: json['proveedor'] != null ? Supplier.fromJson(json['proveedor']) : null,

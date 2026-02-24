@@ -31,12 +31,20 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartobservatory._tcp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera for image capture</string>
+	<string>Teki necesita acceso a la cámara para escanear códigos de barras y tomar fotos de productos.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Teki usa la red local para comunicación con herramientas de desarrollo.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>We need access to your microphone for recording video with sound</string>
+	<string>Teki necesita acceso al micrófono para grabar videos de productos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Teki necesita permiso para guardar imágenes en tu galería.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library for image selection</string>
+	<string>Teki necesita acceso a tu galería para seleccionar fotos de productos.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

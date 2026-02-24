@@ -42,9 +42,28 @@ class _ProfileMainScreenState extends ConsumerState<ProfileMainScreen> {
                       child: CircleAvatar(
                         radius: 70,
                         backgroundColor: Colors.transparent,
-                        backgroundImage: user?.avatarUrl?.isNotEmpty == true
-                            ? NetworkImage(user!.avatarUrl!)
-                            : const AssetImage("assets/images/avatar/avatar.png") as ImageProvider,
+                        child: ClipOval(
+                          child: user?.avatarUrl?.isNotEmpty == true
+                              ? Image.network(
+                                  user!.avatarUrl!,
+                                  width: 140,
+                                  height: 140,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Image.asset(
+                                    "assets/images/avatar/avatar.png",
+                                    width: 140,
+                                    height: 140,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Image.asset(
+                                  "assets/images/avatar/avatar.png",
+                                  width: 140,
+                                  height: 140,
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),

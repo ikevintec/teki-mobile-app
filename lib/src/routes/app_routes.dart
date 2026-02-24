@@ -54,6 +54,9 @@ import 'package:teki_app/src/presentation/screens/unit/unit_management_main_scre
 import 'package:teki_app/src/presentation/screens/user_reports/user_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/user_role/user_role_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/ver_comprbantes.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory.dart';
+import 'package:teki_app/src/presentation/screens/inventory/inventory_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/inventory_adjustment/inventory_adjustment_screen.dart';
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_sections/add_warehouse_section.dart';
 import 'package:teki_app/src/presentation/screens/warehouse_reports/warehouse_reports_main_screen.dart';
@@ -121,6 +124,9 @@ class AppRoutes {
   static const String updateProduct = "/product/edit";
   //Ventas
   static const String productsSales = "/products_sale";
+  // Inventario
+  static const String inventory = "/inventory";
+  static const String inventoryAdjustmentCreate = "/inventory-adjustment/create";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -204,6 +210,16 @@ class AppRoutes {
       },
     ),
     GetPage(name: productsSales, page: () => const ProductsSaleScreen()),
+    // Inventario
+    GetPage(name: inventory, page: () => const InventoryMainScreen()),
+    GetPage(
+      name: inventoryAdjustmentCreate,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        final inventory = args?['inventory'] as Inventory?;
+        return InventoryAdjustmentScreen(preSelectedInventory: inventory);
+      },
+    ),
   ];
 
   /// Retorna todas las rutas con el middleware aplicado

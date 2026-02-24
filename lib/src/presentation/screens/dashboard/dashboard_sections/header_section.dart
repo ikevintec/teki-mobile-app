@@ -51,28 +51,38 @@ class DashboardHeaderSection extends ConsumerWidget {
                   onTap: () {
                     openDrawer();
                   },
-                  child: avatarUrl == null
-                      ? Image.asset(
-                          "assets/images/avatar/user_profile.png",
-                          width: 60,
-                        )
-                      : ClipOval(
-                          child: Image.network(
+                  child: ClipOval(
+                    child: avatarUrl != null && avatarUrl.isNotEmpty
+                        ? Image.network(
                             avatarUrl,
                             width: 60,
                             height: 60,
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
-                              return const Center(
-                                child: CircularProgressIndicator(),
+                              return Image.asset(
+                                "assets/images/avatar/user_profile.png",
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
                               );
                             },
                             errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.error);
+                              return Image.asset(
+                                "assets/images/avatar/user_profile.png",
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                              );
                             },
+                          )
+                        : Image.asset(
+                            "assets/images/avatar/user_profile.png",
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
                           ),
-                        ),
+                  ),
                 ),
                 const SizedBox(
                   width: 8,

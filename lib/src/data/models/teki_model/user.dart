@@ -12,6 +12,7 @@ class User {
   final String? avatarUrl;
   final String? rutaInicial;
   final String? rucAsignado;
+  final String? nombreCompleto;
 
   User({
     this.id,
@@ -24,11 +25,13 @@ class User {
     this.avatarUrl,
     this.rutaInicial,
     this.rucAsignado,
+    this.nombreCompleto,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
         id: json['id'],
         username: json['username'],
+        nombreCompleto: json['nombreCompleto'],
         name: json['name'],
         cargo: json['cargo'],
         empresa: json['empresa'] != null
@@ -52,6 +55,7 @@ class User {
   Map<String, dynamic> toJson() => {
         'id': id,
         'username': username,
+        'nombreCompleto': nombreCompleto,
         'name': name,
         'cargo': cargo,
         'empresa': empresa?.toJson(),

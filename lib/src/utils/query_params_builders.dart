@@ -152,6 +152,45 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   return params;
 }
 
+Map<String, dynamic> buildInventoryQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {};
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('pageNumber', state.pageNumber);
+  safeAdd('paginacion', true);
+  safeAdd('perPage', state.perPage);
+  safeAdd('sortField', state.sortField);
+  safeAdd('sortOrder', state.sortOrder);
+  safeAdd('idPuntoVenta', state.idPuntoVenta);
+  try {
+    if (state.filterGlobal != null &&
+        (state.filterGlobal as String).isNotEmpty) {
+      safeAdd('clave', state.filterGlobal);
+    }
+  } catch (_) {}
+
+  return params;
+}
+
+Map<String, dynamic> buildInventoryLogsQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {};
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('pageNumber', state.pageNumber);
+  safeAdd('paginacion', true);
+  safeAdd('perPage', state.perPage);
+  safeAdd('sortField', 'fecha');
+  safeAdd('sortOrder', -1); // más reciente primero
+
+  return params;
+}
+
 Map<String, dynamic> buildCustomersQueryParams(dynamic state) {
   final Map<String, dynamic> params = {};
 

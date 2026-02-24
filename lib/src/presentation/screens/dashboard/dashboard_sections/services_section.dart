@@ -71,6 +71,11 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
         'action': () => Get.toNamed(AppRoutes.customer),
       },
       {
+        'title': 'Inventario',
+        'icon': 'assets/icons/icon_image/warehouse.png',
+        'action': () => Get.toNamed(AppRoutes.inventory),
+      },
+      {
         'title': 'Estadísticas',
         'icon': 'assets/icons/icon_image/trading.png',
         'action': () => Get.toNamed(AppRoutes.analytics),

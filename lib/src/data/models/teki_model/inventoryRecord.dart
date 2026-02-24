@@ -1,5 +1,6 @@
 
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class InventoryRecord {
   final int? id;
@@ -32,7 +33,7 @@ class InventoryRecord {
         tipo: json['tipo'],
         concepto: json['concepto'],
         detalle: json['detalle'],
-        fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : null,
+        fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
         responsable: json['responsable'] != null
             ? User.fromJson(json['responsable'])
             : null,

@@ -1,6 +1,8 @@
 import 'package:teki_app/src/data/models/teki_model/attachedCompany.dart';
 import 'package:teki_app/src/data/models/teki_model/company.dart';
+import 'package:teki_app/src/data/models/teki_model/inventoryRecord.dart';
 import 'package:teki_app/src/data/models/teki_model/purchaseDetail.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class BatchProduct {
   final int? id;
@@ -18,6 +20,7 @@ class BatchProduct {
   final PurchaseDetail? compraLote;
   final Company? empresa;
   final AttachedCompany? empresaAdjunta;
+  final List<InventoryRecord>? registros;
 
   BatchProduct({
     this.id,
@@ -35,6 +38,7 @@ class BatchProduct {
     this.compraLote,
     this.empresa,
     this.empresaAdjunta,
+    this.registros,
   });
 
   factory BatchProduct.fromJson(Map<String, dynamic> json) => BatchProduct(
@@ -45,14 +49,18 @@ class BatchProduct {
     serie: json['serie'],
     talla: json['talla'],
     color: json['color'],
-    fechaFabricacion: json['fechaFabricacion'] != null ? DateTime.parse(json['fechaFabricacion']) : null,
-    fechaVencimiento: json['fechaVencimiento'] != null ? DateTime.parse(json['fechaVencimiento']) : null,
+    fechaFabricacion: json['fechaFabricacion'] != null ? parseDateTimeFlexible(json['fechaFabricacion']) : null,
+    fechaVencimiento: json['fechaVencimiento'] != null ? parseDateTimeFlexible(json['fechaVencimiento']) : null,
     precioCompra: (json['precioCompra'] as num?)?.toDouble(),
     modificado: json['modificado'],
     eliminado: json['eliminado'],
     compraLote: json['compraLote'] != null ? PurchaseDetail.fromJson(json['compraLote']) : null,
     empresa: json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
     empresaAdjunta: json['empresaAdjunta'] != null ? AttachedCompany.fromJson(json['empresaAdjunta']) : null,
+    registros: json['registros'] != null
+        ? List<InventoryRecord>.from(
+            json['registros'].map((x) => InventoryRecord.fromJson(x)))
+        : [],
   );
 
   Map<String, dynamic> toJson() => {
@@ -71,5 +79,6 @@ class BatchProduct {
     'compraLote': compraLote?.toJson(),
     'empresa': empresa?.toJson(),
     'empresaAdjunta': empresaAdjunta?.toJson(),
+    'registros': registros != null ? registros!.map((x) => x.toJson()).toList() : [],
   };
 }
