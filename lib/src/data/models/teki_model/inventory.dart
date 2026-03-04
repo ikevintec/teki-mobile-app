@@ -4,6 +4,7 @@ import 'package:teki_app/src/data/models/teki_model/inventoryRecord.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class Inventory {
   final int? id;
@@ -46,7 +47,7 @@ class Inventory {
           ? User.fromJson(json['usuarioActualizacion'])
           : null,
       fechaActualizacion: json['fechaActualizacion'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['fechaActualizacion'])
+          ? parseDateTimeFlexible(json['fechaActualizacion'])
 
           : null,
       registros: json['registros'] != null
