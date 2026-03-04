@@ -1,5 +1,6 @@
 import 'package:teki_app/src/data/models/teki_model/company.dart';
 import 'package:teki_app/src/data/models/teki_model/lounge.dart';
+import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -18,6 +19,7 @@ class Table {
   final List<Table>? mesasUnidas;
   final String? mesasUnidasHistorico;
   final bool? estado;
+  final OrderRestaurant? pedidoActual;
   final DateTime? createdOn;
   final int? createdBy;
   final int? updatedBy;
@@ -40,6 +42,7 @@ class Table {
     this.mesasUnidas,
     this.mesasUnidasHistorico,
     this.estado,
+    this.pedidoActual,
     this.createdOn,
     this.createdBy,
     this.updatedBy,
@@ -65,6 +68,7 @@ class Table {
             : null,
         mesasUnidasHistorico: json['mesasUnidasHistorico'],
         estado: json['estado'],
+        pedidoActual: json['pedidoActual'] != null ? OrderRestaurant.fromJson(json['pedidoActual']) : null,
         createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
@@ -88,6 +92,7 @@ class Table {
         'mesasUnidas': mesasUnidas?.map((x) => x.toJson()).toList(),
         'mesasUnidasHistorico': mesasUnidasHistorico,
         'estado': estado,
+        'pedidoActual': pedidoActual?.toJson(),
         'createdOn': createdOn?.toIso8601String(),
         'createdBy': createdBy,
         'updatedBy': updatedBy,

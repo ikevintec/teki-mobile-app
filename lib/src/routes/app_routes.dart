@@ -54,9 +54,16 @@ import 'package:teki_app/src/presentation/screens/unit/unit_management_main_scre
 import 'package:teki_app/src/presentation/screens/user_reports/user_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/user_role/user_role_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/ver_comprbantes.dart';
+import 'package:teki_app/src/presentation/screens/orders_restaurant/orders_restaurant_main_screen.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
+import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/inventory/inventory_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/inventory_adjustment/inventory_adjustment_screen.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/cobrador/cobrador_screen.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/comanda/comanda_screen.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/dividir/dividir_screen.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/restaurant_mesas_screen.dart';
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_sections/add_warehouse_section.dart';
 import 'package:teki_app/src/presentation/screens/warehouse_reports/warehouse_reports_main_screen.dart';
@@ -127,6 +134,12 @@ class AppRoutes {
   // Inventario
   static const String inventory = "/inventory";
   static const String inventoryAdjustmentCreate = "/inventory-adjustment/create";
+  // Restaurante
+  static const String restaurantMesas = "/restaurant/mesas";
+  static const String restaurantComanda = "/restaurant/comanda";
+  static const String restaurantDividir = "/restaurant/dividir";
+  static const String restaurantCobrador = "/restaurant/cobrador";
+  static const String ordersRestaurant = "/restaurant/orders";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -219,6 +232,37 @@ class AppRoutes {
         final inventory = args?['inventory'] as Inventory?;
         return InventoryAdjustmentScreen(preSelectedInventory: inventory);
       },
+    ),
+    // Restaurante
+    GetPage(name: restaurantMesas, page: () => const RestaurantMesasScreen()),
+    GetPage(
+      name: restaurantComanda,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        final table = args?['table'] as Table;
+        final existingOrderId = args?['existingOrderId'] as int?;
+        return ComandaScreen(table: table, existingOrderId: existingOrderId);
+      },
+    ),
+    GetPage(
+      name: restaurantDividir,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        final order = args?['order'] as OrderRestaurant;
+        return DividirScreen(order: order);
+      },
+    ),
+    GetPage(
+      name: restaurantCobrador,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        final pvId = args?['pvId'] as int? ?? 0;
+        return CobradorScreen(pvId: pvId);
+      },
+    ),
+    GetPage(
+      name: ordersRestaurant,
+      page: () => const OrdersRestaurantMainScreen(),
     ),
   ];
 

@@ -128,12 +128,12 @@ class OrderRestaurant {
 
   factory OrderRestaurant.fromJson(Map<String, dynamic> json) => OrderRestaurant(
     id: json['id'],
-    fecha: json['fecha'] != null ? parseDateTimeFlexible(DateTime.parse(json['fecha'])) : null,
-    fechaCancelacion: json['fechaCancelacion'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaCancelacion'])) : null,
-    fechaRechazo: json['fechaRechazo'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaRechazo'])) : null,
-    fechaAceptacion: json['fechaAceptacion'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaAceptacion'])) : null,
-    fechaEnvio: json['fechaEnvio'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaEnvio'])) : null,
-    fechaEntrega: json['fechaEntrega'] != null ? parseDateTimeFlexible(DateTime.parse(json['fechaEntrega'])) : null,
+    fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
+    fechaCancelacion: json['fechaCancelacion'] != null ? parseDateTimeFlexible(json['fechaCancelacion']) : null,
+    fechaRechazo: json['fechaRechazo'] != null ? parseDateTimeFlexible(json['fechaRechazo']) : null,
+    fechaAceptacion: json['fechaAceptacion'] != null ? parseDateTimeFlexible(json['fechaAceptacion']) : null,
+    fechaEnvio: json['fechaEnvio'] != null ? parseDateTimeFlexible(json['fechaEnvio']) : null,
+    fechaEntrega: json['fechaEntrega'] != null ? parseDateTimeFlexible(json['fechaEntrega']) : null,
     motivoRechazo: json['motivoRechazo'],
     tipo: json['tipo'],
     estado: json['estado'],

@@ -19,6 +19,7 @@ import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class ProductsSaleScreen extends ConsumerStatefulWidget {
@@ -136,10 +137,13 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
       });
     });
     return Scaffold(
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(ticketP.ticket.pedidoRestaurante != null ? 72 : 60),
         child: CustomAppBar(
           navigateName: "Escoge los productos",
+          subtitle: ticketP.ticket.pedidoRestaurante != null
+              ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
+              : null,
         ),
       ),
       body: isLoading
@@ -313,7 +317,8 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                         showCustomModal(
                                                           context: context,
                                                           child: ModalProductView(
-                                                            product: products[index].producto!
+                                                            product: products[index].producto!,
+                                                            index: index,
                                                           ),
                                                           tittle: "Ver Producto",
                                                           allowButtons: false
@@ -336,21 +341,21 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                       );
                                                     },
                                                   ),
-                                                  DismissibleActionData(
-                                                    type: DismissibleActionType.edit,
-                                                    label: 'Eliminar',
-                                                    icon: Icons.delete,
-                                                    backgroundColor: Colors.redAccent,
-                                                    onTap: () {
-                                                      // Agregar delay para permitir que la animación se complete
-                                                      Future.delayed(const Duration(milliseconds: 150), () {
-                                                        ref
-                                                            .read(productSaleProvider
-                                                                .notifier)
-                                                            .removeProductSale(index);
-                                                      });
-                                                    },
-                                                  ),
+                                                  if (products[index].comandaDetalle == null)
+                                                    DismissibleActionData(
+                                                      type: DismissibleActionType.edit,
+                                                      label: 'Eliminar',
+                                                      icon: Icons.delete,
+                                                      backgroundColor: Colors.redAccent,
+                                                      onTap: () {
+                                                        Future.delayed(const Duration(milliseconds: 150), () {
+                                                          ref
+                                                              .read(productSaleProvider
+                                                                  .notifier)
+                                                              .removeProductSale(index);
+                                                        });
+                                                      },
+                                                    ),
                                                 ],
                                                 child: ProductItemCard(
                                                   key: UniqueKey(),

@@ -16,6 +16,7 @@ import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class SaleInfoScreen extends ConsumerStatefulWidget {
@@ -59,10 +60,12 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
         _dateController2.text = provider.ticket.fechaVencimientoDate.toString().split(" ")[0];
       }
       
-      // Cargar tipo de operación desde el provider
-      if (provider.ticket.codigoTipoOperacion != null) {
-        tipoOperacionSelected = provider.ticket.codigoTipoOperacion;
-      }
+      // Cargar tipo de operación: del provider o '0101' por defecto
+      final tipoOp = (provider.ticket.codigoTipoOperacion?.isNotEmpty ?? false)
+          ? provider.ticket.codigoTipoOperacion!
+          : (comprobante == 'NV' ? '' : '0101');
+      tipoOperacionSelected = tipoOp;
+      notifier.setTipoOperacion(tipoOp);
       
       // Cargar número de orden desde el provider
       if (provider.ticket.ordenCompra != null) {
@@ -176,10 +179,13 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     final saleProvider = ref.watch(ticketSaleProvider);
     final ticketP = ref.watch(ticketProvider);
     return Scaffold(
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(ticketP.ticket.pedidoRestaurante != null ? 72 : 60),
         child: CustomAppBar(
           navigateName: "Comprobante",
+          subtitle: ticketP.ticket.pedidoRestaurante != null
+              ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
+              : null,
         ),
       ),
       body: Container(

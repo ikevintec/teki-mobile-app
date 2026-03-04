@@ -12,7 +12,7 @@ import 'package:teki_app/src/domain/repositories/image_repository.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/products/product.dart';
-import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/providers/products/profucts.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 final productFormProvider =
@@ -434,9 +434,10 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
       await loadImagen();
       Product product = formTomodel();
       await productsRepository.createProduct(product);
-      successNotification('Producto creado correctamente');
       ref.read(productProvider.notifier).setLoading(false);
-      Get.toNamed(AppRoutes.products);
+      Get.back();
+      ref.read(productsProvider.notifier).resetProducts();
+      successNotification('Producto creado correctamente');
     } catch (e) {
       errorNotification(e.toString());
       ref.read(productProvider.notifier).setLoading(false);
@@ -449,9 +450,10 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
       await loadImagen();
       Product product = formTomodel();
       await productsRepository.updateProduct(product);
-      successNotification('Producto actualizado correctamente');
       ref.read(productProvider.notifier).setLoading(false);
-      Get.toNamed(AppRoutes.products);
+      Get.back();
+      ref.read(productsProvider.notifier).resetProducts();
+      successNotification('Producto actualizado correctamente');
     } catch (e) {
       errorNotification(e.toString());
       ref.read(productProvider.notifier).setLoading(false);

@@ -19,11 +19,17 @@ double getPriceProduct(Product product, Office puntoVenta, Map<String, dynamic>?
       if (ops.containsKey('qty')) {
         final wholesalePrice = _wholesale(listPrices, ops['qty']);
         if (wholesalePrice != null) {
+          double price = wholesalePrice.precio ?? 0;
           if (!product.igv!) {
-            return (wholesalePrice.precio ?? 0) * (1 + igv);
-          } else {
-            return wholesalePrice.precio ?? 0;
+            price *= (1 + igv);
           }
+          // Apply the same porcentajeRecargoPorItem adjustment as the default price
+          // so the recargo is handled globally (otrosCargos) and not double-counted.
+          if (ops.containsKey('porcentajeRecargoPorItem') && !(ops['absolute'] ?? false)) {
+            final double porcentajeRecargo = (ops['porcentajeRecargoPorItem'] ?? 0).toDouble();
+            price = (price / (1 + igv + (porcentajeRecargo / 100))) * (1 + igv);
+          }
+          return price;
         }
       }
 

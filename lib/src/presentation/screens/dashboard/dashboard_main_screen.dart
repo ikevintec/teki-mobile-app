@@ -49,6 +49,18 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
     final config = ref.watch(sesionProvider);
     final id = config.office?.id;
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Posición fija del card de TodayReports (solapado con el header)
+    const double todayReportTop = 125.0;
+    // Altura estimada del card de TodayReports
+    const double todayReportCardHeight = 205.0;
+    // La sección blanca comienza al 34% de la pantalla (se adapta a distintas alturas)
+    final double whiteSectionTop = screenHeight * 0.32;
+    // El padding superior del ServicesSection asegura que el grid empiece
+    // debajo del card de TodayReports, sin importar el tamaño de pantalla
+    final double servicesTopPadding = (todayReportTop + todayReportCardHeight - whiteSectionTop + 10)
+        .clamp(20.0, 130.0);
 
     return Scaffold(
       key: _key,
@@ -56,17 +68,43 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
       body: Stack(
         children: [
           // Fondo y servicios
-          Container(
-            color: const Color(0xFFF8FAFC),
-            child: Column(
-              children: [
-                // Espacio para el header
-                const SizedBox(height: 400),
-                // Sección de servicios con scroll interno
-                const Expanded(
-                  child: ServicesSection(showNavigationBar: true),
+          Column(
+            children: [
+              // Bloque superior con degradado
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color.fromARGB(255, 19, 94, 232),
+                        Colors.blue[400]!,
+                      ],
+                    ),
+                  ),
                 ),
-              ],
+              ),
+              // Bloque inferior blanco
+              const SizedBox(height: 250),
+            ],
+          ),
+          // Fondo blanco para ServicesSection
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            top: whiteSectionTop,
+            child: Container(
+              padding: EdgeInsets.only(top: Platform.isIOS ? 0 :servicesTopPadding),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(50),
+                  topRight: Radius.circular(50),
+                ),
+              ),
+              child: const ServicesSection(showNavigationBar: true),
             ),
           ),
           // Header
@@ -76,7 +114,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
               left: 0,
               right: 0,
               child: SizedBox(
-                height: 190,
+                height: 150,
                 child: DashboardHeaderSection(
                   openDrawer: () {
                     if (!Platform.isAndroid && !Platform.isIOS) {
@@ -89,7 +127,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
             ),
           // Sección de reportes - por encima de todo
           Positioned(
-            top:165, // Posición para que se superponga al header
+            top: todayReportTop,
             left: 0,
             right: 0,
             child: TodayReportsSection(key: todayReportKey, idPuntoVenta: id ?? 0),

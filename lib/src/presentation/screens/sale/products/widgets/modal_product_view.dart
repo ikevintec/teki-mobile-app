@@ -1,45 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
-import 'package:teki_app/src/presentation/widgets/upload_image/upload_image.dart';
+import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/utils/contstants.dart';
 
-class ModalProductView extends StatefulWidget {
+class ModalProductView extends ConsumerWidget {
   final Product product;
-  const ModalProductView({super.key, required this.product});
+  final int index;
+  const ModalProductView({super.key, required this.product, required this.index});
 
   @override
-  State<ModalProductView> createState() => _ModalProductViewState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(productSaleProvider.notifier);
 
-class _ModalProductViewState extends State<ModalProductView> {
-  @override
-  Widget build(BuildContext context) {
+    // Sort prices: POR_DEFECTO first, then ESPECIAL, then MAYOREO
+    final allPrices = List<ProductPrice>.from(product.preciosVenta ?? []);
+    allPrices.sort((a, b) {
+      int order(String? tipo) {
+        if (tipo == 'POR_DEFECTO') return 0;
+        if (tipo == 'ESPECIAL') return 1;
+        return 2; // MAYOREO
+      }
+      return order(a.tipoPrecio).compareTo(order(b.tipoPrecio));
+    });
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 10),
-        UploadImage(image: "", showButtons: false, onImageSelected: null),
+        // Image
+        Center(
+          child: product.imagenUrl != null && product.imagenUrl!.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    product.imagenUrl!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.inventory_2_outlined,
+                      size: 60,
+                      color: Colors.grey,
+                    ),
+                  ),
+                )
+              : const Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey),
+        ),
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            widget.product.nombre!,
+            product.nombre ?? '',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ),
         const SizedBox(height: 5),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25),
-          child: const Divider(),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 25),
+          child: Divider(),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 30),
           child: Column(
             children: [
               Text(
-                widget.product.detalle ?? "",
+                product.detalle ?? '',
                 textAlign: TextAlign.center,
-                style:
-                    const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 15),
               Row(
@@ -48,13 +78,12 @@ class _ModalProductViewState extends State<ModalProductView> {
                   Expanded(
                     child: RichText(
                       text: TextSpan(
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.black),
+                        style: const TextStyle(fontSize: 12, color: Colors.black),
                         children: [
                           const TextSpan(
-                              text: "Código de barras: ",
+                              text: 'Código de barras: ',
                               style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text: widget.product.codigoBarra ?? ""),
+                          TextSpan(text: product.codigoBarra ?? ''),
                         ],
                       ),
                     ),
@@ -63,13 +92,12 @@ class _ModalProductViewState extends State<ModalProductView> {
                     child: RichText(
                       textAlign: TextAlign.end,
                       text: TextSpan(
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.black),
+                        style: const TextStyle(fontSize: 12, color: Colors.black),
                         children: [
                           const TextSpan(
-                              text: "Código: ",
+                              text: 'Código: ',
                               style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text: widget.product.codigo ?? ""),
+                          TextSpan(text: product.codigo ?? ''),
                         ],
                       ),
                     ),
@@ -83,13 +111,12 @@ class _ModalProductViewState extends State<ModalProductView> {
                   Expanded(
                     child: RichText(
                       text: TextSpan(
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.black),
+                        style: const TextStyle(fontSize: 12, color: Colors.black),
                         children: [
                           const TextSpan(
-                              text: "Tipo de lote: ",
+                              text: 'Tipo de lote: ',
                               style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text: widget.product.tipoLote ?? ""),
+                          TextSpan(text: product.tipoLote ?? ''),
                         ],
                       ),
                     ),
@@ -98,13 +125,13 @@ class _ModalProductViewState extends State<ModalProductView> {
                     child: RichText(
                       textAlign: TextAlign.end,
                       text: TextSpan(
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.black),
+                        style: const TextStyle(fontSize: 12, color: Colors.black),
                         children: [
                           const TextSpan(
-                              text: "Unidad: ",
+                              text: 'Unidad: ',
                               style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text: widget.product.unidad?.descripcion ?? ""),
+                          TextSpan(
+                              text: product.unidad?.descripcion ?? ''),
                         ],
                       ),
                     ),
@@ -118,13 +145,12 @@ class _ModalProductViewState extends State<ModalProductView> {
                   Expanded(
                     child: RichText(
                       text: TextSpan(
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.black),
+                        style: const TextStyle(fontSize: 12, color: Colors.black),
                         children: [
                           const TextSpan(
-                              text: "Moneda: ",
+                              text: 'Moneda: ',
                               style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text: widget.product.moneda ?? ""),
+                          TextSpan(text: product.moneda ?? ''),
                         ],
                       ),
                     ),
@@ -133,13 +159,13 @@ class _ModalProductViewState extends State<ModalProductView> {
                     child: RichText(
                       textAlign: TextAlign.end,
                       text: TextSpan(
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.black),
+                        style: const TextStyle(fontSize: 12, color: Colors.black),
                         children: [
                           const TextSpan(
-                              text: "IGV: ",
+                              text: 'IGV: ',
                               style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text: widget.product.igv == true ? "Sí" : "No"),
+                          TextSpan(
+                              text: product.igv == true ? 'Sí' : 'No'),
                         ],
                       ),
                     ),
@@ -150,50 +176,94 @@ class _ModalProductViewState extends State<ModalProductView> {
           ),
         ),
         const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25),
-          child: const Divider(),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 25),
+          child: Divider(),
         ),
         const SizedBox(height: 10),
-        Text(
-          "Precios de venta",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        const Center(
+          child: Text(
+            'Precios de venta',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
         ),
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25),
           child: Column(
-            children: widget.product.preciosVenta!.map((precio) {
-              return Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(precio.tipoPrecio ?? "",
-                              style: const TextStyle(fontSize: 12)),
-                          SizedBox(height: 20),
-                          Text(
-                            "${precio.precio}",
-                            style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
+            children: allPrices.map((precio) {
+              final isMayoreo = precio.tipoPrecio == 'MAYOREO';
+              final label = precio.nombre?.isNotEmpty == true
+                  ? precio.nombre!
+                  : (precio.tipoPrecio ?? '');
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  SizedBox(height: 10),
-                ],
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              label,
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            if (isMayoreo && precio.unidadesMayoreo != null)
+                              Text(
+                                'Desde ${precio.unidadesMayoreo} unidades',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey.shade600),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        precio.precio?.toStringAsFixed(2) ?? '—',
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                      if (!isMayoreo) ...[
+                        const SizedBox(width: 10),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
+                            if (precio.precio != null) {
+                              notifier.applySpecificPrice(
+                                  index, precio.precio!);
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: ColorSchema.primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check,
+                                color: Colors.white, size: 18),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               );
             }).toList(),
           ),
         ),
+        const SizedBox(height: 10),
       ],
     );
   }

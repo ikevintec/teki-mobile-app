@@ -7,9 +7,11 @@ import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart'
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class ClientSaleScreen extends ConsumerStatefulWidget {
   const ClientSaleScreen({super.key});
@@ -65,12 +67,33 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   void initState() {
     super.initState();
     final clientProvider = ref.read(customerSaleProvider);
-    if ((clientProvider.customer.razonSocial ?? '').isNotEmpty) {
-      _nombreController.text = clientProvider.customer.razonSocial ?? '';
-      _direccionController.text = clientProvider.customer.direccion ?? '';
-      _documentoController.text = clientProvider.customer.numeroDocumento ?? '';
-      _emailController.text = clientProvider.customer.email ?? '';
-      _telefonoController.text = clientProvider.customer.telefono ?? '';
+    Customer customer = clientProvider.customer;
+
+    // Si no hay cliente cargado, usar el cliente por defecto de la sesión
+    if ((customer.razonSocial ?? '').isEmpty) {
+      final defaultCustomer =
+          ref.read(sesionProvider).config?.clientePorDefectoData;
+      if (defaultCustomer != null) {
+        customer = defaultCustomer;
+        // Diferir la modificación del provider para evitar modificarlo durante el build
+        Future.microtask(() {
+          if (mounted) {
+            ref.read(customerSaleProvider.notifier).setCustomerEntity(customer);
+          }
+        });
+      }
+    }
+
+    if ((customer.razonSocial ?? '').isNotEmpty) {
+      _nombreController.text = customer.razonSocial ?? '';
+      _direccionController.text = customer.direccion ?? '';
+      _documentoController.text = customer.numeroDocumento ?? '';
+      _emailController.text = customer.email ?? '';
+      _telefonoController.text = customer.telefono ?? '';
+      final tipoDocCodigo = customer.tipoDocumento?.toString();
+      if (tipoDocCodigo != null && tipoDocumentoMap.containsKey(tipoDocCodigo)) {
+        _selectedTipoDocumentoValue = tipoDocCodigo;
+      }
     }
   }
 
@@ -114,9 +137,14 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     final clienteNotifier = ref.read(customerSaleProvider.notifier);
     final ticketP = ref.watch(ticketProvider);
     return Scaffold(
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: CustomAppBar(navigateName: "Cliente"),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(ticketP.ticket.pedidoRestaurante != null ? 72 : 60),
+        child: CustomAppBar(
+          navigateName: "Cliente",
+          subtitle: ticketP.ticket.pedidoRestaurante != null
+              ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
+              : null,
+        ),
       ),
       body: Container(
         color: ColorSchema.primaryColor,

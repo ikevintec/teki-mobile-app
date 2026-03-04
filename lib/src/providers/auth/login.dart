@@ -95,8 +95,8 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           message = 'Acceso denegado. No tienes permisos suficientes.';
         } else if (statusCode == 500) {
           message = 'Error interno del servidor.';
-        } else if (errorData is Map && errorData.containsKey('message')) {
-          message = errorData['message'];
+        } else if (errorData is Map) {
+          message = errorData['mensaje'] ?? errorData['message'] ?? 'Error HTTP $statusCode';
         } else {
           message = 'Error HTTP $statusCode';
         }

@@ -3,6 +3,7 @@ import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetailGroupOption.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetailPreparationOption.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class CommandDetail {
   final int? id;
@@ -56,7 +57,7 @@ class CommandDetail {
         cantidad: json['cantidad'],
         precioVenta: json['precioVenta'],
         producto: json['producto'] != null ? Product.fromJson(json['producto']) : null,
-        fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : null,
+        fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
         cuenta: json['cuenta'] != null ? Check.fromJson(json['cuenta']) : null,
         grupoProductoOpciones: json['grupoProductoOpciones'] != null
             ? List<CommandDetailGroupOption>.from(json['grupoProductoOpciones'].map((x) => CommandDetailGroupOption.fromJson(x)))
@@ -71,12 +72,12 @@ class CommandDetail {
         comanda: json['comanda'] != null ? Command.fromJson(json['comanda']) : null,
         eliminado: json['eliminado'],
         modificado: json['modificado'],
-        createdOn: json['createdOn'] != null ? DateTime.parse(json['createdOn']) : null,
+        createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
         createdBy: json['createdBy'],
         updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? DateTime.parse(json['updatedOn']) : null,
+        updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
         deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? DateTime.parse(json['deletedOn']) : null,
+        deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
       );
 
   Map<String, dynamic> toJson() => {

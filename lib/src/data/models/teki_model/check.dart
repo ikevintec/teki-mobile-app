@@ -39,7 +39,7 @@ class Check {
 
   factory Check.fromJson(Map<String, dynamic> json) => Check(
         id: json['id'],
-        fecha: json['fecha'] != null ? parseDateTimeFlexible(DateTime.parse(json['fecha'])) : null,
+        fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
         items: json['items'] != null
             ? List<CommandDetail>.from(json['items'].map((x) => CommandDetail.fromJson(x)))
             : null,

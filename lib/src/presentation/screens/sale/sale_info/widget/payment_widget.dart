@@ -1,12 +1,15 @@
 import 'dart:async';
-import 'dart:convert';
+// import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:teki_app/src/data/models/teki_model/check.dart';
+import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
+import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen.dart/view_comprobante_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_card_widget.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
@@ -564,33 +567,74 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                         errorNotification("Debe seleccionar un método de pago");
                         return;
                       }
-                      final isValid = _tabController.index == 0
+                      final isValid = isContado
                           ? (formKeyContado.currentState?.validate() ?? false)
                           : (formKeyCredito.currentState?.validate() ?? false);
                       if (!isValid) return;
+
                       if (isContado) {
                         procesoContado();
                       } else {
                         procesoCredito();
                       }
-                      final ticket = ref.read(ticketProvider).ticket;
-                      final jsonPretty = const JsonEncoder.withIndent('  ')
-                          .convert(ticket.toJson());
-                      // debugPrint("TICKET RESULTADO ");
-                      debugPrint(jsonPretty); // en lugar de print
-                      final Ticket? ticketResponse = await notifier.proceessTicket();
-                      if (ticketResponse != null) {
-                        //reseteamos los providers
-                        ref.invalidate(ticketProvider);
-                        ref.invalidate(productSaleProvider);
-                        ref.invalidate(customerSaleProvider);
-                        successNotification(ticketP.isEdit ?  "Venta editada con éxito" : "Venta registrada con éxito");
-                        Get.off(() => ViewComponentScreen(
-                          ticket: ticketResponse,
-                          fromSale: true,
-                        ));
+
+                      final ticketState = ref.read(ticketProvider);
+                      final checkId = ticketState.ticket.cuentaRestaurante;
+
+                      if (checkId != null) {
+                        // ── Flujo cobrador: PUT /checks/{id} ──────────────────
+                        final ticketPayload = notifier.getTicketPayload();
+                        final customer = ref.read(customerSaleProvider).customer;
+                        final originalItems = ref
+                            .read(productSaleProvider)
+                            .productsSales
+                            .map((td) => td.comandaDetalle)
+                            .whereType<CommandDetail>()
+                            .toList();
+                        final checkPayload = Check(
+                          cliente: (customer.razonSocial?.isNotEmpty ?? false)
+                              ? customer
+                              : null,
+                          pagado: true,
+                          items: originalItems,
+                          comprobante: ticketPayload,
+                        );
+                        try {
+                          final checkResult = await RestaurantRepositoryImpl()
+                              .updateCheck(checkId, checkPayload);
+                          ref.invalidate(ticketProvider);
+                          ref.invalidate(productSaleProvider);
+                          ref.invalidate(customerSaleProvider);
+                          successNotification("Pago registrado con éxito");
+                          final comprobante = checkResult.comprobante;
+                          if (comprobante != null) {
+                            Get.off(() => ViewComponentScreen(
+                                  ticket: comprobante,
+                                  fromSale: true,
+                                ));
+                          } else {
+                            Get.back();
+                          }
+                        } catch (e) {
+                          errorNotification("Error al registrar el pago: $e");
+                        }
+                      } else {
+                        // ── Flujo normal: POST /tickets ───────────────────────
+                        final Ticket? ticketResponse =
+                            await notifier.proceessTicket();
+                        if (ticketResponse != null) {
+                          ref.invalidate(ticketProvider);
+                          ref.invalidate(productSaleProvider);
+                          ref.invalidate(customerSaleProvider);
+                          successNotification(ticketP.isEdit
+                              ? "Venta editada con éxito"
+                              : "Venta registrada con éxito");
+                          Get.off(() => ViewComponentScreen(
+                                ticket: ticketResponse,
+                                fromSale: true,
+                              ));
+                        }
                       }
-                      // continuar
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorSchema.primaryColor,

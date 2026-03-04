@@ -16,11 +16,13 @@ import 'package:teki_app/src/utils/contstants.dart';
 class ProductListSection extends ConsumerStatefulWidget {
   final dynamic isSmallScreen;
   final List<Product> productList;
+  final Future<void> Function() onRefresh;
 
   const ProductListSection({
     super.key,
     required this.isSmallScreen,
     required this.productList,
+    required this.onRefresh,
   });
 
   @override
@@ -60,33 +62,40 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
     final idPuntoVenta = provider.office?.id;
     final isLast = ref.watch(productsProvider).last;
     return widget.productList.isEmpty
-        ? ListView(
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              const SizedBox(height: 100),
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      "assets/images/other/empty_product.png",
-                      width: 350,
-                    ),
-                    Text(
-                      "No se encontraron productos",
-                      style: GoogleFonts.raleway(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 24,
-                        color: const Color(0xFF333333),
+        ? RefreshIndicator(
+            color: ColorSchema.primaryColor,
+            onRefresh: widget.onRefresh,
+            child: ListView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                const SizedBox(height: 100),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "assets/images/other/empty_product.png",
+                        width: 350,
                       ),
-                    ),
-                  ],
+                      Text(
+                        "No se encontraron productos",
+                        style: GoogleFonts.raleway(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 24,
+                          color: const Color(0xFF333333),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           )
-        : ListView.builder(
+        : RefreshIndicator(
+            color: ColorSchema.primaryColor,
+            onRefresh: widget.onRefresh,
+            child: ListView.builder(
             controller: _scrollController,
             padding: EdgeInsets.zero,
             itemCount: widget.productList.length +
@@ -117,153 +126,195 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
               }
 
               final product = widget.productList[index];
-              return Card(
-                elevation: 0.1,
-                color: Colors.white,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    SizedBox(width: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: product.imagenUrl != null &&
-                                  product.imagenUrl!.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
+              final stock = product.inventarios?.firstWhere(
+                    (e) => e.puntoVenta?.id == idPuntoVenta,
+                    orElse: () => Inventory(stock: 0),
+                  ).stock ??
+                  0;
+              final precioVenta = product.preciosVenta
+                  ?.firstWhere(
+                    (e) => e.tipoPrecio == TipoPrecio.POR_DEFECTO,
+                    orElse: () => ProductPrice(),
+                  )
+                  .precio;
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Imagen
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F6FA),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: product.imagenUrl != null &&
+                                    product.imagenUrl!.isNotEmpty
+                                ? Image.network(
                                     product.imagenUrl!,
                                     fit: BoxFit.contain,
-                                    width: 60,
-                                    height: 60,
                                     loadingBuilder:
                                         (context, child, loadingProgress) {
                                       if (loadingProgress == null) return child;
                                       return Image.asset(
                                         'assets/images/gif/loader.gif',
-                                        width: 60,
-                                        height: 60,
                                         fit: BoxFit.cover,
                                       );
                                     },
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(Icons.error),
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        const Icon(Icons.broken_image_outlined,
+                                            color: Colors.grey),
+                                  )
+                                : Image.asset(
+                                    'assets/images/products/icon.png',
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        const Icon(Icons.inventory_2_outlined,
+                                            color: Colors.grey),
                                   ),
-                                )
-                              : Image.asset(
-                                  'assets/images/products/icon.png',
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.error);
-                                  },
-                                  fit: BoxFit.contain,
-                                ),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8 , bottom: 8),
+                      const SizedBox(width: 12),
+                      // Info
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              product.nombre!,
+                              product.nombre ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.raleway(
-                                textStyle: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: Colors.black,
-                                ),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: const Color(0xFF1A1A2E),
                               ),
                             ),
-                            ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Stock: ${product.inventarios?.firstWhere(
-                                          (element) =>
-                                              element.puntoVenta?.id ==
-                                              idPuntoVenta,
-                                          orElse: () => Inventory(
-                                            stock: 0,
-                                          ),
-                                        ).stock ?? 0}",
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                _infoChip(
+                                  icon: Icons.inventory_2_outlined,
+                                  label: 'Stock: $stock',
+                                  color: stock > 0
+                                      ? const Color(0xFF2E7D32)
+                                      : const Color(0xFFC62828),
+                                  bg: stock > 0
+                                      ? const Color(0xFFE8F5E9)
+                                      : const Color(0xFFFFEBEE),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Venta: ${precioVenta ?? "—"}',
                                     style: GoogleFonts.nunito(
-                                      fontSize: 10,
+                                      fontSize: 11,
+                                      color: const Color(0xFF555555),
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    "Precio venta: ${product.preciosVenta?.firstWhere(
-                                          (element) =>
-                                              element.tipoPrecio ==
-                                              TipoPrecio.POR_DEFECTO,
-                                          orElse: () => ProductPrice(),
-                                        ).precio ?? "No registrado"}",
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'Compra: ${product.precioCompra ?? "—"}',
                                     style: GoogleFonts.nunito(
-                                      fontSize: 10,
+                                      fontSize: 11,
+                                      color: const Color(0xFF555555),
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    "Precio compra: ${product.precioCompra ?? "No registrado"}",
-                                    style: GoogleFonts.nunito(
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(50),
-                              color: Colors.blue.shade50.withOpacity(0.3),
-                            ),
-                            child: IconButton(
-                              icon: Padding(
-                                padding: const EdgeInsets.all(2.0),
-                                child: SvgPicture.asset(
-                                  "assets/icons/icon_svg/edit_icon.svg",
-                                  color: Colors.blue,
-                                ),
-                              ),
-                              onPressed: () {
-                                Get.toNamed(AppRoutes.updateProduct,
-                                    arguments: {
-                                      "id": product.id,
-                                    });
-                              },
+                      const SizedBox(width: 8),
+                      // Botón editar
+                      InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () {
+                          Get.toNamed(AppRoutes.updateProduct,
+                              arguments: {'id': product.id});
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: SvgPicture.asset(
+                            'assets/icons/icon_svg/edit_icon.svg',
+                            width: 18,
+                            height: 18,
+                            colorFilter: const ColorFilter.mode(
+                              Color(0xFF3949AB),
+                              BlendMode.srcIn,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    )
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
-          );
+          ),
+        );
+  }
+
+  Widget _infoChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color bg,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: GoogleFonts.nunito(
+              fontSize: 10,
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void buildModalBottomSheet(

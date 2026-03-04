@@ -15,6 +15,13 @@ DateTime? parseDateTimeFlexible(dynamic value) {
   return null;
 }
 
+/// Formatea un número de orden a 8 dígitos rellenando con ceros a la izquierda.
+/// Ejemplo: 123 → "00000123"
+String formatOrderNumber(int? number) {
+  if (number == null) return '-';
+  return number.toString().padLeft(8, '0');
+}
+
 String formatDouble(double value) {
   if (value == value.toInt()) {
     return value.toInt().toString(); // 7.0 → 7

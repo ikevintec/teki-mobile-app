@@ -69,32 +69,74 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   }
 
   void setProductsSales(Product productsSales, int? index) {
-    final existingProductIndex = index ??
-        state.productsSales.indexWhere(
-          (ticketDetail) =>
-              (ticketDetail.producto != null
-                  ? ticketDetail.producto!.id
-                  : -1) ==
-              productsSales.id,
-        );
-    if (existingProductIndex != -1) {
-      final existingTicketDetail = state.productsSales[existingProductIndex];
-      final updatedTicketDetail = changeQtyTicketDetail(
-          ticketDetail: existingTicketDetail,
-          quantity: (existingTicketDetail.cantidad ?? 0) + 1,
+    // If an explicit index is given, just increment that item's quantity
+    if (index != null) {
+      final existing = state.productsSales[index];
+      final updated = changeQtyTicketDetail(
+          ticketDetail: existing,
+          quantity: (existing.cantidad ?? 0) + 1,
           sesion: ref.read(sesionProvider));
       state = state.copyWith(
-        productsSales: List.from(state.productsSales)
-          ..[existingProductIndex] = updatedTicketDetail,
+        productsSales: List.from(state.productsSales)..[index] = updated,
       );
-      calculoTotal(); // Recalcular totales cuando se actualiza cantidad de producto existente
+      calculoTotal();
+      return;
+    }
+
+    // Check if this product exists as a locked check item
+    final hasCheckItem = state.productsSales.any(
+      (td) => (td.producto?.id ?? -1) == productsSales.id && td.comandaDetalle != null,
+    );
+
+    if (hasCheckItem) {
+      // Look for an extra (non-check) line for the same product
+      final extraIndex = state.productsSales.indexWhere(
+        (td) => (td.producto?.id ?? -1) == productsSales.id && td.comandaDetalle == null,
+      );
+      if (extraIndex != -1) {
+        // Increment the extra line
+        final existing = state.productsSales[extraIndex];
+        final updated = changeQtyTicketDetail(
+            ticketDetail: existing,
+            quantity: (existing.cantidad ?? 0) + 1,
+            sesion: ref.read(sesionProvider));
+        state = state.copyWith(
+          productsSales: List.from(state.productsSales)..[extraIndex] = updated,
+        );
+        calculoTotal();
+      } else {
+        // Add a new extra line for this product
+        state = state.copyWith(
+          productsSales: [
+            ...state.productsSales,
+            getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider)),
+          ],
+        );
+        setCurrency(state.currency!.codigoMoneda!);
+      }
+      return;
+    }
+
+    // Normal flow: no check item for this product
+    final existingIndex = state.productsSales.indexWhere(
+      (td) => (td.producto?.id ?? -1) == productsSales.id,
+    );
+    if (existingIndex != -1) {
+      final existing = state.productsSales[existingIndex];
+      final updated = changeQtyTicketDetail(
+          ticketDetail: existing,
+          quantity: (existing.cantidad ?? 0) + 1,
+          sesion: ref.read(sesionProvider));
+      state = state.copyWith(
+        productsSales: List.from(state.productsSales)..[existingIndex] = updated,
+      );
+      calculoTotal();
       return;
     }
     state = state.copyWith(
       productsSales: [
         ...state.productsSales,
-        getTicketDetail(
-            product: productsSales, sesion: ref.read(sesionProvider)),
+        getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider)),
       ],
     );
     setCurrency(state.currency!.codigoMoneda!);
@@ -150,6 +192,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   }
 
   void setCantidadProductSale(int index, double cantidad) {
+    if (state.productsSales[index].comandaDetalle != null) return;
     final existingTicketDetail = state.productsSales[index];
     if (existingTicketDetail.producto != null) {
       final updatedTicketDetail = changeQtyTicketDetail(
@@ -201,37 +244,49 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   }
 
   void syncAllProductsFromForms(List<Map<String, dynamic>> formsData) {
-    // Sincronizar todos los productos sin re-renders individuales
+    final sesion = ref.read(sesionProvider);
     final updatedProducts = <TicketDetail>[];
-    
+
     for (int i = 0; i < state.productsSales.length; i++) {
       final existingTicketDetail = state.productsSales[i];
       final formData = formsData[i];
-      
-      final precio = formData['price'] as double? ?? existingTicketDetail.precioVentaUnitario ?? 0.0;
+
       final description = formData['description'] as String? ?? existingTicketDetail.descripcion ?? '';
       final quantity = double.tryParse(formData['quantity'].toString()) ?? existingTicketDetail.cantidad ?? 1.0;
-      
-      final updatedTicketDetail = state.incIgv
-          ? existingTicketDetail.copyWith(
-              precioVentaUnitario: precio,
-              montoOriginal: precio,
-              monedaOriginal: state.currency!.codigoMoneda,
-              descripcion: description,
-              cantidad: quantity,
-            )
-          : existingTicketDetail.copyWith(
-              valorUnitario: precio,
-              montoOriginal: precio,
-              monedaOriginal: state.currency!.codigoMoneda,
-              descripcion: description,
-              cantidad: quantity,
-            );
-      
+      final quantityChanged = quantity != (existingTicketDetail.cantidad ?? 1.0);
+
+      TicketDetail updatedTicketDetail;
+
+      // When quantity changes on a product item, recalculate price via getPriceProduct
+      // so mayoreo (wholesale) tiers are applied correctly.
+      if (quantityChanged && existingTicketDetail.producto != null) {
+        updatedTicketDetail = changeQtyTicketDetail(
+          ticketDetail: existingTicketDetail,
+          quantity: quantity,
+          sesion: sesion,
+        ).copyWith(descripcion: description);
+      } else {
+        final precio = formData['price'] as double? ?? existingTicketDetail.precioVentaUnitario ?? 0.0;
+        updatedTicketDetail = state.incIgv
+            ? existingTicketDetail.copyWith(
+                precioVentaUnitario: precio,
+                montoOriginal: precio,
+                monedaOriginal: state.currency!.codigoMoneda,
+                descripcion: description,
+                cantidad: quantity,
+              )
+            : existingTicketDetail.copyWith(
+                valorUnitario: precio,
+                montoOriginal: precio,
+                monedaOriginal: state.currency!.codigoMoneda,
+                descripcion: description,
+                cantidad: quantity,
+              );
+      }
+
       updatedProducts.add(updatedTicketDetail);
     }
-    
-    // Solo una actualización del estado al final
+
     state = state.copyWith(productsSales: updatedProducts);
     calculoTotal();
   }
@@ -260,6 +315,29 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       productsSales: [...state.productsSales, ticketDetail],
     );
     calculoTotal();
+  }
+
+  void applySpecificPrice(int index, double rawPrecio) {
+    final sesion = ref.read(sesionProvider);
+    final ticketDetail = state.productsSales[index];
+    final product = ticketDetail.producto;
+    if (product == null) return;
+
+    final igv = (sesion.config!.igv ?? 0.0).toDouble();
+    final porcentajeRecargo =
+        (sesion.config!.porcentajeRecargoPorItem ?? 0.0).toDouble();
+
+    double price = rawPrecio;
+
+    if (product.igv == false) {
+      price *= (1 + igv);
+    }
+
+    if (porcentajeRecargo > 0) {
+      price = (price / (1 + igv + (porcentajeRecargo / 100))) * (1 + igv);
+    }
+
+    setPrecioProductSale(index, price);
   }
 
   void calculoTotal() {

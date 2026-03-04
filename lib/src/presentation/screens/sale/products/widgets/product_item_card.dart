@@ -118,6 +118,61 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     super.dispose();
   }
 
+  Widget _buildProductAvatar() {
+    final imageUrl = widget.productTicketDetail.producto?.imagenUrl;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFFF5F6FA),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Image.network(
+          imageUrl,
+          width: 40,
+          height: 40,
+          fit: BoxFit.contain,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          },
+          errorBuilder: (_, __, ___) => _buildInitialCircle(),
+        ),
+      );
+    }
+    return _buildInitialCircle();
+  }
+
+  Widget _buildInitialCircle() {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: ColorSchema.primaryColor,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        widget.productTicketDetail.descripcion != ''
+            ? widget.productTicketDetail.descripcion![0].toUpperCase()
+            : 'P',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isIos = Theme.of(context).platform == TargetPlatform.iOS;
@@ -137,26 +192,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
             formGroup: widget.formGroup,
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: ColorSchema.primaryColor, // color de fondo
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    widget.productTicketDetail.descripcion != ''
-                        ? widget.productTicketDetail.descripcion![0]
-                            .toUpperCase()
-                        : 'P',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
+                _buildProductAvatar(),
                 const SizedBox(width: 15),
                 Expanded(
                     child: Column(
@@ -285,6 +321,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                         QuantityControl(
                           formGroup: widget.formGroup,
                           onQuantityChanged: widget.onQuantityChanged ?? () {},
+                          locked: widget.productTicketDetail.comandaDetalle != null,
                         ),
                       ],
                     ),
@@ -352,11 +389,13 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
 class QuantityControl extends ConsumerStatefulWidget {
   final FormGroup formGroup;
   final VoidCallback onQuantityChanged;
+  final bool locked;
 
   const QuantityControl({
     Key? key,
     required this.formGroup,
     required this.onQuantityChanged,
+    this.locked = false,
   }) : super(key: key);
 
   @override
@@ -402,6 +441,35 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.locked) {
+      final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+      return ReactiveFormConsumer(
+        builder: (context, form, _) {
+          final qty = (quantityControl.value ?? 1).toString();
+          return Container(
+            width: 120,
+            height: 32,
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 14, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Text(
+                  'x$qty',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
     return SizedBox(
       width: 120,
       height: 32,
@@ -451,7 +519,6 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   ),
                   onSubmitted: (control) {
-                    // El ReactiveTextField se sincroniza automáticamente
                     widget.onQuantityChanged();
                   },
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],

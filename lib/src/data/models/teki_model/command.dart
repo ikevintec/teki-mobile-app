@@ -35,7 +35,7 @@ class Command {
 
   factory Command.fromJson(Map<String, dynamic> json) => Command(
         id: json['id'],
-        fecha: json['fecha'] != null ? parseDateTimeFlexible(DateTime.parse(json['fecha'])) : null,
+        fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
         orden: json['orden'],
         numeroComanda: json['numeroComanda'],
         estadoComanda: json['estadoComanda'],

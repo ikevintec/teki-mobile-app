@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
@@ -36,15 +38,74 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
     super.dispose();
   }
 
-  void openNewSale(WidgetRef ref) {
-    final ticket = ref.read(ticketProvider);
-    if (ticket.isEdit) {
-      // Limpiar completamente todos los providers para nueva venta
+  Future<void> openNewSale(WidgetRef ref) async {
+    final ticketState = ref.read(ticketProvider);
+    final ticket = ticketState.ticket;
+    final productState = ref.read(productSaleProvider);
+    final customerState = ref.read(customerSaleProvider);
+
+    final hasData = (ticket.items?.isNotEmpty ?? false) ||
+        ticketState.isEdit ||
+        productState.productsSales.isNotEmpty ||
+        (customerState.customer.razonSocial?.isNotEmpty ?? false);
+
+    // "De orden" si el ticket lo indica o si hay productos bloqueados (de un check de restaurante)
+    final fromOrder = ticket.pedidoRestaurante != null ||
+        productState.productsSales.any((td) => td.comandaDetalle != null);
+
+    void resetAndNavigate() {
       ref.invalidate(ticketProvider);
       ref.invalidate(productSaleProvider);
       ref.invalidate(customerSaleProvider);
+      Get.toNamed(AppRoutes.productsSales);
     }
-    Get.toNamed(AppRoutes.productsSales);
+
+    // Si viene de una orden de restaurante: siempre reiniciar sin preguntar
+    if (hasData && fromOrder) {
+      resetAndNavigate();
+      return;
+    }
+
+    // Sin datos: navegar directo
+    if (!hasData) {
+      Get.toNamed(AppRoutes.productsSales);
+      return;
+    }
+
+    // Hay datos pero no es de orden: preguntar al usuario
+    if (!mounted) return;
+    final continuar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Venta en progreso',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
+        content: const Text('Ya tienes una venta en curso. ¿Qué deseas hacer?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Nueva venta'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorSchema.primaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+
+    if (continuar == true) {
+      Get.toNamed(AppRoutes.productsSales);
+    } else if (continuar == false) {
+      resetAndNavigate();
+    }
   }
 
   // Lista de servicios para Venta
@@ -52,37 +113,37 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
     return [
       {
         'title': 'Nueva Venta',
-        'icon': 'assets/icons/icon_image/pos.png',
+        'icon': 'assets/icons/icon_svg/purchase_service_icon.svg',
         'action': () => openNewSale(ref),
       },
       {
         'title': 'Comprobantes',
-        'icon': 'assets/icons/icon_image/expense_list.png',
+        'icon': 'assets/icons/icon_image/voucher_list.png',
         'action': () => Get.toNamed(AppRoutes.comprobantesVer),
       },
       {
         'title': 'Productos',
-        'icon': 'assets/icons/icon_image/products.png',
+        'icon': 'assets/icons/icon_image/products_basket.png',
         'action': () => Get.toNamed(AppRoutes.products),
       },
       {
         'title': 'Clientes',
-        'icon': 'assets/icons/icon_image/customer.png',
+        'icon': 'assets/icons/icon_svg/customer.svg',
         'action': () => Get.toNamed(AppRoutes.customer),
       },
       {
         'title': 'Inventario',
-        'icon': 'assets/icons/icon_image/warehouse.png',
+        'icon': 'assets/icons/icon_image/inventory_list.png',
         'action': () => Get.toNamed(AppRoutes.inventory),
       },
       {
         'title': 'Estadísticas',
-        'icon': 'assets/icons/icon_image/trading.png',
+        'icon': 'assets/icons/icon_image/stats.png',
         'action': () => Get.toNamed(AppRoutes.analytics),
       },
       {
         'title': 'Ajustes',
-        'icon': 'assets/icons/icon_image/user_management.png',
+        'icon': 'assets/icons/icon_image/settings.png',
         'action': () => Get.toNamed(AppRoutes.settings),
       },
     ];
@@ -92,24 +153,22 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
   List<Map<String, dynamic>> getRestaurantServicesList(WidgetRef ref) {
     return [
       {
+        'title': 'Mesas',
+        'icon': 'assets/icons/icon_image/dinner-table.png',
+        'action': () => Get.toNamed(AppRoutes.restaurantMesas),
+      },
+      {
+        'title': 'Cobrador',
+        'icon': 'assets/icons/icon_image/bill_restaurant.png',
+        'action': () {
+          final pvId = ref.read(sesionProvider).office?.id ?? 0;
+          Get.toNamed(AppRoutes.restaurantCobrador, arguments: {'pvId': pvId});
+        },
+      },
+      {
         'title': 'Pedidos',
-        'icon': 'assets/icons/icon_image/pos.png',
-        'action': () => openNewSale(ref), // Placeholder
-      },
-      {
-        'title': 'Cocina',
-        'icon': 'assets/icons/icon_image/expense_list.png',
-        'action': () => Get.toNamed(AppRoutes.comprobantesVer), // Placeholder
-      },
-      {
-        'title': 'Reportes',
-        'icon': 'assets/icons/icon_image/trading.png',
-        'action': () => Get.toNamed(AppRoutes.analytics),
-      },
-      {
-        'title': 'Configuración',
-        'icon': 'assets/icons/icon_image/user_management.png',
-        'action': () => Get.toNamed(AppRoutes.settings),
+        'icon': 'assets/icons/icon_image/pedido_add.png',
+        'action': () => Get.toNamed(AppRoutes.ordersRestaurant),
       },
     ];
   }
@@ -200,7 +259,7 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
                   color: Colors.black.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 14,
-                  offset: const Offset(0, -2),
+                  offset: const Offset(0, 4), // changes position of shadow
                 ),
               ],
             ),
@@ -236,7 +295,7 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          height: 50,
+          height: 55,
           margin: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(25),
@@ -277,7 +336,7 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
     return InkWell(
       onTap: () => onPressed(),
       child: Container(
-        margin: const EdgeInsets.all(4),
+        margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -297,14 +356,20 @@ class _ServicesSectionState extends ConsumerState<ServicesSection> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Stack(alignment: Alignment.center, children: [
-              SizedBox(
-                height: 70,
-              ),
-              ImageIcon(
-                AssetImage(serviceIcon),
-                color: serviceImageColor,
-                size: 45,
-              )
+              const SizedBox(height: 70),
+              if (serviceIcon.endsWith('.svg'))
+                SvgPicture.asset(
+                  serviceIcon,
+                  colorFilter: ColorFilter.mode(serviceImageColor, BlendMode.srcIn),
+                  width: 55,
+                  height: 55,
+                )
+              else
+                ImageIcon(
+                  AssetImage(serviceIcon),
+                  color: serviceImageColor,
+                  size: 55,
+                ),
             ]),
             Text(
               service,

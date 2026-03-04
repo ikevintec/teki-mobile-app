@@ -73,6 +73,7 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
     bool isLoading = productState.isLoading && productListModel.isEmpty;
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6FA),
       key: _key,
       // endDrawer: DashboardDrawer(routeName: "Products", controller: controller),
       // appBar: isSmallScreen
@@ -128,57 +129,53 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
           navigateName: "Productos",
         ),
       ),
-      body: RefreshIndicator(
-        color: ColorSchema.primaryColor,
-        onRefresh: () async {
-          await ref.read(productsProvider.notifier).resetProducts();
-          searchController.clear();
-        },
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            const SizedBox(height: 20),
-            SearchField(
-              onTextChanged: onSearchChanged,
-              controller: searchController,
-            ),
-            const SizedBox(height: 10),
-            if (isLoading)
-              SizedBox(
-                height: MediaQuery.of(context).size.height *
-                    0.6, // o el alto que necesites
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                        color: ColorSchema.primaryColor,
-                        strokeWidth: 2,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 20),
+          SearchField(
+            onTextChanged: onSearchChanged,
+            controller: searchController,
+          ),
+          const SizedBox(height: 10),
+          if (isLoading)
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(
+                      color: ColorSchema.primaryColor,
+                      strokeWidth: 2,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Cargando productos...",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Cargando productos...",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.75,
-                child: ProductListSection(
-                  isSmallScreen: isSmallScreen,
-                  productList: productListModel,
+                    ),
+                  ],
                 ),
               ),
-          ],
-        ),
+            )
+          else
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.75,
+              child: ProductListSection(
+                isSmallScreen: isSmallScreen,
+                productList: productListModel,
+                onRefresh: () async {
+                  await ref.read(productsProvider.notifier).resetProducts();
+                  searchController.clear();
+                },
+              ),
+            ),
+        ],
       ),
       floatingActionButton: const CustomFloatingActionButton(
         buttonName: "Agregar",

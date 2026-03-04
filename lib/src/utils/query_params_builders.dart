@@ -152,6 +152,50 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   return params;
 }
 
+Map<String, dynamic> buildOrdersRestaurantQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {};
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('idPuntoVenta', state.idPuntoVenta);
+  safeAdd('pageNumber', state.pageNumber);
+  safeAdd('perPage', state.perPage);
+  params['borradores'] = false;
+  safeAdd('sortField', state.sortField);
+  safeAdd('sortOrder', state.sortOrder);
+  safeAdd('desde', state.desde);
+  safeAdd('hasta', state.hasta);
+
+  try {
+    if (state.nombreCliente != null &&
+        (state.nombreCliente as String).isNotEmpty) {
+      safeAdd('nombreCliente', state.nombreCliente);
+    }
+  } catch (_) {}
+
+  try {
+    if (state.pedidoFacturado != null) {
+      safeAdd('pedidoFacturado', state.pedidoFacturado);
+    }
+  } catch (_) {}
+
+  try {
+    if (state.tipos != null && (state.tipos as List).isNotEmpty) {
+      params['tipo'] = state.tipos;
+    }
+  } catch (_) {}
+
+  try {
+    if (state.estados != null && (state.estados as List).isNotEmpty) {
+      params['estado'] = state.estados;
+    }
+  } catch (_) {}
+
+  return params;
+}
+
 Map<String, dynamic> buildInventoryQueryParams(dynamic state) {
   final Map<String, dynamic> params = {};
 

@@ -79,7 +79,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Container(
-        padding: const EdgeInsets.only(right: 16, left: 16, top: 20, bottom: 35),
+        padding: const EdgeInsets.only(right: 16, left: 16, top: 14, bottom: 20),
         margin: const EdgeInsets.only(left: 16, right: 16, top: 0),
       decoration: BoxDecoration(
         boxShadow: [
@@ -103,12 +103,12 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Reportes Diario",
+                  "Ventas del Día",
                   style: GoogleFonts.raleway(
                     textStyle: TextStyle(
                       fontSize: screenWidth * 0.06,
@@ -161,7 +161,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                   showCurrencySymbol: false,
                 ),
                 buildReports(
-                  "Ventas Concretadas",
+                  "Ventas\nCerradas",
                   loadingVentas
                       ? "---"
                       : totalVentas != null
@@ -201,7 +201,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
   }) {
     return Container(
         width: screenWidth * 0.27,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: reportColor,
           borderRadius: BorderRadius.circular(16),
@@ -248,7 +248,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.nunito(
                 textStyle: TextStyle(
-                  fontSize: screenWidth * 0.032,
+                  fontSize: screenWidth * 0.032 - 2,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF555555),
                   height: 1.2,
