@@ -20,7 +20,8 @@ class RemoteMonthlySalesDatasource extends MonthlySalesRepositoryDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final message = e.response?.data['message'] ?? 'Error de conexión';
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());

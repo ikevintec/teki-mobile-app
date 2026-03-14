@@ -56,6 +56,9 @@ class Printer {
   final String? fontsizeXOcultarItems;
   final String? fontsizeYOcultarItems;
 
+  final String? tipoImpresora;
+  final String? tipoImpresion;
+
   Printer({
     this.id,
     this.nombre,
@@ -99,6 +102,8 @@ class Printer {
     this.fontsizeOcultarItems,
     this.fontsizeXOcultarItems,
     this.fontsizeYOcultarItems,
+    this.tipoImpresora,
+    this.tipoImpresion,
   });
 
   factory Printer.fromJson(Map<String, dynamic> json) => Printer(
@@ -145,6 +150,8 @@ class Printer {
         fontsizeOcultarItems: json['fontsizeOcultarItems'],
         fontsizeXOcultarItems: json['fontsizeXOcultarItems'],
         fontsizeYOcultarItems: json['fontsizeYOcultarItems'],
+        tipoImpresora: json['tipoImpresora'],
+        tipoImpresion: json['tipoImpresion'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -190,5 +197,7 @@ class Printer {
         'fontsizeOcultarItems': fontsizeOcultarItems,
         'fontsizeXOcultarItems': fontsizeXOcultarItems,
         'fontsizeYOcultarItems': fontsizeYOcultarItems,
+        'tipoImpresora': tipoImpresora,
+        'tipoImpresion': tipoImpresion,
       };
 }

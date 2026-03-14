@@ -15,6 +15,13 @@ DateTime? parseDateTimeFlexible(dynamic value) {
   return null;
 }
 
+/// Normaliza un texto con guiones bajos reemplazándolos por espacios.
+/// Ejemplo: "PEDIDO_ONLINE" → "PEDIDO ONLINE"
+String normalizeEnumLabel(String? value) {
+  if (value == null || value.isEmpty) return '-';
+  return value.replaceAll('_', ' ');
+}
+
 /// Formatea un número de orden a 8 dígitos rellenando con ceros a la izquierda.
 /// Ejemplo: 123 → "00000123"
 String formatOrderNumber(int? number) {
@@ -60,7 +67,7 @@ String formatExchange({required String moneda}) {
   }
 
 String formatTipoComprobante(String tipoComprobante) {
-  List<Map<String, String>> lista = tipoComprobantesVenta;
+  List<Map<String, String>> lista = tipoComprobantesVerVenta;
   Map<String, String> item =
       lista.firstWhere((item) => item['value'] == tipoComprobante);
   return item['label2'] ?? '';

@@ -143,6 +143,13 @@ final List<Map<String, String>> tipoComprobantesVenta = [
   {'label': 'N. venta', 'label2': 'Nota de venta', 'value': 'NV'},
 ];
 
+final List<Map<String, String>> tipoComprobantesVerVenta = [
+  {'label': 'Factura', 'label2': 'Factura', 'value': '01'},
+  {'label': 'Boleta', 'label2': 'Boleta', 'value': '03'},
+  {'label': 'N. venta', 'label2': 'Nota de venta', 'value': 'NV'},
+  {'label': 'N. Crédito', 'label2': 'Nota de Crédito', 'value': '07'},
+];
+
 final List<Map<String, String>> tipoOperacion = [
   {"label": "Venta Interna [0101]", "value": "0101"},
   {"label": "Exportación [0200]", "value": "0200"},

@@ -2,14 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetailGroupOption.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetailPreparationOption.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
+import 'package:teki_app/src/data/models/teki_model/config.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/restaurant_repository.dart';
+import 'package:teki_app/src/shared/services/command_print_service.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:dio/dio.dart';
@@ -107,6 +110,7 @@ final comandaProvider =
 class ComandaNotifier extends StateNotifier<ComandaState> {
   final RestaurantRepository repository;
   final Dio _dio = ApiClient.dio;
+  final CommandPrintService _printService = CommandPrintService();
 
   ComandaNotifier({required this.repository})
       : super(ComandaState(
@@ -125,10 +129,10 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   // Init / load
   // -------------------------------------------------------------------------
 
-  Future<void> init(Table table, {int? existingOrderId}) async {
+  Future<void> init(Table? table, {int? existingOrderId}) async {
     state = ComandaState(
       table: table,
-      existingOrderId: existingOrderId ?? table.pedidoActual?.id,
+      existingOrderId: existingOrderId ?? table?.pedidoActual?.id,
       cartItems: [],
       searchQuery: '',
       products: [],
@@ -262,7 +266,11 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   // Submit
   // -------------------------------------------------------------------------
 
-  Future<void> submitComanda(Office puntoVenta) async {
+  Future<void> submitComanda(
+    Office puntoVenta, {
+    ConfigCompany? config,
+    int? idCompany,
+  }) async {
     if (state.cartItems.isEmpty) {
       warningNotification('Agregue al menos un producto');
       return;
@@ -279,9 +287,11 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
             preparacionProductoOpciones: cartItem.preparacionOpciones,
           )).toList();
 
+      int? commandId;
       final existingOrderId = state.existingOrderId;
       if (existingOrderId != null) {
-        await repository.addCommand(existingOrderId, Command(items: details));
+        final savedCommand = await repository.addCommand(existingOrderId, Command(items: details));
+        commandId = savedCommand.id;
       } else {
         final order = OrderRestaurant(
           mesa: state.table,
@@ -289,16 +299,100 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
           tipo: 'LOCAL',
           comandas: [Command(items: details)],
         );
-        await repository.createOrder(order);
+        final createdOrder = await repository.createOrder(order);
+        commandId = createdOrder.comandas?.firstOrNull?.id;
       }
       if (!mounted) return;
       state = state.copyWith(isSubmitting: false);
       Get.back();
       successNotification('Comanda enviada exitosamente');
+
+      if (commandId != null && config?.clienteImpresion == 'COFFE') {
+        _printService.processCommand(
+          commandId: commandId,
+          puntoVenta: puntoVenta,
+          escPos: config?.imprimeTicketsEscPos ?? false,
+          clientPrinter: config?.clienteImpresion,
+          idCompany: idCompany,
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       state = state.copyWith(isSubmitting: false);
       errorNotification(e.toString());
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Submit – pedido sin mesa
+  // -------------------------------------------------------------------------
+
+  /// Crea la orden y retorna el [OrderRestaurant] creado por el backend.
+  /// Retorna `null` si hay un error (ya notificado internamente).
+  /// La navegación post-creación es responsabilidad del screen llamador.
+  Future<OrderRestaurant?> submitPedidoSinMesa({
+    required Office puntoVenta,
+    required String tipo,
+    required String nombreCliente,
+    required String tipoDocumentoReceptor,
+    required String numeroDocumentoReceptor,
+    required String denominacionReceptor,
+    required String direccionReceptor,
+    required String emailReceptor,
+    required String telefonoReceptor,
+    String? direccionCompleta,
+    double? montoDelivery,
+  }) async {
+    if (state.cartItems.isEmpty) {
+      warningNotification('Agregue al menos un producto');
+      return null;
+    }
+    state = state.copyWith(isSubmitting: true);
+    try {
+      final details = state.cartItems.map((cartItem) => CommandDetail(
+            producto: cartItem.product,
+            cantidad: cartItem.quantity.toDouble(),
+            precioVenta: cartItem.unitTotal,
+            nota: cartItem.nota,
+            paraLlevar: cartItem.paraLlevar,
+            grupoProductoOpciones: cartItem.grupoOpciones,
+            preparacionProductoOpciones: cartItem.preparacionOpciones,
+          )).toList();
+
+      final cliente = Customer(
+        razonSocial: denominacionReceptor.isNotEmpty ? denominacionReceptor : nombreCliente,
+        tipoDocumento: tipoDocumentoReceptor,
+        numeroDocumento: numeroDocumentoReceptor,
+        direccion: direccionReceptor,
+        email: emailReceptor.isNotEmpty ? emailReceptor : null,
+        telefono: telefonoReceptor.isNotEmpty ? telefonoReceptor : null,
+      );
+
+      final order = OrderRestaurant(
+        puntoVenta: puntoVenta,
+        tipo: tipo,
+        comandas: [Command(items: details)],
+        nombreCliente: nombreCliente,
+        tipoDocumentoReceptor: tipoDocumentoReceptor,
+        numeroDocumentoReceptor: numeroDocumentoReceptor,
+        denominacionReceptor: denominacionReceptor.isNotEmpty ? denominacionReceptor : nombreCliente,
+        direccionReceptor: direccionReceptor,
+        emailReceptor: emailReceptor.isNotEmpty ? emailReceptor : null,
+        telefonoReceptor: telefonoReceptor.isNotEmpty ? telefonoReceptor : null,
+        cliente: cliente,
+        direccionCompleta: direccionCompleta,
+        montoDelivery: montoDelivery,
+      );
+
+      final createdOrder = await repository.createOrder(order);
+      if (!mounted) return null;
+      state = state.copyWith(isSubmitting: false);
+      return createdOrder;
+    } catch (e) {
+      if (!mounted) return null;
+      state = state.copyWith(isSubmitting: false);
+      errorNotification(e.toString());
+      return null;
     }
   }
 }

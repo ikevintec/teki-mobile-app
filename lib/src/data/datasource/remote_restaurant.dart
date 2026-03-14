@@ -21,7 +21,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       return list.map((e) => Lounge.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return [];
     } catch (e) {
@@ -39,7 +39,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       return list.map((e) => Table.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return [];
     } catch (e) {
@@ -57,7 +57,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       return list.map((e) => OrderRestaurant.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return [];
     } catch (e) {
@@ -86,9 +86,10 @@ class RemoteRestaurant extends RestaurantDatasource {
   }
 
   @override
-  Future<void> addCommand(int orderId, Command command) async {
+  Future<Command> addCommand(int orderId, Command command) async {
     try {
-      await dio.post('/orders-restaurant/$orderId/commands', data: command.toJson());
+      final response = await dio.post('/orders-restaurant/$orderId/commands', data: command.toJson());
+      return Command.fromJson(response.data);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       final data = e.response?.data;
@@ -110,7 +111,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       return data.map((e) => Check.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error al guardar cuentas';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error al guardar cuentas';
       throw Exception(msg);
     }
   }
@@ -121,7 +122,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       await dio.post('/orders-restaurant/$orderId/operations/delete-order-check');
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error al eliminar precuentas';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error al eliminar precuentas';
       throw Exception(msg);
     }
   }
@@ -139,7 +140,8 @@ class RemoteRestaurant extends RestaurantDatasource {
       return data.map((e) => OrderRestaurantChangeStatusItems.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error al actualizar estado';
+      final data = e.response?.data;
+      final msg = (data is Map ? (data['mensaje'] ?? data['message']) : null) ?? e.message ?? 'Error al actualizar estado';
       return Future.error(msg);
     } catch (e) {
       return Future.error(e.toString());
@@ -155,7 +157,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       return list.map((e) => Check.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return [];
     } catch (e) {
@@ -171,7 +173,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       return Check.fromJson(response.data);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error al cargar la cuenta';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error al cargar la cuenta';
       throw Exception(msg);
     }
   }
@@ -183,7 +185,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       return Check.fromJson(response.data);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error al actualizar la cuenta';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error al actualizar la cuenta';
       throw Exception(msg);
     }
   }
@@ -201,7 +203,7 @@ class RemoteRestaurant extends RestaurantDatasource {
       );
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
-      final msg = e.response?.data['message'] ?? e.message ?? 'Error al actualizar el item';
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error al actualizar el item';
       throw Exception(msg);
     }
   }

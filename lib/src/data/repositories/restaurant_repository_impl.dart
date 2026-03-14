@@ -31,7 +31,7 @@ class RestaurantRepositoryImpl extends RestaurantRepository {
       restaurantDatasource.createOrder(order);
 
   @override
-  Future<void> addCommand(int orderId, Command command) =>
+  Future<Command> addCommand(int orderId, Command command) =>
       restaurantDatasource.addCommand(orderId, command);
 
   @override

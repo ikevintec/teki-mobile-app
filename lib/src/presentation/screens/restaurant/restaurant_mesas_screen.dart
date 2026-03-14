@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart' hide Table;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import 'package:teki_app/src/presentation/screens/restaurant/widgets/table_card.
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/shared/services/socket_service.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class RestaurantMesasScreen extends ConsumerStatefulWidget {
@@ -20,16 +22,31 @@ class RestaurantMesasScreen extends ConsumerStatefulWidget {
 
 class _RestaurantMesasScreenState
     extends ConsumerState<RestaurantMesasScreen> {
+  final _socketService = SocketService();
+  StreamSubscription<dynamic>? _socketSub;
+
   @override
   void initState() {
     super.initState();
+
+    _socketSub = _socketService
+        .on(SocketEvent.orderRestaurant)
+        .listen((_) { if (mounted) _reload(); });
+
     Future.microtask(() {
       if (!mounted) return;
-      final pvId = ref.read(sesionProvider).office?.id;
-      if (pvId != null) {
-        ref.read(restaurantProvider.notifier).loadData(pvId);
-      }
+      final session = ref.read(sesionProvider);
+      final pvId = session.office?.id;
+      if (pvId != null) ref.read(restaurantProvider.notifier).loadData(pvId);
+      _socketService.connect(officeCode: session.office?.codigo ?? 'PV001');
     });
+  }
+
+  @override
+  void dispose() {
+    _socketSub?.cancel();
+    _socketService.disconnect();
+    super.dispose();
   }
 
   void _reload() {

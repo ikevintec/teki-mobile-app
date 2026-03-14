@@ -154,6 +154,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
       final items = <TicketDetail>[];
 
       for (final detail in (check.items ?? [])) {
+        if (detail.estadoComandaDetalle?.toUpperCase() == 'CANCELADO') continue;
         if (detail.producto == null) continue;
 
         // Producto principal
@@ -227,6 +228,27 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
             precioCompraUnitario: option.producto!.precioCompra ?? 0,
           ));
         }
+      }
+
+      // Agregar servicio delivery como ítem si aplica
+      final montoDelivery = check.pedido?.montoDelivery;
+      if (montoDelivery != null && montoDelivery > 0) {
+        items.add(TicketDetail(
+          cantidad: 1.0,
+          precioVentaUnitario: montoDelivery,
+          montoOriginal: montoDelivery,
+          valorUnitario: 0,
+          descripcion: 'Servicio delivery',
+          codigoUnidadMedida: 'ZZ',
+          codigoTipoAfectacionIgv: '10',
+          tieneImpuestoBolsas: false,
+          esAnticipo: null,
+          descuento: 0,
+          producto: null,
+          comandaDetalle: null,
+          monedaOriginal: 'PEN',
+          precioCompraUnitario: 0,
+        ));
       }
 
       setProductsSaleEntity(items, monedaOrigen: 'PEN');

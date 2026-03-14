@@ -14,12 +14,8 @@ class RemoteCompany extends CompanyDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      String errorMessage = 'Error de conexión';
-      if (e.response != null) {
-        errorMessage = e.response?.data['message'] ?? 'Error de conexión';
-      } else {
-        errorMessage = e.message ?? 'Error de conexión';
-      }
+      final resData = e.response?.data;
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       return Future.error(errorMessage);
     } catch (e) {
       return Future.error(e.toString());

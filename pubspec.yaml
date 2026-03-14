@@ -8,6 +8,9 @@ environment:
   sdk: '>=3.2.4 <4.0.0'
 
 dependencies:
+  firebase_core: ^3.13.0
+  firebase_messaging: ^15.2.5
+  flutter_local_notifications: ^18.0.1
   card_slider: ^1.0.5
   carousel_slider: ^5.0.0
   cherry_toast: ^1.8.0
@@ -42,6 +45,7 @@ dependencies:
   url_launcher: ^6.3.1
   intl: ^0.20.2
   syncfusion_flutter_pdfviewer: ^30.1.40
+  socket_io_client: ^2.0.3+1
   uuid: ^4.5.1
   flutter_localizations:
     sdk: flutter
@@ -73,3 +77,4 @@ flutter:
     - assets/images/payment/
     - assets/images/logo/icon.png
     - .env
+    - .env.production

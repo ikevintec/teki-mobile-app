@@ -6,8 +6,11 @@ import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
+import 'package:teki_app/src/data/models/teki_model/delivery.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/comanda_detail_item_tile.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/item_action_bottom_sheet.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -17,6 +20,13 @@ import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
+
+void showOrderDetailDialog(BuildContext context, OrderRestaurant order) {
+  showDialog(
+    context: context,
+    builder: (_) => _OrderDetailDialog(order: order),
+  );
+}
 
 class OrderOptionsSheet extends ConsumerStatefulWidget {
   final OrderRestaurant order;
@@ -264,10 +274,7 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
   }
 
   void _showDetailDialog(BuildContext context, OrderRestaurant order) {
-    showDialog(
-      context: context,
-      builder: (_) => _OrderDetailDialog(order: order),
-    );
+    showOrderDetailDialog(context, order);
   }
 
   Future<void> _finalizarCuenta(BuildContext context, OrderRestaurant order) async {
@@ -502,7 +509,7 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
   Future<void> _anularOrden(BuildContext context, OrderRestaurant order) async {
     final result = await showDialog<({bool confirmed, bool updateInventory, String observacion})>(
       context: context,
-      builder: (_) => const _AnularOrdenDialog(),
+      builder: (_) => const AnularOrdenDialog(),
     );
     if (result == null || !result.confirmed) return;
     final pvId = ref.read(sesionProvider).office?.id;
@@ -521,14 +528,14 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
 
 }
 
-class _AnularOrdenDialog extends StatefulWidget {
-  const _AnularOrdenDialog();
+class AnularOrdenDialog extends StatefulWidget {
+  const AnularOrdenDialog();
 
   @override
-  State<_AnularOrdenDialog> createState() => _AnularOrdenDialogState();
+  State<AnularOrdenDialog> createState() => _AnularOrdenDialogState();
 }
 
-class _AnularOrdenDialogState extends State<_AnularOrdenDialog> {
+class _AnularOrdenDialogState extends State<AnularOrdenDialog> {
   final _observacionController = TextEditingController();
   bool _updateInventory = true;
 
@@ -861,103 +868,6 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
     return map;
   }
 
-  Widget _buildItemRow(CommandDetail item) {
-    final isCancelled = ComandaDetailStatus.isCancelledItem(item);
-    final textDecor = isCancelled ? TextDecoration.lineThrough : TextDecoration.none;
-    final mainColor = isCancelled ? Colors.red.shade400 : Colors.black87;
-    final grupoOpciones =
-        (item.grupoProductoOpciones ?? []).where((o) => o.eliminado != true).toList();
-
-    return Container(
-      color: isCancelled ? Colors.red.shade50 : null,
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Main row ───────────────────────────────────────────────────
-          Row(
-            children: [
-              Text(
-                '${item.cantidad ?? 1}x',
-                style: TextStyle(
-                  color: isCancelled ? Colors.red.shade400 : Colors.grey.shade600,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  decoration: textDecor,
-                  decorationColor: Colors.red.shade400,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  item.producto?.nombre ?? '-',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: mainColor,
-                    decoration: textDecor,
-                    decorationColor: Colors.red.shade400,
-                  ),
-                ),
-              ),
-              Text(
-                'S/. ${((item.precioVenta ?? 0) * (item.cantidad ?? 1)).toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: mainColor,
-                  decoration: textDecor,
-                  decorationColor: Colors.red.shade400,
-                ),
-              ),
-            ],
-          ),
-          // ── Group options sub-items ─────────────────────────────────────
-          if (grupoOpciones.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(left: 22, top: 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: grupoOpciones.map((o) {
-                  final subColor = isCancelled ? Colors.red.shade300 : Colors.grey.shade600;
-                  final optPrice = (o.precio ?? 0) * (o.cantidad ?? 1);
-                  final name = o.nombreOpcion ?? o.nombreGrupo ?? '-';
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Row(
-                      children: [
-                        Icon(Icons.subdirectory_arrow_right_rounded,
-                            size: 11, color: Colors.grey.shade400),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: Text(
-                            '${(o.cantidad ?? 1).toInt()}x $name',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: subColor,
-                              decoration: textDecor,
-                              decorationColor: Colors.red.shade300,
-                            ),
-                          ),
-                        ),
-                        if (optPrice > 0)
-                          Text(
-                            'S/. ${optPrice.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: subColor,
-                              decoration: textDecor,
-                              decorationColor: Colors.red.shade300,
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSubtotalRow(double subtotal) {
     return Container(
@@ -982,6 +892,100 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
     );
   }
 
+  Widget _buildOrdenView(OrderRestaurant order, bool hasItemPreparado, bool isPendiente) {
+    final estadoColor = hasItemPreparado
+        ? const Color(0xFFE65100)
+        : isPendiente
+            ? const Color(0xFF1565C0)
+            : const Color(0xFF2E7D32);
+    final estadoLabel = hasItemPreparado ? 'PREPARADO' : (order.estado ?? '-');
+    final isDelivery = order.tipo == 'DELIVERY';
+    final isPedidoOnline = order.tipo == 'PEDIDO_ONLINE';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+            // Información General
+          _LabeledInfoCard(
+            title: 'Información General',
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: estadoColor,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                estadoLabel,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+            children: [
+              _OrderInfoRow(
+                icon: Icons.access_time_rounded,
+                label: 'Tiempo en mesa',
+                value: _formatElapsed(_elapsed),
+              ),
+              if ((order.mesa?.numero ?? order.mesa?.id) != null)
+                _OrderInfoRow(
+                  icon: Icons.table_restaurant_rounded,
+                  label: 'Mesa',
+                  value: 'Mesa ${order.mesa?.numero ?? order.mesa?.id}',
+                ),
+              if (order.tipo?.isNotEmpty == true)
+                _OrderInfoRow(
+                  icon: Icons.local_dining_rounded,
+                  label: 'Tipo',
+                  value: normalizeEnumLabel(order.tipo),
+                ),
+              if (order.numeroComensales != null)
+                _OrderInfoRow(
+                  icon: Icons.people_alt_rounded,
+                  label: 'Comensales',
+                  value: '${order.numeroComensales}',
+                ),
+              if ((order.usuario?.nombreCompleto ?? order.usuario?.name)?.isNotEmpty == true)
+                _OrderInfoRow(
+                  icon: Icons.person_rounded,
+                  label: 'Atendido por',
+                  value: order.usuario!.nombreCompleto ?? order.usuario!.name!,
+                ),
+              if (order.fecha != null)
+                _OrderInfoRow(
+                  icon: Icons.calendar_today_rounded,
+                  label: 'Apertura',
+                  value: _formatDateTime(order.fecha),
+                ),
+            ],
+          ),
+          // Cliente (solo DELIVERY)
+          if (isDelivery) _ClienteInfoCard(cliente: order.cliente),
+          // Dirección (si hay data)
+          _DireccionInfoCard(
+            direccionCompleta: order.direccionCompleta,
+            referencia: order.referencia,
+            montoDelivery: order.montoDelivery,
+          ),
+          // Información Online (solo PEDIDO_ONLINE)
+          if (isPedidoOnline)
+            _OnlineInfoCard(
+              estadoOnline: order.estadoOnline,
+              formaPago: order.formaPago,
+              nombreFormaPago: order.nombreFormaPago,
+              envio: order.envio,
+            ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+
   Widget _buildComandasView(List<Command> comandas) {
     if (comandas.isEmpty) {
       return const Center(
@@ -997,7 +1001,12 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
       itemCount: comandas.length,
       itemBuilder: (context, index) {
         final comanda = comandas[index];
-        final items = comanda.items ?? [];
+        const statusOrder = {'PREPARADO': 0, 'PENDIENTE': 1, 'DESPACHADO': 2, 'CANCELADO': 3};
+        final items = <CommandDetail>[...(comanda.items ?? [])]..sort((a, b) {
+            final aO = statusOrder[a.estadoComandaDetalle?.toUpperCase()] ?? 1;
+            final bO = statusOrder[b.estadoComandaDetalle?.toUpperCase()] ?? 1;
+            return aO.compareTo(bO);
+          });
         final subtotal = items.fold<double>(
           0.0,
           (s, i) => ComandaDetailStatus.isCancelledItem(i)
@@ -1005,7 +1014,7 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
               : s + ((i.precioVenta ?? 0.0) * (i.cantidad ?? 1.0)),
         );
         return Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -1013,9 +1022,9 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
               border: Border.all(color: ColorSchema.primaryColor.withValues(alpha: 0.25)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -1048,7 +1057,23 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
                     ],
                   ),
                 ),
-                ...items.map((item) => _buildItemRow(item)),
+                ...items.where((i) => !ComandaDetailStatus.isCancelledItem(i)).map((item) => _CommandaItemRow(
+                      item: item,
+                      onServir: (comanda.id != null && item.id != null)
+                          ? () => ref
+                                .read(restaurantProvider.notifier)
+                                .updateCommandItemStatus(comanda.id!, item.id!, 'DESPACHADO')
+                          : null,
+                      onAnular: (comanda.id != null && item.id != null)
+                          ? () => ref
+                                .read(restaurantProvider.notifier)
+                                .updateCommandItemStatus(comanda.id!, item.id!, 'CANCELADO')
+                          : null,
+                    )),
+                if (items.any(ComandaDetailStatus.isCancelledItem))
+                  _CancelledItemsBar(
+                    items: items.where(ComandaDetailStatus.isCancelledItem).toList(),
+                  ),
                 _buildSubtotalRow(subtotal),
               ],
             ),
@@ -1094,7 +1119,7 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
         return GestureDetector(
           onTap: isPagado ? null : () => _showCuentaSheet(context, cuenta, index),
           child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
           child: Container(
             decoration: BoxDecoration(
               color: cardBg,
@@ -1102,9 +1127,9 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
               border: Border.all(color: borderColor.withValues(alpha: 0.35)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -1164,8 +1189,16 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
                       style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
                     ),
                   )
-                else
-                  ...items.map((item) => _buildItemRow(item)),
+                else ...[
+                  ...items.where((i) => !ComandaDetailStatus.isCancelledItem(i)).map(
+                        (item) => _CommandaItemRow(item: item, showStatus: false),
+                      ),
+                  if (items.any(ComandaDetailStatus.isCancelledItem))
+                    _CancelledItemsBar(
+                      items: items.where(ComandaDetailStatus.isCancelledItem).toList(),
+                      showStatus: false,
+                    ),
+                ],
                 _buildSubtotalRow(subtotal),
               ],
             ),
@@ -1281,65 +1314,6 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
     );
   }
 
-  Widget _buildAccionesView(List<Command> comandas) {
-    // Flatten all items from all comandas into a single list, preserving
-    // a reference to their parent comanda id and number.
-    final entries = <({CommandDetail item, int? commandId, int? numeroComanda})>[];
-    for (final comanda in comandas) {
-      for (final item in (comanda.items ?? [])) {
-        entries.add((item: item, commandId: comanda.id, numeroComanda: comanda.numeroComanda));
-      }
-    }
-
-    // Sort: PREPARADO → PENDIENTE → DESPACHADO → CANCELADO
-    const statusOrder = {
-      'PREPARADO': 0,
-      'PENDIENTE': 1,
-      'DESPACHADO': 2,
-      'CANCELADO': 3,
-    };
-    entries.sort((a, b) {
-      final aStatus = (a.item.estadoComandaDetalle?.toUpperCase() ?? 'PENDIENTE');
-      final bStatus = (b.item.estadoComandaDetalle?.toUpperCase() ?? 'PENDIENTE');
-      return (statusOrder[aStatus] ?? 1).compareTo(statusOrder[bStatus] ?? 1);
-    });
-
-    if (entries.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('Sin productos', style: TextStyle(color: Colors.grey)),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 6, bottom: 8),
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final e = entries[index];
-        final commandId = e.commandId;
-        final itemId = e.item.id;
-        return ComandaDetailItemTile(
-          item: e.item,
-          numeroComanda: e.numeroComanda,
-          showComandaBadge: true,
-          interactive: true,
-          onServir: (commandId != null && itemId != null)
-              ? () => ref
-                    .read(restaurantProvider.notifier)
-                    .updateCommandItemStatus(commandId, itemId, 'DESPACHADO')
-              : null,
-          onAnular: (commandId != null && itemId != null)
-              ? () => ref
-                    .read(restaurantProvider.notifier)
-                    .updateCommandItemStatus(commandId, itemId, 'CANCELADO')
-              : null,
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // Watch the provider so the dialog rebuilds when the order data is reloaded
@@ -1371,20 +1345,28 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      backgroundColor: Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
+            padding: const EdgeInsets.fromLTRB(20, 5, 8, 0),
             child: Row(
               children: [
-                const Expanded(
-                  child: Text(
-                    'Detalle de orden',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                const Text(
+                  'Detalle de orden',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '#${formatOrderNumber(order.numeroOrden)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
                   ),
                 ),
+                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.of(context).pop(),
@@ -1392,94 +1374,6 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
               ],
             ),
           ),
-          // Order info strip
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            color: Colors.grey.shade50,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  alignment: WrapAlignment.start,
-                  children: [
-                    _InfoChip(
-                      icon: Icons.tag,
-                      value: formatOrderNumber(order.numeroOrden).toString(),
-                      color: ColorSchema.primaryColor,
-                    ),
-                    _InfoChip(
-                      icon: Icons.table_restaurant_rounded,
-                      value: 'Mesa ${order.mesa?.numero ?? order.mesa?.id ?? '-'}',
-                      color: ColorSchema.primaryColor,
-                    ),
-                    _InfoChip(
-                      icon: Icons.local_dining_rounded,
-                      value: order.tipo ?? '-',
-                      color: ColorSchema.primaryColor,
-                    ),
-                    if (order.numeroComensales != null)
-                      _InfoChip(
-                        icon: Icons.people_alt_rounded,
-                        value: '${order.numeroComensales}',
-                        color: ColorSchema.primaryColor,
-                      ),
-                  ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: hasItemPreparado
-                            ? const Color(0xFFE65100).withValues(alpha: 0.12)
-                            : isPendiente
-                                ? const Color(0xFF1565C0).withValues(alpha: 0.12)
-                                : const Color(0xFF2E7D32).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        hasItemPreparado ? 'PREPARADO' : (order.estado ?? '-'),
-                        style: TextStyle(
-                          color: hasItemPreparado
-                              ? const Color(0xFFE65100)
-                              : isPendiente
-                                  ? const Color(0xFF1565C0)
-                                  : const Color(0xFF2E7D32),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Icon(Icons.access_time_rounded, size: 13, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatElapsed(_elapsed),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        fontFeatures: [FontFeature.tabularFigures()],
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'en mesa',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: Colors.grey.shade200),
           // Tab bar
           ColoredBox(
             color: Colors.white,
@@ -1490,26 +1384,29 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
               indicatorColor: ColorSchema.primaryColor,
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               tabs: const [
+                Tab(text: 'Orden'),
                 Tab(text: 'Comandas'),
                 Tab(text: 'Cuentas'),
-                Tab(text: 'Acciones'),
               ],
             ),
           ),
           const Divider(height: 1),
           // Tab content
-          ConstrainedBox(
+          ColoredBox(
+            color: const Color.fromARGB(255, 223, 228, 247),
+            child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.45,
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
             ),
             child: TabBarView(
               controller: _tabController,
               children: [
+                _buildOrdenView(order, hasItemPreparado, isPendiente),
                 _buildComandasView(comandas),
                 _buildCuentasView(order),
-                _buildAccionesView(comandas),
               ],
             ),
+          ),
           ),
           // Grand total footer
           Container(
@@ -1519,24 +1416,52 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
               color: ColorSchema.primaryColor,
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Total',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                if (order.montoDelivery != null && order.montoDelivery! > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Delivery',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          'S/. ${order.montoDelivery!.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  'S/. ${grandTotal.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Total',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      'S/. ${grandTotal.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1547,32 +1472,388 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final Color color;
+// ─── Comanda item row with status colors, payment badge, action button ────────
 
-  const _InfoChip({required this.icon, required this.value, required this.color});
+class _CommandaItemRow extends StatefulWidget {
+  final CommandDetail item;
+  final VoidCallback? onServir;
+  final VoidCallback? onAnular;
+  final bool showStatus;
+
+  const _CommandaItemRow({
+    required this.item,
+    this.onServir,
+    this.onAnular,
+    this.showStatus = true,
+  });
+
+  @override
+  State<_CommandaItemRow> createState() => _CommandaItemRowState();
+}
+
+class _CommandaItemRowState extends State<_CommandaItemRow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _bounceController;
+  late final Animation<double> _bounceAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _bounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
+    _bounceAnim = Tween<double>(begin: 0, end: 4).animate(
+      CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _bounceController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+    final item = widget.item;
+    final isCancelled = ComandaDetailStatus.isCancelledItem(item);
+    final status = item.estadoComandaDetalle?.toUpperCase() ?? ComandaDetailStatus.pendiente;
+    final isPagado = item.cuenta?.pagado == true;
+    final hasActions =
+        !isCancelled && !isPagado && (widget.onServir != null || widget.onAnular != null);
+    final grupoOpciones =
+        (item.grupoProductoOpciones ?? []).where((o) => o.eliminado != true).toList();
+    final hasGroups = grupoOpciones.isNotEmpty;
+
+    final textDecor = isCancelled ? TextDecoration.lineThrough : TextDecoration.none;
+    final mainColor = isCancelled ? Colors.red.shade400 : Colors.black87;
+    final bgColor = Colors.white;
+    final borderAccent = isCancelled
+        ? Colors.red.shade300
+        : isPagado
+            ? const Color(0xFF2E7D32)
+            : statusBorderColor(status);
+    final total = (item.precioVenta ?? 0) * (item.cantidad ?? 1);
+
+    return GestureDetector(
+      onTap: hasActions
+          ? () => ItemActionBottomSheet.show(
+                context,
+                item: item,
+                status: status,
+                onServir: widget.onServir,
+                onAnular: widget.onAnular,
+              )
+          : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border(
+            left: BorderSide(color: borderAccent, width: 3),
+            bottom: BorderSide(color: Colors.grey.shade300, width: 1.0),
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+          // ── Row 1: pagado + status (left) · arrow (right) ─────────────
+          Row(
+            children: [
+              if (!isCancelled) ...[
+                if (widget.showStatus && !isPagado && status != ComandaDetailStatus.pendiente) ...[
+                  ComandaStatusBadge(status: status, fontSize: 8),
+                  const SizedBox(width: 4),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isPagado ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    isPagado ? 'Pagado' : 'Por pagar',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isPagado ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                    ),
+                  ),
+                ),
+              ],
+              const Spacer(),
+              if (hasActions)
+                AnimatedBuilder(
+                  animation: _bounceAnim,
+                  builder: (_, __) => Transform.translate(
+                    offset: Offset(_bounceAnim.value, 0),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: borderAccent,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          // ── Row 2: qty + name + price ──────────────────────────────────
+          Row(
+            children: [
+              Text(
+                '${item.cantidad?.toInt() ?? 1}x',
+                style: TextStyle(
+                  color: isCancelled ? Colors.red.shade400 : Colors.grey.shade600,
+                  fontSize: isCancelled ? 11 : 13,
+                  fontWeight: FontWeight.w600,
+                  decoration: textDecor,
+                  decorationColor: Colors.red.shade400,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  item.producto?.nombre ?? '-',
+                  style: TextStyle(
+                    fontSize: isCancelled ? 11 : 13,
+                    fontWeight: FontWeight.w500,
+                    color: mainColor,
+                    decoration: textDecor,
+                    decorationColor: Colors.red.shade400,
+                  ),
+                ),
+              ),
+              Text(
+                'S/. ${total.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: isCancelled ? 11 : 13,
+                  fontWeight: FontWeight.w600,
+                  color: mainColor,
+                  decoration: textDecor,
+                  decorationColor: Colors.red.shade400,
+                ),
+              ),
+            ],
+          ),
+          // ── Group options (expanded) ───────────────────────────────────
+          if (hasGroups) ...[
+            const SizedBox(height: 5),
+            Padding(
+              padding: const EdgeInsets.only(left: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: grupoOpciones.map((o) {
+                  final subColor = isCancelled ? Colors.red.shade300 : Colors.grey.shade600;
+                  final optPrice = (o.precio ?? 0) * (o.cantidad ?? 1);
+                  final name = o.nombreOpcion ?? o.nombreGrupo ?? '-';
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Row(
+                      children: [
+                        Icon(Icons.subdirectory_arrow_right_rounded,
+                            size: 11, color: Colors.grey.shade400),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            '${(o.cantidad ?? 1).toInt()}x $name',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: subColor,
+                              decoration: textDecor,
+                              decorationColor: Colors.red.shade300,
+                            ),
+                          ),
+                        ),
+                        if (optPrice > 0)
+                          Text(
+                            'S/. ${optPrice.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: subColor,
+                              decoration: textDecor,
+                              decorationColor: Colors.red.shade300,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ],
       ),
+    ),
+    );
+  }
+}
+
+// ─── Cancelled items collapsible bar ─────────────────────────────────────────
+
+class _CancelledItemsBar extends StatefulWidget {
+  final List<CommandDetail> items;
+  final bool showStatus;
+
+  const _CancelledItemsBar({required this.items, this.showStatus = true});
+
+  @override
+  State<_CancelledItemsBar> createState() => _CancelledItemsBarState();
+}
+
+class _CancelledItemsBarState extends State<_CancelledItemsBar> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = widget.items.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: Colors.red.shade300, width: 3),
+                bottom: BorderSide(color: Colors.grey.shade300, width: 1.0),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+            child: Row(
+              children: [
+                Text(
+                  '$count ${count == 1 ? 'item anulado' : 'items anulados'}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.red.shade300,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  _expanded ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  size: 13,
+                  color: Colors.red.shade300,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded)
+          ...widget.items.map(
+            (item) => _CommandaItemRow(item: item, showStatus: widget.showStatus),
+          ),
+      ],
+    );
+  }
+}
+
+// ─── Order info row ───────────────────────────────────────────────────────────
+
+class _OrderInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool valueBadge;
+
+  const _OrderInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.valueBadge = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = valueColor ?? Colors.black87;
+    Widget valueWidget = Text(
+      value,
+      textAlign: TextAlign.end,
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color),
+    );
+    if (valueBadge && valueColor != null) {
+      valueWidget = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: valueColor!.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: valueColor!.withValues(alpha: 0.25)),
+        ),
+        child: Text(
+          value,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: valueColor),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color.withValues(alpha: 0.7)),
-          const SizedBox(width: 4),
+          Icon(icon, size: 15, color: ColorSchema.primaryColor.withValues(alpha: 0.7)),
+          const SizedBox(width: 10),
           Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color.withValues(alpha: 0.85),
+            label,
+            style: TextStyle(fontSize: 13, color: ColorSchema.primaryColor.withValues(alpha: 0.7), fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Align(alignment: Alignment.centerRight, child: valueWidget),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Row with two values stacked vertically on the right side.
+class _StackedInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value1;
+  final String? value2;
+
+  const _StackedInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value1,
+    this.value2,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: 15, color: ColorSchema.primaryColor.withValues(alpha: 0.7)),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: TextStyle(fontSize: 13, color: ColorSchema.primaryColor.withValues(alpha: 0.7), fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  value1,
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+                ),
+                if (value2 != null)
+                  Text(
+                    value2!,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.grey.shade500),
+                  ),
+              ],
             ),
           ),
         ],
@@ -1580,3 +1861,243 @@ class _InfoChip extends StatelessWidget {
     );
   }
 }
+
+Color _estadoPedidoOnlineColor(String estado) {
+  switch (estado) {
+    case 'ACEPTADO':             return const Color(0xFF2E7D32);
+    case 'CANCELADO':
+    case 'RECHAZADO':            return const Color(0xFFC62828);
+    case 'PENDIENTE_ACEPTACION': return const Color(0xFFE65100);
+    default:                     return Colors.black87;
+  }
+}
+
+Color _estadoPedidoOnlineBgColor(String estado) {
+  switch (estado) {
+    case 'ACEPTADO':             return const Color.fromARGB(255, 230, 255, 232);
+    case 'CANCELADO':
+    case 'RECHAZADO':            return const Color(0xFFFFD6D6);
+    case 'PENDIENTE_ACEPTACION': return const Color(0xFFFFE5CC);
+    default:                     return const Color(0xFFF0F0F0);
+  }
+}
+
+Color _estadoDeliveryColor(String estado) {
+  switch (estado) {
+    case 'ENTREGADO': return const Color(0xFF2E7D32);
+    case 'ENVIADO':   return const Color(0xFF1565C0);
+    case 'CANCELADO': return const Color(0xFFC62828);
+    case 'PENDIENTE': return const Color(0xFFE65100);
+    default:          return Colors.black87;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Card with a floating label overlapping the top-left border.
+/// Optionally accepts a [trailing] widget that floats on the top-right border.
+class _LabeledInfoCard extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  final Widget? trailing;
+
+  const _LabeledInfoCard({required this.title, required this.children, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 10),
+            padding: EdgeInsets.fromLTRB(14, trailing != null ? 26 : 16, 14, 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.07),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: ColorSchema.primaryColor,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ),
+          if (trailing != null)
+            Positioned(
+              top: 0,
+              right: 12,
+              child: trailing!,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card with client info, shown only when at least one field has data.
+class _ClienteInfoCard extends StatelessWidget {
+  final Customer? cliente;
+
+  const _ClienteInfoCard({required this.cliente});
+
+  @override
+  Widget build(BuildContext context) {
+    final nombre = cliente?.razonSocial?.isNotEmpty == true ? cliente!.razonSocial! : null;
+    final telefono = cliente?.telefono?.isNotEmpty == true ? cliente!.telefono! : null;
+    if (nombre == null && telefono == null) return const SizedBox.shrink();
+    return _LabeledInfoCard(
+      title: 'Cliente',
+      children: [
+        if (nombre != null)
+          _OrderInfoRow(icon: Icons.person_outline_rounded, label: 'Nombre', value: nombre),
+        if (telefono != null)
+          _OrderInfoRow(icon: Icons.phone_outlined, label: 'Teléfono', value: telefono),
+      ],
+    );
+  }
+}
+
+/// Card with address info, shown only when at least one field has data.
+class _DireccionInfoCard extends StatelessWidget {
+  final String? direccionCompleta;
+  final String? referencia;
+  final double? montoDelivery;
+
+  const _DireccionInfoCard({
+    this.direccionCompleta,
+    this.referencia,
+    this.montoDelivery,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dir = direccionCompleta?.isNotEmpty == true ? direccionCompleta! : null;
+    final ref = referencia?.isNotEmpty == true ? referencia! : null;
+    final monto = (montoDelivery != null && montoDelivery! > 0) ? montoDelivery : null;
+    if (dir == null && ref == null && monto == null) return const SizedBox.shrink();
+    return _LabeledInfoCard(
+      title: 'Dirección',
+      children: [
+        if (dir != null)
+          _OrderInfoRow(icon: Icons.location_on_outlined, label: 'Dirección', value: dir),
+        if (ref != null)
+          _OrderInfoRow(icon: Icons.signpost_outlined, label: 'Referencia', value: ref),
+        if (monto != null)
+          _OrderInfoRow(
+            icon: Icons.delivery_dining_outlined,
+            label: 'Costo delivery',
+            value: 'S/. ${monto.toStringAsFixed(2)}',
+          ),
+      ],
+    );
+  }
+}
+
+/// Card with online order info, shown only when at least one field has data.
+class _OnlineInfoCard extends StatelessWidget {
+  final String? estadoOnline;
+  final String? formaPago;
+  final String? nombreFormaPago;
+  final Delivery? envio;
+
+  const _OnlineInfoCard({
+    this.estadoOnline,
+    this.formaPago,
+    this.nombreFormaPago,
+    this.envio,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final online = estadoOnline?.isNotEmpty == true ? estadoOnline! : null;
+    final fpCodigo = formaPago?.isNotEmpty == true ? formaPago! : null;
+    final fpNombre = nombreFormaPago?.isNotEmpty == true ? nombreFormaPago! : null;
+    final estadoEnvio = envio?.estado?.isNotEmpty == true ? envio!.estado! : null;
+    final repartidor = envio?.repartidor?.nombreCompleto?.isNotEmpty == true
+        ? envio!.repartidor!.nombreCompleto!
+        : null;
+    if (online == null && fpCodigo == null && fpNombre == null &&
+        estadoEnvio == null && repartidor == null) {
+      return const SizedBox.shrink();
+    }
+    final onlineColor = online != null ? _estadoPedidoOnlineColor(online) : null;
+    final onlineBgColor = online != null ? _estadoPedidoOnlineBgColor(online) : null;
+    return _LabeledInfoCard(
+      title: 'Información Online',
+      trailing: online != null
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: onlineBgColor,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: onlineColor!),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.cloud_outlined, size: 11, color: onlineColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    online,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: onlineColor,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : null,
+      children: [
+        if (estadoEnvio != null)
+          _OrderInfoRow(
+            icon: Icons.delivery_dining_outlined,
+            label: 'Estado envío',
+            value: estadoEnvio,
+            valueColor: _estadoDeliveryColor(estadoEnvio),
+            valueBadge: true,
+          ),
+        if (repartidor != null)
+          _OrderInfoRow(icon: Icons.person_pin_circle_outlined, label: 'Repartidor', value: repartidor),
+        if (fpCodigo != null || fpNombre != null)
+          _StackedInfoRow(
+            icon: Icons.payment_outlined,
+            label: 'Forma de pago',
+            value1: fpCodigo ?? fpNombre!,
+            value2: fpCodigo != null ? fpNombre : null,
+          ),
+      ],
+    );
+  }
+}
+

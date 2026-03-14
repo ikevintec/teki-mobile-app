@@ -21,12 +21,8 @@ class RemoteSalestation extends SaleStationDataSource {
         return Future.error('Sesión expirada');
       }
       
-      String responseMessage = 'Error de conexión';
-      if (e.response != null) {
-        responseMessage = e.response?.data['message'] ?? 'Error de conexión';
-      } else {
-        responseMessage = e.message ?? 'Error de conexión';
-      }
+      final resData = e.response?.data;
+      final responseMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       return Future.error(responseMessage);
     } catch (e) {
       return Future.error(e.toString());

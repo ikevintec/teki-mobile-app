@@ -276,10 +276,11 @@ Widget _buildErrorScreen(String message, bool fromSale) {
         Get.to(() => PdfViewerScreen(
               uuid: ticket.uuid!,
               fileName: ticket.identificadorDocumento!,
+              ticketId: ticket.id,
             ));
       },
     ));
-    
+
     options.add(DropdownActionOption(
       label: 'Ver Ticket',
       icon: Icons.confirmation_number,
@@ -289,6 +290,7 @@ Widget _buildErrorScreen(String message, bool fromSale) {
               uuid: ticket.uuid!,
               fileName: ticket.identificadorDocumento!,
               fileSize: 'TICKET',
+              ticketId: ticket.id,
             ));
       },
     ));

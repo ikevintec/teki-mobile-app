@@ -2,20 +2,32 @@ import 'dart:async';
 
 import 'package:flutter/material.dart' hide Table;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
+import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/pedido_sin_mesa_dialog.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/cart_bottom_sheet.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail_sheet.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_menu_card.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/restaurant/cobrador_provider.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class ComandaScreen extends ConsumerStatefulWidget {
-  final Table table;
+  final Table? table;
   final int? existingOrderId;
+  final bool isPedidoSinMesa;
 
-  const ComandaScreen({super.key, required this.table, this.existingOrderId});
+  const ComandaScreen({
+    super.key,
+    this.table,
+    this.existingOrderId,
+    this.isPedidoSinMesa = false,
+  });
 
   @override
   ConsumerState<ComandaScreen> createState() => _ComandaScreenState();
@@ -81,7 +93,81 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // Submit
+  // Submit – pedido sin mesa
+  // -------------------------------------------------------------------------
+
+  Future<void> _handlePedidoSinMesa() async {
+    final office = ref.read(sesionProvider).office;
+    if (office == null) {
+      warningNotification('No hay punto de venta seleccionado');
+      return;
+    }
+    final notifier = ref.read(comandaProvider.notifier);
+    if (notifier.totalItems == 0) {
+      warningNotification('La canasta está vacía');
+      return;
+    }
+
+    final result = await showPedidoSinMesaDialog(context);
+    if (result == null) return;
+
+    final createdOrder = await notifier.submitPedidoSinMesa(
+      puntoVenta: office,
+      tipo: result.tipo,
+      nombreCliente: result.nombreCliente,
+      tipoDocumentoReceptor: result.tipoDocumentoReceptor,
+      numeroDocumentoReceptor: result.numeroDocumentoReceptor,
+      denominacionReceptor: result.denominacionReceptor,
+      direccionReceptor: result.direccionReceptor,
+      emailReceptor: result.emailReceptor,
+      telefonoReceptor: result.telefonoReceptor,
+      direccionCompleta: result.direccionCompleta,
+      montoDelivery: result.montoDelivery,
+    );
+
+    if (createdOrder == null) return; // error ya notificado
+    if (!mounted) return;
+
+    // Si generarComprobante: cargar la cuenta y lanzar flujo de comprobante
+    if (result.generarComprobante) {
+      final cuentaId = createdOrder.cuentas?.isNotEmpty == true
+          ? createdOrder.cuentas![0].id
+          : null;
+
+      if (cuentaId != null) {
+        try {
+          final fullCheck =
+              await ref.read(cobradorProvider.notifier).getCheckById(cuentaId);
+          if (!mounted) return;
+          await ref.read(productSaleProvider.notifier).initFromCheck(fullCheck);
+          if (!mounted) return;
+          // Reemplaza ComandaScreen con ProductsSaleScreen; back → pedidos
+          Get.offUntil(
+            GetPageRoute(
+              page: () => const ProductsSaleScreen(),
+              routeName: '/products_sale_from_pedido',
+            ),
+            (route) => route.settings.name == AppRoutes.ordersRestaurant,
+          );
+          successNotification('Pedido creado exitosamente');
+        } catch (e) {
+          errorNotification('Error al cargar la cuenta: $e');
+          Get.until((route) =>
+              route.settings.name == AppRoutes.ordersRestaurant);
+          successNotification('Pedido creado. No se pudo abrir el comprobante.');
+        }
+        return;
+      }
+    }
+
+    // Sin generarComprobante o sin cuenta: volver a pedidos
+    successNotification('Pedido creado exitosamente');
+    Get.until(
+        (route) => route.settings.name == AppRoutes.ordersRestaurant);
+  }
+
+  // -------------------------------------------------------------------------
+  // Submit – comanda con mesa
   // -------------------------------------------------------------------------
 
   Future<void> _submit() async {
@@ -196,7 +282,12 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
     );
 
     if (confirmed != true) return;
-    await notifier.submitComanda(office);
+    final sesion = ref.read(sesionProvider);
+    await notifier.submitComanda(
+      office,
+      config: sesion.config,
+      idCompany: sesion.company?.id,
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -220,13 +311,15 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Mesa ${widget.table.numero ?? widget.table.id}',
+              widget.isPedidoSinMesa
+                  ? 'Pedido (sin mesa)'
+                  : 'Mesa ${widget.table?.numero ?? widget.table?.id ?? ''}',
               style: const TextStyle(
                   fontWeight: FontWeight.bold, fontSize: 15),
             ),
-            if (widget.table.salon?.nombre != null)
+            if (!widget.isPedidoSinMesa && widget.table?.salon?.nombre != null)
               Text(
-                widget.table.salon!.nombre!,
+                widget.table!.salon!.nombre!,
                 style: const TextStyle(
                     fontSize: 11, color: Colors.white70),
               ),
@@ -405,8 +498,9 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                 // Main CTA
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed:
-                        state.isSubmitting ? null : _submit,
+                    onPressed: state.isSubmitting
+                        ? null
+                        : (widget.isPedidoSinMesa ? _handlePedidoSinMesa : _submit),
                     icon: state.isSubmitting
                         ? const SizedBox(
                             width: 16,
@@ -416,12 +510,19 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Icon(Icons.receipt_long_rounded,
+                        : Icon(
+                            widget.isPedidoSinMesa
+                                ? Icons.arrow_forward_rounded
+                                : Icons.receipt_long_rounded,
                             size: 20),
                     label: Text(
-                      totalItems > 0
-                          ? 'Agregar Comanda  ·  S/ ${notifier.totalAmount.toStringAsFixed(2)}'
-                          : 'Agregar Comanda',
+                      widget.isPedidoSinMesa
+                          ? (totalItems > 0
+                              ? 'Siguiente  ·  S/ ${notifier.totalAmount.toStringAsFixed(2)}'
+                              : 'Siguiente')
+                          : (totalItems > 0
+                              ? 'Agregar Comanda  ·  S/ ${notifier.totalAmount.toStringAsFixed(2)}'
+                              : 'Agregar Comanda'),
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 14),
                     ),

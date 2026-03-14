@@ -72,8 +72,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final errorMessage =
-          e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final resData = e.response?.data;
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(errorMessage);
       return Future.error(errorMessage);
     } catch (e) {
@@ -101,8 +101,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final message =
-          e.response?.data?['message'] ?? 'Error desconocido del servidor';
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
@@ -172,8 +172,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final message =
-          e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       print("Error al obtener comprobantes 1: $message");
       return Future.error(message);
     } catch (e, stack) {
@@ -211,8 +211,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final message =
-          e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification("Error al obtener totales por moneda 1: $message");
       return Future.error(message);
     } catch (e, stack) {
@@ -234,14 +234,14 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final message =
-          e.response?.data?['message'] ?? 'Error desconocido del servidor';
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
     }
   }
-  
+
 
   /// Crea un nuevo ticket de venta
   @override

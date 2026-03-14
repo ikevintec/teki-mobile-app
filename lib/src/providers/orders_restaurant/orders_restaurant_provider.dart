@@ -39,7 +39,7 @@ class OrdersRestaurantNotifier
       : super(OrdersRestaurantState.initial());
 
   Future<void> initialize(int idPuntoVenta) async {
-    state = state.copyWith(idPuntoVenta: idPuntoVenta, isLoading: true);
+    state = state.copyWith(idPuntoVenta: idPuntoVenta, isLoading: true, pageNumber: 0, orders: []);
     await _fetchAndSet(resetList: true);
   }
 

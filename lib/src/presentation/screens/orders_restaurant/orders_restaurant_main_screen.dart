@@ -2,12 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:teki_app/main.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/sections/orders_restaurant_list_section.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/more_filters_bottom_sheet.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/orders_filter_bar.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/shared/services/socket_service.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class OrdersRestaurantMainScreen extends ConsumerStatefulWidget {
@@ -19,34 +23,74 @@ class OrdersRestaurantMainScreen extends ConsumerStatefulWidget {
 }
 
 class _OrdersRestaurantMainScreenState
-    extends ConsumerState<OrdersRestaurantMainScreen> {
+    extends ConsumerState<OrdersRestaurantMainScreen> with RouteAware {
   late final TextEditingController _searchController;
   Timer? _debounce;
-  bool _initialized = false;
+  bool _subscribed = false;
+  final _socketService = SocketService();
+  StreamSubscription<dynamic>? _orderSub;
+
+  /// Se pone en true cuando GetX navega a una pantalla nombrada encima de esta.
+  /// Dialogs y dropdowns NO cambian Get.currentRoute, por lo que nunca lo activan.
+  bool _pendingReload = false;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+
+    _orderSub = _socketService
+        .on(SocketEvent.orderRestaurant)
+        .listen((_) { if (mounted) _reload(); });
+
+    Future.microtask(() {
+      if (!mounted) return;
+      _reload();
+      _socketService.connect(officeCode: ref.read(sesionProvider).office?.codigo ?? '');
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
-      final idPuntoVenta =
-          ref.read(sesionProvider).office?.id ?? 0;
-      Future.microtask(() {
-        ref
-            .read(ordersRestaurantProvider.notifier)
-            .initialize(idPuntoVenta);
-      });
-      _initialized = true;
+    if (!_subscribed) {
+      final route = ModalRoute.of(context);
+      if (route != null) {
+        routeObserver.subscribe(this, route);
+        _subscribed = true;
+      }
+    }
+  }
+
+  void _reload() {
+    final idPuntoVenta = ref.read(sesionProvider).office?.id ?? 0;
+    ref.read(ordersRestaurantProvider.notifier).initialize(idPuntoVenta);
+  }
+
+  /// Llamado cuando cualquier ruta se apila encima.
+  /// Solo activa el flag si GetX registró una ruta nombrada (pantalla completa).
+  /// Dialogs y dropdowns no modifican Get.currentRoute, así que no activan el flag.
+  @override
+  void didPushNext() {
+    if (Get.currentRoute != AppRoutes.ordersRestaurant) {
+      _pendingReload = true;
+    }
+  }
+
+  /// Llamado cuando la ruta de encima se cierra.
+  /// Solo recarga si fue una pantalla real la que se cerró (flag activo).
+  @override
+  void didPopNext() {
+    if (_pendingReload) {
+      _pendingReload = false;
+      _reload();
     }
   }
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
+    _orderSub?.cancel();
     _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
@@ -110,10 +154,17 @@ class _OrdersRestaurantMainScreenState
         child: CustomAppBar(navigateName: 'Pedidos'),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: null,
+        onPressed: () {
+          Get.toNamed(
+            AppRoutes.restaurantComanda,
+            arguments: {'isPedidoSinMesa': true},
+          );
+        },
         backgroundColor: ColorSchema.primaryColor,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Pedido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        label: const Text('Pedido',
+            style:
+                TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
       body: Column(
         children: [

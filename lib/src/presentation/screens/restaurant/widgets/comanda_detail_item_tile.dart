@@ -21,9 +21,9 @@ class ComandaDetailStatus {
 Color statusBgColor(String? status) {
   switch (status?.toUpperCase()) {
     case ComandaDetailStatus.preparado:
-      return const Color(0xFFFFF9C4);
+      return const Color(0xFFFFFDE7);
     case ComandaDetailStatus.cancelado:
-      return const Color(0xFFFFEBEE);
+      return const Color(0xFFFFF5F5);
     case ComandaDetailStatus.despachado:
       return const Color(0xFFE3F2FD);
     default:
@@ -94,8 +94,10 @@ class ComandaDetailItemTile extends StatelessWidget {
     final grupoOpciones =
         (item.grupoProductoOpciones ?? []).where((o) => o.eliminado != true).toList();
 
+    final isPagado = item.cuenta?.pagado == true;
+
     return GestureDetector(
-      onTap: (interactive && !isCancelled)
+      onTap: (interactive && !isCancelled && !isPagado)
           ? () => ItemActionBottomSheet.show(
                 context,
                 item: item,
@@ -150,15 +152,37 @@ class ComandaDetailItemTile extends StatelessWidget {
                   ),
                   // ── Price ─────────────────────────────────────────────
                   const SizedBox(height: 2),
-                  Text(
-                    'S/. ${total.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isCancelled ? Colors.red.shade400 : Colors.black54,
-                      decoration: textDecor,
-                      decorationColor: Colors.red.shade400,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'S/. ${total.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isCancelled ? Colors.red.shade400 : Colors.black54,
+                          decoration: textDecor,
+                          decorationColor: Colors.red.shade400,
+                        ),
+                      ),
+                      if (!isCancelled) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isPagado ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isPagado ? 'Pagado' : 'Por pagar',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: isPagado ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   // ── Group options sub-items ────────────────────────────
                   if (grupoOpciones.isNotEmpty) ...[
@@ -291,8 +315,9 @@ class _GroupOptionRow extends StatelessWidget {
 
 class ComandaStatusBadge extends StatelessWidget {
   final String status;
+  final double fontSize;
 
-  const ComandaStatusBadge({super.key, required this.status});
+  const ComandaStatusBadge({super.key, required this.status, this.fontSize = 10});
 
   @override
   Widget build(BuildContext context) {
@@ -338,12 +363,12 @@ class ComandaStatusBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: Colors.white),
+          Icon(icon, size: fontSize, color: Colors.white),
           const SizedBox(width: 3),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 10,
+            style: TextStyle(
+              fontSize: fontSize,
               fontWeight: FontWeight.w600,
               color: Colors.white,
             ),

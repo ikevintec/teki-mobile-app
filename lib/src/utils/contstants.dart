@@ -8,8 +8,12 @@ class ColorSchema {
 }
 
 class Environment {
-  static intiEnvironment() async{
+  static intiEnvironment() async {
     await dotenv.load(fileName: ".env");
   }
+
   static String apiUrl = dotenv.env['API_URL'] ?? 'no url defined';
+  static String wsUrl = dotenv.env['WS_URL'] ?? 'https://sock.teki.pe';
+  static String wsPath = dotenv.env['WS_PATH'] ?? '/tekiwss';
+  static String printUrl = dotenv.env['PRINT_URL'] ?? '';
 }

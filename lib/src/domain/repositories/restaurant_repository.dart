@@ -10,7 +10,7 @@ abstract class RestaurantRepository {
   Future<List<Table>> getTables(Map<String, dynamic> params);
   Future<List<OrderRestaurant>> getOrders(Map<String, dynamic> params);
   Future<OrderRestaurant> createOrder(OrderRestaurant order);
-  Future<void> addCommand(int orderId, Command command);
+  Future<Command> addCommand(int orderId, Command command);
   Future<List<Check>> saveChecks(int orderId, List<Check> checks);
   Future<void> deleteOrderChecks(int orderId);
   Future<List<OrderRestaurantChangeStatusItems>> updateOrderStatus(int orderId, String estado, {bool updateInventory = true, String? observacion});

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/shared/services/notification_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/config.dart';
@@ -72,7 +73,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       
       // Resetear el flag de logout para permitir nuevas sesiones
       ApiClient.resetLogoutFlag();
-      
+
+      // Inicializar push notifications con el userId del usuario autenticado
+      final userId = response.user?.id;
+      if (userId != null) {
+        NotificationService.instance.initialize(userId);
+      }
+
       successNotification('Sesion iniciada');
       Get.offAllNamed('/dashboard');
     } on DioException catch (e) {

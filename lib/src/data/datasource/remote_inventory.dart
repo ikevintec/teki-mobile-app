@@ -18,8 +18,8 @@ class RemoteInventory extends InventoryDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final errorMessage =
-          e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final resData = e.response?.data;
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(errorMessage);
       return InventoryResponse(
         content: [],
@@ -63,8 +63,8 @@ class RemoteInventory extends InventoryDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final errorMessage =
-          e.response?.data['message'] ?? e.message ?? 'Error de conexión';
+      final resData = e.response?.data;
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(errorMessage);
       return InventoryRecordResponse(
         content: [],

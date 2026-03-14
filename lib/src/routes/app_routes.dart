@@ -239,9 +239,14 @@ class AppRoutes {
       name: restaurantComanda,
       page: () {
         final args = Get.arguments as Map<String, dynamic>?;
-        final table = args?['table'] as Table;
+        final table = args?['table'] as Table?;
         final existingOrderId = args?['existingOrderId'] as int?;
-        return ComandaScreen(table: table, existingOrderId: existingOrderId);
+        final isPedidoSinMesa = args?['isPedidoSinMesa'] as bool? ?? false;
+        return ComandaScreen(
+          table: table,
+          existingOrderId: existingOrderId,
+          isPedidoSinMesa: isPedidoSinMesa,
+        );
       },
     ),
     GetPage(

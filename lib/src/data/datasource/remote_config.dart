@@ -16,12 +16,10 @@ class RemoteConfigDatasource extends ConfigDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      if (e.response != null) {
-        errorNotification(e.response?.data['message']);
-      } else {
-        errorNotification(e.message ?? 'Error de conexión');
-      }
-      return Future.error(e.message ?? 'Error de conexión');
+      final resData = e.response?.data;
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      errorNotification(errorMessage);
+      return Future.error(errorMessage);
     } on Exception catch (e) {
       errorNotification(e.toString());
       return Future.error(e.toString());

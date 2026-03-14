@@ -1,15 +1,120 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options_sheet.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
-class OrderRestaurantCard extends StatelessWidget {
+class OrderRestaurantCard extends ConsumerWidget {
   final OrderRestaurant order;
 
   const OrderRestaurantCard({super.key, required this.order});
 
+  bool get _canAnular =>
+      order.pagado != true ||
+      (order.estado == 'PENDIENTE' && order.tipo == 'LOCAL');
+
+  Future<void> _anularOrden(BuildContext context, WidgetRef ref) async {
+    final result = await showDialog<({bool confirmed, bool updateInventory, String observacion})>(
+      context: context,
+      builder: (_) => const AnularOrdenDialog(),
+    );
+    if (result == null || !result.confirmed) return;
+    final pvId = ref.read(sesionProvider).office?.id;
+    final notifier = ref.read(restaurantProvider.notifier);
+    Get.back();
+    if (pvId != null) {
+      notifier.updateOrderStatus(
+        order.id!,
+        'CANCELADO',
+        pvId,
+        updateInventory: result.updateInventory,
+        observacion: result.observacion.isNotEmpty ? result.observacion : null,
+      );
+    }
+  }
+
+  void _showOptions(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Divider(height: 1, color: Colors.grey.shade200),
+              ListTile(
+                leading: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: ColorSchema.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.receipt_long_outlined,
+                      color: ColorSchema.primaryColor, size: 20),
+                ),
+                title: const Text(
+                  'Ver detalle',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  showOrderDetailDialog(context, order);
+                },
+              ),
+              if (_canAnular)
+                ListTile(
+                  leading: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.cancel_outlined,
+                        color: Colors.red, size: 20),
+                  ),
+                  title: const Text(
+                    'Anular orden',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _anularOrden(context, ref);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
-    return Card(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () => _showOptions(context, ref),
+      child: Card(
       elevation: 0.5,
       color: Colors.white,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -65,6 +170,7 @@ class OrderRestaurantCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
       ),
     );
   }

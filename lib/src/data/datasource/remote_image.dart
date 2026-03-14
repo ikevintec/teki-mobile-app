@@ -30,11 +30,9 @@ class RemoteImage extends ImageDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      if (e.response != null) {
-        return Future.error(e.response?.data['message']);
-      } else {
-        return Future.error(e.message ?? 'Error de conexión');
-      }
+      final resData = e.response?.data;
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error(errorMessage);
     } catch (e) {
       return Future.error(e.toString());
     }
