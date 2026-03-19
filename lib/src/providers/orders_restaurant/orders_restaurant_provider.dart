@@ -122,6 +122,36 @@ class OrdersRestaurantNotifier
     _fetchAndSet(resetList: true);
   }
 
+  /// Aplica filtros pre-seteados (desde una notificación) y hace un único fetch.
+  /// Si [idPuntoVenta] es null se usa el que ya está en el estado.
+  Future<void> applyNotificationFilters({
+    int? idPuntoVenta,
+    String? searchTerm,
+    String? tipo,
+    bool? paid,
+  }) async {
+    final selectedEstadoPago =
+        paid == null ? 'TODOS' : (paid ? 'PAGADOS' : 'NO_PAGADOS');
+    final List<String> tipos =
+        tipo == null || tipo.isEmpty || tipo == 'TODOS' ? kAllTipos : [tipo];
+    final selectedTipo =
+        (tipo == null || tipo.isEmpty || tipo == 'TODOS') ? 'TODOS' : tipo;
+    state = state.copyWith(
+      idPuntoVenta: idPuntoVenta ?? state.idPuntoVenta,
+      isLoading: true,
+      pageNumber: 0,
+      orders: [],
+      nombreCliente: searchTerm ?? '',
+      selectedTipo: selectedTipo,
+      tipos: tipos,
+      selectedEstadoPago: selectedEstadoPago,
+      pedidoFacturado: paid,
+      clearPedidoFacturado: paid == null,
+      notificationTrigger: state.notificationTrigger + 1,
+    );
+    await _fetchAndSet(resetList: true);
+  }
+
   Future<void> _fetchAndSet({required bool resetList}) async {
     final response = await repository.getOrdersRestaurant(
       buildOrdersRestaurantQueryParams(state),
@@ -155,6 +185,11 @@ class OrdersRestaurantState {
   final String selectedTipo;
   final String selectedEstadoPago;
 
+  /// Se incrementa cada vez que se llama a [applyNotificationFilters].
+  /// Permite al screen saber que llegó una nueva notificación y debe
+  /// auto-navegar, sin re-navegar por el mismo trigger al volver atrás.
+  final int notificationTrigger;
+
   OrdersRestaurantState({
     required this.orders,
     required this.isLoading,
@@ -167,6 +202,7 @@ class OrdersRestaurantState {
     required this.estados,
     required this.selectedTipo,
     required this.selectedEstadoPago,
+    required this.notificationTrigger,
     this.idPuntoVenta,
     this.nombreCliente,
     this.pedidoFacturado,
@@ -190,6 +226,7 @@ class OrdersRestaurantState {
       selectedTipo: 'TODOS',
       selectedEstadoPago: 'PAGADOS',
       pedidoFacturado: true,
+      notificationTrigger: 0,
     );
   }
 
@@ -213,6 +250,7 @@ class OrdersRestaurantState {
     bool clearHasta = false,
     String? selectedTipo,
     String? selectedEstadoPago,
+    int? notificationTrigger,
   }) {
     return OrdersRestaurantState(
       orders: orders ?? this.orders,
@@ -233,6 +271,7 @@ class OrdersRestaurantState {
       hasta: clearHasta ? null : (hasta ?? this.hasta),
       selectedTipo: selectedTipo ?? this.selectedTipo,
       selectedEstadoPago: selectedEstadoPago ?? this.selectedEstadoPago,
+      notificationTrigger: notificationTrigger ?? this.notificationTrigger,
     );
   }
 }

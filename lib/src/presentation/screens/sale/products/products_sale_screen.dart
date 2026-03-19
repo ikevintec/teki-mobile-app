@@ -125,6 +125,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final provider = ref.watch(productSaleProvider);
     final notifier = ref.read(productSaleProvider.notifier);
     final isLoading = provider.isLoading;
+    final isBarcodeSearching = provider.isBarcodeSearching;
     final products = provider.productsSales;
     final ticketP = ref.watch(ticketProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -397,24 +398,26 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                             children: [
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: () {
-                                    form.markAllAsTouched();
+                                  onPressed: isBarcodeSearching
+                                      ? null
+                                      : () {
+                                          form.markAllAsTouched();
 
-                                    if (form.valid) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                ClientSaleScreen()),
-                                      );
-                                    }
-                                    if (form
-                                        .control('products')
-                                        .hasError('minLength')) {
-                                      errorNotification(
-                                          "Debe seleccionar al menos un producto");
-                                    }
-                                  },
+                                          if (form.valid) {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ClientSaleScreen()),
+                                            );
+                                          }
+                                          if (form
+                                              .control('products')
+                                              .hasError('minLength')) {
+                                            errorNotification(
+                                                "Debe seleccionar al menos un producto");
+                                          }
+                                        },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: ColorSchema.primaryColor,
                                     foregroundColor: Colors.white,

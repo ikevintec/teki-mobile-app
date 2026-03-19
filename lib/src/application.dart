@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:toastification/toastification.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/main.dart'; // Importa el routeObserver global
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,7 +11,8 @@ class Application extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardDismisser(
+    return ToastificationWrapper(
+      child: KeyboardDismisser(
       child: GetMaterialApp(
       title: "teki_app",
       locale: const Locale('es'), // tu idioma deseado
@@ -27,6 +29,7 @@ class Application extends StatelessWidget {
       navigatorObservers: [routeObserver],
       initialRoute: AppRoutes.splashScreen,
       getPages: AppRoutes.pages,
+      ),
       ),
     );
   }

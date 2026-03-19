@@ -304,8 +304,8 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
       }
       if (!mounted) return;
       state = state.copyWith(isSubmitting: false);
-      Get.back();
       successNotification('Comanda enviada exitosamente');
+      Get.back();
 
       if (commandId != null && config?.clienteImpresion == 'COFFE') {
         _printService.processCommand(

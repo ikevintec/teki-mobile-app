@@ -34,6 +34,7 @@ class ConfigCompany {
   bool? recargoPorItem;
   double? porcentajeRecargoPorItem;
   bool? imprimeTicketsEscPos;
+  bool? imprimirBoletaLite;
   String? clienteImpresion;
   bool? controlDespacho;
   bool? buscarPorPuntoVenta;
@@ -80,6 +81,7 @@ class ConfigCompany {
     this.recargoPorItem,
     this.porcentajeRecargoPorItem,
     this.imprimeTicketsEscPos,
+    this.imprimirBoletaLite,
     this.clienteImpresion,
     this.controlDespacho,
     this.buscarPorPuntoVenta,
@@ -127,6 +129,7 @@ class ConfigCompany {
       recargoPorItem: json['recargoPorItem'],
       porcentajeRecargoPorItem: (json['porcentajeRecargoPorItem'] as num?)?.toDouble(),
       imprimeTicketsEscPos: json['imprimeTicketsEscPos'],
+      imprimirBoletaLite: json['imprimirBoletaLite'],
       clienteImpresion: json['clienteImpresion'],
       controlDespacho: json['controlDespacho'],
       buscarPorPuntoVenta: json['buscarPorPuntoVenta'],
@@ -181,6 +184,7 @@ class ConfigCompany {
       'recargoPorItem': recargoPorItem,
       'porcentajeRecargoPorItem': porcentajeRecargoPorItem,
       'imprimeTicketsEscPos': imprimeTicketsEscPos,
+      'imprimirBoletaLite': imprimirBoletaLite,
       'clienteImpresion': clienteImpresion,
       'controlDespacho': controlDespacho,
       'buscarPorPuntoVenta': buscarPorPuntoVenta,

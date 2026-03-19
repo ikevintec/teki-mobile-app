@@ -39,22 +39,25 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     final dateFormat = DateFormat('dd-MM-yyyy H:mm:ss');
 
     dashboardRepository.getCustomerCount().then((clienteResult) {
+      if (!mounted) return;
       setState(() {
         totalClientes = clienteResult.total;
         loadingClientes = false;
       });
     }).catchError((error) {
       printError(info: "❌ Error al cargar clientes: ${error.toString()}");
+      if (!mounted) return;
       setState(() => loadingClientes = false);
     });
 
     dashboardRepository.getSalesCount(widget.idPuntoVenta).then((ventaResult) {
+      if (!mounted) return;
       setState(() {
         totalVentas = ventaResult.total;
         loadingVentas = false;
       });
     }).catchError((_) {
-      // errorNotification("Error cargando ventas");
+      if (!mounted) return;
       setState(() => loadingVentas = false);
     });
 
@@ -64,12 +67,14 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
       'filtroHasta': dateFormat.format(filtroHasta),
       'idPuntoVenta': widget.idPuntoVenta.toString(),
     }).then((resultMontos) {
+      if (!mounted) return;
       setState(() {
         montosPorMoneda = resultMontos;
         loadingMontos = false;
       });
-    }).catchError((_) {
-      printError(info: "❌ Error al mostrar las Ventas del Día: $_");
+    }).catchError((e) {
+      printError(info: "❌ Error al mostrar las Ventas del Día: $e");
+      if (!mounted) return;
       setState(() => loadingMontos = false);
     });
   }

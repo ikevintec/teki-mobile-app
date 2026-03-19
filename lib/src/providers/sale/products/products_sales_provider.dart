@@ -51,6 +51,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
           incIgv: true,
           currency: null,
           isLoading: true,
+          isBarcodeSearching: false,
           error: null,
           pageNumber: 0,
           paginacion: true,
@@ -79,6 +80,30 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     } catch (e) {
       errorNotification(e.toString());
       return [];
+    }
+  }
+
+  Future<Product?> getProductByBarcode(String barcode) async {
+    state = state.copyWith(isBarcodeSearching: true);
+    try {
+      final params = <String, dynamic>{
+        'filterGlobal': barcode,
+        'perPage': 1,
+        'paginacion': true,
+        'pageNumber': 0,
+        'sortField': 'id',
+        'sortOrder': 1,
+      };
+      final response = await productsRepository.getProducts(params);
+      if (response.content != null && response.content!.isNotEmpty) {
+        return response.content!.first;
+      }
+      return null;
+    } catch (e) {
+      errorNotification(e.toString());
+      return null;
+    } finally {
+      state = state.copyWith(isBarcodeSearching: false);
     }
   }
 
@@ -299,6 +324,7 @@ class ProductsSaleState {
   final List<Currency> currencies;
   final Currency? currency;
   final bool isLoading;
+  final bool isBarcodeSearching;
   final String? error;
   // Parámetros de configuración
   final bool incIgv;
@@ -322,6 +348,7 @@ class ProductsSaleState {
     required this.currencies,
     required this.currency,
     required this.isLoading,
+    required this.isBarcodeSearching,
     required this.error,
     required this.pageNumber,
     required this.paginacion,
@@ -344,6 +371,7 @@ class ProductsSaleState {
     List<Currency>? currencies,
     Currency? currency,
     bool? isLoading,
+    bool? isBarcodeSearching,
     String? error,
     //configuración
     bool? incIgv,
@@ -367,6 +395,7 @@ class ProductsSaleState {
       currencies: currencies ?? this.currencies,
       currency: currency ?? this.currency,
       isLoading: isLoading ?? this.isLoading,
+      isBarcodeSearching: isBarcodeSearching ?? this.isBarcodeSearching,
       error: error ?? this.error,
       pageNumber: pageNumber ?? this.pageNumber,
       paginacion: paginacion ?? this.paginacion,

@@ -5,9 +5,11 @@ import 'package:reactive_forms/reactive_forms.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
+import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 class SearchProducts extends ConsumerStatefulWidget {
   final FormGroup form;
@@ -25,6 +27,20 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
   void dispose() {
     _debounce?.cancel();
     super.dispose();
+  }
+
+  Future<void> _onScanBarcode() async {
+    final code = await BarcodeScannerSheet.show(context);
+    if (code == null || code.isEmpty) return;
+
+    final product =
+        await ref.read(productSaleProvider.notifier).getProductByBarcode(code);
+    if (!mounted) return;
+    if (product != null) {
+      ref.read(productSaleProvider.notifier).setProductsSales(product, null);
+    } else {
+      errorNotification("Producto no encontrado para el código de barras: $code");
+    }
   }
 
   Future<List<Product>> onSearchChanged(String query) async {
@@ -50,9 +66,16 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
 
   @override
   Widget build(BuildContext context) {
+    final isBarcodeSearching =
+        ref.watch(productSaleProvider).isBarcodeSearching;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SearchAnchor.bar(
+      child: Row(
+        children: [
+          Expanded(
+            child: AbsorbPointer(
+              absorbing: isBarcodeSearching,
+              child: SearchAnchor.bar(
         barHintText: "Buscar producto",
         barBackgroundColor: WidgetStateProperty.all(Colors.white),
         dividerColor: ColorSchema.primaryColor,
@@ -111,6 +134,39 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
             ),
           ];
         },
+      ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: isBarcodeSearching ? null : _onScanBarcode,
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: isBarcodeSearching
+                  ? const Padding(
+                      padding: EdgeInsets.all(13),
+                      child: CircularProgressIndicator(
+                        color: ColorSchema.primaryColor,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.qr_code_scanner,
+                      color: ColorSchema.primaryColor, size: 22),
+            ),
+          ),
+        ],
       ),
     );
   }

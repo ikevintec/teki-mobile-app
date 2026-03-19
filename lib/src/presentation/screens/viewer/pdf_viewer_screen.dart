@@ -9,6 +9,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PdfViewerScreen extends ConsumerStatefulWidget {
   final String uuid;
@@ -31,6 +32,7 @@ class PdfViewerScreen extends ConsumerStatefulWidget {
 class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
   final ComprobantePrintService _printService = ComprobantePrintService();
   bool _isPrinting = false;
+  bool _isDownloading = false;
 
   String get _pdfUrl {
     final domain = Environment.apiUrl;
@@ -64,6 +66,20 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
     }
   }
 
+  Future<void> _handleDownload() async {
+    setState(() => _isDownloading = true);
+    try {
+      final uri = Uri.parse(_pdfUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        errorNotification('No se pudo abrir el comprobante para descarga.');
+      }
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sesionProvider);
@@ -80,7 +96,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
       ),
       body: Column(
         children: [
-          _buildPrintSection(canPrint, printer?.nombre),
+          _buildActionButtons(canPrint, printer?.nombre),
           Expanded(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -107,52 +123,77 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
     );
   }
 
-  Widget _buildPrintSection(bool canPrint, String? printerName) {
-    if (!canPrint) {
-      return Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.amber.shade50,
-          border: Border.all(color: Colors.amber.shade300),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.amber.shade700, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Configure una impresora en la estación de venta para imprimir el comprobante.',
-                style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
+  Widget _buildActionButtons(bool canPrint, String? printerName) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: _isPrinting ? null : _handlePrint,
-          icon: _isPrinting
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : const Icon(Icons.print, size: 18),
-          label: Text('Imprimir en $printerName'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ColorSchema.primaryColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Column(
+        children: [
+          if (!canPrint)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                border: Border.all(color: Colors.amber.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.amber.shade700, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Configure una impresora en la estación de venta para imprimir el comprobante.',
+                      style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Row(
+            children: [
+              if (canPrint) ...[
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isPrinting ? null : _handlePrint,
+                    icon: _isPrinting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.print, size: 18),
+                    label: Text('Imprimir en $printerName'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorSchema.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              ElevatedButton.icon(
+                onPressed: _isDownloading ? null : _handleDownload,
+                icon: _isDownloading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.download, size: 18),
+                label: const Text('Descargar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
           ),
-        ),
+        ],
       ),
     );
   }

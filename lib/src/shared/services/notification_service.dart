@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,6 +7,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
+import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
+import 'package:teki_app/src/presentation/screens/push_notification_events/dish_desk_ready_screen.dart';
+import 'package:teki_app/src/presentation/screens/push_notification_events/order_ready_to_pay_screen.dart';
+import 'package:teki_app/main.dart' show globalContainer;
 
 import 'package:teki_app/src/utils/api_client.constant.dart';
 
@@ -20,6 +28,11 @@ class NotificationService {
   static const _tokenKey = 'fcm_token';
   static const _channelId = 'teki_high_importance';
   static const _channelName = 'Teki Notificaciones';
+
+  StreamSubscription<RemoteMessage>? _foregroundSub;
+  StreamSubscription<RemoteMessage>? _backgroundTapSub;
+  StreamSubscription<String>? _tokenRefreshSub;
+  bool _localNotificationsReady = false;
 
   // ---------------------------------------------------------------------------
   // Punto de entrada principal — llamar después del login exitoso
@@ -37,11 +50,24 @@ class NotificationService {
     await _setupTerminatedTapHandler();
   }
 
+  /// Cancela todos los listeners activos. Llamar al hacer logout.
+  void dispose() {
+    _foregroundSub?.cancel();
+    _foregroundSub = null;
+
+    _backgroundTapSub?.cancel();
+    _backgroundTapSub = null;
+
+    _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = null;
+
+    debugPrint('[FCM] Listeners cancelados (logout)');
+  }
+
   // ---------------------------------------------------------------------------
   // Permisos
   // ---------------------------------------------------------------------------
 
-  /// Retorna true si se obtuvo permiso (o si ya estaba concedido).
   Future<bool> _requestPermission() async {
     final settings = await _messaging.requestPermission(
       alert: true,
@@ -59,10 +85,11 @@ class NotificationService {
   // ---------------------------------------------------------------------------
 
   Future<void> _initLocalNotifications() async {
+    if (_localNotificationsReady) return;
+
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
-      // El permiso ya lo pidió FirebaseMessaging; no re-pedirlo aquí.
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
@@ -91,6 +118,8 @@ class NotificationService {
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
     }
+
+    _localNotificationsReady = true;
   }
 
   // ---------------------------------------------------------------------------
@@ -99,11 +128,11 @@ class NotificationService {
 
   Future<void> _getAndSaveToken(int userId) async {
     try {
-      // En iOS el token APNs debe estar disponible antes de pedir el FCM token.
-      // Si aún no llegó, esperamos hasta 10 s antes de continuar.
       if (Platform.isIOS) {
         String? apnsToken = await _messaging.getAPNSToken();
-        if (apnsToken == null) {
+        if (apnsToken != null) {
+          debugPrint('[FCM] APNs token disponible: $apnsToken');
+        } else {
           for (int i = 0; i < 10; i++) {
             await Future.delayed(const Duration(seconds: 1));
             apnsToken = await _messaging.getAPNSToken();
@@ -147,15 +176,14 @@ class NotificationService {
           debugPrint('[FCM] Token registrado en el reintento');
         } catch (retryError) {
           debugPrint('[FCM] Reintento fallido: $retryError');
-          // El token ya está guardado localmente; se puede reenviar
-          // en el próximo ciclo de vida de la app.
         }
       });
     }
   }
 
   void _setupTokenRefresh(int userId) {
-    _messaging.onTokenRefresh.listen((newToken) async {
+    _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = _messaging.onTokenRefresh.listen((newToken) async {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, newToken);
       await _registerTokenWithBackend(newToken, userId);
@@ -166,9 +194,9 @@ class NotificationService {
   // Handlers de mensajes
   // ---------------------------------------------------------------------------
 
-  /// Foreground: FCM no muestra la notificación automáticamente → usar local.
   void _setupForegroundHandler() {
-    FirebaseMessaging.onMessage.listen((message) {
+    _foregroundSub?.cancel();
+    _foregroundSub = FirebaseMessaging.onMessage.listen((message) {
       final notification = message.notification;
       if (notification == null) return;
 
@@ -181,18 +209,16 @@ class NotificationService {
     });
   }
 
-  /// Background tap: el usuario toca la notificación estando la app en segundo plano.
   void _setupBackgroundTapHandler() {
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    _backgroundTapSub?.cancel();
+    _backgroundTapSub = FirebaseMessaging.onMessageOpenedApp.listen((message) {
       handleNotificationTap(message.data);
     });
   }
 
-  /// Terminated tap: el usuario toca la notificación y la app estaba cerrada.
   Future<void> _setupTerminatedTapHandler() async {
     final message = await _messaging.getInitialMessage();
     if (message != null) {
-      // Pequeño delay para que el árbol de widgets esté listo antes de navegar.
       Future.delayed(const Duration(milliseconds: 800), () {
         handleNotificationTap(message.data);
       });
@@ -217,11 +243,17 @@ class NotificationService {
       playSound: true,
     );
 
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
     await _localNotifications.show(
       id,
       title,
       body,
-      NotificationDetails(android: androidDetails),
+      NotificationDetails(android: androidDetails, iOS: iosDetails),
       payload: _encodePayload(data),
     );
   }
@@ -230,19 +262,68 @@ class NotificationService {
   // Navegación
   // ---------------------------------------------------------------------------
 
-  /// Despacha la navegación según el campo "type" del data payload.
-  ///
-  /// Ejemplo de payload del backend:
-  ///   { "type": "dish_ready", "dishId": "123" }
   void handleNotificationTap(Map<String, dynamic> data) {
     final type = data['type'] as String?;
     debugPrint('[FCM] Navegando por tipo: $type');
 
     switch (type) {
-      case 'dish_ready':
-        Get.toNamed('/restaurant/comanda', arguments: data);
-      case 'order_new':
-        Get.toNamed('/restaurant/mesas', arguments: data);
+      case 'dish_desk_ready':
+        final commandId = int.tryParse(data['commandId'] as String? ?? '');
+        final itemId = int.tryParse(data['itemId'] as String? ?? '');
+        if (commandId == null || itemId == null) break;
+        final dishArgs = {'commandId': commandId, 'itemId': itemId};
+
+        void reloadMesas() {
+          final pvId = globalContainer.read(sesionProvider).office?.id;
+          if (pvId != null) {
+            globalContainer.read(restaurantProvider.notifier).reload(pvId);
+          }
+        }
+
+        if (DishDeskReadyScreen.isVisible) {
+          // Estamos en el dish screen → pop de vuelta a mesas, recargar y
+          // abrir el dish screen con el nuevo plato.
+          DishDeskReadyScreen.isVisible = false;
+          Get.back();
+          reloadMesas();
+          Future.delayed(Duration.zero, () {
+            Get.toNamed(AppRoutes.restaurantDishReady, arguments: dishArgs);
+          });
+        } else if (Get.currentRoute == AppRoutes.restaurantMesas) {
+          // Ya estamos en mesas → solo recargar y abrir el dish screen.
+          reloadMesas();
+          Get.toNamed(AppRoutes.restaurantDishReady, arguments: dishArgs);
+        } else {
+          // Venimos de otra pantalla → navegar a mesas (que abrirá el dish
+          // screen desde su initState al recibir los args).
+          Get.toNamed(AppRoutes.restaurantMesas, arguments: dishArgs);
+        }
+      case 'order_ready':
+        final orderNumber = data['orderNumber'] as String? ?? '';
+        final typeOrder = data['typeOrder'] as String? ?? '';
+        // Si el pay screen está visible, lo cerramos primero para no apilar.
+        if (OrderReadyToPayScreen.isVisible) {
+          OrderReadyToPayScreen.isVisible = false; // marcar antes del pop
+          Get.back();
+        }
+        if (Get.currentRoute == AppRoutes.ordersRestaurant) {
+          final idPuntoVenta =
+              globalContainer.read(sesionProvider).office?.id ?? 0;
+          globalContainer
+              .read(ordersRestaurantProvider.notifier)
+              .applyNotificationFilters(
+                idPuntoVenta: idPuntoVenta,
+                searchTerm: orderNumber.isNotEmpty ? orderNumber : null,
+                tipo: typeOrder.isNotEmpty ? typeOrder : null,
+                paid: false,
+              );
+        } else {
+          Get.toNamed(AppRoutes.ordersRestaurant, arguments: {
+            'orderNumber': orderNumber,
+            'typeOrder': typeOrder,
+            'paid': false,
+          });
+        }
       case 'sale_update':
         Get.toNamed('/sales', arguments: data);
       default:

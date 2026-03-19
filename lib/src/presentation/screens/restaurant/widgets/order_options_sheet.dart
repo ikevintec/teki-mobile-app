@@ -1354,17 +1354,34 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
             padding: const EdgeInsets.fromLTRB(20, 5, 8, 0),
             child: Row(
               children: [
-                const Text(
-                  'Detalle de orden',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '#${formatOrderNumber(order.numeroOrden)}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Detalle de orden',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '#${formatOrderNumber(order.numeroOrden)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (order.mesa != null)
+                      Text(
+                        'Mesa ${order.mesa?.numero ?? order.mesa?.id ?? '-'}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color.fromARGB(255, 65, 65, 65),
+                        ),
+                      ),
+                  ],
                 ),
                 const Spacer(),
                 IconButton(

@@ -30,7 +30,7 @@ class _RestaurantMesasScreenState
     super.initState();
 
     _socketSub = _socketService
-        .on(SocketEvent.orderRestaurant)
+        .on(SocketEvent.commandRestaurant)
         .listen((_) { if (mounted) _reload(); });
 
     Future.microtask(() {
@@ -40,6 +40,21 @@ class _RestaurantMesasScreenState
       if (pvId != null) ref.read(restaurantProvider.notifier).loadData(pvId);
       _socketService.connect(officeCode: session.office?.codigo ?? 'PV001');
     });
+
+    // If opened from a dish_desk_ready notification, navigate to the ready screen
+    // after the first frame is rendered so mesas is visible underneath.
+    final args = Get.arguments as Map<String, dynamic>?;
+    final notifCommandId = args?['commandId'] as int?;
+    final notifItemId = args?['itemId'] as int?;
+    if (notifCommandId != null && notifItemId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Get.toNamed(
+          AppRoutes.restaurantDishReady,
+          arguments: {'commandId': notifCommandId, 'itemId': notifItemId},
+        );
+      });
+    }
   }
 
   @override

@@ -60,7 +60,7 @@ class _AnalyticsReportSectionState extends State<AnalyticsReportSection> {
         final clienteResult = await dashboardRepository.getCustomerCount();
         totalClientes = clienteResult.total;
       } catch (e) {
-        errorNotification("Error cargando clientes: $e");
+        if (mounted) errorNotification('Error cargando clientes: $e');
       }
 
       try {
@@ -68,7 +68,7 @@ class _AnalyticsReportSectionState extends State<AnalyticsReportSection> {
             await dashboardRepository.getSalesCount(widget.idPuntoVenta);
         totalVentas = ventaResult.total;
       } catch (e) {
-        errorNotification('Error cargando ventas concretadas');
+        if (mounted) errorNotification('Error cargando ventas concretadas');
       }
 
       try {
@@ -89,7 +89,7 @@ class _AnalyticsReportSectionState extends State<AnalyticsReportSection> {
 
         montosPorMoneda = resultMontos;
       } catch (e) {
-        errorNotification("❌ Error al mostrar la Ventas del Día: ");
+        if (mounted) errorNotification('Error al mostrar las Ventas del Día');
       }
 
       if (mounted) {

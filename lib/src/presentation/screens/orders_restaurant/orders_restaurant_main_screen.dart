@@ -4,15 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/main.dart';
+import 'package:teki_app/src/data/models/teki_model/check.dart';
+import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/sections/orders_restaurant_list_section.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/more_filters_bottom_sheet.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/orders_filter_bar.dart';
+import 'package:teki_app/src/presentation/screens/push_notification_events/order_ready_to_pay_screen.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/services/socket_service.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 class OrdersRestaurantMainScreen extends ConsumerStatefulWidget {
   const OrdersRestaurantMainScreen({super.key});
@@ -34,6 +38,15 @@ class _OrdersRestaurantMainScreenState
   /// Dialogs y dropdowns NO cambian Get.currentRoute, por lo que nunca lo activan.
   bool _pendingReload = false;
 
+  /// true cuando llegamos desde una notificación order_ready con args.
+  bool _isNotificationNav = false;
+
+  /// Último [notificationTrigger] del provider que ya se manejó con auto-nav.
+  /// Si el trigger del estado es mayor, es una notificación nueva → navegar.
+  /// Si es igual, ya se navegó para este trigger → no re-navegar (ej: back).
+  int _lastHandledTrigger = 0;
+
+
   @override
   void initState() {
     super.initState();
@@ -43,9 +56,28 @@ class _OrdersRestaurantMainScreenState
         .on(SocketEvent.orderRestaurant)
         .listen((_) { if (mounted) _reload(); });
 
+    final args = Get.arguments as Map<String, dynamic>?;
+    _isNotificationNav = args != null && args.containsKey('orderNumber');
+
     Future.microtask(() {
       if (!mounted) return;
-      _reload();
+      final idPuntoVenta = ref.read(sesionProvider).office?.id ?? 0;
+      if (_isNotificationNav) {
+        final orderNumber = args!['orderNumber'] as String? ?? '';
+        final typeOrder = args['typeOrder'] as String? ?? '';
+        final paid = args['paid'] as bool?;
+        if (orderNumber.isNotEmpty) {
+          _searchController.text = orderNumber;
+        }
+        ref.read(ordersRestaurantProvider.notifier).applyNotificationFilters(
+              idPuntoVenta: idPuntoVenta,
+              searchTerm: orderNumber.isNotEmpty ? orderNumber : null,
+              tipo: typeOrder.isNotEmpty ? typeOrder : null,
+              paid: paid,
+            );
+      } else {
+        _reload();
+      }
       _socketService.connect(officeCode: ref.read(sesionProvider).office?.codigo ?? '');
     });
   }
@@ -142,10 +174,57 @@ class _OrdersRestaurantMainScreenState
         state.hasta != null;
   }
 
+  /// Devuelve el par (order, cuenta) si se cumple la condición de auto-pago,
+  /// o null en caso contrario.
+  (OrderRestaurant, Check)? _readyToPayTarget(OrdersRestaurantState state) {
+    if (state.orders.length != 1) return null;
+    final order = state.orders.first;
+    final cuentas = order.cuentas;
+    if (cuentas == null || cuentas.length != 1) return null;
+    final cuenta = cuentas.first;
+    if (cuenta.pagado == true) return null;
+    if (order.comandas == null || order.comandas!.isEmpty) return null;
+    if ((order.comandas ?? []).length > 1) return null;
+
+    final items = (order.comandas?[0].items ?? []).where((i) => i.eliminado != true).toList();
+    if (items.isEmpty) return null;
+    if (!items.every((i) => i.estadoComandaDetalle == 'PREPARADO')) {
+      infoNotification("La orden tiene items sin preparar.",duration: const Duration(seconds: 4));
+      return null;
+    }
+    return (order, cuenta);
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(ordersRestaurantProvider);
     final isInitialLoading = state.isLoading && state.orders.isEmpty;
+
+    // Auto-navegar al pay screen cuando venimos de una notificación y se cumple
+    // la condición: 1 resultado, 1 cuenta, todos los items en PREPARADO.
+    // Auto-navegar al pay screen cuando:
+    // • hay un trigger de notificación nuevo (mayor que el último manejado),
+    // • la carga terminó, y • la condición de pago se cumple.
+    // Guardar el trigger evita re-navegar si el usuario vuelve atrás con el
+    // mismo estado de resultados.
+    ref.listen<OrdersRestaurantState>(ordersRestaurantProvider, (_, next) {
+      if (next.isLoading) return;
+      if (next.notificationTrigger <= _lastHandledTrigger) return;
+      final target = _readyToPayTarget(next);
+      if (target == null) return;
+      _lastHandledTrigger = next.notificationTrigger;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => OrderReadyToPayScreen(
+              order: target.$1,
+              cuenta: target.$2,
+            ),
+          ),
+        );
+      });
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),

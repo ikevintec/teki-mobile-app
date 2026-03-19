@@ -24,6 +24,8 @@ class SocketService {
     for (final e in SocketEvent.values) e: StreamController<dynamic>.broadcast(),
   };
 
+  final Map<String, List<void Function(dynamic)>> _listeners = {};
+
   bool get isConnected => _socket?.connected ?? false;
 
   Future<void> connect({required String officeCode}) async {
@@ -56,6 +58,10 @@ class SocketService {
 
     _socket!.onAny((event, data) {
       debugPrint('[Socket] Evento recibido → $event | data: $data');
+      final cbs = _listeners[event.toString()];
+      if (cbs != null) {
+        for (final cb in List.of(cbs)) cb(data);
+      }
     });
 
     for (final event in SocketEvent.values) {
@@ -69,6 +75,14 @@ class SocketService {
   }
 
   Stream<dynamic> on(SocketEvent event) => _controllers[event]!.stream;
+
+  void addListener(SocketEvent event, void Function(dynamic) callback) {
+    _listeners.putIfAbsent(event.value, () => []).add(callback);
+  }
+
+  void removeListener(SocketEvent event, void Function(dynamic) callback) {
+    _listeners[event.value]?.remove(callback);
+  }
 
   void disconnect() {
     _connectionCount = (_connectionCount - 1).clamp(0, 999);

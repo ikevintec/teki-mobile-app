@@ -21,6 +21,8 @@ import 'package:teki_app/src/providers/sale/products/products_sales_provider.dar
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:intl/intl.dart';
+import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
+import 'package:teki_app/src/shared/services/print_coffe_service.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class PaymentWidget extends ConsumerStatefulWidget {
@@ -32,6 +34,8 @@ class PaymentWidget extends ConsumerStatefulWidget {
 
 class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     with SingleTickerProviderStateMixin {
+  final ComprobantePrintService _printService = ComprobantePrintService();
+
   late TabController _tabController;
   List<PaymentMethod> paymentMethods = [];
   PaymentMethod? selectedPaymentMethod;
@@ -133,6 +137,36 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
 
   double get cambioDisponible =>
       (double.tryParse(montoPagadoController.text) ?? 0) - total;
+
+  void _autoprint(Ticket ticket) {
+    if (ticket.id == null || ticket.uuid == null || ticket.identificadorDocumento == null) return;
+
+    final session = ref.read(sesionProvider);
+    final printer = session.saleStation?.impresoraComprobante;
+    final config = session.config;
+    if (printer == null || config == null) return;
+
+    final escPos = config.imprimeTicketsEscPos ?? false;
+    final tipo = config.tipoImpresion ?? 'A4';
+    final pdfUrl =
+        '${Environment.apiUrl}/public/pdf/tickets/${ticket.uuid}/${ticket.identificadorDocumento}?tipo=$tipo';
+
+    unawaited(() async {
+      try {
+        await _printService.autoprint(
+          ticketId: ticket.id!,
+          pdfUrl: pdfUrl,
+          printer: printer,
+          escPos: escPos,
+          officeCode: session.office?.codigo ?? '',
+          idCompany: session.companySelected?.id,
+          config: config,
+        );
+      } on PrintCoffeException catch (e) {
+        errorNotification(e.message);
+      } catch (_) {}
+    }());
+  }
 
   void _loadExistingPaymentData(Ticket ticket) {
     // Cargar datos de pago al contado si existe movimientoCaja
@@ -608,6 +642,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                           successNotification("Pago registrado con éxito");
                           final comprobante = checkResult.comprobante;
                           if (comprobante != null) {
+                            _autoprint(comprobante);
                             Get.off(() => ViewComponentScreen(
                                   ticket: comprobante,
                                   fromSale: true,
@@ -629,6 +664,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                           successNotification(ticketP.isEdit
                               ? "Venta editada con éxito"
                               : "Venta registrada con éxito");
+                          _autoprint(ticketResponse);
                           Get.off(() => ViewComponentScreen(
                                 ticket: ticketResponse,
                                 fromSale: true,

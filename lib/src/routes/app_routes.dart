@@ -64,6 +64,7 @@ import 'package:teki_app/src/presentation/screens/restaurant/cobrador/cobrador_s
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/comanda_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/dividir/dividir_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/restaurant_mesas_screen.dart';
+import 'package:teki_app/src/presentation/screens/push_notification_events/dish_desk_ready_screen.dart';
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/warehouse/warehouse_sections/add_warehouse_section.dart';
 import 'package:teki_app/src/presentation/screens/warehouse_reports/warehouse_reports_main_screen.dart';
@@ -140,6 +141,7 @@ class AppRoutes {
   static const String restaurantDividir = "/restaurant/dividir";
   static const String restaurantCobrador = "/restaurant/cobrador";
   static const String ordersRestaurant = "/restaurant/orders";
+  static const String restaurantDishReady = "/restaurant/dish-ready";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -268,6 +270,16 @@ class AppRoutes {
     GetPage(
       name: ordersRestaurant,
       page: () => const OrdersRestaurantMainScreen(),
+    ),
+    GetPage(
+      name: restaurantDishReady,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>;
+        return DishDeskReadyScreen(
+          commandId: args['commandId'] as int,
+          itemId: args['itemId'] as int,
+        );
+      },
     ),
   ];
 

@@ -1,15 +1,19 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/esc_pos/command_print.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/printer.dart';
 import 'package:teki_app/src/data/models/teki_model/productionArea.dart';
+import 'package:teki_app/src/shared/services/command_esc_pos_formatter.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 class CommandPrintService {
   final Dio _dio = ApiClient.dio;
   final PrintCoffeService _printCoffeService = PrintCoffeService();
+  final CommandEscPosFormatter _escPosFormatter = CommandEscPosFormatter();
 
   /// Procesa una comanda guardada: detecta áreas de producción y dispara impresión.
   Future<void> processCommand({
@@ -92,15 +96,21 @@ class CommandPrintService {
           '/ticket-esc-pos/command/$commandId',
           queryParameters: _paramsToMap(params),
         );
+        final commandPrint = CommandPrint.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        final orders = _escPosFormatter.format(commandPrint, printer);
         await _printCoffeService.printCoffe({
           'printerName': printer.nombre,
-          'orders': response.data,
+          'orders': orders,
           'event': 'printEscPos',
           'idCompany': idCompany,
           'officeCode': printerOfficeCode,
         });
-      } catch (_) {
-        // No interrumpir flujo principal
+      } on PrintCoffeException catch (e) {
+        errorNotification(e.message);
+      } catch (e) {
+        errorNotification('Error al imprimir comanda: ${e.toString()}');
       }
     } else if (tipoImpresion == 'PDF') {
       final url = '${Environment.apiUrl}/public/pdf/command/$commandId?$params';

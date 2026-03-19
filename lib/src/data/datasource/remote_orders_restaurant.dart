@@ -29,4 +29,5 @@ class RemoteOrdersRestaurant extends OrdersRestaurantDatasource {
       return OrderRestaurantResponse.emptyResponse();
     }
   }
+
 }

@@ -146,6 +146,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         ConfigCompany configCompany =
             ConfigCompany.fromJson(jsonDecode(configCompanyJson));
         ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+
+        final userId = login.user?.id;
+        if (userId != null) {
+          NotificationService.instance.initialize(userId);
+        }
       } catch (e) {
         logout();
         errorNotification(e.toString());
@@ -156,6 +161,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   void logout() async {
+    NotificationService.instance.dispose();
     await keyvalueStorage.removeKey('access_token');
     await keyvalueStorage.removeKey('login');
     await keyvalueStorage.removeKey('configCompany');

@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options_sheet.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class OrderRestaurantCard extends ConsumerWidget {
@@ -15,6 +17,52 @@ class OrderRestaurantCard extends ConsumerWidget {
   bool get _canAnular =>
       order.pagado != true ||
       (order.estado == 'PENDIENTE' && order.tipo == 'LOCAL');
+
+  bool get _canFinalizar {
+    final tipo = order.tipo;
+    final flagReadyFor = (tipo == 'PEDIDO_LOCAL' ||
+            tipo == 'PEDIDO_FORANEO' ||
+            tipo == 'PEDIDO_LOCAL_INTERNO') ||
+        (tipo == 'PEDIDO_ONLINE' && order.estadoOnline == 'ACEPTADO');
+    return flagReadyFor &&
+        order.pagado == true &&
+        order.estado != 'FINALIZADO' &&
+        order.estado != 'CANCELADO' &&
+        order.esBorrador != true;
+  }
+
+  Future<void> _finalizarOrden(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Finalizar pedido'),
+        content: const Text('¿Estás seguro de finalizar el pedido?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Sí'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final pvId = ref.read(sesionProvider).office?.id;
+    if (pvId == null) {
+      errorNotification('No se pudo obtener el punto de venta');
+      return;
+    }
+    await ref.read(restaurantProvider.notifier).updateOrderStatus(
+          order.id!,
+          'FINALIZADO',
+          pvId,
+          updateInventory: false,
+        );
+    ref.read(ordersRestaurantProvider.notifier).refresh();
+  }
 
   Future<void> _anularOrden(BuildContext context, WidgetRef ref) async {
     final result = await showDialog<({bool confirmed, bool updateInventory, String observacion})>(
@@ -79,6 +127,30 @@ class OrderRestaurantCard extends ConsumerWidget {
                   showOrderDetailDialog(context, order);
                 },
               ),
+              if (_canFinalizar)
+                ListTile(
+                  leading: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.check_circle_outline,
+                        color: Colors.green, size: 20),
+                  ),
+                  title: const Text(
+                    'Finalizar pedido',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.green),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _finalizarOrden(context, ref);
+                  },
+                ),
               if (_canAnular)
                 ListTile(
                   leading: Container(
