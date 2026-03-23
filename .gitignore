@@ -5,10 +5,13 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
+.env
 
 # IntelliJ related
 *.iml
@@ -27,12 +30,11 @@ migrate_working_dir/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-.packages
 .pub-cache/
 .pub/
 /build/
-
-# Web related
+/android/app/.cxx/
+.android/app/.cxx/Debug
 
 # Symbolication related
 app.*.symbols
@@ -44,3 +46,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/app/build/
+/android/build/
+/android/.gradle/
+android/.gradle/
+**/android/**/build/
+
+# iOS builds and archives
+**/ios/build/
+**/ios/Runner.app
+**/ios/Runner.app.dSYM/
+**/ios/DerivedData/
+**/ios/*.xcarchive
+**/ios/Runner/GeneratedPluginRegistrant.*
+build/ios/

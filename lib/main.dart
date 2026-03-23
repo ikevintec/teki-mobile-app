@@ -1,52 +1,45 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:salespro_saas_admin/Screen/Authentication/forgot_password.dart';
-import 'package:salespro_saas_admin/Screen/Authentication/log_in.dart';
-import 'package:salespro_saas_admin/Screen/Dashboard/dashboard.dart';
-import 'package:salespro_saas_admin/Screen/Package/package.dart';
-import 'package:salespro_saas_admin/Screen/Reports/reports.dart';
-import 'package:salespro_saas_admin/Screen/Shop%20Category/shop_category.dart';
-import 'package:salespro_saas_admin/Screen/Shop%20Management/shop_management.dart';
-import 'package:url_strategy/url_strategy.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:teki_app/src/application.dart';
+import 'package:teki_app/src/utils/contstants.dart';
+// Nota: firebase_options.dart se genera con `flutterfire configure`.
+// Cuando lo ejecutes, descomenta la línea de abajo y usa DefaultFirebaseOptions.currentPlatform.
+// import 'package:teki_app/firebase_options.dart';
 
-import 'firebase_options.dart';
+final ProviderContainer globalContainer = ProviderContainer();
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
-Future<void> main () async{
+/// Handler de background: debe ser top-level, no puede usar contexto ni navegar.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('[FCM] Background message recibido: ${message.messageId}');
+  // Procesar solo data silenciosa aquí si es necesario.
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.web,
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await Environment.intiEnvironment();
+  await initializeDateFormatting('es', null);
+  runApp(
+    UncontrolledProviderScope(
+      container: globalContainer,
+      child: const ProviderScope(child: MyApp()),
+    ),
   );
-  setPathUrlStrategy();
-  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Salespro Saas Admin',
-      initialRoute: '/',
-      builder: EasyLoading.init(),
-      routes: {
-        '/': (context) => const LogIn(),
-        MtDashboard.route: (context) => const MtDashboard(),
-        ShopManagement.route:(context)=> const ShopManagement(),
-        ShopCategory.route:(context)=>const ShopCategory(),
-        Package.route:(context)=>const Package(),
-        Reports.route:(context)=>const Reports(),
-        ForgotPassword.route:(context)=> const ForgotPassword()
-      },
-    );
+    return const Application();
   }
 }
-

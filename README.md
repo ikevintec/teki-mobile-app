@@ -1,4 +1,4 @@
-# salespro_saas_admin
+# inventual
 
 A new Flutter project.
 

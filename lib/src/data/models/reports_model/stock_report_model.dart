@@ -1,0 +1,167 @@
+List<Map<String, dynamic>> stockReportModel = [
+  {
+    "date": "01 Jan 2024",
+    "warehouse": "Warehouse 1",
+    "name": "China Apple",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "02 Jan 2024",
+    "warehouse": "Warehouse 2",
+    "name": "Orange",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "03 Jan 2024",
+    "warehouse": "Warehouse 3",
+    "name": "T-shirt",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "04 Jan 2024",
+    "warehouse": "Warehouse 4",
+    "name": "Dell Laptop",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "05 Jan 2024",
+    "warehouse": "Warehouse 5",
+    "name": "Mouse",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "06 Jan 2024",
+    "warehouse": "Warehouse 1",
+    "name": "HP Monitor",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "07 Jan 2024",
+    "warehouse": "Warehouse 2",
+    "name": "LED TV",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "08 Jan 2024",
+    "warehouse": "Warehouse 5",
+    "name": "China Apple",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "09 Jan 2024",
+    "warehouse": "Warehouse 3",
+    "name": "Android",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "10 Jan 2024",
+    "warehouse": "Warehouse 4",
+    "name": "Lenovo",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "11 Jan 2024",
+    "warehouse": "Warehouse 5",
+    "name": "Asus",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "12 Jan 2024",
+    "warehouse": "Warehouse 2",
+    "name": "Acer",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "13 Jan 2024",
+    "warehouse": "Warehouse 4",
+    "name": "Hp",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "14 Jan 2024",
+    "warehouse": "Warehouse 3",
+    "name": "Orange",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+  {
+    "date": "15 Jan 2024",
+    "warehouse": "Warehouse 1",
+    "name": "T-shirt",
+    "unit": "Kilogram (kg)",
+    "openingStock": "364",
+    "received": "450",
+    "total": "658",
+    "pos_sales": "60",
+    "closingStock": "80"
+  },
+];

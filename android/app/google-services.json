@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "113907776411",
+    "project_id": "testtekimobile",
+    "storage_bucket": "testtekimobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:113907776411:android:88de758f7ec2ec59673f3e",
+        "android_client_info": {
+          "package_name": "com.inventual.inventual"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBScdadPi1EmpVaDKW41J6Bx4byfzU161I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
