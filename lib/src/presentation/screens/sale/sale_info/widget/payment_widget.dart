@@ -1,5 +1,4 @@
 import 'dart:async';
-// import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -162,8 +161,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
           idCompany: session.companySelected?.id,
           config: config,
         );
-      } on PrintCoffeException catch (e) {
-        errorNotification(e.message);
+      } on PrintCoffeException catch (_) {
       } catch (_) {}
     }());
   }
@@ -639,7 +637,6 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                           ref.invalidate(ticketProvider);
                           ref.invalidate(productSaleProvider);
                           ref.invalidate(customerSaleProvider);
-                          successNotification("Pago registrado con éxito");
                           final comprobante = checkResult.comprobante;
                           if (comprobante != null) {
                             _autoprint(comprobante);
@@ -661,9 +658,6 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                           ref.invalidate(ticketProvider);
                           ref.invalidate(productSaleProvider);
                           ref.invalidate(customerSaleProvider);
-                          successNotification(ticketP.isEdit
-                              ? "Venta editada con éxito"
-                              : "Venta registrada con éxito");
                           _autoprint(ticketResponse);
                           Get.off(() => ViewComponentScreen(
                                 ticket: ticketResponse,

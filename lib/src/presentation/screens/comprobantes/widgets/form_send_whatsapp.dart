@@ -205,7 +205,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                     child: Text(
                       'Volver',
                       style: GoogleFonts.nunito(
-                        fontSize: 15,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
