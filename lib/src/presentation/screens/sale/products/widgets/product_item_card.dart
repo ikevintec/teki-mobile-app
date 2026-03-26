@@ -5,7 +5,6 @@ import 'package:reactive_forms/reactive_forms.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
 import 'package:teki_app/src/presentation/widgets/form/smart_price_value_accessor.dart';
-import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -345,16 +344,10 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                         padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
                         child: GestureDetector(
                           onTap: () {
-                            showCustomModal(
-                              context: context,
-                              child: ModalSeriesConfig(
-                                ticketDetail: widget.productTicketDetail,
-                                index: widget.index,
-                              ),
-                              tittle: "Configurar Series",
-                              allowButtons: false,
-                              showButtoms: false,
-                              showCloseButton: true,
+                            showSeriesConfigSheet(
+                              context,
+                              ticketDetail: widget.productTicketDetail,
+                              index: widget.index,
                             );
                           },
                           child: Row(

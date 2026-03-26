@@ -296,7 +296,11 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       // Auto-seleccionar series cuando la cantidad cambia en productos SERIE
       if (quantityChanged && updatedTicketDetail.producto?.tipoLote == 'SERIE') {
         updatedTicketDetail = updatedTicketDetail.copyWith(
-          lotes: _autoSelectSeries(updatedTicketDetail, sesion.office?.id),
+          lotes: _autoSelectSeries(
+            updatedTicketDetail,
+            sesion.office?.id,
+            previousLotes: existingTicketDetail.lotes,
+          ),
         );
       }
 
@@ -307,7 +311,11 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     calculoTotal();
   }
 
-  List<BatchProductSale> _autoSelectSeries(TicketDetail ticketDetail, int? officeId) {
+  List<BatchProductSale> _autoSelectSeries(
+    TicketDetail ticketDetail,
+    int? officeId, {
+    List<BatchProductSale>? previousLotes,
+  }) {
     final producto = ticketDetail.producto;
     if (producto == null) return [];
 
@@ -321,11 +329,37 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       }
     }
 
-    final qty = (ticketDetail.cantidad ?? 1).toInt();
-    return available
-        .take(qty)
-        .map((s) => BatchProductSale(lote: s, cantidad: 1))
+    final newQty = (ticketDetail.cantidad ?? 1).toInt();
+
+    // Sin selección previa: tomar las primeras N disponibles
+    if (previousLotes == null || previousLotes.isEmpty) {
+      return available
+          .take(newQty)
+          .map((s) => BatchProductSale(lote: s, cantidad: 1))
+          .toList();
+    }
+
+    // Mantener solo las series previamente seleccionadas que siguen disponibles
+    final availableIds = available.map((a) => a.id).toSet();
+    final currentSelection = previousLotes
+        .where((l) => availableIds.contains(l.lote?.id))
         .toList();
+
+    if (newQty <= currentSelection.length) {
+      // Reducir: quitar desde el final respetando el orden de selección
+      return currentSelection.take(newQty).toList();
+    } else {
+      // Aumentar: agregar las siguientes disponibles que no estén ya seleccionadas
+      final selectedIds = currentSelection.map((l) => l.lote?.id).toSet();
+      for (final serie in available) {
+        if (currentSelection.length >= newQty) break;
+        if (!selectedIds.contains(serie.id)) {
+          currentSelection.add(BatchProductSale(lote: serie, cantidad: 1));
+          selectedIds.add(serie.id);
+        }
+      }
+      return currentSelection;
+    }
   }
 
   void updateLotesProductSale(int index, List<BatchProductSale> lotes) {

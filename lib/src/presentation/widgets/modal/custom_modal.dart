@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
-void showCustomModal({
+Future<void> showCustomModal({
   required BuildContext context,
   required Widget child,
   required String tittle,
@@ -30,7 +30,7 @@ void showCustomModal({
 
   WidgetsBinding.instance.addPostFrameCallback((_) => updateScrollHint());
 
-  showGeneralDialog(
+  return showGeneralDialog(
     barrierDismissible: allowButtons,
     barrierLabel: tittle,
     transitionDuration: const Duration(milliseconds: 200),
@@ -133,7 +133,10 @@ Widget _buildModalContent({
               ),
               if (showCloseButton)
                 GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    Navigator.of(context).pop();
+                  },
                   child: const Icon(Icons.close, size: 22, color: Colors.black54),
                 ),
             ],

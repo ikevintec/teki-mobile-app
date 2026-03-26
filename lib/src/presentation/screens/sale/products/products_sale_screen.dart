@@ -334,16 +334,10 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                       icon: Icons.list_alt,
                                                       backgroundColor: ColorSchema.primaryColor.withValues(alpha: 0.8),
                                                       onTap: () {
-                                                        showCustomModal(
-                                                          context: context,
-                                                          child: ModalSeriesConfig(
-                                                            ticketDetail: products[index],
-                                                            index: index,
-                                                          ),
-                                                          tittle: "Configurar Series",
-                                                          allowButtons: false,
-                                                          showButtoms: false,
-                                                          showCloseButton: true,
+                                                        showSeriesConfigSheet(
+                                                          context,
+                                                          ticketDetail: products[index],
+                                                          index: index,
                                                         );
                                                       },
                                                     ),
