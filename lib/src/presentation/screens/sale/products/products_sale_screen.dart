@@ -8,6 +8,7 @@ import 'package:teki_app/src/presentation/screens/sale/client/client_sale_screen
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/product_item_card.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/search_products.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_product_view.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
@@ -326,22 +327,26 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                         );
                                                       },
                                                     ),
-                                                  DismissibleActionData(
-                                                    type: DismissibleActionType.edit,
-                                                    label: 'Config',
-                                                    icon: Icons.settings,
-                                                    backgroundColor: ColorSchema.primaryColor.withValues(alpha: 0.8),
-                                                    onTap: () {
-                                                      // Aquí puedes agregar la lógica de configuración del producto
-                                                      // Por ahora, solo muestra un mensaje
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text('Configuraciones del producto'),
-                                                          backgroundColor: ColorSchema.primaryColor,
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
+                                                  if (products[index].producto?.tipoLote == 'SERIE')
+                                                    DismissibleActionData(
+                                                      type: DismissibleActionType.edit,
+                                                      label: 'Series',
+                                                      icon: Icons.list_alt,
+                                                      backgroundColor: ColorSchema.primaryColor.withValues(alpha: 0.8),
+                                                      onTap: () {
+                                                        showCustomModal(
+                                                          context: context,
+                                                          child: ModalSeriesConfig(
+                                                            ticketDetail: products[index],
+                                                            index: index,
+                                                          ),
+                                                          tittle: "Configurar Series",
+                                                          allowButtons: false,
+                                                          showButtoms: false,
+                                                          showCloseButton: true,
+                                                        );
+                                                      },
+                                                    ),
                                                   if (products[index].comandaDetalle == null)
                                                     DismissibleActionData(
                                                       type: DismissibleActionType.edit,
@@ -404,6 +409,15 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                           form.markAllAsTouched();
 
                                           if (form.valid) {
+                                            final seriesInvalidas = products.where((p) =>
+                                              p.producto?.tipoLote == 'SERIE' &&
+                                              (p.lotes?.length ?? 0) != (p.cantidad ?? 1).toInt()
+                                            ).toList();
+                                            if (seriesInvalidas.isNotEmpty) {
+                                              errorNotification(
+                                                "Configura las series de todos los productos (${seriesInvalidas.length} pendiente${seriesInvalidas.length > 1 ? 's' : ''})");
+                                              return;
+                                            }
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(

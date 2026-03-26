@@ -12,6 +12,7 @@ void showCustomModal({
   bool scrolleable = true,
   bool autoSize = true,
   double? fixedHeight,
+  bool showCloseButton = false,
 }) {
   final size = MediaQuery.of(context).size;
 
@@ -69,6 +70,7 @@ void showCustomModal({
                             scrollController: scrollController,
                             showScrollHint: showScrollHint,
                             size: size,
+                            showCloseButton: showCloseButton,
                           ),
                         )
                       : SizedBox(
@@ -83,6 +85,7 @@ void showCustomModal({
                             scrollController: scrollController,
                             showScrollHint: showScrollHint,
                             size: size,
+                            showCloseButton: showCloseButton,
                           ),
                         ),
                 );
@@ -105,6 +108,7 @@ Widget _buildModalContent({
   required ScrollController scrollController,
   required ValueNotifier<bool> showScrollHint,
   required Size size,
+  bool showCloseButton = false,
 }) {
   return Column(
     mainAxisSize: MainAxisSize.min,
@@ -113,14 +117,26 @@ Widget _buildModalContent({
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            tittle,
-            style: GoogleFonts.nunito(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
+          child: Row(
+            children: [
+              SizedBox(width: showCloseButton ? 30 : 0),
+              Expanded(
+                child: Text(
+                  tittle,
+                  style: GoogleFonts.nunito(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              if (showCloseButton)
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const Icon(Icons.close, size: 22, color: Colors.black54),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
