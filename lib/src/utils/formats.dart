@@ -73,6 +73,13 @@ String formatTipoComprobante(String tipoComprobante) {
   return item['label2'] ?? '';
 }
 
+String formatTipoComprobanteTitulo(String tipoComprobante) {
+  List<Map<String, String>> lista = tipoComprobantesVerVenta;
+  Map<String, String> item =
+      lista.firstWhere((item) => item['value'] == tipoComprobante);
+  return item['label'] ?? '';
+}
+
 String formatTipoDocumento(String tipo) {
   List<Map<String, String>> lista = tipoDocumento;
   Map<String, String> item =

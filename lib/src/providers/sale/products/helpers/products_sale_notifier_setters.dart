@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/general/exhange.dart';
+import 'package:teki_app/src/data/models/teki_model/batchProduct.dart';
+import 'package:teki_app/src/data/models/teki_model/batchProductSale.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
@@ -68,14 +70,21 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     calculoTotal();
   }
 
+  TicketDetail _withAutoSeries(TicketDetail td) {
+    if (td.producto?.tipoLote != 'SERIE') return td;
+    return td.copyWith(
+      lotes: _autoSelectSeries(td, ref.read(sesionProvider).office?.id),
+    );
+  }
+
   void setProductsSales(Product productsSales, int? index) {
     // If an explicit index is given, just increment that item's quantity
     if (index != null) {
       final existing = state.productsSales[index];
-      final updated = changeQtyTicketDetail(
+      final updated = _withAutoSeries(changeQtyTicketDetail(
           ticketDetail: existing,
           quantity: (existing.cantidad ?? 0) + 1,
-          sesion: ref.read(sesionProvider));
+          sesion: ref.read(sesionProvider)));
       state = state.copyWith(
         productsSales: List.from(state.productsSales)..[index] = updated,
       );
@@ -96,10 +105,10 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       if (extraIndex != -1) {
         // Increment the extra line
         final existing = state.productsSales[extraIndex];
-        final updated = changeQtyTicketDetail(
+        final updated = _withAutoSeries(changeQtyTicketDetail(
             ticketDetail: existing,
             quantity: (existing.cantidad ?? 0) + 1,
-            sesion: ref.read(sesionProvider));
+            sesion: ref.read(sesionProvider)));
         state = state.copyWith(
           productsSales: List.from(state.productsSales)..[extraIndex] = updated,
         );
@@ -109,7 +118,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         state = state.copyWith(
           productsSales: [
             ...state.productsSales,
-            getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider)),
+            _withAutoSeries(getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider))),
           ],
         );
         setCurrency(state.currency!.codigoMoneda!);
@@ -123,10 +132,10 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     );
     if (existingIndex != -1) {
       final existing = state.productsSales[existingIndex];
-      final updated = changeQtyTicketDetail(
+      final updated = _withAutoSeries(changeQtyTicketDetail(
           ticketDetail: existing,
           quantity: (existing.cantidad ?? 0) + 1,
-          sesion: ref.read(sesionProvider));
+          sesion: ref.read(sesionProvider)));
       state = state.copyWith(
         productsSales: List.from(state.productsSales)..[existingIndex] = updated,
       );
@@ -136,7 +145,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     state = state.copyWith(
       productsSales: [
         ...state.productsSales,
-        getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider)),
+        _withAutoSeries(getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider))),
       ],
     );
     setCurrency(state.currency!.codigoMoneda!);
@@ -284,11 +293,80 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
               );
       }
 
+      // Auto-seleccionar series cuando la cantidad cambia en productos SERIE
+      if (quantityChanged && updatedTicketDetail.producto?.tipoLote == 'SERIE') {
+        updatedTicketDetail = updatedTicketDetail.copyWith(
+          lotes: _autoSelectSeries(
+            updatedTicketDetail,
+            sesion.office?.id,
+            previousLotes: existingTicketDetail.lotes,
+          ),
+        );
+      }
+
       updatedProducts.add(updatedTicketDetail);
     }
 
     state = state.copyWith(productsSales: updatedProducts);
     calculoTotal();
+  }
+
+  List<BatchProductSale> _autoSelectSeries(
+    TicketDetail ticketDetail,
+    int? officeId, {
+    List<BatchProductSale>? previousLotes,
+  }) {
+    final producto = ticketDetail.producto;
+    if (producto == null) return [];
+
+    final available = <BatchProduct>[];
+    for (final inv in (producto.inventarios ?? [])) {
+      if (inv.puntoVenta?.id != officeId) continue;
+      for (final lote in (inv.lotes ?? [])) {
+        if (lote.tipoLote == 'SERIE' && (lote.cantidad ?? 0) == 1) {
+          available.add(lote);
+        }
+      }
+    }
+
+    final newQty = (ticketDetail.cantidad ?? 1).toInt();
+
+    // Sin selección previa: tomar las primeras N disponibles
+    if (previousLotes == null || previousLotes.isEmpty) {
+      return available
+          .take(newQty)
+          .map((s) => BatchProductSale(lote: s, cantidad: 1))
+          .toList();
+    }
+
+    // Mantener solo las series previamente seleccionadas que siguen disponibles
+    final availableIds = available.map((a) => a.id).toSet();
+    final currentSelection = previousLotes
+        .where((l) => availableIds.contains(l.lote?.id))
+        .toList();
+
+    if (newQty <= currentSelection.length) {
+      // Reducir: quitar desde el final respetando el orden de selección
+      return currentSelection.take(newQty).toList();
+    } else {
+      // Aumentar: agregar las siguientes disponibles que no estén ya seleccionadas
+      final selectedIds = currentSelection.map((l) => l.lote?.id).toSet();
+      for (final serie in available) {
+        if (currentSelection.length >= newQty) break;
+        if (!selectedIds.contains(serie.id)) {
+          currentSelection.add(BatchProductSale(lote: serie, cantidad: 1));
+          selectedIds.add(serie.id);
+        }
+      }
+      return currentSelection;
+    }
+  }
+
+  void updateLotesProductSale(int index, List<BatchProductSale> lotes) {
+    final updatedTicketDetail = state.productsSales[index].copyWith(lotes: lotes);
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)..[index] = updatedTicketDetail,
+    );
   }
 
   void createItemForm() {
