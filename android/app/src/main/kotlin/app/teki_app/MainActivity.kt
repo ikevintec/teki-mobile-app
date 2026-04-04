@@ -1,4 +1,4 @@
-package com.inventual.inventual
+package app.teki.pe
 
 import io.flutter.embedding.android.FlutterActivity
 

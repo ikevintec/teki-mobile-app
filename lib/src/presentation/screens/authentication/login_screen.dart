@@ -5,7 +5,6 @@ import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -23,8 +22,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       TextEditingController();
   final TextEditingController _userPasswordController = TextEditingController();
 
-  final String _defaultEmail = "admin";
-  final String _defaultPassword = "admin";
+  final String _defaultEmail = "test1@test.com";
+  final String _defaultPassword = "12345678";
   @override
   void initState() {
     _userEmailAddressController.text = _defaultEmail;

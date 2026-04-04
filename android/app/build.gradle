@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.inventual.inventual"
+    namespace "app.teki.pe"
     compileSdk 36
     ndkVersion flutter.ndkVersion
 
@@ -44,11 +44,10 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.inventual.inventual"
-        // applicationId "app.teki.pe"
+        applicationId "app.teki.pe"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 23
+        minSdkVersion flutter.minSdkVersion
         targetSdkVersion 36
         versionCode 7
         versionName "1.0.7"

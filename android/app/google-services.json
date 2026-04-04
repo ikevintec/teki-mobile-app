@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "113907776411",
-    "project_id": "testtekimobile",
-    "storage_bucket": "testtekimobile.firebasestorage.app"
+    "project_number": "997737892948",
+    "project_id": "tekimobile-3829c",
+    "storage_bucket": "tekimobile-3829c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:113907776411:android:88de758f7ec2ec59673f3e",
+        "mobilesdk_app_id": "1:997737892948:android:f526e186e44330a84f71c1",
         "android_client_info": {
-          "package_name": "com.inventual.inventual"
+          "package_name": "pe.teki.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBScdadPi1EmpVaDKW41J6Bx4byfzU161I"
+          "current_key": "AIzaSyD_kM1uoGFH16SL-eMNH5wDDsNukfa09pw"
         }
       ],
       "services": {
