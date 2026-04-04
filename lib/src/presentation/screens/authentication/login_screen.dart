@@ -192,49 +192,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "¿No tienes una cuenta?",
-                        style: GoogleFonts.raleway(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Colors.grey),
-                      ),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      GestureDetector(
-                        onTap: () async {
-                          // Get.toNamed(AppRoutes.register);
-                          final phone =
-                              '51976967870'; // Número con código de país (ej. +51 para Perú)
-                          final message = Uri.encodeComponent(
-                              "Hola, me gustaría registrarme en TEKI.");
-                          final url = 'https://wa.me/$phone?text=$message';
-                          if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(Uri.parse(url),
-                                mode: LaunchMode.externalApplication);
-                          } else {
-                            Get.snackbar("Error", "No se pudo contactar con el proovedor, inténtelo en otro momento",
-                                backgroundColor: Colors.red,
-                                colorText: Colors.white);
-                          }
-                        },
-                        child: Text(
-                          "Contáctanos",
-                          style: GoogleFonts.raleway(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                              color: ColorSchema.primaryColor),
-                        ),
-                      )
-                    ],
-                  )
                 ],
               ),
             ),
