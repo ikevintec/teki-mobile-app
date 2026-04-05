@@ -22,8 +22,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       TextEditingController();
   final TextEditingController _userPasswordController = TextEditingController();
 
-  final String _defaultEmail = "test1@test.com";
-  final String _defaultPassword = "12345678";
+  final String _defaultEmail = "";
+  final String _defaultPassword = "";
   @override
   void initState() {
     _userEmailAddressController.text = _defaultEmail;
