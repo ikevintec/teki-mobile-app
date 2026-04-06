@@ -108,7 +108,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           ),
                         ),
                         Text(
-                          "V 1.0.0",
+                          "V 1.0.2",
                           style: GoogleFonts.nunito(
                             color: Colors.white,
                             fontSize: 16,
