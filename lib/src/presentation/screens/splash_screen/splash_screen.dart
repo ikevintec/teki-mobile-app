@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -30,8 +31,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _animation = Tween<double>(begin: 0, end: 1).animate(_controller);
     _controller.forward();
 
-    Timer(const Duration(seconds: 5), () {
-      Navigator.pushNamed(context, AppRoutes.onboarding);
+    Timer(const Duration(seconds: 5), () async {
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+      if (onboardingCompleted) {
+        navigator.pushNamed(AppRoutes.login);
+      } else {
+        navigator.pushNamed(AppRoutes.onboarding);
+      }
     });
   }
 

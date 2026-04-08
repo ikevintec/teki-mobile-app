@@ -22,7 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // Derivados del primaryColor (#2C6AE5 - azul)
   static const Color _gradientTop = Color.fromARGB(255, 244, 248, 255);
-  static const Color _gradientBottom = Color.fromARGB(232, 210, 225, 255);
+  static const Color _gradientBottom = Color.fromARGB(232, 205, 221, 255);
   static const Color _errorColor = Color(0xFFE53935);
 
   @override
@@ -47,93 +47,105 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color.fromARGB(255, 252, 253, 255), _gradientTop, _gradientBottom],
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-            child: Column(
-              children: [
-                Image.asset(
-                  "assets/images/logo/logo-teki-solo.png",
-                  width: MediaQuery.of(context).size.width * 0.20,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  "TEKI",
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: ColorSchema.primaryColor,
-                    letterSpacing: 4,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 28),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorSchema.primaryColor.withValues(alpha: 0.12),
-                        spreadRadius: 0,
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Bienvenido",
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF2D3748),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Inicia sesión para continuar",
-                        style: GoogleFonts.raleway(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            _buildTextField(
-                              "Correo electrónico",
-                              TextInputType.emailAddress,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildPasswordField("Contraseña"),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      _buildLoginButton(),
-                    ],
-                  ),
-                ),
-              ],
+      body: Stack(
+        children: [
+          // Fondo con gradiente
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color.fromARGB(255, 252, 253, 255), _gradientTop, _gradientBottom],
+              ),
             ),
           ),
-        ),
+          // Nubes decorativas en la parte inferior
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(painter: _CloudPainter()),
+            ),
+          ),
+          // Contenido del formulario
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+              child: Column(
+                children: [
+                  Image.asset(
+                    "assets/images/logo/logo-teki-solo.png",
+                    width: MediaQuery.of(context).size.width * 0.20,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "TEKI",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: ColorSchema.primaryColor,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 28),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: ColorSchema.primaryColor.withValues(alpha: 0.12),
+                          spreadRadius: 0,
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Bienvenido",
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF2D3748),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Inicia sesión para continuar",
+                          style: GoogleFonts.raleway(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              _buildTextField(
+                                "Correo electrónico",
+                                TextInputType.emailAddress,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildPasswordField("Contraseña"),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        _buildLoginButton(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -291,4 +303,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
+}
+
+/// Pinta tres capas de nubes superpuestas en la parte inferior de la pantalla.
+/// Cada capa usa curvas bezier cuadráticas para los "puffs" y va aumentando
+/// la opacidad hacia el frente, generando sensación de profundidad.
+class _CloudPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Capa 1 — más atrás, ondas grandes y suaves
+    final paint1 = Paint()
+      ..color = Colors.white.withValues(alpha: 0.22)
+      ..style = PaintingStyle.fill;
+
+    // Amplitud ~8% — ondas anchas y suaves
+    final path1 = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(0, size.height * 0.63)
+      ..quadraticBezierTo(size.width * 0.13, size.height * 0.55, size.width * 0.26, size.height * 0.61)
+      ..quadraticBezierTo(size.width * 0.39, size.height * 0.68, size.width * 0.51, size.height * 0.61)
+      ..quadraticBezierTo(size.width * 0.63, size.height * 0.54, size.width * 0.76, size.height * 0.61)
+      ..quadraticBezierTo(size.width * 0.88, size.height * 0.68, size.width, size.height * 0.62)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(path1, paint1);
+
+    // Capa 2 — profundidad media, amplitud ~7%
+    final paint2 = Paint()
+      ..color = Colors.white.withValues(alpha: 0.4)
+      ..style = PaintingStyle.fill;
+
+    final path2 = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(0, size.height * 0.74)
+      ..quadraticBezierTo(size.width * 0.10, size.height * 0.67, size.width * 0.22, size.height * 0.73)
+      ..quadraticBezierTo(size.width * 0.34, size.height * 0.80, size.width * 0.46, size.height * 0.73)
+      ..quadraticBezierTo(size.width * 0.58, size.height * 0.66, size.width * 0.70, size.height * 0.73)
+      ..quadraticBezierTo(size.width * 0.82, size.height * 0.80, size.width * 0.93, size.height * 0.74)
+      ..quadraticBezierTo(size.width * 0.97, size.height * 0.72, size.width, size.height * 0.73)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(path2, paint2);
+
+    // Capa 3 — al frente, amplitud ~6%
+    final paint3 = Paint()
+      ..color = Colors.white.withValues(alpha: 0.8)
+      ..style = PaintingStyle.fill;
+
+    final path3 = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(0, size.height * 0.84)
+      ..quadraticBezierTo(size.width * 0.08, size.height * 0.78, size.width * 0.18, size.height * 0.83)
+      ..quadraticBezierTo(size.width * 0.28, size.height * 0.89, size.width * 0.38, size.height * 0.83)
+      ..quadraticBezierTo(size.width * 0.48, size.height * 0.77, size.width * 0.58, size.height * 0.83)
+      ..quadraticBezierTo(size.width * 0.68, size.height * 0.89, size.width * 0.78, size.height * 0.83)
+      ..quadraticBezierTo(size.width * 0.88, size.height * 0.77, size.width * 0.95, size.height * 0.83)
+      ..quadraticBezierTo(size.width * 0.98, size.height * 0.85, size.width, size.height * 0.84)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(path3, paint3);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

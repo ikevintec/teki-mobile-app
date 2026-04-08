@@ -21,24 +21,14 @@ class ApiClient {
       sendTimeout: const Duration(seconds: 30),
     ),
   )..interceptors.addAll([
-      LogInterceptor(
-        request: true,
-        requestHeader: true,
-        responseHeader: true,
-        error: true,
-        requestBody: true,
-        responseBody: true,
-        logPrint: (obj) {
-          print('--->: $obj');
-        },
-      ),
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final prefs = await SharedPreferences.getInstance();
           final token = prefs.getString('access_token');
+          // PlatformRequest siempre se envía (incluyendo login)
+          options.headers['PlatformRequest'] = 'mobile';
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
-            options.headers['PlatformRequest'] = 'mobile';
           }
           return handler.next(options);
         },
@@ -63,6 +53,19 @@ class ApiClient {
           }
           return handler.next(e);
         },
-      )
+      ),
+      
+      // LogInterceptor
+      LogInterceptor(
+        request: true,
+        requestHeader: true,
+        responseHeader: true,
+        error: true,
+        requestBody: true,
+        responseBody: true,
+        logPrint: (obj) {
+          print('--->: $obj');
+        },
+      ),
     ]);
 }
