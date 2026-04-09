@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:toastification/toastification.dart';
@@ -29,6 +30,19 @@ class Application extends StatelessWidget {
       navigatorObservers: [routeObserver],
       initialRoute: AppRoutes.splashScreen,
       getPages: AppRoutes.pages,
+      builder: (context, child) {
+        // Solo aplicar SafeArea en Android con navegación por botones.
+        // La navegación por gestos reserva insets laterales (left/right > 0),
+        // en botones esos insets son 0. En iOS no aplica.
+        if (!Platform.isAndroid) return child!;
+        final gestureInsets = MediaQuery.of(context).systemGestureInsets;
+        final isGestureNav = gestureInsets.left > 0 || gestureInsets.right > 0;
+        if (isGestureNav) return child!;
+        return ColoredBox(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: SafeArea(top: false, child: child!),
+        );
+      },
       ),
       ),
     );
