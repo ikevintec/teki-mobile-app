@@ -44,6 +44,10 @@ String formatExchange({required String moneda}) {
       return '\$ ';
     case 'EUR':
       return '€ ';
+    case 'JPY':
+      return '¥ ';
+    case 'CLP':
+      return '\$ ';
     case 'GBP':
       return '£ ';
     default:
