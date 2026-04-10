@@ -11,18 +11,16 @@ class AnalyticsChartSection extends StatefulWidget {
 
   const AnalyticsChartSection({super.key, required this.id});
 
-  final Color leftBarColor = const Color(0xFF4A80E9); // Ingresos
+  final Color leftBarColor = const Color(0xFF4A80E9);  // Ingresos
   final Color rightBarColor = const Color(0xFF44DF9D); // Egresos
-  final Color avgColor = const Color(0xFFFFA641); // Ganancia
+  final Color avgColor = const Color(0xFFFFA641);       // Ganancia
 
   @override
   State<AnalyticsChartSection> createState() => _AnalyticsChartSectionState();
 }
 
 class _AnalyticsChartSectionState extends State<AnalyticsChartSection> {
-  final double width = 10;
   final MovementMonthRepository repository = MovementMonthRepositoryImpl();
-
   late Future<List<MonthlyMovement>> futureMovements;
 
   @override
@@ -49,136 +47,136 @@ class _AnalyticsChartSectionState extends State<AnalyticsChartSection> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
 
         final data = snapshot.data ?? [];
-
         if (data.isEmpty) {
           return const Center(child: Text('No hay datos para mostrar.'));
         }
 
         final rawBarGroups = List.generate(data.length, (index) {
           final item = data[index];
-          final ingreso = item.totalIngresos.toDouble();
-          final egreso = item.totalEgresos.toDouble();
-          final ganancia =
-              (ingreso - egreso).clamp(0, double.infinity).toDouble();
-
+          final ingreso  = item.totalIngresos.toDouble();
+          final egreso   = item.totalEgresos.toDouble();
+          final ganancia = (ingreso - egreso).clamp(0, double.infinity).toDouble();
           return makeGroupData(index, ingreso, egreso, ganancia);
         });
 
-        return AspectRatio(
-          aspectRatio: 1.2,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Center(
-                  child: Text(
-                    'Ingresos vs. Egresos',
-                    style: GoogleFonts.raleway(
-                      textStyle: TextStyle(
-                        color: ColorSchema.primaryColor.withOpacity(0.7),
-                        fontSize: MediaQuery.of(context).size.width * 0.06,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
-                      ),
-                    ),
+        final screenWidth = MediaQuery.of(context).size.width;
+        final chartWidth = (data.length * 130.0).clamp(screenWidth - 32, double.infinity);
+
+        final chart = SizedBox(
+          width: chartWidth,
+          height: 280,
+          child: BarChart(
+            BarChartData(
+              groupsSpace: 24,
+              maxY: _calculateMaxY(data),
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => const Color(0xFF2D2D2D),
+                  fitInsideVertically: true,
+                  fitInsideHorizontally: true,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final labels = ['Ingresos', 'Egresos', 'Ganancia'];
+                    final colors = [widget.leftBarColor, widget.rightBarColor, widget.avgColor];
+                    return BarTooltipItem(
+                      '${data[group.x].periodo}\n',
+                      GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      children: [
+                        TextSpan(
+                          text: '${labels[rodIndex]}: ${rod.toY.toStringAsFixed(2)}',
+                          style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: colors[rodIndex]),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              titlesData: FlTitlesData(
+                show: true,
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 42,
+                    getTitlesWidget: (value, meta) {
+                      final i = value.toInt();
+                      if (i < 0 || i >= data.length) return const SizedBox.shrink();
+                      return SideTitleWidget(
+                        meta: meta,
+                        space: 8,
+                        child: Text(data[i].periodo, style: GoogleFonts.nunito(fontSize: 11)),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: BarChart(
-                    BarChartData(
-                      maxY: _calculateMaxY(data),
-                      barTouchData: BarTouchData(
-                        touchTooltipData: BarTouchTooltipData(
-                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            final label =
-                                ['Ingresos', 'Egresos', 'Ganancia'][rodIndex];
-                            return BarTooltipItem(
-                              '$label\n${rod.toY.toStringAsFixed(2)}',
-                              GoogleFonts.nunito(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
-                        topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 42,
-                            getTitlesWidget: (value, meta) {
-                              if (value.toInt() < data.length) {
-                                return SideTitleWidget(
-                                  meta: meta,
-                                  space: 8,
-                                  child: Text(
-                                    data[value.toInt()].periodo,
-                                    style: GoogleFonts.nunito(fontSize: 11),
-                                  ),
-                                );
-                              }
-                              return const SizedBox();
-                            },
-                          ),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 40,
-                            interval: _getInterval(data),
-                            getTitlesWidget: (value, meta) {
-                              final text = value >= 1000
-                                  ? '${(value / 1000).toStringAsFixed(0)}K'
-                                  : value.toStringAsFixed(0);
-                              return SideTitleWidget(
-                                meta: meta,
-                                child: Text(
-                                  text,
-                                  style: GoogleFonts.nunito(fontSize: 11),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      borderData: FlBorderData(show: false),
-                      barGroups: rawBarGroups,
-                      gridData: FlGridData(
-                        show: true,
-                        drawHorizontalLine: true,
-                        drawVerticalLine: false,
-                        horizontalInterval: _getInterval(data),
-                        getDrawingHorizontalLine: (value) {
-                          return FlLine(
-                            color: Colors.grey.withOpacity(0.3),
-                            strokeWidth: 1,
-                            dashArray: [5, 4],
-                          );
-                        },
-                      ),
-                    ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 60,
+                    interval: _getInterval(data),
+                    getTitlesWidget: (value, meta) {
+                      if (value == meta.min || value == meta.max) return const SizedBox.shrink();
+                      final text = value >= 1000
+                          ? '${(value / 1000).toStringAsFixed(0)}K'
+                          : value.toStringAsFixed(0);
+                      return SideTitleWidget(
+                        meta: meta,
+                        child: Text(text, style: GoogleFonts.nunito(fontSize: 11)),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(height: 12),
-                Center(child: makeTransactionsIcon()),
-                const SizedBox(height: 8),
-              ],
+              ),
+              borderData: FlBorderData(show: false),
+              barGroups: rawBarGroups,
+              gridData: FlGridData(
+                show: true,
+                drawHorizontalLine: true,
+                drawVerticalLine: false,
+                horizontalInterval: _getInterval(data),
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  strokeWidth: 1,
+                  dashArray: [5, 4],
+                ),
+              ),
             ),
+          ),
+        );
+
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Text(
+                  'Ingresos vs. Egresos',
+                  style: GoogleFonts.raleway(
+                    textStyle: TextStyle(
+                      color: ColorSchema.primaryColor.withValues(alpha: 0.7),
+                      fontSize: screenWidth * 0.06,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: chart,
+              ),
+              const SizedBox(height: 12),
+              Center(child: _legend()),
+              const SizedBox(height: 8),
+            ],
           ),
         );
       },
@@ -186,57 +184,52 @@ class _AnalyticsChartSectionState extends State<AnalyticsChartSection> {
   }
 
   double _calculateMaxY(List<MonthlyMovement> data) {
-    final maxIngreso =
-        data.map((e) => e.totalIngresos).reduce((a, b) => a > b ? a : b);
-    final maxEgreso =
-        data.map((e) => e.totalEgresos).reduce((a, b) => a > b ? a : b);
+    final maxIngreso  = data.map((e) => e.totalIngresos).reduce((a, b) => a > b ? a : b);
+    final maxEgreso   = data.map((e) => e.totalEgresos).reduce((a, b) => a > b ? a : b);
     final maxGanancia = data
-        .map(
-            (e) => (e.totalIngresos - e.totalEgresos).clamp(0, double.infinity))
+        .map((e) => (e.totalIngresos - e.totalEgresos).clamp(0, double.infinity))
         .reduce((a, b) => a > b ? a : b);
-    return [maxIngreso, maxEgreso, maxGanancia]
-            .reduce((a, b) => a > b ? a : b) *
-        1.2;
+    return [maxIngreso, maxEgreso, maxGanancia].reduce((a, b) => a > b ? a : b) * 1.2;
   }
 
   double _getInterval(List<MonthlyMovement> data) {
     final maxY = _calculateMaxY(data);
     if (maxY > 50000) return 10000;
     if (maxY > 10000) return 2000;
-    if (maxY > 5000) return 1000;
-    if (maxY > 1000) return 500;
-    if (maxY > 100) return 50;
+    if (maxY > 5000)  return 1000;
+    if (maxY > 1000)  return 500;
+    if (maxY > 100)   return 50;
     return 10;
   }
 
-  BarChartGroupData makeGroupData(
-      int x, double ingreso, double egreso, double ganancia) {
+  BarChartGroupData makeGroupData(int x, double ingreso, double egreso, double ganancia) {
     return BarChartGroupData(
-      barsSpace: 4,
       x: x,
+      barsSpace: 4,
       barRods: [
-        BarChartRodData(toY: ingreso, color: widget.leftBarColor, width: width),
-        BarChartRodData(toY: egreso, color: widget.rightBarColor, width: width),
-        BarChartRodData(toY: ganancia, color: widget.avgColor, width: width),
+        BarChartRodData(toY: ingreso,  color: widget.leftBarColor,  width: 18, borderRadius: BorderRadius.circular(4)),
+        BarChartRodData(toY: egreso,   color: widget.rightBarColor, width: 18, borderRadius: BorderRadius.circular(4)),
+        BarChartRodData(toY: ganancia, color: widget.avgColor,      width: 18, borderRadius: BorderRadius.circular(4)),
       ],
     );
   }
 
-  Widget makeTransactionsIcon() {
+  Widget _legend() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _legend(widget.leftBarColor, 'Ingresos'),
+        _legendItem(widget.leftBarColor, 'Ingresos'),
         const SizedBox(width: 10),
-        _legend(widget.rightBarColor, 'Egresos'),
+        _legendItem(widget.rightBarColor, 'Egresos'),
         const SizedBox(width: 10),
-        _legend(widget.avgColor, 'Ganancia'),
+        _legendItem(widget.avgColor, 'Ganancia'),
       ],
     );
   }
 
-  Widget _legend(Color color, String label) {
+  Widget _legendItem(Color color, String label) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(width: 10, height: 10, color: color),
         const SizedBox(width: 4),

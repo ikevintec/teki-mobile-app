@@ -8,10 +8,12 @@ class ScreenLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Dialog(
+      insetPadding: EdgeInsets.zero,
       backgroundColor: ColorSchema.primaryColor,
-      body: Center(
-        child: AnimatedContainer(
+      child: SizedBox.expand(
+        child: Center(
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
           decoration: BoxDecoration(
@@ -45,6 +47,7 @@ class ScreenLoader extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
