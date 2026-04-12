@@ -89,7 +89,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             spreadRadius: 1,
             blurRadius: 14,
             offset: const Offset(0, 10),
@@ -124,7 +124,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: IconButton(
@@ -138,56 +138,63 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
             ),
           ),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-                buildReports(
-                  "Ventas",
-                  loadingMontos
-                      ? "---"
-                      : montosPorMoneda != null
-                          ? montosPorMoneda!.map((m) {
-                              final moneda = m['codigoMoneda'];
-                              final monto = (m['monto'] ?? 0).toStringAsFixed(2);
-                              switch (moneda) {
-                                case 'PEN':
-                                  return 'S/. $monto';
-                                case 'USD':
-                                  return '\$ $monto';
-                                case 'EUR':
-                                  return '€ $monto';
-                                default:
-                                  return '$moneda $monto';
-                              }
-                            }).join('\n')
-                          : '---',
-                  Colors.white,
-                  "assets/icons/icon_svg/sale_service_icon.svg",
-                  screenWidth,
-                  showCurrencySymbol: false,
+                Expanded(
+                  child: buildReports(
+                    "Ventas",
+                    loadingMontos
+                        ? "---"
+                        : montosPorMoneda != null
+                            ? montosPorMoneda!.map((m) {
+                                final moneda = m['codigoMoneda'];
+                                final monto = (m['monto'] ?? 0).toStringAsFixed(2);
+                                switch (moneda) {
+                                  case 'PEN':
+                                    return 'S/. $monto';
+                                  case 'USD':
+                                    return '\$ $monto';
+                                  case 'EUR':
+                                    return '€ $monto';
+                                  default:
+                                    return '$moneda $monto';
+                                }
+                              }).join('\n')
+                            : '---',
+                    Colors.white,
+                    "assets/icons/icon_svg/sale_service_icon.svg",
+                    screenWidth,
+                    showCurrencySymbol: false,
+                  ),
                 ),
-                buildReports(
-                  "Ventas\nCerradas",
-                  loadingVentas
-                      ? "---"
-                      : totalVentas != null
-                          ? "$totalVentas"
-                          : '---',
-                  Colors.white,
-                  "assets/icons/icon_svg/purchase_service_icon.svg",
-                  screenWidth,
-                  showCurrencySymbol: false,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: buildReports(
+                    "Ventas\nCerradas",
+                    loadingVentas
+                        ? "---"
+                        : totalVentas != null
+                            ? "$totalVentas"
+                            : '---',
+                    Colors.white,
+                    "assets/icons/icon_svg/purchase_service_icon.svg",
+                    screenWidth,
+                    showCurrencySymbol: false,
+                  ),
                 ),
-                buildReports(
-                  "Clientes",
-                  loadingClientes
-                      ? "---"
-                      : totalClientes != null
-                          ? "$totalClientes"
-                          : '---',
-                  Colors.white,
-                  "assets/icons/icon_svg/expenses_icon.svg",
-                  screenWidth,
-                  showCurrencySymbol: false,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: buildReports(
+                    "Clientes",
+                    loadingClientes
+                        ? "---"
+                        : totalClientes != null
+                            ? "$totalClientes"
+                            : '---',
+                    Colors.white,
+                    "assets/icons/icon_svg/expenses_icon.svg",
+                    screenWidth,
+                    showCurrencySymbol: false,
+                  ),
                 ),
               ],
             ),
@@ -205,14 +212,13 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     bool showCurrencySymbol = true,
   }) {
     return Container(
-        width: screenWidth * 0.27,
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: reportColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               spreadRadius: 0,
               blurRadius: 8,
               offset: const Offset(0, 2),
@@ -226,10 +232,10 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: ColorSchema.primaryColor.withOpacity(0.1),
+                color: ColorSchema.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(25),
                 border: Border.all(
-                  color: ColorSchema.primaryColor.withOpacity(0.2),
+                  color: ColorSchema.primaryColor.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),

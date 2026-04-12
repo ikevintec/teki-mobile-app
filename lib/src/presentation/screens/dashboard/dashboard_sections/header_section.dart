@@ -22,10 +22,10 @@ class DashboardHeaderSection extends ConsumerWidget {
         color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.only(
-          top: 20,
+          top: 5,
           left: 20,
           right: 16,
-          bottom: 0,
+          bottom: 10,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -41,31 +41,31 @@ class DashboardHeaderSection extends ConsumerWidget {
                     child: avatarUrl != null && avatarUrl.isNotEmpty
                         ? Image.network(
                             avatarUrl,
-                            width: 60,
-                            height: 60,
+                            width: 50,
+                            height: 50,
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
                               return Image.asset(
                                 "assets/images/avatar/user_profile.png",
-                                width: 60,
-                                height: 60,
+                                width: 50,
+                                height: 50,
                                 fit: BoxFit.cover,
                               );
                             },
                             errorBuilder: (context, error, stackTrace) {
                               return Image.asset(
                                 "assets/images/avatar/user_profile.png",
-                                width: 60,
-                                height: 60,
+                                width: 50,
+                                height: 50,
                                 fit: BoxFit.cover,
                               );
                             },
                           )
                         : Image.asset(
                             "assets/images/avatar/user_profile.png",
-                            width: 60,
-                            height: 60,
+                            width: 50,
+                            height: 50,
                             fit: BoxFit.cover,
                           ),
                   ),
