@@ -119,9 +119,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
                   topLeft: Radius.circular(28),
                   topRight: Radius.circular(28),
                 ),
-                // IndexedStack mantiene los 3 tabs vivos simultáneamente,
-                // preservando estado (scroll, datos) al cambiar de tab.
-                child: IndexedStack(
+                child: _FadeIndexedStack(
                   index: _selectedTab,
                   children: [
                     InicioTab(
@@ -146,50 +144,78 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
   }
 
   Widget _buildBottomNav() {
-    return Container(
-      color: Colors.white,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-          child: Container(
-            height: 64,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Inicio',
-                  isSelected: _selectedTab == 0,
-                  onTap: () => _onTabSelected(0),
-                ),
-                _NavItem(
-                  icon: Icons.inventory_2_rounded,
-                  label: 'Inventario',
-                  isSelected: _selectedTab == 1,
-                  onTap: () => _onTabSelected(1),
-                ),
-                _NavItem(
-                  icon: Icons.point_of_sale_rounded,
-                  label: 'Caja',
-                  isSelected: _selectedTab == 2,
-                  onTap: () => _onTabSelected(2),
-                ),
-              ],
-            ),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
+        child: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: const Color.fromARGB(255, 48, 47, 103).withValues(alpha: 0.25),
+                blurRadius: 50,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _NavItem(
+                icon: Icons.home_rounded,
+                label: 'Inicio',
+                isSelected: _selectedTab == 0,
+                onTap: () => _onTabSelected(0),
+              ),
+              _NavItem(
+                icon: Icons.inventory_2_rounded,
+                label: 'Inventario',
+                isSelected: _selectedTab == 1,
+                onTap: () => _onTabSelected(1),
+              ),
+              _NavItem(
+                icon: Icons.point_of_sale_rounded,
+                label: 'Caja',
+                isSelected: _selectedTab == 2,
+                onTap: () => _onTabSelected(2),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FadeIndexedStack extends StatefulWidget {
+  final int index;
+  final List<Widget> children;
+
+  const _FadeIndexedStack({required this.index, required this.children});
+
+  @override
+  State<_FadeIndexedStack> createState() => _FadeIndexedStackState();
+}
+
+class _FadeIndexedStackState extends State<_FadeIndexedStack> {
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: List.generate(widget.children.length, (i) {
+        final isActive = i == widget.index;
+        return IgnorePointer(
+          ignoring: !isActive,
+          child: AnimatedOpacity(
+            opacity: isActive ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            child: widget.children[i],
+          ),
+        );
+      }),
     );
   }
 }
@@ -217,36 +243,34 @@ class _NavItem extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeInOut,
-            padding: isSelected
-                ? const EdgeInsets.symmetric(horizontal: 18, vertical: 8)
-                : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            constraints: const BoxConstraints(minWidth: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
             decoration: BoxDecoration(
               color: isSelected
-                  ? ColorSchema.primaryColor
+                  ? ColorSchema.primaryColor.withValues(alpha: 0.12)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(26),
             ),
-            child: Row(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   icon,
-                  size: 25,
+                  size: 32,
                   color: isSelected
-                      ? Colors.white
-                      : Colors.grey.shade400,
+                      ? ColorSchema.primaryColor
+                      : const Color.fromARGB(255, 157, 157, 157),
                 ),
-                if (isSelected) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: GoogleFonts.nunito(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
+                Text(
+                  label,
+                  style: GoogleFonts.nunito(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected
+                        ? ColorSchema.primaryColor
+                        : Colors.grey.shade400,
                   ),
-                ],
+                ),
               ],
             ),
           ),
