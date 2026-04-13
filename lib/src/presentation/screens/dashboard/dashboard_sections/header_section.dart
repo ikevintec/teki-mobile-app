@@ -18,14 +18,15 @@ class DashboardHeaderSection extends ConsumerWidget {
     final cargo = user?.cargo ?? "User Cargo";
     final username = user?.username ?? "User Username";
     final avatarUrl = user?.avatarUrl;
+    final sizeAvatarImage = 48.0;
     return Container(
         color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.only(
-          top: 5,
+          top: 0,
           left: 20,
           right: 16,
-          bottom: 10,
+          bottom: 15,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -41,37 +42,37 @@ class DashboardHeaderSection extends ConsumerWidget {
                     child: avatarUrl != null && avatarUrl.isNotEmpty
                         ? Image.network(
                             avatarUrl,
-                            width: 50,
-                            height: 50,
+                            width: sizeAvatarImage,
+                            height: sizeAvatarImage,
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
                               return Image.asset(
                                 "assets/images/avatar/user_profile.png",
-                                width: 50,
-                                height: 50,
+                                width: sizeAvatarImage,
+                                height: sizeAvatarImage,
                                 fit: BoxFit.cover,
                               );
                             },
                             errorBuilder: (context, error, stackTrace) {
                               return Image.asset(
                                 "assets/images/avatar/user_profile.png",
-                                width: 50,
-                                height: 50,
+                                width: sizeAvatarImage,
+                                height: sizeAvatarImage,
                                 fit: BoxFit.cover,
                               );
                             },
                           )
                         : Image.asset(
                             "assets/images/avatar/user_profile.png",
-                            width: 50,
-                            height: 50,
+                            width: sizeAvatarImage,
+                            height: sizeAvatarImage,
                             fit: BoxFit.cover,
                           ),
                   ),
                 ),
                 const SizedBox(
-                  width: 8,
+                  width: 15,
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,31 +101,17 @@ class DashboardHeaderSection extends ConsumerWidget {
               onTap: () {
                 Get.toNamed(AppRoutes.settings);
               },
-              child: Stack(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                        color: Colors.white),
-                    child: const Icon(
-                      Icons.tune,
-                      color: ColorSchema.primaryColor,
-                      size: 26,
-                    ),
-                  ),
-                  // Positioned(
-                  //     right: 14,
-                  //     top: 14,
-                  //     child: Container(
-                  //       width: 5,
-                  //       height: 5,
-                  //       decoration: BoxDecoration(
-                  //           borderRadius: BorderRadius.circular(50),
-                  //           color: Colors.red),
-                  //     ))
-                ],
+              child: Container(
+                width: 37,
+                height: 37,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50),
+                    color: Colors.white),
+                child: const Icon(
+                  Icons.tune,
+                  color: ColorSchema.primaryColor,
+                  size: 22,
+                ),
               ),
             )
           ],

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -148,40 +149,51 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
-        child: Container(
-          height: 70,
+        child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(32),
             boxShadow: [
               BoxShadow(
                 color: const Color.fromARGB(255, 48, 47, 103).withValues(alpha: 0.25),
-                blurRadius: 50,
+                blurRadius: 30,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Row(
-            children: [
-              _NavItem(
-                icon: Icons.home_rounded,
-                label: 'Inicio',
-                isSelected: _selectedTab == 0,
-                onTap: () => _onTabSelected(0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 9),
+              child: Container(
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: Row(
+                  children: [
+                    _NavItem(
+                      icon: Icons.home_rounded,
+                      label: 'Inicio',
+                      isSelected: _selectedTab == 0,
+                      onTap: () => _onTabSelected(0),
+                    ),
+                    _NavItem(
+                      icon: Icons.inventory_2_rounded,
+                      label: 'Inventario',
+                      isSelected: _selectedTab == 1,
+                      onTap: () => _onTabSelected(1),
+                    ),
+                    _NavItem(
+                      icon: Icons.point_of_sale_rounded,
+                      label: 'Caja',
+                      isSelected: _selectedTab == 2,
+                      onTap: () => _onTabSelected(2),
+                    ),
+                  ],
+                ),
               ),
-              _NavItem(
-                icon: Icons.inventory_2_rounded,
-                label: 'Inventario',
-                isSelected: _selectedTab == 1,
-                onTap: () => _onTabSelected(1),
-              ),
-              _NavItem(
-                icon: Icons.point_of_sale_rounded,
-                label: 'Caja',
-                isSelected: _selectedTab == 2,
-                onTap: () => _onTabSelected(2),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -259,7 +271,7 @@ class _NavItem extends StatelessWidget {
                   size: 32,
                   color: isSelected
                       ? ColorSchema.primaryColor
-                      : const Color.fromARGB(255, 157, 157, 157),
+                      : const Color.fromARGB(255, 129, 129, 129),
                 ),
                 Text(
                   label,
@@ -268,7 +280,7 @@ class _NavItem extends StatelessWidget {
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     color: isSelected
                         ? ColorSchema.primaryColor
-                        : Colors.grey.shade400,
+                        : const Color.fromARGB(255, 129, 129, 129),
                   ),
                 ),
               ],

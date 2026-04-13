@@ -174,22 +174,22 @@ class _InicioTabState extends ConsumerState<InicioTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      // Sin padding horizontal global: TodayReportsSection maneja su propio
-      // margen (16px), y las secciones del grid lo tienen via Padding interno.
-      padding: const EdgeInsets.only(top: 20, bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // TodayReports ocupa el ancho disponible (solo su margen interno de 16px)
-          TodayReportsSection(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Ventas del Día — fijo, no escrolea ───────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+          child: TodayReportsSection(
             key: _todayReportKey,
             idPuntoVenta: widget.idPuntoVenta,
           ),
-          const SizedBox(height: 24),
-          // Grid sections con su propio padding horizontal
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+        const SizedBox(height: 24),
+        // ── Opciones — escroleable ────────────────────────────────────────
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -208,8 +208,8 @@ class _InicioTabState extends ConsumerState<InicioTab> {
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
