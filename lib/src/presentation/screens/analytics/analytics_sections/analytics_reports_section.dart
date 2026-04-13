@@ -229,7 +229,7 @@ class _AnalyticsReportSectionState extends State<AnalyticsReportSection> {
                       const SizedBox(height: 6),
                       Text(
                         balance,
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: balanceColor,

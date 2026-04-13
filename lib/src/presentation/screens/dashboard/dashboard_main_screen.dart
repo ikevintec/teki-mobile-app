@@ -324,7 +324,7 @@ class _NavItem extends StatelessWidget {
                 ),
                 Text(
                   label,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontSize: 10,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     color: isSelected

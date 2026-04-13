@@ -62,7 +62,7 @@ class _UserListCardSectionState extends State<UserListCardSection> {
                             vertical: 5, horizontal: 10),
                         child: Text(
                           user["status"],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               color: Color(user["statusColor"])),
                         ),
                       ),
@@ -84,7 +84,7 @@ class _UserListCardSectionState extends State<UserListCardSection> {
                     ),
                     Text(
                       user["email"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFFA0A0A3),
                         fontSize: 16,
                       ),
@@ -106,7 +106,7 @@ class _UserListCardSectionState extends State<UserListCardSection> {
                     ),
                     Text(
                       user["phone"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFFA0A0A3),
                         fontSize: 16,
                       ),
@@ -131,7 +131,7 @@ class _UserListCardSectionState extends State<UserListCardSection> {
                         ),
                         Text(
                           user["role"],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               color: const Color(0xFF5D6571),
                               fontWeight: FontWeight.w600,
                               fontSize: 16),

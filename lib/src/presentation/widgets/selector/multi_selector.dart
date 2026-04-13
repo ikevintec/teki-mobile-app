@@ -105,7 +105,7 @@ class _MultiSelectorState extends State<MultiSelector> {
                 Expanded(
                   child: Text(
                     _getDisplayText(),
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
                       color: _selectedValues.isEmpty ? Colors.grey : Colors.black87,
@@ -222,7 +222,7 @@ class _MultiSelectorModalState extends State<_MultiSelectorModal> {
                 Expanded(
                   child: Text(
                     widget.label,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                       color: ColorSchema.primaryColor,
@@ -260,7 +260,7 @@ class _MultiSelectorModalState extends State<_MultiSelectorModal> {
                     ),
                     title: Text(
                       label,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontWeight: FontWeight.w600,
                         color: isSelected ? ColorSchema.primaryColor : Colors.black87,
                       ),
@@ -290,7 +290,7 @@ class _MultiSelectorModalState extends State<_MultiSelectorModal> {
                 ),
                 child: Text(
                   'Aplicar Filtros',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),

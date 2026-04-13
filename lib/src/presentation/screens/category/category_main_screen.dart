@@ -114,7 +114,7 @@ class _CategoryMainScreenState extends State<CategoryMainScreen> {
                         padding: const EdgeInsets.only(top: 10),
                         child: Text(
                           productsCategoryModel[index]["category_item"],
-                          style: GoogleFonts.nunito(),
+                          style: GoogleFonts.roboto(),
                         ),
                       ),
                     ),

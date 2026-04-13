@@ -22,7 +22,7 @@ class ComprobanteSummaryWidget extends StatelessWidget {
             children: [
               Text(
                 'Total',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: ColorSchema.primaryColor.withValues(alpha: 0.7),
@@ -34,7 +34,7 @@ class ComprobanteSummaryWidget extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")} ',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: ColorSchema.primaryColor.withValues(alpha: 0.7),
@@ -42,7 +42,7 @@ class ComprobanteSummaryWidget extends StatelessWidget {
                     ),
                     TextSpan(
                       text: ticket.totalVenta?.toStringAsFixed(2) ?? '--',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
                         color: ColorSchema.primaryColor,
@@ -115,11 +115,11 @@ class ComprobanteSummaryWidget extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.nunito(fontSize: 14, fontWeight: fontWeight, color: textColor),
+            style: GoogleFonts.roboto(fontSize: 14, fontWeight: fontWeight, color: textColor),
           ),
           Text(
             '${formatExchange(moneda: currency ?? "PEN")} ${(value ?? 0).toStringAsFixed(2)}',
-            style: GoogleFonts.nunito(fontSize: 14, fontWeight: fontWeight, color: textColor),
+            style: GoogleFonts.roboto(fontSize: 14, fontWeight: fontWeight, color: textColor),
           ),
         ],
       ),

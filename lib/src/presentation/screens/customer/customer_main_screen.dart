@@ -265,7 +265,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                         const SizedBox(height: 2),
                         Text(
                           formatTipoDocumento(customer.tipoDocumento ?? ''),
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFF9CA3AF),
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
@@ -286,7 +286,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                     ),
                     child: Text(
                       customer.numeroDocumento!,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
@@ -321,7 +321,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                                 Expanded(
                                   child: Text(
                                     customer.email!,
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                       color: const Color(0xFF6B7280),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
@@ -346,7 +346,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   customer.telefono!,
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                     color: const Color(0xFF6B7280),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w400,
@@ -371,7 +371,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                                 Expanded(
                                   child: Text(
                                     customer.direccionCompleta!,
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                       color: const Color(0xFF6B7280),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,

@@ -195,7 +195,7 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen>
                               const SizedBox(height: 4),
                               Text(
                                 '${ticketToShow.serie} - ${ticketToShow.numero}',
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.grey[700],
@@ -207,7 +207,7 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen>
                                 Text(
                                   ticketToShow.denominacionReceptor!,
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.grey[600],
@@ -294,7 +294,7 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen>
                         const SizedBox(height: 8),
                         Text(
                           'El comprobante fue registrado con éxito',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             fontSize: 14,
                             color: ColorSchema.primaryColor,
                           ),
@@ -353,7 +353,7 @@ Widget _buildErrorScreen(String message, bool fromSale) {
           const SizedBox(height: 16),
           Text(
             message,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               fontSize: 18,
               color: Colors.grey[600],
             ),
@@ -412,7 +412,7 @@ Widget _buildErrorScreen(String message, bool fromSale) {
           const SizedBox(width: 4),
           Text(
             'SUNAT · $label',
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: color,
@@ -815,7 +815,7 @@ class _SplitButtonState extends State<_SplitButton>
                       Flexible(
                         child: Text(
                           widget.directLabel,
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -931,7 +931,7 @@ class _SplitDropdownOverlay extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   opt.label,
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.black87,

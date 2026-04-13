@@ -179,7 +179,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                             const SizedBox(height: 10),
                             Text(
                               'No se pudo cargar la caja',
-                              style: GoogleFonts.nunito(
+                              style: GoogleFonts.roboto(
                                   fontSize: 14, color: Colors.grey.shade500),
                               textAlign: TextAlign.center,
                             ),
@@ -221,7 +221,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                                 const SizedBox(width: 12),
                                 Text(
                                   'Balance',
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.grey.shade700,
@@ -278,7 +278,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                                 ? Center(
                                     child: Text(
                                       'Sin movimientos hoy',
-                                      style: GoogleFonts.nunito(
+                                      style: GoogleFonts.roboto(
                                         fontSize: 12,
                                         color: Colors.grey.shade400,
                                       ),
@@ -365,7 +365,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
             const SizedBox(height: 8),
             Text(
               'No se pudo cargar el historial',
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                   fontSize: 13, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 12),
@@ -385,7 +385,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
       return Center(
         child: Text(
           'Sin movimientos',
-          style: GoogleFonts.nunito(
+          style: GoogleFonts.roboto(
               fontSize: 13, color: Colors.grey.shade400),
         ),
       );
@@ -507,7 +507,7 @@ class _TipoBtn extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             label,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               fontSize: 13,
               fontWeight:
                   isSelected ? FontWeight.w700 : FontWeight.w500,
@@ -642,7 +642,7 @@ class _HistorialItem extends StatelessWidget {
                     const SizedBox(width: 3),
                     Text(
                       hora,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 11,
                         color: Colors.grey.shade400,
                       ),
@@ -811,7 +811,7 @@ class _CurrencySelectorState extends State<_CurrencySelector> {
                               ),
                             Text(
                               m,
-                              style: GoogleFonts.nunito(
+                              style: GoogleFonts.roboto(
                                 fontSize: 13,
                                 fontWeight: isSelected
                                     ? FontWeight.w700
@@ -865,7 +865,7 @@ class _CurrencySelectorState extends State<_CurrencySelector> {
             children: [
               Text(
                 widget.value,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: ColorSchema.primaryColor,

@@ -96,7 +96,7 @@ class DashboardHeaderSection extends ConsumerWidget {
                     [if (username.isNotEmpty) username, if (cargo.isNotEmpty) cargo].join(' · '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: Colors.white.withValues(alpha: 0.65),

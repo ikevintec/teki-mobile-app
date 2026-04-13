@@ -24,7 +24,7 @@ class TextFieldMaxLineSection extends StatelessWidget {
         fillColor: Colors.white,
         filled: true,
         hintText: hintText,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
             textStyle: const TextStyle(
           color: Colors.grey,
           fontWeight: FontWeight.w500,

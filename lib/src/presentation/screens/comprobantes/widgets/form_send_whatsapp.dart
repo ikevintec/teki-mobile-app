@@ -132,7 +132,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                     LengthLimitingTextInputFormatter(15),
                   ],
                   validator: _validatePhone,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -147,7 +147,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                       ),
                       child: Text(
                         '+51',
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.grey[700],
@@ -204,7 +204,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                     ),
                     child: Text(
                       'Volver',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -240,7 +240,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                       : const Icon(Icons.send, size: 18),
                     label: Text(
                       _isLoading ? 'Enviando...' : 'Enviar',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -265,7 +265,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                 Expanded(
                   child: Text(
                     'Se enviará el recibo vía WhatsApp al número proporcionado.',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       fontSize: 12,
                       color: Colors.grey[500],
                       fontWeight: FontWeight.w400,

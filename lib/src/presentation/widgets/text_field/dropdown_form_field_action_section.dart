@@ -48,7 +48,7 @@ class _DropdownFormFieldActionSectionState
           fillColor: Colors.white,
           filled: true,
           hintText: widget.hint,
-          hintStyle: GoogleFonts.nunito(
+          hintStyle: GoogleFonts.roboto(
               textStyle: const TextStyle(
                   color: Colors.grey, fontWeight: FontWeight.w500)),
           enabledBorder: OutlineInputBorder(
@@ -68,7 +68,7 @@ class _DropdownFormFieldActionSectionState
                 value: item,
                 child: Text(
                   item,
-                  style: GoogleFonts.nunito(color: Colors.black),
+                  style: GoogleFonts.roboto(color: Colors.black),
                 ));
           }),
           DropdownMenuItem(
@@ -84,7 +84,7 @@ class _DropdownFormFieldActionSectionState
                 ),
                 Text(
                   widget.addTitle,
-                  style: GoogleFonts.nunito(color: ColorSchema.primaryColor),
+                  style: GoogleFonts.roboto(color: ColorSchema.primaryColor),
                 ),
               ],
             ),

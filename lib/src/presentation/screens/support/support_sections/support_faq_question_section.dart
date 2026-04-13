@@ -76,7 +76,7 @@ class SupportFaqQuestionSection extends StatelessWidget {
           questionTextStyle: GoogleFonts.raleway(
               fontWeight: FontWeight.w700, color: Colors.black87, fontSize: 15),
           anserTextStyle:
-              GoogleFonts.nunito(color: Colors.black54, fontSize: 15),
+              GoogleFonts.roboto(color: Colors.black54, fontSize: 15),
           question: question,
           answer: answer),
     );

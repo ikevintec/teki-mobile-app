@@ -11,7 +11,7 @@ class SuccessToast {
       animationType: AnimationType.fromTop,
       action: Text(
         toastText,
-        style: GoogleFonts.nunito(
+        style: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.black,
           ),

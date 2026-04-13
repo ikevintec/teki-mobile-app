@@ -87,7 +87,7 @@ class _UnitManagementMainScreenState extends State<UnitManagementMainScreen> {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       unit["unit-short-name"],
-                      style: GoogleFonts.nunito(color: Colors.grey),
+                      style: GoogleFonts.roboto(color: Colors.grey),
                     ),
                   ),
                   trailing: Row(

@@ -232,7 +232,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                 Expanded(
                                   child: Text(
                                     'Venta: ${precioVenta ?? "—"}',
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                       fontSize: 11,
                                       color: const Color(0xFF555555),
                                       fontWeight: FontWeight.w600,
@@ -242,7 +242,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                 Expanded(
                                   child: Text(
                                     'Compra: ${product.precioCompra ?? "—"}',
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                       fontSize: 11,
                                       color: const Color(0xFF555555),
                                     ),
@@ -306,7 +306,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
           const SizedBox(width: 3),
           Text(
             label,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               fontSize: 10,
               color: color,
               fontWeight: FontWeight.w700,

@@ -13,7 +13,7 @@ class CustomSearchField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle:
-            GoogleFonts.nunito(textStyle: const TextStyle(color: Colors.grey)),
+            GoogleFonts.roboto(textStyle: const TextStyle(color: Colors.grey)),
         suffixIcon: const Icon(Icons.search, color: Colors.grey),
         filled: true,
         fillColor: Colors.white,

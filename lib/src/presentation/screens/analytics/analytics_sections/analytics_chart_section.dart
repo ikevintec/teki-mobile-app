@@ -84,11 +84,11 @@ class _AnalyticsChartSectionState extends State<AnalyticsChartSection> {
                     final colors = [widget.leftBarColor, widget.rightBarColor, widget.avgColor];
                     return BarTooltipItem(
                       '${data[group.x].periodo}\n',
-                      GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                       children: [
                         TextSpan(
                           text: '${labels[rodIndex]}: ${rod.toY.toStringAsFixed(2)}',
-                          style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: colors[rodIndex]),
+                          style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: colors[rodIndex]),
                         ),
                       ],
                     );
@@ -109,7 +109,7 @@ class _AnalyticsChartSectionState extends State<AnalyticsChartSection> {
                       return SideTitleWidget(
                         meta: meta,
                         space: 8,
-                        child: Text(data[i].periodo, style: GoogleFonts.nunito(fontSize: 11)),
+                        child: Text(data[i].periodo, style: GoogleFonts.roboto(fontSize: 11)),
                       );
                     },
                   ),
@@ -126,7 +126,7 @@ class _AnalyticsChartSectionState extends State<AnalyticsChartSection> {
                           : value.toStringAsFixed(0);
                       return SideTitleWidget(
                         meta: meta,
-                        child: Text(text, style: GoogleFonts.nunito(fontSize: 11)),
+                        child: Text(text, style: GoogleFonts.roboto(fontSize: 11)),
                       );
                     },
                   ),
@@ -233,7 +233,7 @@ class _AnalyticsChartSectionState extends State<AnalyticsChartSection> {
       children: [
         Container(width: 10, height: 10, color: color),
         const SizedBox(width: 4),
-        Text(label, style: GoogleFonts.nunito(fontSize: 12)),
+        Text(label, style: GoogleFonts.roboto(fontSize: 12)),
       ],
     );
   }

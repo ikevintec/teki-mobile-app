@@ -569,7 +569,7 @@ class OtherOptions extends StatelessWidget {
           children: [
             Text(
               "Otros datos",
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: ColorSchema.primaryColor,

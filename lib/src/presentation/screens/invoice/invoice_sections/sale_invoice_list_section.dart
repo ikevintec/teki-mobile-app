@@ -57,7 +57,7 @@ class _SaleInvoiceListSectionState extends State<SaleInvoiceListSection> {
                         borderRadius: BorderRadius.circular(5),
                       ),
                       child: Text(saleInvoice["paymentStatus"],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                           )),
@@ -79,7 +79,7 @@ class _SaleInvoiceListSectionState extends State<SaleInvoiceListSection> {
                     ),
                     Text(
                       saleInvoice["customerPhone"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFFA0A0A3),
                         fontSize: 16,
                       ),
@@ -101,7 +101,7 @@ class _SaleInvoiceListSectionState extends State<SaleInvoiceListSection> {
                     ),
                     Text(
                       saleInvoice["date"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFFA0A0A3),
                         fontSize: 16,
                       ),
@@ -129,7 +129,7 @@ class _SaleInvoiceListSectionState extends State<SaleInvoiceListSection> {
                         ),
                         Text(
                           saleInvoice["company"],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               color: const Color(0xFF5D6571),
                               fontWeight: FontWeight.w600,
                               fontSize: 15),

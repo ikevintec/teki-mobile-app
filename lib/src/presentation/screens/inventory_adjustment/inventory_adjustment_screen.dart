@@ -229,7 +229,7 @@ class _InventoryAdjustmentScreenState
                                       const SizedBox(width: 8),
                                       Text(
                                         'Sin resultados',
-                                        style: GoogleFonts.nunito(
+                                        style: GoogleFonts.roboto(
                                             color: Colors.black45,
                                             fontSize: 13),
                                       ),
@@ -281,7 +281,7 @@ class _InventoryAdjustmentScreenState
                                                   children: [
                                                     Text(
                                                       p.nombre ?? '-',
-                                                      style: GoogleFonts.nunito(
+                                                      style: GoogleFonts.roboto(
                                                           fontWeight:
                                                               FontWeight.w600,
                                                           fontSize: 13),
@@ -293,7 +293,7 @@ class _InventoryAdjustmentScreenState
                                                         p.codigo!.isNotEmpty)
                                                       Text(
                                                         p.codigo!,
-                                                        style: GoogleFonts.nunito(
+                                                        style: GoogleFonts.roboto(
                                                             fontSize: 11,
                                                             color:
                                                                 Colors.black45),
@@ -330,7 +330,7 @@ class _InventoryAdjustmentScreenState
                       child: Center(
                         child: Text(
                           'Busca y selecciona los productos a ajustar',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               color: Colors.black38, fontSize: 13),
                         ),
                       ),
@@ -577,12 +577,12 @@ class _AdjustmentItemWidgetState
                         children: [
                           Text(
                             'Stock actual: ',
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 fontSize: 11, color: Colors.black45),
                           ),
                           Text(
                             formatDouble(widget.item.stockActual),
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: Colors.black54,
@@ -600,7 +600,7 @@ class _AdjustmentItemWidgetState
                             children: [
                               Text(
                                 'Nuevo stock',
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                     fontSize: 11, color: Colors.black54),
                               ),
                               const Spacer(),
@@ -634,7 +634,7 @@ class _AdjustmentItemWidgetState
                                       const SizedBox(width: 3),
                                       Text(
                                         '${delta > 0 ? '+' : ''}${formatDouble(delta)}',
-                                        style: GoogleFonts.nunito(
+                                        style: GoogleFonts.roboto(
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
                                           color: delta > 0

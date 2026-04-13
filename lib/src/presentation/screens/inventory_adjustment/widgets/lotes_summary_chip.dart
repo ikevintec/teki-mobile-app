@@ -100,7 +100,7 @@ class LotesSummaryChip extends ConsumerWidget {
                               const SizedBox(width: 8),
                               Text(
                                 label,
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.black87,
@@ -110,7 +110,7 @@ class LotesSummaryChip extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   loteCount > 0 ? sumLabel : '',
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                     fontSize: 11,
                                     color: isMatch
                                         ? Colors.green.shade700
@@ -262,7 +262,7 @@ class _LotesSheetContent extends ConsumerWidget {
                     ),
                     child: Text(
                       '${item.lotes.length}',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: ColorSchema.primaryColor,
@@ -300,7 +300,7 @@ class _LotesSheetContent extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${_fmt(sum)} / ${_fmt(expected)}',
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: isMatch

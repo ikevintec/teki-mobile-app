@@ -122,7 +122,7 @@ class OngoingDiscussionSectionState extends State<OngoingDiscussionSection> {
             ),
             Text(
               discussion["desc"],
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                   color: Colors.black87,
                   fontSize: MediaQuery.of(context).size.width * 0.036),
             ),
@@ -174,7 +174,7 @@ class OngoingDiscussionSectionState extends State<OngoingDiscussionSection> {
                           child: Text(
                             discussion["people"],
                             style:
-                                GoogleFonts.nunito(fontWeight: FontWeight.w700),
+                                GoogleFonts.roboto(fontWeight: FontWeight.w700),
                           ))
                     ]),
                   ],

@@ -204,7 +204,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                                       children: [
                                         Text(
                                           _simbolo(_monedaActiva),
-                                          style: GoogleFonts.nunito(
+                                          style: GoogleFonts.roboto(
                                             fontSize: 20,
                                             fontWeight: FontWeight.w600,
                                             color: Colors.white.withValues(alpha: 0.9),
@@ -214,7 +214,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                                         const SizedBox(width: 5),
                                         Text(
                                           _monto(_monedaActiva),
-                                          style: GoogleFonts.nunito(
+                                          style: GoogleFonts.roboto(
                                             fontSize: 32,
                                             fontWeight: FontWeight.w800,
                                             color: Colors.white,
@@ -244,7 +244,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 const SizedBox(height: 2),
                 Text(
                   todayLabel,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Colors.white.withValues(alpha: 0.75),
@@ -313,7 +313,7 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                   children: [
                     Text(
                       'Ver detalles',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -381,7 +381,7 @@ class _SecondaryMetric extends StatelessWidget {
                   ? _Skeleton(width: 36, height: 14)
                   : Text(
                       value,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 19,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -390,7 +390,7 @@ class _SecondaryMetric extends StatelessWidget {
                     ),
               Text(
                 label,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Colors.white.withValues(alpha: 0.8),
@@ -527,7 +527,7 @@ class _MonedaSelectorState extends State<_MonedaSelector> {
                               ),
                             Text(
                               m,
-                              style: GoogleFonts.nunito(
+                              style: GoogleFonts.roboto(
                                 fontSize: 13,
                                 fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                                 color: sel
@@ -576,7 +576,7 @@ class _MonedaSelectorState extends State<_MonedaSelector> {
             children: [
               Text(
                 widget.value,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,

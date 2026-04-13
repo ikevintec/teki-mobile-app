@@ -132,7 +132,7 @@ class CustomerDetailsScreen extends StatelessWidget {
                       ),
                       child: Text(
                         customer.numeroDocumento!,
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -225,7 +225,7 @@ class CustomerDetailsScreen extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     color: const Color(0xFF6B7280),
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
@@ -234,7 +234,7 @@ class CustomerDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     color: const Color(0xFF374151),
                     fontWeight: FontWeight.w500,
                     fontSize: 15,

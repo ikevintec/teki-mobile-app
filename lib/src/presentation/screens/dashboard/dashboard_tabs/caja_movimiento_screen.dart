@@ -91,7 +91,7 @@ class CajaMovimientoScreen extends StatelessWidget {
                 ),
                 child: Text(
                   _esIngreso ? 'INGRESO' : 'EGRESO',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: _accentColor,
@@ -102,7 +102,7 @@ class CajaMovimientoScreen extends StatelessWidget {
               const Spacer(),
               Text(
                 '$symbol${monto.toStringAsFixed(2)}',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: _accentColor,
@@ -193,7 +193,7 @@ class CajaMovimientoScreen extends StatelessWidget {
               icon: Icons.price_check_rounded,
               label: 'Total venta',
               value: '$symbol${total.toStringAsFixed(2)}',
-              valueStyle: GoogleFonts.nunito(
+              valueStyle: GoogleFonts.roboto(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: _accentColor,
@@ -269,7 +269,7 @@ class CajaMovimientoScreen extends StatelessWidget {
             icon: Icons.price_check_rounded,
             label: 'Total compra',
             value: '$symbol${total.toStringAsFixed(2)}',
-            valueStyle: GoogleFonts.nunito(
+            valueStyle: GoogleFonts.roboto(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: _accentColor,
@@ -416,7 +416,7 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 11,
                   color: Colors.grey.shade500,
                   fontWeight: FontWeight.w500,
@@ -426,7 +426,7 @@ class _InfoRow extends StatelessWidget {
               Text(
                 value,
                 style: valueStyle ??
-                    GoogleFonts.nunito(
+                    GoogleFonts.roboto(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF1F1F1F),
@@ -502,7 +502,7 @@ class _PagoItem extends StatelessWidget {
           Expanded(
             child: Text(
               '$nombre$detalle',
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1F1F1F),
@@ -511,7 +511,7 @@ class _PagoItem extends StatelessWidget {
           ),
           Text(
             '$symbol${monto.toStringAsFixed(2)}',
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: color,

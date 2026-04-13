@@ -173,7 +173,7 @@ class _OtrosDatosWidgetState extends ConsumerState<OtrosDatosWidget>
                                       children: [
                                         Text(
                                           "Agregar",
-                                          style: GoogleFonts.nunito(
+                                          style: GoogleFonts.roboto(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                             color: ColorSchema.primaryColor,
@@ -294,7 +294,7 @@ class _OtrosDatosWidgetState extends ConsumerState<OtrosDatosWidget>
                                       children: [
                                         Text(
                                           "Agregar",
-                                          style: GoogleFonts.nunito(
+                                          style: GoogleFonts.roboto(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                             color: ColorSchema.primaryColor,

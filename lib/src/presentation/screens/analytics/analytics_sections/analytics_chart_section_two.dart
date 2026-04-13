@@ -111,32 +111,32 @@ class _AnalyticsChartSectionTwoState extends State<AnalyticsChartSectionTwo> {
                     final item = data[group.x];
                     return BarTooltipItem(
                       '${item.periodo}\n',
-                      GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                       children: [
                         if (item.totalFacturas > 0)
                           TextSpan(
                             text: 'Facturas: ${item.totalFacturas.toStringAsFixed(2)}\n',
-                            style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[0]),
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[0]),
                           ),
                         if (item.totalBoletas > 0)
                           TextSpan(
                             text: 'Boletas: ${item.totalBoletas.toStringAsFixed(2)}\n',
-                            style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[1]),
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[1]),
                           ),
                         if (item.totalNotasVenta > 0)
                           TextSpan(
                             text: 'Notas Venta: ${item.totalNotasVenta.toStringAsFixed(2)}\n',
-                            style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[2]),
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[2]),
                           ),
                         if (item.totalNotasCredito > 0)
                           TextSpan(
                             text: 'Notas Crédito: ${item.totalNotasCredito.toStringAsFixed(2)}\n',
-                            style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[3]),
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[3]),
                           ),
                         if (item.totalNotasDebito > 0)
                           TextSpan(
                             text: 'Notas Débito: ${item.totalNotasDebito.toStringAsFixed(2)}',
-                            style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[4]),
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[4]),
                           ),
                       ],
                     );
@@ -153,7 +153,7 @@ class _AnalyticsChartSectionTwoState extends State<AnalyticsChartSectionTwo> {
                         return SideTitleWidget(
                           meta: meta,
                           space: 8,
-                          child: Text(data[value.toInt()].periodo, style: GoogleFonts.nunito(fontSize: 11)),
+                          child: Text(data[value.toInt()].periodo, style: GoogleFonts.roboto(fontSize: 11)),
                         );
                       }
                       return const SizedBox();
@@ -172,7 +172,7 @@ class _AnalyticsChartSectionTwoState extends State<AnalyticsChartSectionTwo> {
                           : value.toStringAsFixed(0);
                       return SideTitleWidget(
                         meta: meta,
-                        child: Text(text, style: GoogleFonts.nunito(fontSize: 11)),
+                        child: Text(text, style: GoogleFonts.roboto(fontSize: 11)),
                       );
                     },
                   ),
@@ -263,7 +263,7 @@ class _AnalyticsChartSectionTwoState extends State<AnalyticsChartSectionTwo> {
           children: [
             Container(width: 10, height: 10, color: widget.barColors[index]),
             const SizedBox(width: 4),
-            Text(labels[index], style: GoogleFonts.nunito(fontSize: 12)),
+            Text(labels[index], style: GoogleFonts.roboto(fontSize: 12)),
           ],
         );
       }),

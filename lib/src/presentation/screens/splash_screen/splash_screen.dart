@@ -116,7 +116,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         const SizedBox(height: 20),
                         Text(
                           "Teki Solutions",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                             fontSize: 18,
@@ -124,7 +124,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         ),
                         Text(
                           "V 1.0.4",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: Colors.white,
                             fontSize: 16,
                           ),

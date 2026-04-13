@@ -146,16 +146,16 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                         SizedBox(height: 4),
                         Text(
                           'Fecha de emisión: ${ticket.fechaEmision?.toString() ?? "--"}',
-                          style: GoogleFonts.nunito(fontSize: 11),
+                          style: GoogleFonts.roboto(fontSize: 11),
                         ),
                         Text(
                           'SUNAT: ${formatEstadoSunat(ticket.estadoSunat ?? '')}',
-                          style: GoogleFonts.nunito(fontSize: 11),
+                          style: GoogleFonts.roboto(fontSize: 11),
                         ),
                         //texto to show if its Anulado or nor
                         Text(
                           ticket.anulado == true ? 'Anulado' : 'Emitido',
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             fontSize: 11,
                             color: ticket.anulado == true
                                 ? Colors.red
@@ -191,7 +191,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                           ticket.tipoVenta == 'CONTADO'
                               ? 'Al contado'
                               : 'Al crédito',
-                          style: GoogleFonts.nunito(fontSize: 11),
+                          style: GoogleFonts.roboto(fontSize: 11),
                         ),
                       ],
                     ),

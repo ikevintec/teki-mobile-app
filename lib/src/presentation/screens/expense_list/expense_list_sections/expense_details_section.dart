@@ -46,7 +46,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                   ),
                   Text(
                     "${expenseData["expense-name"]}",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: const Color(0xFF5D6571),
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
@@ -73,7 +73,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                   ),
                   Text(
                     "${expenseData["expense-category"]}",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: const Color(0xFF5D6571),
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
@@ -112,7 +112,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               "${expenseData["amount"]}",
-                              style: GoogleFonts.nunito(
+                              style: GoogleFonts.roboto(
                                 color: const Color(0xFF5D6571),
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
@@ -140,7 +140,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                         ),
                         Text(
                           "${expenseData["voucher"]}",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFF5D6571),
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -174,7 +174,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                         ),
                         Text(
                           "${expenseData["start-date"]}",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFF5D6571),
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -200,7 +200,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                         ),
                         Text(
                           "${expenseData["end-date"]}",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFF5D6571),
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -234,7 +234,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                         ),
                         Text(
                           "${expenseData["status"]}",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFF5D6571),
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -260,7 +260,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                         ),
                         Text(
                           "${expenseData["expense-type"]}",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFF5D6571),
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -290,7 +290,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                   ),
                   Text(
                     "${expenseData["warehouse"]}",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: const Color(0xFF5D6571),
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
@@ -333,7 +333,7 @@ class ExpenseDetailsSection extends StatelessWidget {
                       ),
                       Text(
                         "256 kb",
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                             color: const Color(0xFF9C9CA1)),

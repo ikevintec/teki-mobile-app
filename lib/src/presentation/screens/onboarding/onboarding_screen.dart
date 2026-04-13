@@ -109,7 +109,7 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'Teki app es un sistema de punto de venta que permite a los usuarios acceder de forma segura a su información desde cualquier lugar y en cualquier momento.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                         textStyle: TextStyle(
                             color: ColorSchema.subTitleTextColor,
                             fontSize: screenWidth * 0.045,
@@ -145,7 +145,7 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'Ofrecemos intuitivas y sencillas herramientas para que puedas gestionar tu negocio de manera eficiente.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                         textStyle: TextStyle(
                             color: ColorSchema.subTitleTextColor,
                             fontSize: screenWidth * 0.045,
@@ -180,7 +180,7 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'Con Teki app puedes gestionar tu inventario, ventas y reportes desde una sola plataforma.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                         textStyle: TextStyle(
                             color: ColorSchema.subTitleTextColor,
                             fontSize: screenWidth * 0.045,

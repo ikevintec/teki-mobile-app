@@ -19,7 +19,7 @@ class SearchField extends StatelessWidget {
         onChanged: onTextChanged,
         decoration: InputDecoration(
           hintText: "Buscar productos",
-          hintStyle: GoogleFonts.nunito(
+          hintStyle: GoogleFonts.roboto(
               textStyle: const TextStyle(color: Colors.grey)),
           suffixIcon: const Icon(Icons.search, color: Colors.grey),
           filled: true,

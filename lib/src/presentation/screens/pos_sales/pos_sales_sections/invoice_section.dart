@@ -173,27 +173,27 @@ class _InvoiceSectionState extends State<InvoiceSection> {
                           (entry) => DataRow(
                             cells: [
                               DataCell(Text(entry.value['name'],
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: const TextStyle()))),
                               DataCell(Text("${entry.value["barcode"]}",
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: const TextStyle()))),
                               DataCell(Text(entry.value["unit-short"],
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: const TextStyle()))),
                               DataCell(Text("\$${entry.value["price"]}",
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: const TextStyle()))),
                               DataCell(Text("${entry.value["product-tax"]}%",
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: const TextStyle()))),
                               DataCell(Text(
                                   "${entry.value["product-discount"]}",
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: const TextStyle()))),
                               DataCell(Text(
                                   "${entry.value["product-discount"]}",
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: const TextStyle()))),
                             ],
                           ),
@@ -305,7 +305,7 @@ class _InvoiceSectionState extends State<InvoiceSection> {
                         color: Colors.black87, fontWeight: FontWeight.w500)),
                 TextSpan(
                     text: "N/A",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.grey,
                     ))
               ])),
@@ -322,7 +322,7 @@ class _InvoiceSectionState extends State<InvoiceSection> {
                         color: Colors.black87, fontWeight: FontWeight.w500)),
                 TextSpan(
                     text: "N/A",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.grey,
                     ))
               ])),
@@ -339,7 +339,7 @@ class _InvoiceSectionState extends State<InvoiceSection> {
                         color: Colors.black87, fontWeight: FontWeight.w500)),
                 TextSpan(
                     text: "Richard Joseph",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.grey,
                     ))
               ])),
@@ -356,7 +356,7 @@ class _InvoiceSectionState extends State<InvoiceSection> {
                         color: Colors.black87, fontWeight: FontWeight.w500)),
                 TextSpan(
                     text: "info@example.com",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.grey,
                     ))
               ])),
@@ -427,14 +427,14 @@ class _InvoiceSectionState extends State<InvoiceSection> {
         children: [
           Text(
             title,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               color: Colors.white60,
               fontWeight: FontWeight.w600,
             ),
           ),
           Text(
             value,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
@@ -489,7 +489,7 @@ class _InvoiceSectionState extends State<InvoiceSection> {
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.nunito(color: Colors.grey),
+              style: GoogleFonts.roboto(color: Colors.grey),
             ),
           ),
         ],

@@ -87,7 +87,7 @@ class BrandMainScreenState extends State<BrandMainScreen> {
                     ),
                     title: Text(
                       brand["brand-name"],
-                      style: GoogleFonts.nunito(fontWeight: FontWeight.w500),
+                      style: GoogleFonts.roboto(fontWeight: FontWeight.w500),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,

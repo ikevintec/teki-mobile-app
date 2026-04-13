@@ -157,19 +157,19 @@ class _HorizontalSalesTableSectionState
                     cells: [
                       DataCell(Text(
                         '${entry.key + 1}',
-                        style: GoogleFonts.nunito(textStyle: const TextStyle()),
+                        style: GoogleFonts.roboto(textStyle: const TextStyle()),
                       )),
                       DataCell(Text(entry.value['date'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['reference'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['customerName'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['warehouse'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Container(
                         padding: const EdgeInsets.symmetric(
@@ -178,13 +178,13 @@ class _HorizontalSalesTableSectionState
                             color: Color(entry.value["statusColor"]),
                             borderRadius: BorderRadius.circular(5)),
                         child: Text(entry.value['status'],
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600))),
                       )),
                       DataCell(Text(entry.value['billerName'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Container(
                         padding: const EdgeInsets.symmetric(
@@ -193,19 +193,19 @@ class _HorizontalSalesTableSectionState
                             color: Color(entry.value["paymentColor"]),
                             borderRadius: BorderRadius.circular(5)),
                         child: Text(entry.value['payment'],
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600))),
                       )),
                       DataCell(Text(entry.value['grandTotal'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['paid'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['due'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Container(
                         margin: const EdgeInsets.symmetric(vertical: 6),
@@ -220,7 +220,7 @@ class _HorizontalSalesTableSectionState
                           alignment: Alignment.center,
                           hint: Text(
                             "Action",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               color: const Color(0xFF696AE9),
                             ),
                           ),
@@ -289,7 +289,7 @@ class _HorizontalSalesTableSectionState
                                   const SizedBox(width: 8),
                                   Text(
                                     choice,
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                         textStyle: const TextStyle(
                                             color: Colors.black87)),
                                   ),

@@ -46,7 +46,7 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
         ? widget.items!
             .map((item) => DropdownMenuItem<String>(
                   value: item,
-                  child: Text(item, style: GoogleFonts.nunito(color: Colors.black)),
+                  child: Text(item, style: GoogleFonts.roboto(color: Colors.black)),
                 ))
             .toList()
         : widget.itemsMap!
@@ -55,7 +55,7 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
               final label = map[widget.labelKey!] ?? '';
               return DropdownMenuItem<String>(
                 value: value,
-                child: Text(label, style: GoogleFonts.nunito(color: Colors.black)),
+                child: Text(label, style: GoogleFonts.roboto(color: Colors.black)),
               );
             }).toList();
 
@@ -65,7 +65,7 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
 
     return DropdownButtonFormField<String>(
       isExpanded: true,
-      style: GoogleFonts.nunito(
+      style: GoogleFonts.roboto(
         textStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -92,7 +92,7 @@ class _DropdownFormFieldSectionState extends State<DropdownFormFieldSection> {
         fillColor: Colors.white,
         filled: true,
         hintText: widget.hint,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.w500,

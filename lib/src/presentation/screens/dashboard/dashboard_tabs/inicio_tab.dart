@@ -179,7 +179,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       children: [
         // ── Ventas del Día — fijo, no escrolea ───────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+          padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
           child: TodayReportsSection(
             key: _todayReportKey,
             idPuntoVenta: widget.idPuntoVenta,
@@ -322,7 +322,7 @@ class _ServiceCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                 fontSize: screenWidth * 0.028,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey.shade700,

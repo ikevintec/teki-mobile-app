@@ -63,7 +63,7 @@ class _DatePickerState extends State<DatePicker> {
         fillColor: Colors.white,
         filled: true,
         hintText: widget.hintText,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.w500,
@@ -103,7 +103,7 @@ class _DatePickerState extends State<DatePicker> {
           color: Colors.white70,
           fontSize: 20,
         ),
-        textStyleDayButton: GoogleFonts.nunito(
+        textStyleDayButton: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.white,
             fontSize: 28,
@@ -115,7 +115,7 @@ class _DatePickerState extends State<DatePicker> {
             color: ColorSchema.primaryColor,
             fontSize: 16,
             fontWeight: FontWeight.bold),
-        textStyleButtonNegative: GoogleFonts.nunito(
+        textStyleButtonNegative: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: ColorSchema.primaryColor,
             fontSize: 16,
@@ -131,7 +131,7 @@ class _DatePickerState extends State<DatePicker> {
           color: ColorSchema.primaryColor,
           fontSize: 16,
         ),
-        textStyleDayOnCalendarSelected: GoogleFonts.nunito(
+        textStyleDayOnCalendarSelected: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.white,
             fontSize: 16,

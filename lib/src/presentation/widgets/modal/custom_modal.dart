@@ -123,7 +123,7 @@ Widget _buildModalContent({
               Expanded(
                 child: Text(
                   tittle,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,

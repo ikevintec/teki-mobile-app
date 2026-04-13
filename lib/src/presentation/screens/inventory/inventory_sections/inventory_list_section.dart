@@ -223,13 +223,13 @@ class _InventoryCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     'Stock: ${formatDouble(stock)} ${inventory.producto?.unidad?.codigo ?? ''}',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                         fontSize: 12, color: Colors.black54),
                   ),
                   if (fechaActualizacion != null)
                     Text(
                       'Actualizado: $fechaActualizacion',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                           fontSize: 11, color: Colors.black38),
                     ),
                 ],

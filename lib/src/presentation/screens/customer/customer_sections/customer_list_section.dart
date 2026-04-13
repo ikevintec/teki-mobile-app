@@ -66,7 +66,7 @@ class _CustomerListSectionState extends State<CustomerListSection> {
                             width: 2,
                           ),
                           Text(customer["reward"],
-                              style: GoogleFonts.nunito(
+                              style: GoogleFonts.roboto(
                                 color: const Color(0xFF5D6571),
                                 fontWeight: FontWeight.w600,
                               ))
@@ -90,7 +90,7 @@ class _CustomerListSectionState extends State<CustomerListSection> {
                     ),
                     Text(
                       customer["email"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFFA0A0A3),
                         fontSize: 16,
                       ),
@@ -112,7 +112,7 @@ class _CustomerListSectionState extends State<CustomerListSection> {
                     ),
                     Text(
                       customer["phone"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFFA0A0A3),
                         fontSize: 16,
                       ),
@@ -134,7 +134,7 @@ class _CustomerListSectionState extends State<CustomerListSection> {
                     ),
                     Text(
                       customer["address"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFFA0A0A3),
                         fontSize: 16,
                       ),
@@ -159,7 +159,7 @@ class _CustomerListSectionState extends State<CustomerListSection> {
                         ),
                         Text(
                           customer["group"],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               color: const Color(0xFF5D6571),
                               fontWeight: FontWeight.w600,
                               fontSize: 16),
