@@ -40,6 +40,14 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
     super.dispose();
   }
 
+  void _reloadInventory() {
+    final idPuntoVenta = ref.read(sesionProvider).office?.id;
+    if (idPuntoVenta != null) {
+      _searchController.clear();
+      ref.read(inventoryProvider.notifier).loadInventory(idPuntoVenta);
+    }
+  }
+
   void _onSearchChanged(String value) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 700), () {
@@ -69,11 +77,18 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
       }
     });
 
+    ref.listen(sesionProvider, (prev, next) {
+      if (next.office?.id != prev?.office?.id) _reloadInventory();
+    });
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: CustomAppBar(navigateName: 'Inventario'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: CustomAppBar(
+          navigateName: 'Inventario',
+          onSettingsReturn: _reloadInventory,
+        ),
       ),
       body: Column(
         children: [

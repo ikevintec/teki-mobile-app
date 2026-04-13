@@ -12,12 +12,16 @@ class CustomAppBar extends StatelessWidget {
   /// Acciones adicionales que se insertan antes del botón de ajustes.
   final List<Widget>? actions;
 
+  /// Callback invocado al regresar de la pantalla de ajustes.
+  final VoidCallback? onSettingsReturn;
+
   const CustomAppBar({
     super.key,
     required this.navigateName,
     this.navigateRoute,
     this.subtitle,
     this.actions,
+    this.onSettingsReturn,
   });
 
   @override
@@ -31,7 +35,10 @@ class CustomAppBar extends StatelessWidget {
         if (actions != null) ...actions!,
         IconButton(
           tooltip: 'Ajustes',
-          onPressed: () => Get.toNamed(AppRoutes.settings),
+          onPressed: () async {
+            await Get.toNamed(AppRoutes.settings);
+            onSettingsReturn?.call();
+          },
           icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
         ),
       ],

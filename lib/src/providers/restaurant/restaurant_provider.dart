@@ -31,7 +31,20 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
 
     // 1. Lounges
     final lounges = await repository.getLounges({'idPuntoVenta': pvId});
-    // Default: "Todos" (selectedLoungeId = null)
+
+    if (lounges.isEmpty) {
+      state = state.copyWith(
+        lounges: [],
+        tables: [],
+        orders: [],
+        selectedLoungeId: RestaurantState.kAllSelected,
+        pvId: pvId,
+        isLoading: false,
+      );
+      return;
+    }
+
+    // Default: "Todos" (selectedLoungeId = kAllSelected)
     state = state.copyWith(lounges: lounges, selectedLoungeId: RestaurantState.kAllSelected);
 
     // 2. Todas las mesas sin filtro de salón
