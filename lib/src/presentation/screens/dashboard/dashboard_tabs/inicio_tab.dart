@@ -194,15 +194,15 @@ class _InicioTabState extends ConsumerState<InicioTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionLabel('Venta'),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 _buildServicesGrid(_ventaServices),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 _buildSectionLabel('Restaurante'),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 _buildServicesGrid(_restauranteServices),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 _buildSectionLabel('General'),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 _buildServicesGrid(_generalServices),
                 const SizedBox(height: 120),
               ],
@@ -215,22 +215,28 @@ class _InicioTabState extends ConsumerState<InicioTab> {
 
   Widget _buildSectionLabel(String label) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Container(
-          width: 4,
-          height: 18,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
-            color: ColorSchema.primaryColor,
-            borderRadius: BorderRadius.circular(2),
+            color: ColorSchema.primaryColor.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.raleway(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: ColorSchema.primaryColor,
+            ),
           ),
         ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: GoogleFonts.raleway(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey.shade700,
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 3),
+            height: 1,
+            color: ColorSchema.primaryColor.withValues(alpha: 0.15),
           ),
         ),
       ],
