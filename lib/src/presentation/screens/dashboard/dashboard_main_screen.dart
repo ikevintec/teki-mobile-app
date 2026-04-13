@@ -82,60 +82,89 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
         children: [
           // ── Header fijo con gradiente ──────────────────────────────────
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color.fromARGB(255, 19, 94, 232),
-                  Colors.blue[400]!,
-                ],
-              ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: DashboardHeaderSection(
-                openDrawer: () {
-                  if (!Platform.isAndroid && !Platform.isIOS) {
-                    _sidebarController.setExtended(true);
-                  }
-                  _scaffoldKey.currentState?.openDrawer();
-                },
-              ),
-            ),
-          ),
-
-          // ── Área de contenido (blanco, esquinas redondeadas) ───────────
-          Expanded(
-            child: Container(
               decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(28),
-                  topRight: Radius.circular(28),
-                ),
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(28),
-                  topRight: Radius.circular(28),
-                ),
-                child: _FadeIndexedStack(
-                  index: _selectedTab,
-                  children: [
-                    InicioTab(
-                      idPuntoVenta: idPuntoVenta,
-                      refreshNotifier: _refreshNotifiers[0],
-                    ),
-                    InventarioTab(
-                      refreshNotifier: _refreshNotifiers[1],
-                    ),
-                    CajaTab(
-                      refreshNotifier: _refreshNotifiers[2],
-                    ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color.fromARGB(255, 14, 78, 210),
+                    Color.fromARGB(255, 56, 152, 236),
                   ],
                 ),
               ),
+              child: Stack(
+                children: [
+                  // Círculo decorativo superior derecho
+                  Positioned(
+                    top: -30,
+                    right: -20,
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.07),
+                      ),
+                    ),
+                  ),
+                  // Círculo decorativo inferior izquierdo
+                  Positioned(
+                    bottom: 10,
+                    left: -40,
+                    child: Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.06),
+                      ),
+                    ),
+                  ),
+                  // Círculo decorativo medio
+                  Positioned(
+                    top: 10,
+                    right: 90,
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                  // Contenido del header
+                  SafeArea(
+                    bottom: false,
+                    child: DashboardHeaderSection(
+                      openDrawer: () {
+                        if (!Platform.isAndroid && !Platform.isIOS) {
+                          _sidebarController.setExtended(true);
+                        }
+                        _scaffoldKey.currentState?.openDrawer();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+          ),
+
+          // ── Área de contenido ─────────────────────────────────────────
+          Expanded(
+            child: _FadeIndexedStack(
+              index: _selectedTab,
+              children: [
+                InicioTab(
+                  idPuntoVenta: idPuntoVenta,
+                  refreshNotifier: _refreshNotifiers[0],
+                ),
+                InventarioTab(
+                  refreshNotifier: _refreshNotifiers[1],
+                ),
+                CajaTab(
+                  refreshNotifier: _refreshNotifiers[2],
+                ),
+              ],
             ),
           ),
         ],
