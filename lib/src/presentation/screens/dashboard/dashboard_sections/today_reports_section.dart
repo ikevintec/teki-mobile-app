@@ -110,58 +110,62 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color.fromARGB(255, 14, 78, 210),
-              Color.fromARGB(255, 56, 152, 236),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Color.fromARGB(255, 14, 78, 210).withValues(alpha: 0.35),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Círculo decorativo
-            Positioned(
-              top: -20,
-              right: -20,
-              child: Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.05),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // ── Tarjeta principal ──────────────────────────────────────────
+          Container(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color.fromARGB(255, 14, 78, 210),
+                    Color.fromARGB(255, 56, 152, 236),
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color.fromARGB(255, 14, 78, 210).withValues(alpha: 0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-            ),
-            Positioned(
-              bottom: -30,
-              right: 60,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.04),
-                ),
-              ),
-            ),
+              child: Stack(
+                children: [
+                  // Círculo decorativo
+                  Positioned(
+                    top: -20,
+                    right: -20,
+                    child: Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -30,
+                    right: 60,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.04),
+                      ),
+                    ),
+                  ),
 
-            Column(
+                  Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Monto (izq) | selector + flecha (der) ──────────────
+                // ── Monto (izq) | selector (der) ───────────────────────
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -224,38 +228,16 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                               ],
                             ),
                     ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (!loadingMontos && _monedas.length > 1) ...[
-                          _MonedaSelector(
-                            monedas: _monedas,
-                            value: _monedaActiva,
-                            onChanged: (v) => setState(() => _selectedMoneda = v),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        GestureDetector(
-                          onTap: () => Get.toNamed(AppRoutes.analytics),
-                          child: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.13),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 17,
-                              color: Colors.white,
-                            ),
-                          ),
+                    if (!loadingMontos && _monedas.length > 1)
+                      GestureDetector(
+                        // Evita que el tap del selector propague al card
+                        onTap: () {},
+                        child: _MonedaSelector(
+                          monedas: _monedas,
+                          value: _monedaActiva,
+                          onChanged: (v) => setState(() => _selectedMoneda = v),
                         ),
-                      ],
-                    ),
+                      ),
                   ],
                 ),
 
@@ -301,6 +283,54 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
             ),
           ],
         ),
+      ),
+
+          // ── Chip "Ver detalles" en el borde superior derecho ───────────
+          Positioned(
+            top: -15,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => Get.toNamed(AppRoutes.analytics),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 14, 78, 210),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Ver detalles',
+                      style: GoogleFonts.nunito(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
