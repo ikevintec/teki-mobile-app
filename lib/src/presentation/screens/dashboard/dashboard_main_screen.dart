@@ -29,6 +29,10 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
 
   int _selectedTab = 0;
 
+  /// Tabs que ya han sido visitados al menos una vez.
+  /// Solo se monta el widget real del tab cuando se visita por primera vez.
+  final _visitedTabs = <int>{0};
+
   /// Un notifier por tab para disparar recargas aisladas sin recrear widgets.
   final _refreshNotifiers = [
     ValueNotifier<int>(0),
@@ -60,7 +64,10 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
 
   void _onTabSelected(int index) {
     if (_selectedTab == index) return;
-    setState(() => _selectedTab = index);
+    setState(() {
+      _selectedTab = index;
+      _visitedTabs.add(index);
+    });
   }
 
   @override
@@ -153,6 +160,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
           Expanded(
             child: _FadeIndexedStack(
               index: _selectedTab,
+              visitedIndices: _visitedTabs,
               children: [
                 InicioTab(
                   idPuntoVenta: idPuntoVenta,
@@ -232,9 +240,14 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
 
 class _FadeIndexedStack extends StatefulWidget {
   final int index;
+  final Set<int> visitedIndices;
   final List<Widget> children;
 
-  const _FadeIndexedStack({required this.index, required this.children});
+  const _FadeIndexedStack({
+    required this.index,
+    required this.visitedIndices,
+    required this.children,
+  });
 
   @override
   State<_FadeIndexedStack> createState() => _FadeIndexedStackState();
@@ -247,13 +260,20 @@ class _FadeIndexedStackState extends State<_FadeIndexedStack> {
       fit: StackFit.expand,
       children: List.generate(widget.children.length, (i) {
         final isActive = i == widget.index;
+        // Solo monta el widget real si el tab ya fue visitado.
+        // La primera vez que se selecciona un tab, se agrega a visitedIndices
+        // y se monta su widget (ejecutando initState y cargando datos).
+        // En visitas posteriores el widget ya está montado y no se recarga.
+        final child = widget.visitedIndices.contains(i)
+            ? widget.children[i]
+            : const SizedBox.shrink();
         return IgnorePointer(
           ignoring: !isActive,
           child: AnimatedOpacity(
             opacity: isActive ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeInOut,
-            child: widget.children[i],
+            child: child,
           ),
         );
       }),
