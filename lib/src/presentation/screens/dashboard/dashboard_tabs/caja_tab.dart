@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_movimiento_screen.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -20,6 +22,7 @@ class CajaTab extends ConsumerStatefulWidget {
 
 class _CajaTabState extends ConsumerState<CajaTab> {
   String? _selectedMoneda;
+  DateTime _selectedDate = DateTime.now();
   late final ScrollController _scrollController;
 
   @override
@@ -27,7 +30,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     super.initState();
     _scrollController = ScrollController()..addListener(_onScroll);
     widget.refreshNotifier.addListener(_onRefresh);
-    Future.microtask(() => _fetchCashRegister());
+    // La carga inicial la dispara CustomDatePicker vía onDateSelected al montarse.
   }
 
   @override
@@ -46,8 +49,19 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     }
   }
 
+  /// Llamado por refreshNotifier (al volver de una sub-pantalla).
+  /// Refresca la fecha actualmente seleccionada.
   void _onRefresh() {
     setState(() => _selectedMoneda = null);
+    _fetchCashRegister();
+  }
+
+  /// Llamado por CustomDatePicker cada vez que el usuario selecciona una fecha.
+  void _onDateChanged(DateTimeRange range) {
+    setState(() {
+      _selectedDate = range.start;
+      _selectedMoneda = null;
+    });
     _fetchCashRegister();
   }
 
@@ -56,9 +70,11 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     final sesion = ref.read(sesionProvider);
     final idPV = sesion.office?.id ?? 0;
     final idEV = sesion.saleStation?.id ?? 0;
+    final fechaStr = DateFormat('dd-MM-yyyy').format(_selectedDate);
     await ref.read(cashRegisterProvider.notifier).fetch(
           idPuntoVenta: idPV,
           idEstacionVenta: idEV,
+          fecha: fechaStr,
         );
     if (!mounted) return;
     _loadDetail();
@@ -119,58 +135,14 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Encabezado ────────────────────────────────────────────────────
+        // ── Selector de fecha ─────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-          child: Row(
-            children: [
-              Text(
-                'Caja del Día',
-                style: GoogleFonts.raleway(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1F1F1F),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                DateFormat('dd MMM yyyy', 'es').format(DateTime.now()),
-                style: GoogleFonts.nunito(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-              const Spacer(),
-              if (monedas.length > 1)
-                _CurrencySelector(
-                  monedas: monedas,
-                  value: monedaActiva,
-                  onChanged: _onMonedaChanged,
-                ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  setState(() => _selectedMoneda = null);
-                  _fetchCashRegister();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: ColorSchema.primaryColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.refresh_rounded,
-                    size: 18,
-                    color: ColorSchema.primaryColor,
-                  ),
-                ),
-              ),
-            ],
+          padding: const EdgeInsets.only(top: 0, left: 8, right: 4),
+          child: CustomDatePicker(
+            onDateSelected: _onDateChanged,
           ),
         ),
-
+        SizedBox(height: 12),
         // ── Tarjeta de balance ─────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -255,6 +227,34 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                                     color: Colors.grey.shade700,
                                   ),
                                 ),
+                                const Spacer(),
+                                if (monedas.length > 1) ...[
+                                  _CurrencySelector(
+                                    monedas: monedas,
+                                    value: monedaActiva,
+                                    onChanged: _onMonedaChanged,
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() => _selectedMoneda = null);
+                                    _fetchCashRegister();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: ColorSchema.primaryColor
+                                          .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.refresh_rounded,
+                                      size: 18,
+                                      color: ColorSchema.primaryColor,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             Align(
@@ -263,7 +263,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                                 monedas.isEmpty
                                     ? '${formatExchange(moneda: 'PEN')}0.00'
                                     : _fmt(balance, monedaActiva),
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                   fontSize: 34,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.grey.shade900,
@@ -549,7 +549,13 @@ class _HistorialItem extends StatelessWidget {
         : '';
     final usuario = item.usuario?.nombreCompleto ?? '';
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CajaMovimientoScreen(item: item),
+        ),
+      ),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -590,7 +596,7 @@ class _HistorialItem extends StatelessWidget {
               children: [
                 Text(
                   item.descripcion ?? item.conceptoMovimientoCaja ?? '-',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF1F1F1F),
@@ -602,7 +608,7 @@ class _HistorialItem extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     usuario,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       fontSize: 11,
                       color: Colors.grey.shade500,
                     ),
@@ -620,7 +626,7 @@ class _HistorialItem extends StatelessWidget {
             children: [
               Text(
                 '$symbol${monto.toStringAsFixed(2)}',
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: amountColor,
@@ -628,18 +634,27 @@ class _HistorialItem extends StatelessWidget {
               ),
               if (hora.isNotEmpty) ...[
                 const SizedBox(height: 2),
-                Text(
-                  hora,
-                  style: GoogleFonts.nunito(
-                    fontSize: 11,
-                    color: Colors.grey.shade400,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.access_time_rounded,
+                        size: 11, color: Colors.grey.shade400),
+                    const SizedBox(width: 3),
+                    Text(
+                      hora,
+                      style: GoogleFonts.nunito(
+                        fontSize: 11,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ],
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -680,7 +695,7 @@ class _MovimientoItem extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey.shade500,
@@ -691,7 +706,7 @@ class _MovimientoItem extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               fontSize: 17,
               fontWeight: FontWeight.w700,
               color: textColor,

@@ -22,6 +22,7 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
   Future<void> fetch({
     required int idPuntoVenta,
     required int idEstacionVenta,
+    String? fecha, // null = hoy, formato: dd-MM-yyyy
   }) async {
     // Cancela cualquier petición en vuelo antes de lanzar una nueva
     _cancelToken?.cancel();
@@ -30,11 +31,11 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final fecha = DateFormat('dd-MM-yyyy').format(DateTime.now());
+      final fechaStr = fecha ?? DateFormat('dd-MM-yyyy').format(DateTime.now());
       final registers = await repository.getCashRegister(
         idPuntoVenta: idPuntoVenta,
         idEstacionVenta: idEstacionVenta,
-        fecha: fecha,
+        fecha: fechaStr,
         cancelToken: _cancelToken,
       );
 

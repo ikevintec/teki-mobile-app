@@ -81,7 +81,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
         routeName: 'Dashboard',
         controller: _sidebarController,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: const Color.fromARGB(255, 246, 248, 255),
       // Usamos extendBody para que el contenido llegue hasta el borde inferior
       // detrás del navbar flotante.
       extendBody: true,

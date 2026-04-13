@@ -27,6 +27,7 @@ class Purchase {
   final SaleStation? estacionVenta;
   final String? uuid;
   final CashRegisterDetail? movimientoCaja;
+  final double? totalCompra;
   final bool? anulado;
   final String? motivoAnulacion;
   final bool? estado;
@@ -51,6 +52,7 @@ class Purchase {
     this.estacionVenta,
     this.uuid,
     this.movimientoCaja,
+    this.totalCompra,
     this.anulado,
     this.motivoAnulacion,
     this.estado,
@@ -76,6 +78,7 @@ class Purchase {
     estacionVenta: json['estacionVenta'] != null ? SaleStation.fromJson(json['estacionVenta']) : null,
     uuid: json['uuid'],
     movimientoCaja: json['movimientoCaja'] != null ? CashRegisterDetail.fromJson(json['movimientoCaja']) : null,
+    totalCompra: (json['totalCompra'] as num?)?.toDouble(),
     anulado: json['anulado'],
     motivoAnulacion: json['motivoAnulacion'],
     estado: json['estado'],
@@ -101,6 +104,7 @@ class Purchase {
     'estacionVenta': estacionVenta?.toJson(),
     'uuid': uuid,
     'movimientoCaja': movimientoCaja?.toJson(),
+    'totalCompra': totalCompra,
     'anulado': anulado,
     'motivoAnulacion': motivoAnulacion,
     'estado': estado,
