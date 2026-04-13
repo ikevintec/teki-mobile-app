@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class CustomAppBar extends StatelessWidget {
@@ -8,11 +9,15 @@ class CustomAppBar extends StatelessWidget {
   final String? navigateRoute;
   final String? subtitle;
 
+  /// Acciones adicionales que se insertan antes del botón de ajustes.
+  final List<Widget>? actions;
+
   const CustomAppBar({
     super.key,
     required this.navigateName,
     this.navigateRoute,
     this.subtitle,
+    this.actions,
   });
 
   @override
@@ -22,6 +27,14 @@ class CustomAppBar extends StatelessWidget {
       surfaceTintColor: Colors.white,
       backgroundColor: ColorSchema.primaryColor,
       centerTitle: true,
+      actions: [
+        if (actions != null) ...actions!,
+        IconButton(
+          tooltip: 'Ajustes',
+          onPressed: () => Get.toNamed(AppRoutes.settings),
+          icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
+        ),
+      ],
       title: subtitle != null
           ? Column(
               mainAxisSize: MainAxisSize.min,
@@ -49,18 +62,19 @@ class CustomAppBar extends StatelessWidget {
             ),
       automaticallyImplyLeading: false,
       leading: IconButton(
-          onPressed: () {
-            if (navigateRoute == null) {
-              Get.back();
-              return;
-            }
-            Get.offAllNamed(navigateRoute!);
-          },
-          icon: const Icon(
-            color: Colors.white,
-            Icons.chevron_left,
-            size: 30,
-          )),
+        onPressed: () {
+          if (navigateRoute == null) {
+            Get.back();
+            return;
+          }
+          Get.offAllNamed(navigateRoute!);
+        },
+        icon: const Icon(
+          color: Colors.white,
+          Icons.chevron_left,
+          size: 30,
+        ),
+      ),
     );
   }
 }

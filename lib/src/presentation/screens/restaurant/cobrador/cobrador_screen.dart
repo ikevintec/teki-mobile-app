@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/restaurant/cobrador_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'widgets/cobrador_filter_bar.dart';
@@ -41,6 +43,13 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
           'Cobrador',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Ajustes',
+            onPressed: () => Get.toNamed(AppRoutes.settings),
+            icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
+          ),
+        ],
       ),
       body: Column(
         children: [

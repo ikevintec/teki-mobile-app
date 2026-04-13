@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -10,6 +11,7 @@ import 'package:teki_app/src/presentation/screens/comprobantes/widgets/clean_fil
 
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 final filtroDesdeProvider = StateProvider<DateTime?>((ref) => null);
@@ -43,6 +45,13 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
             style: TextStyle(color: Colors.white)),
         backgroundColor: ColorSchema.primaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            tooltip: 'Ajustes',
+            onPressed: () => Get.toNamed(AppRoutes.settings),
+            icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
+          ),
+        ],
       ),
       body: Column(
         children: [

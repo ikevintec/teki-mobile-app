@@ -137,18 +137,10 @@ class _RestaurantMesasScreenState
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              final pvId = ref.read(sesionProvider).office?.id;
-              Get.toNamed(
-                AppRoutes.restaurantCobrador,
-                arguments: {'pvId': pvId},
-              );
-            },
-            child: const Text(
-              'Cobrador',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
+          IconButton(
+            tooltip: 'Ajustes',
+            onPressed: () => Get.toNamed(AppRoutes.settings),
+            icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
           ),
         ],
       ),
