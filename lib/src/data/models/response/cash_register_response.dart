@@ -44,3 +44,25 @@ class MontoMoneda {
     );
   }
 }
+
+/// Wrapper de la respuesta paginada de `/cash-register-detail`.
+class CashRegisterDetailPage {
+  final List<Map<String, dynamic>> rawItems;
+  final bool isLast;
+  final int totalElements;
+
+  CashRegisterDetailPage({
+    required this.rawItems,
+    required this.isLast,
+    required this.totalElements,
+  });
+
+  factory CashRegisterDetailPage.fromJson(Map<String, dynamic> json) {
+    return CashRegisterDetailPage(
+      rawItems: (json['content'] as List)
+          .cast<Map<String, dynamic>>(),
+      isLast: json['last'] as bool? ?? true,
+      totalElements: json['totalElements'] as int? ?? 0,
+    );
+  }
+}

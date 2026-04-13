@@ -44,4 +44,43 @@ class RemoteCashRegister extends CashRegisterDatasource {
       return Future.error(e.toString());
     }
   }
+
+  @override
+  Future<CashRegisterDetailPage> getCashRegisterDetail({
+    required int idCaja,
+    required String tipo,
+    required String moneda,
+    required int page,
+    int perPage = 10,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final response = await dio.get(
+        '/cash-register-detail',
+        queryParameters: {
+          'idCaja': idCaja,
+          'tipo': tipo,
+          'moneda': moneda,
+          'perPage': perPage,
+          'pageNumber': page,
+        },
+        cancelToken: cancelToken,
+      );
+      return CashRegisterDetailPage.fromJson(
+          response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final resData = e.response?.data;
+      final msg = (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
+      errorNotification(msg);
+      return Future.error(msg);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
 }

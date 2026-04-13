@@ -8,4 +8,13 @@ abstract class CashRegisterRepository {
     required String fecha,
     CancelToken? cancelToken,
   });
+
+  Future<CashRegisterDetailPage> getCashRegisterDetail({
+    required int idCaja,
+    required String tipo,
+    required String moneda,
+    required int page,
+    int perPage,
+    CancelToken? cancelToken,
+  });
 }

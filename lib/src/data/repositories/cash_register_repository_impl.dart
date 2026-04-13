@@ -24,4 +24,23 @@ class CashRegisterRepositoryImpl extends CashRegisterRepository {
       cancelToken: cancelToken,
     );
   }
+
+  @override
+  Future<CashRegisterDetailPage> getCashRegisterDetail({
+    required int idCaja,
+    required String tipo,
+    required String moneda,
+    required int page,
+    int perPage = 10,
+    CancelToken? cancelToken,
+  }) {
+    return datasource.getCashRegisterDetail(
+      idCaja: idCaja,
+      tipo: tipo,
+      moneda: moneda,
+      page: page,
+      perPage: perPage,
+      cancelToken: cancelToken,
+    );
+  }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
+import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -18,18 +20,30 @@ class CajaTab extends ConsumerStatefulWidget {
 
 class _CajaTabState extends ConsumerState<CajaTab> {
   String? _selectedMoneda;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
     widget.refreshNotifier.addListener(_onRefresh);
     Future.microtask(() => _fetchCashRegister());
   }
 
   @override
   void dispose() {
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
     widget.refreshNotifier.removeListener(_onRefresh);
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(cashRegisterDetailProvider.notifier).loadMore();
+    }
   }
 
   void _onRefresh() {
@@ -37,19 +51,57 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     _fetchCashRegister();
   }
 
-  void _fetchCashRegister() {
+  Future<void> _fetchCashRegister() async {
+    if (!mounted) return;
     final sesion = ref.read(sesionProvider);
     final idPV = sesion.office?.id ?? 0;
     final idEV = sesion.saleStation?.id ?? 0;
-    ref.read(cashRegisterProvider.notifier).fetch(
+    await ref.read(cashRegisterProvider.notifier).fetch(
           idPuntoVenta: idPV,
           idEstacionVenta: idEV,
         );
+    if (!mounted) return;
+    _loadDetail();
+  }
+
+  /// Calcula la moneda activa con la misma lógica que el build y dispara
+  /// la carga del historial usando el primer registro disponible.
+  void _loadDetail() {
+    final cajaState = ref.read(cashRegisterProvider);
+    if (cajaState.registers.isEmpty) return;
+    final idCaja = cajaState.registers.first.id;
+    if (idCaja == null) return;
+
+    final monedas = {...cajaState.balancePorMoneda.keys}.toList()
+      ..sort((a, b) => a == 'PEN' ? -1 : 1);
+    final moneda = (_selectedMoneda != null && monedas.contains(_selectedMoneda))
+        ? _selectedMoneda!
+        : (monedas.contains('PEN')
+            ? 'PEN'
+            : (monedas.isNotEmpty ? monedas.first : 'PEN'));
+
+    ref.read(cashRegisterDetailProvider.notifier).load(
+          idCaja: idCaja,
+          moneda: moneda,
+        );
+  }
+
+  void _onMonedaChanged(String newMoneda) {
+    setState(() => _selectedMoneda = newMoneda);
+    ref.read(cashRegisterDetailProvider.notifier).changeMoneda(newMoneda);
+  }
+
+  String _fmt(Map<String, double> map, String moneda) {
+    final symbol = formatExchange(moneda: moneda);
+    final v = map[moneda] ?? 0.0;
+    return '$symbol${v.toStringAsFixed(2)}';
   }
 
   @override
   Widget build(BuildContext context) {
     final cajaState = ref.watch(cashRegisterProvider);
+    final detailState = ref.watch(cashRegisterDetailProvider);
+
     final balance = cajaState.balancePorMoneda;
     final ingresos = cajaState.totalIngresosPorMoneda;
     final egresos = cajaState.totalEgresosPorMoneda;
@@ -64,65 +116,65 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                 ? 'PEN'
                 : (monedas.isNotEmpty ? monedas.first : 'PEN'));
 
-    String fmt(Map<String, double> map, String moneda) {
-      final symbol = formatExchange(moneda: moneda);
-      final v = map[moneda] ?? 0.0;
-      return '$symbol${v.toStringAsFixed(2)}';
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Encabezado
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              children: [
-                Text(
-                  'Caja del Día',
-                  style: GoogleFonts.raleway(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1F1F1F),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Encabezado ────────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+          child: Row(
+            children: [
+              Text(
+                'Caja del Día',
+                style: GoogleFonts.raleway(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1F1F1F),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                DateFormat('dd MMM yyyy', 'es').format(DateTime.now()),
+                style: GoogleFonts.nunito(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade400,
+                ),
+              ),
+              const Spacer(),
+              if (monedas.length > 1)
+                _CurrencySelector(
+                  monedas: monedas,
+                  value: monedaActiva,
+                  onChanged: _onMonedaChanged,
+                ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  setState(() => _selectedMoneda = null);
+                  _fetchCashRegister();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: ColorSchema.primaryColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.refresh_rounded,
+                    size: 18,
+                    color: ColorSchema.primaryColor,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  DateFormat('dd MMM yyyy', 'es').format(DateTime.now()),
-                  style: GoogleFonts.nunito(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade400,
-                  ),
-                ),
-                const Spacer(),
-                // Botón actualizar
-                GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedMoneda = null);
-                    _fetchCashRegister();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: ColorSchema.primaryColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.refresh_rounded,
-                      size: 18,
-                      color: ColorSchema.primaryColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
 
-          // Tarjeta principal
-          Container(
+        // ── Tarjeta de balance ─────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -137,7 +189,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
             ),
             child: cajaState.isLoading
                 ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 56),
+                    padding: EdgeInsets.symmetric(vertical: 40),
                     child: Center(
                       child: CircularProgressIndicator(
                         color: ColorSchema.primaryColor,
@@ -173,84 +225,56 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                           ],
                         ),
                       )
-                    : Column(
-                        children: [
-                          // Balance
-                          Padding(
-                            padding:
-                                const EdgeInsets.fromLTRB(20, 20, 16, 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    : Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: ColorSchema.primaryColor
-                                            .withValues(alpha: 0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(
-                                        Icons.account_balance_wallet_rounded,
-                                        color: ColorSchema.primaryColor,
-                                        size: 21,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        'Balance',
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                    if (monedas.length > 1)
-                                      _CurrencySelector(
-                                        monedas: monedas,
-                                        value: monedaActiva,
-                                        onChanged: (v) =>
-                                            setState(() => _selectedMoneda = v),
-                                      ),
-                                  ],
+                                Container(
+                                  width: 42,
+                                  height: 42,
+                                  decoration: BoxDecoration(
+                                    color: ColorSchema.primaryColor
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.account_balance_wallet_rounded,
+                                    color: ColorSchema.primaryColor,
+                                    size: 21,
+                                  ),
                                 ),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 0, bottom: 0),
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Text(
-                                      monedas.isEmpty
-                                          ? '${formatExchange(moneda: 'PEN')}0.00'
-                                          : fmt(balance, monedaActiva),
-                                      style: GoogleFonts.nunito(
-                                        fontSize: 34,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.grey.shade900,
-                                      ),
-                                    ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Balance',
+                                  style: GoogleFonts.nunito(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade700,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-
-                          Divider(
-                              height: 1,
-                              color: Colors.grey.shade200,
-                              indent: 20,
-                              endIndent: 20),
-
-                          // Ingresos / Egresos
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            child: monedas.isEmpty
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                monedas.isEmpty
+                                    ? '${formatExchange(moneda: 'PEN')}0.00'
+                                    : _fmt(balance, monedaActiva),
+                                style: GoogleFonts.nunito(
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.grey.shade900,
+                                ),
+                              ),
+                            ),
+                            Divider(
+                                height: 1,
+                                color: Colors.grey.shade200),
+                            const SizedBox(height: 12),
+                            monedas.isEmpty
                                 ? Center(
                                     child: Text(
                                       'Sin movimientos hoy',
@@ -264,7 +288,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                                     children: [
                                       _MovimientoItem(
                                         label: 'Ingresos',
-                                        value: fmt(ingresos, monedaActiva),
+                                        value: _fmt(ingresos, monedaActiva),
                                         dotColor: const Color(0xFF22C55E),
                                         textColor: const Color(0xFF16A34A),
                                       ),
@@ -277,22 +301,352 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                                       ),
                                       _MovimientoItem(
                                         label: 'Egresos',
-                                        value: fmt(egresos, monedaActiva),
+                                        value: _fmt(egresos, monedaActiva),
                                         dotColor: const Color(0xFFEF4444),
                                         textColor: const Color(0xFFDC2626),
                                       ),
                                     ],
                                   ),
-                          ),
-
-                        ],
+                          ],
+                        ),
                       ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // ── Selector Ingresos / Egresos ────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _TipoSelector(
+            tipo: detailState.tipo,
+            isBlocked: detailState.isLoading || detailState.isLoadingMore,
+            onChanged: (t) =>
+                ref.read(cashRegisterDetailProvider.notifier).changeTipo(t),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // ── Historial (solo esta parte scrollea) ───────────────────────────
+        Expanded(
+          child: _buildHistorialList(detailState, cajaState.isLoading),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHistorialList(
+      CashRegisterDetailState detailState, bool cajaLoading) {
+    if (cajaLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: ColorSchema.primaryColor,
+          strokeWidth: 2,
+        ),
+      );
+    }
+
+    if (detailState.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: ColorSchema.primaryColor,
+          strokeWidth: 2,
+        ),
+      );
+    }
+
+    if (detailState.error != null && detailState.items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, color: Colors.grey.shade400, size: 40),
+            const SizedBox(height: 8),
+            Text(
+              'No se pudo cargar el historial',
+              style: GoogleFonts.nunito(
+                  fontSize: 13, color: Colors.grey.shade500),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: _loadDetail,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Reintentar'),
+              style: TextButton.styleFrom(
+                  foregroundColor: ColorSchema.primaryColor),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (detailState.items.isEmpty) {
+      return Center(
+        child: Text(
+          'Sin movimientos',
+          style: GoogleFonts.nunito(
+              fontSize: 13, color: Colors.grey.shade400),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: ColorSchema.primaryColor,
+      onRefresh: () async => _loadDetail(),
+      child: ListView.builder(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+        itemCount:
+            detailState.items.length + (detailState.isLoadingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == detailState.items.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: ColorSchema.primaryColor,
+                  strokeWidth: 2,
+                ),
+              ),
+            );
+          }
+          final item = detailState.items[index];
+          return _HistorialItem(
+            item: item,
+            tipo: detailState.tipo,
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Selector Ingresos / Egresos
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TipoSelector extends StatelessWidget {
+  final String tipo;
+  final bool isBlocked;
+  final ValueChanged<String> onChanged;
+
+  const _TipoSelector({
+    required this.tipo,
+    required this.isBlocked,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          _TipoBtn(
+            label: 'Ingresos',
+            isSelected: tipo == 'INGRESO',
+            isBlocked: isBlocked && tipo != 'INGRESO',
+            selectedColor: const Color(0xFF16A34A),
+            onTap: () => onChanged('INGRESO'),
+          ),
+          _TipoBtn(
+            label: 'Egresos',
+            isSelected: tipo == 'EGRESO',
+            isBlocked: isBlocked && tipo != 'EGRESO',
+            selectedColor: const Color(0xFFDC2626),
+            onTap: () => onChanged('EGRESO'),
           ),
         ],
       ),
     );
   }
 }
+
+class _TipoBtn extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final bool isBlocked;
+  final Color selectedColor;
+  final VoidCallback onTap;
+
+  const _TipoBtn({
+    required this.label,
+    required this.isSelected,
+    required this.isBlocked,
+    required this.selectedColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: isBlocked ? null : onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: GoogleFonts.nunito(
+              fontSize: 13,
+              fontWeight:
+                  isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected
+                  ? selectedColor
+                  : (isBlocked
+                      ? Colors.grey.shade300
+                      : Colors.grey.shade500),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Item del historial
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _HistorialItem extends StatelessWidget {
+  final CashRegisterDetail item;
+  final String tipo;
+
+  const _HistorialItem({required this.item, required this.tipo});
+
+  @override
+  Widget build(BuildContext context) {
+    final isIngreso = tipo == 'INGRESO';
+    final amountColor =
+        isIngreso ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+    final iconBgColor = isIngreso
+        ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+        : const Color(0xFFDC2626).withValues(alpha: 0.1);
+    final symbol = formatExchange(moneda: item.monedaMovimientoCaja ?? 'PEN');
+    final monto = item.monto ?? 0.0;
+    final hora = item.fechaMovimiento != null
+        ? DateFormat('HH:mm', 'es').format(item.fechaMovimiento!)
+        : '';
+    final usuario = item.usuario?.nombreCompleto ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Icono
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(
+              isIngreso
+                  ? Icons.arrow_downward_rounded
+                  : Icons.arrow_upward_rounded,
+              color: amountColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Descripción + usuario
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.descripcion ?? item.conceptoMovimientoCaja ?? '-',
+                  style: GoogleFonts.nunito(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1F1F1F),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (usuario.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    usuario,
+                    style: GoogleFonts.nunito(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Monto + hora
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$symbol${monto.toStringAsFixed(2)}',
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: amountColor,
+                ),
+              ),
+              if (hora.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  hora,
+                  style: GoogleFonts.nunito(
+                    fontSize: 11,
+                    color: Colors.grey.shade400,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Selector de moneda (OverlayEntry — sin NavBar)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _MovimientoItem extends StatelessWidget {
   final String label;
@@ -349,8 +703,6 @@ class _MovimientoItem extends StatelessWidget {
   }
 }
 
-/// Selector de moneda mediante OverlayEntry — no usa Navigator, evita
-/// disparar didPopNext en pantallas padres suscritas a RouteObserver.
 class _CurrencySelector extends StatefulWidget {
   final List<String> monedas;
   final String value;
