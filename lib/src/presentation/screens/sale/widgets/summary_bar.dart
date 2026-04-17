@@ -8,8 +8,20 @@ import 'package:teki_app/src/utils/formats.dart';
 class SummaryBarSales extends ConsumerStatefulWidget {
   final bool showOnlyTotal;
   final bool isProcessingTotal;
+  final bool showMontoPagado;
+  final bool showCambio;
+  final double montoPagado;
+  final double cambio;
 
-  const SummaryBarSales({super.key, this.showOnlyTotal = false, this.isProcessingTotal = false});
+  const SummaryBarSales({
+    super.key,
+    this.showOnlyTotal = false,
+    this.isProcessingTotal = false,
+    this.showMontoPagado = false,
+    this.showCambio = false,
+    this.montoPagado = 0,
+    this.cambio = 0,
+  });
 
   @override
   ConsumerState<SummaryBarSales> createState() => _SummaryBarSalesState();
@@ -71,6 +83,34 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
                     ),
                   ],
                 ),
+                if (widget.showMontoPagado)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Pagado",
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                      ),
+                      Text(
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${widget.montoPagado.toStringAsFixed(2)}",
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                      ),
+                    ],
+                  ),
+                if (widget.showCambio && widget.cambio > 0)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Cambio",
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green.shade700),
+                      ),
+                      Text(
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${widget.cambio.toStringAsFixed(2)}",
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green.shade700),
+                      ),
+                    ],
+                  ),
                 if (!widget.showOnlyTotal && isExpanded)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

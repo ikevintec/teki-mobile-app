@@ -171,8 +171,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       montoCredito.clear();
       for (final cuota in ticket.cuotas!) {
         fechaCredito.add(TextEditingController(
-          text: DateFormat('yyyy-MM-dd')
-              .format(cuota.fecha ?? DateTime.now()),
+          text: DateFormat('yyyy-MM-dd').format(cuota.fecha ?? DateTime.now()),
         ));
         montoCredito.add(TextEditingController(
           text: (cuota.monto ?? 0).toStringAsFixed(2),
@@ -181,8 +180,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       _tabController.index = 1;
     }
 
-    if (ticket.movimientoCaja == null &&
-        (ticket.cuotas?.isEmpty ?? true)) {
+    if (ticket.movimientoCaja == null && (ticket.cuotas?.isEmpty ?? true)) {
       diasCredito.text = (ticket.diasCredito ?? 30).toString();
     }
   }
@@ -210,7 +208,8 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     if (method.id == null) return;
     if (_paymentEntries.any((e) => e.method.id == method.id)) return;
     setState(() {
-      _paymentEntries.add(_PaymentEntry(method: method, initialAmount: _remaining));
+      _paymentEntries
+          .add(_PaymentEntry(method: method, initialAmount: _remaining));
     });
   }
 
@@ -223,14 +222,13 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     final dias = int.tryParse(diasCredito.text) ?? 0;
     DateTime fechaBase;
     if (fechaCredito.isNotEmpty) {
-      fechaBase = DateTime.parse(fechaCredito.last.text)
-          .add(Duration(days: dias));
+      fechaBase =
+          DateTime.parse(fechaCredito.last.text).add(Duration(days: dias));
     } else {
       fechaBase = DateTime.now().add(Duration(days: dias));
     }
-    fechaCredito.add(TextEditingController(
-      text: DateFormat('yyyy-MM-dd').format(fechaBase),
-    ));
+    fechaCredito.add(
+        TextEditingController(text: DateFormat('yyyy-MM-dd').format(fechaBase)));
     montoCredito.add(TextEditingController());
     redistribuirMontos();
     setState(() {});
@@ -259,21 +257,19 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       initialDate: today,
       firstDate: today,
       lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.blue,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: Colors.blue),
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Colors.blue,
+            onPrimary: Colors.white,
+            onSurface: Colors.black,
           ),
-          child: child!,
-        );
-      },
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: Colors.blue),
+          ),
+        ),
+        child: child!,
+      ),
     );
     if (picked != null) {
       fechaCredito[index].text = DateFormat('yyyy-MM-dd').format(picked);
@@ -299,8 +295,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       return;
     }
     if (cuotas.any((c) => c.monto! <= 0)) {
-      errorNotification(
-          "Todos los montos de las cuotas deben ser mayores a cero");
+      errorNotification("Todos los montos de las cuotas deben ser mayores a cero");
       return;
     }
     provider.setCuotas(cuotas);
@@ -326,11 +321,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     }).toList();
 
     final cambio = (_totalPaid - total).clamp(0.0, double.infinity);
-    provider.setMovimientoCaja(
-      total: total,
-      pagos: pagos,
-      cambio: cambio,
-    );
+    provider.setMovimientoCaja(total: total, pagos: pagos, cambio: cambio);
   }
 
   @override
@@ -360,7 +351,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       ),
       body: Column(
         children: [
-          // ── Switch Agrupar ────────────────────────────────────────────────
+          // ── Switch Agrupar ──────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: CustomSwitch(
@@ -373,257 +364,142 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
             ),
           ),
           Divider(height: 1, color: Colors.grey.shade200),
+          // ── Tabs ────────────────────────────────────────────────────────
           Expanded(
             child: IndexedStack(
               index: _tabController.index,
               children: [
-                // ── Tab Contado ─────────────────────────────────────────────
-                Column(
-                  children: [
-                    // Lista de pagos seleccionados
-                    if (_paymentEntries.isNotEmpty) ...[
-                      ListView.builder(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                        itemCount: _paymentEntries.length,
-                        itemBuilder: (_, i) => _buildPaymentEntryRow(i),
-                      ),
-                      Divider(height: 1, color: Colors.grey.shade200),
-                    ],
-                    // Grid de métodos disponibles
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                        itemCount: visiblePaymentMethods.length,
-                        itemBuilder: (_, index) {
-                          final payment = visiblePaymentMethods[index];
-                          final isSelected = _paymentEntries
-                              .any((e) => e.method.id == payment.id);
-                          return _PaymentMethodRow(
-                            method: payment,
-                            isSelected: isSelected,
-                            onTap: () => _addPayment(payment),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                // ── Tab Contado ──────────────────────────────────────────
+                ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  itemCount: visiblePaymentMethods.length,
+                  itemBuilder: (_, index) {
+                    final payment = visiblePaymentMethods[index];
+                    final entryIndex = _paymentEntries
+                        .indexWhere((e) => e.method.id == payment.id);
+                    final entry =
+                        entryIndex >= 0 ? _paymentEntries[entryIndex] : null;
+                    return _PaymentMethodRow(
+                      method: payment,
+                      entry: entry,
+                      onTap: () => entry == null
+                          ? _addPayment(payment)
+                          : _removePayment(entryIndex),
+                      onRemove: entry != null
+                          ? () => _removePayment(entryIndex)
+                          : null,
+                      onAmountChanged: () => setState(() {}),
+                    );
+                  },
                 ),
-                  // ── Tab Crédito ───────────────────────────────────────────
-                  Form(
-                    key: formKeyCredito,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 15),
+                // ── Tab Crédito ──────────────────────────────────────────
+                Form(
+                  key: formKeyCredito,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 15),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextFieldSection(
+                                  label: 'Días de crédito (*)',
+                                  hint: 'Ingrese días',
+                                  inputType: TextInputType.text,
+                                  controller: diasCredito,
+                                  onChanged: (_) {},
+                                  validator: (p0) => (p0 == null || p0.isEmpty)
+                                      ? 'Ingrese un número válido'
+                                      : (int.tryParse(p0) == null ||
+                                              int.parse(p0) <= 0)
+                                          ? 'Debe ser mayor a cero'
+                                          : null,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: addCuota,
+                                icon: const Icon(Icons.add_circle,
+                                    color: ColorSchema.primaryColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          child: Row(
+                            children: [
+                              Expanded(child: Divider(color: Colors.grey.shade300)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'Cuotas',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade500,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              Expanded(child: Divider(color: Colors.grey.shade300)),
+                            ],
+                          ),
+                        ),
+                        ...List.generate(fechaCredito.length, (index) {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
+                                  flex: 2,
+                                  child: GestureDetector(
+                                    onTap: () => _selectDate(index),
+                                    child: AbsorbPointer(
+                                      child: TextFieldSection(
+                                        label: 'Fecha',
+                                        hint: 'Seleccione fecha',
+                                        inputType: TextInputType.text,
+                                        controller: fechaCredito[index],
+                                        isReadOnly: true,
+                                        onChanged: (_) {},
+                                        validator: (p0) =>
+                                            (p0 == null || p0.isEmpty)
+                                                ? 'Seleccione una fecha'
+                                                : null,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  flex: 2,
                                   child: TextFieldSection(
-                                    label: 'Días de crédito (*)',
-                                    hint: 'Ingrese días',
-                                    inputType: TextInputType.text,
-                                    controller: diasCredito,
-                                    onChanged: (_) {},
+                                    label: 'Monto cuota',
+                                    hint: 'Monto',
+                                    controller: montoCredito[index],
+                                    inputType: TextInputType.number,
                                     validator: (p0) =>
                                         (p0 == null || p0.isEmpty)
-                                            ? 'Ingrese un número válido'
-                                            : (int.tryParse(p0) == null ||
-                                                    int.parse(p0) <= 0)
-                                                ? 'Debe ser mayor a cero'
+                                            ? 'Monto requerido'
+                                            : (double.tryParse(p0) == null ||
+                                                    double.parse(p0) <= 0)
+                                                ? 'Monto invalido'
                                                 : null,
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed: addCuota,
-                                  icon: const Icon(Icons.add_circle,
-                                      color: ColorSchema.primaryColor),
+                                  icon: const Icon(Icons.remove_circle,
+                                      color: Colors.red),
+                                  onPressed: () => eliminarCuota(index),
                                 ),
                               ],
                             ),
-                          ),
-                          Text(
-                            "------ Cuotas de crédito ------",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: ColorSchema.primaryColor,
-                            ),
-                          ),
-                          ...List.generate(fechaCredito.length, (index) {
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: GestureDetector(
-                                      onTap: () => _selectDate(index),
-                                      child: AbsorbPointer(
-                                        child: TextFieldSection(
-                                          label: 'Fecha',
-                                          hint: 'Seleccione fecha',
-                                          inputType: TextInputType.text,
-                                          controller: fechaCredito[index],
-                                          isReadOnly: true,
-                                          onChanged: (_) {},
-                                          validator: (p0) =>
-                                              (p0 == null || p0.isEmpty)
-                                                  ? 'Seleccione una fecha'
-                                                  : null,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    flex: 2,
-                                    child: TextFieldSection(
-                                      label: 'Monto cuota',
-                                      hint: 'Monto',
-                                      controller: montoCredito[index],
-                                      inputType: TextInputType.number,
-                                      validator: (p0) =>
-                                          (p0 == null || p0.isEmpty)
-                                              ? 'Monto requerido'
-                                              : (double.tryParse(p0) ==
-                                                          null ||
-                                                      double.parse(p0) <= 0)
-                                                  ? 'Monto invalido'
-                                                  : null,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.remove_circle,
-                                        color: Colors.red),
-                                    onPressed: () => eliminarCuota(index),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SummaryBarSales(showOnlyTotal: true),
-            ),
-            // ── Botón finalizar ───────────────────────────────────────────────
-            SafeArea(
-              top: false,
-              child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                    onPressed: () async {
-                      final notifier = ref.read(ticketProvider.notifier);
-                      final isContado = _tabController.index == 0;
-
-                      if (isContado) {
-                        if (_paymentEntries.isEmpty) {
-                          errorNotification(
-                              "Debe seleccionar al menos un método de pago");
-                          return;
-                        }
-                        if (_totalPaid < total - 0.009) {
-                          errorNotification(
-                              "El monto pagado es menor al total de la venta");
-                          return;
-                        }
-                        procesoContado();
-                      } else {
-                        final isValid =
-                            formKeyCredito.currentState?.validate() ?? false;
-                        if (!isValid) return;
-                        procesoCredito();
-                      }
-
-                      final ticketState = ref.read(ticketProvider);
-                      final checkId = ticketState.ticket.cuentaRestaurante;
-
-                      if (checkId != null) {
-                        final ticketPayload = notifier.getTicketPayload();
-                        final customer =
-                            ref.read(customerSaleProvider).customer;
-                        final originalItems = ref
-                            .read(productSaleProvider)
-                            .productsSales
-                            .map((td) => td.comandaDetalle)
-                            .whereType<CommandDetail>()
-                            .toList();
-                        final checkPayload = Check(
-                          cliente:
-                              (customer.razonSocial?.isNotEmpty ?? false)
-                                  ? customer
-                                  : null,
-                          pagado: true,
-                          items: originalItems,
-                          comprobante: ticketPayload,
-                        );
-                        try {
-                          final checkResult =
-                              await RestaurantRepositoryImpl()
-                                  .updateCheck(checkId, checkPayload);
-                          ref.invalidate(ticketProvider);
-                          ref.invalidate(productSaleProvider);
-                          ref.invalidate(customerSaleProvider);
-                          final comprobante = checkResult.comprobante;
-                          if (comprobante != null) {
-                            _autoprint(comprobante);
-                            Get.off(() => ViewComponentScreen(
-                                  ticket: comprobante,
-                                  fromSale: true,
-                                ));
-                          } else {
-                            Get.back();
-                          }
-                        } catch (e) {
-                          errorNotification(
-                              "Error al registrar el pago: $e");
-                        }
-                      } else {
-                        final Ticket? ticketResponse =
-                            await notifier.proceessTicket();
-                        if (ticketResponse != null) {
-                          ref.invalidate(ticketProvider);
-                          ref.invalidate(productSaleProvider);
-                          ref.invalidate(customerSaleProvider);
-                          _autoprint(ticketResponse);
-                          Get.off(() => ViewComponentScreen(
-                                ticket: ticketResponse,
-                                fromSale: true,
-                              ));
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorSchema.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(ticketP.isEdit
-                            ? 'Finalizar Edición'
-                            : 'Finalizar Pago'),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.check_circle),
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -631,53 +507,126 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
               ],
             ),
           ),
-            ),
-          ],
-        ),
-    );
-  }
-
-  Widget _buildPaymentEntryRow(int index) {
-    final entry = _paymentEntries[index];
-    final isCash =
-        (entry.method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Campo monto con nombre del método como label
-          Expanded(
-            flex: 2,
-            child: TextFieldSection(
-              label: entry.method.nombre ?? 'Monto',
-              hint: '0.00',
-              inputType: TextInputType.number,
-              controller: entry.amountController,
-              onChanged: (_) => setState(() {}),
-            ),
+          // ── Total ────────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Builder(builder: (_) {
+              final isContado = _tabController.index == 0;
+              final hasEntries = _paymentEntries.isNotEmpty;
+              final cambio = (_totalPaid - total).clamp(0.0, double.infinity);
+              return SummaryBarSales(
+                showOnlyTotal: true,
+                showCambio: isContado && hasEntries,
+                montoPagado: _totalPaid,
+                cambio: cambio,
+              );
+            }),
           ),
-          // Campo # operación (solo tarjetas)
-          if (!isCash) ...[
-            const SizedBox(width: 6),
-            Expanded(
-              flex: 2,
-              child: TextFieldSection(
-                label: '# Op.',
-                hint: 'Número',
-                inputType: TextInputType.number,
-                controller: entry.operationController,
+          // ── Botón finalizar ──────────────────────────────────────────────
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final notifier = ref.read(ticketProvider.notifier);
+                    final isContado = _tabController.index == 0;
+
+                    if (isContado) {
+                      if (_paymentEntries.isEmpty) {
+                        errorNotification(
+                            "Debe seleccionar al menos un método de pago");
+                        return;
+                      }
+                      if (_totalPaid < total - 0.009) {
+                        errorNotification(
+                            "El monto pagado es menor al total de la venta");
+                        return;
+                      }
+                      procesoContado();
+                    } else {
+                      final isValid =
+                          formKeyCredito.currentState?.validate() ?? false;
+                      if (!isValid) return;
+                      procesoCredito();
+                    }
+
+                    final ticketState = ref.read(ticketProvider);
+                    final checkId = ticketState.ticket.cuentaRestaurante;
+
+                    if (checkId != null) {
+                      final ticketPayload = notifier.getTicketPayload();
+                      final customer = ref.read(customerSaleProvider).customer;
+                      final originalItems = ref
+                          .read(productSaleProvider)
+                          .productsSales
+                          .map((td) => td.comandaDetalle)
+                          .whereType<CommandDetail>()
+                          .toList();
+                      final checkPayload = Check(
+                        cliente: (customer.razonSocial?.isNotEmpty ?? false)
+                            ? customer
+                            : null,
+                        pagado: true,
+                        items: originalItems,
+                        comprobante: ticketPayload,
+                      );
+                      try {
+                        final checkResult = await RestaurantRepositoryImpl()
+                            .updateCheck(checkId, checkPayload);
+                        ref.invalidate(ticketProvider);
+                        ref.invalidate(productSaleProvider);
+                        ref.invalidate(customerSaleProvider);
+                        final comprobante = checkResult.comprobante;
+                        if (comprobante != null) {
+                          _autoprint(comprobante);
+                          Get.off(() => ViewComponentScreen(
+                                ticket: comprobante,
+                                fromSale: true,
+                              ));
+                        } else {
+                          Get.back();
+                        }
+                      } catch (e) {
+                        errorNotification("Error al registrar el pago: $e");
+                      }
+                    } else {
+                      final Ticket? ticketResponse =
+                          await notifier.proceessTicket();
+                      if (ticketResponse != null) {
+                        ref.invalidate(ticketProvider);
+                        ref.invalidate(productSaleProvider);
+                        ref.invalidate(customerSaleProvider);
+                        _autoprint(ticketResponse);
+                        Get.off(() => ViewComponentScreen(
+                              ticket: ticketResponse,
+                              fromSale: true,
+                            ));
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorSchema.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(ticketP.isEdit ? 'Finalizar Edición' : 'Finalizar Pago'),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.check_circle),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ],
-          // Botón eliminar
-          IconButton(
-            onPressed: () => _removePayment(index),
-            icon: const Icon(Icons.delete_outline_rounded,
-                color: Colors.redAccent, size: 20),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
           ),
         ],
       ),
@@ -685,21 +634,28 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
   }
 }
 
-// ─── Fila de método de pago ───────────────────────────────────────────────────
+// ─── Fila de método de pago con inputs expandibles ───────────────────────────
 
 class _PaymentMethodRow extends StatelessWidget {
   final PaymentMethod method;
-  final bool isSelected;
+  final _PaymentEntry? entry;
   final VoidCallback onTap;
+  final VoidCallback? onRemove;
+  final VoidCallback onAmountChanged;
 
   const _PaymentMethodRow({
     required this.method,
-    required this.isSelected,
+    required this.entry,
     required this.onTap,
+    required this.onAmountChanged,
+    this.onRemove,
   });
 
+  bool get _isSelected => entry != null;
+  bool get _isCash => (method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
+
   Widget _buildIcon() {
-    const double size = 32;
+    const double size = 28;
     final url = method.imagenUrl;
     if (url != null && url.isNotEmpty) {
       return Image.network(
@@ -707,41 +663,37 @@ class _PaymentMethodRow extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.contain,
-        errorBuilder: (context, e, stack) => _buildFallbackIcon(size),
+        errorBuilder: (context, e, stack) => _fallbackIcon(size),
       );
     }
-    return _buildFallbackIcon(size);
+    return _fallbackIcon(size);
   }
 
-  Widget _buildFallbackIcon(double size) {
-    final isCash = (method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
-    return Icon(
-      isCash ? Icons.payments_rounded : Icons.credit_card_rounded,
-      color: isSelected ? ColorSchema.primaryColor : Colors.grey.shade500,
-      size: size,
-    );
-  }
+  Widget _fallbackIcon(double size) => Icon(
+        _isCash ? Icons.payments_rounded : Icons.credit_card_rounded,
+        color: _isSelected ? ColorSchema.primaryColor : Colors.grey.shade500,
+        size: size,
+      );
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        duration: const Duration(milliseconds: 180),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? ColorSchema.primaryColor.withValues(alpha: 0.06)
+          color: _isSelected
+              ? ColorSchema.primaryColor.withValues(alpha: 0.04)
               : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected
+            color: _isSelected
                 ? ColorSchema.primaryColor
                 : Colors.grey.shade200,
-            width: isSelected ? 1.5 : 1,
+            width: _isSelected ? 1.5 : 1,
           ),
-          boxShadow: isSelected
+          boxShadow: _isSelected
               ? [
                   BoxShadow(
                     color: ColorSchema.primaryColor.withValues(alpha: 0.08),
@@ -751,42 +703,96 @@ class _PaymentMethodRow extends StatelessWidget {
                 ]
               : null,
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Ícono / imagen
-            SizedBox(width: 36, child: Center(child: _buildIcon())),
-            const SizedBox(width: 14),
-            // Nombre
-            Expanded(
-              child: Text(
-                method.nombre ?? '',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight:
-                      isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? ColorSchema.primaryColor
-                      : Colors.grey.shade800,
-                ),
+            // ── Cabecera del método ────────────────────────────────────
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  SizedBox(width: 32, child: Center(child: _buildIcon())),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      method.nombre ?? '',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: _isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: _isSelected
+                            ? ColorSchema.primaryColor
+                            : Colors.grey.shade800,
+                      ),
+                    ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: _isSelected
+                        ? Container(
+                            key: const ValueKey('check'),
+                            width: 22,
+                            height: 22,
+                            decoration: const BoxDecoration(
+                              color: ColorSchema.primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_rounded,
+                                color: Colors.white, size: 13),
+                          )
+                        : const SizedBox(
+                            key: ValueKey('empty'), width: 22),
+                  ),
+                ],
               ),
             ),
-            // Checkmark
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 160),
-              child: isSelected
-                  ? Container(
-                      key: const ValueKey('check'),
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: ColorSchema.primaryColor,
-                        shape: BoxShape.circle,
+            // ── Inputs expandibles ────────────────────────────────────
+            if (_isSelected) ...[
+              Divider(
+                  height: 1,
+                  indent: 16,
+                  endIndent: 16,
+                  color: ColorSchema.primaryColor.withValues(alpha: 0.2)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFieldSection(
+                                label: 'Monto',
+                                hint: '0.00',
+                                inputType: TextInputType.number,
+                                controller: entry!.amountController,
+                                onChanged: (_) => onAmountChanged(),
+                              ),
+                            ),
+                            if (!_isCash) ...[
+                              const SizedBox(width: 10),
+                              Expanded(
+                                flex: 2,
+                                child: TextFieldSection(
+                                  label: '# Operación',
+                                  hint: 'Número',
+                                  inputType: TextInputType.number,
+                                  controller: entry!.operationController,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: onRemove,
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  color: Colors.redAccent, size: 20),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: const Icon(Icons.check_rounded,
-                          color: Colors.white, size: 14),
-                    )
-                  : const SizedBox(key: ValueKey('empty'), width: 24),
-            ),
+            ],
           ],
         ),
       ),
