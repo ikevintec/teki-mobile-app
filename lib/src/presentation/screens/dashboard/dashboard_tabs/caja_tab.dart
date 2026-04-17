@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_balance_screen.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_movimiento_screen.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
@@ -313,7 +314,45 @@ class _CajaTabState extends ConsumerState<CajaTab> {
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+
+        // ── Botón ver balance ──────────────────────────────────────────────
+        if (!cajaState.isLoading &&
+            cajaState.registers.isNotEmpty &&
+            cajaState.registers.first.id != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CajaBalanceScreen(
+                      idCaja: cajaState.registers.first.id!,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.bar_chart_rounded, size: 17),
+                label: const Text('Ver balance'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ColorSchema.primaryColor,
+                  side: BorderSide(
+                    color: ColorSchema.primaryColor.withValues(alpha: 0.4),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  textStyle: GoogleFonts.roboto(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                ),
+              ),
+            ),
+          ),
+
+        const SizedBox(height: 12),
 
         // ── Selector Ingresos / Egresos ────────────────────────────────────
         Padding(

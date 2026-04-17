@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/datasource/remote_cash_register.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
+import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
 import 'package:teki_app/src/domain/datasource/cash_register_datasource.dart';
 import 'package:teki_app/src/domain/repositories/cash_register_repository.dart';
 
@@ -40,6 +41,17 @@ class CashRegisterRepositoryImpl extends CashRegisterRepository {
       moneda: moneda,
       page: page,
       perPage: perPage,
+      cancelToken: cancelToken,
+    );
+  }
+
+  @override
+  Future<List<CajaMetodoPagoBalance>> getTotalesMetodoPago({
+    required int idCaja,
+    CancelToken? cancelToken,
+  }) {
+    return datasource.getTotalesMetodoPago(
+      idCaja: idCaja,
       cancelToken: cancelToken,
     );
   }
