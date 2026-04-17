@@ -11,7 +11,6 @@ import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen.dart/view_comprobante_screen.dart';
-import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_card_widget.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
@@ -393,23 +392,16 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                     ],
                     // Grid de métodos disponibles
                     Expanded(
-                      child: GridView.builder(
+                      child: ListView.builder(
                         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.0,
-                        ),
                         itemCount: visiblePaymentMethods.length,
                         itemBuilder: (_, index) {
                           final payment = visiblePaymentMethods[index];
                           final isSelected = _paymentEntries
                               .any((e) => e.method.id == payment.id);
-                          return PaymentCardWidget(
-                            paymentMethod: payment,
-                            isSelecelted: isSelected,
+                          return _PaymentMethodRow(
+                            method: payment,
+                            isSelected: isSelected,
                             onTap: () => _addPayment(payment),
                           );
                         },
@@ -688,6 +680,115 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
             constraints: const BoxConstraints(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Fila de método de pago ───────────────────────────────────────────────────
+
+class _PaymentMethodRow extends StatelessWidget {
+  final PaymentMethod method;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PaymentMethodRow({
+    required this.method,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  Widget _buildIcon() {
+    const double size = 32;
+    final url = method.imagenUrl;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (context, e, stack) => _buildFallbackIcon(size),
+      );
+    }
+    return _buildFallbackIcon(size);
+  }
+
+  Widget _buildFallbackIcon(double size) {
+    final isCash = (method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
+    return Icon(
+      isCash ? Icons.payments_rounded : Icons.credit_card_rounded,
+      color: isSelected ? ColorSchema.primaryColor : Colors.grey.shade500,
+      size: size,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? ColorSchema.primaryColor.withValues(alpha: 0.06)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected
+                ? ColorSchema.primaryColor
+                : Colors.grey.shade200,
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: ColorSchema.primaryColor.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            // Ícono / imagen
+            SizedBox(width: 36, child: Center(child: _buildIcon())),
+            const SizedBox(width: 14),
+            // Nombre
+            Expanded(
+              child: Text(
+                method.nombre ?? '',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight:
+                      isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? ColorSchema.primaryColor
+                      : Colors.grey.shade800,
+                ),
+              ),
+            ),
+            // Checkmark
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 160),
+              child: isSelected
+                  ? Container(
+                      key: const ValueKey('check'),
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: ColorSchema.primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check_rounded,
+                          color: Colors.white, size: 14),
+                    )
+                  : const SizedBox(key: ValueKey('empty'), width: 24),
+            ),
+          ],
+        ),
       ),
     );
   }
