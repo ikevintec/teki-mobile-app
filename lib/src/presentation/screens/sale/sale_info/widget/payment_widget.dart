@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/paymentDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
@@ -24,6 +25,33 @@ import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
+// ─── Entrada de pago individual ──────────────────────────────────────────────
+
+class _PaymentEntry {
+  final PaymentMethod method;
+  final TextEditingController amountController;
+  final TextEditingController operationController;
+
+  _PaymentEntry({required this.method, required double initialAmount})
+      : amountController =
+            TextEditingController(text: initialAmount.toStringAsFixed(2)),
+        operationController = TextEditingController();
+
+  _PaymentEntry.fromExisting({
+    required this.method,
+    required String amount,
+    required String operation,
+  })  : amountController = TextEditingController(text: amount),
+        operationController = TextEditingController(text: operation);
+
+  void dispose() {
+    amountController.dispose();
+    operationController.dispose();
+  }
+}
+
+// ─── Widget principal ─────────────────────────────────────────────────────────
+
 class PaymentWidget extends ConsumerStatefulWidget {
   const PaymentWidget({super.key});
 
@@ -37,108 +65,63 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
 
   late TabController _tabController;
   List<PaymentMethod> paymentMethods = [];
-  PaymentMethod? selectedPaymentMethod;
-  TextEditingController montoPagadoController = TextEditingController();
-  TextEditingController numeroOperacion = TextEditingController();
+  final List<_PaymentEntry> _paymentEntries = [];
+
   TextEditingController diasCredito = TextEditingController();
   List<TextEditingController> fechaCredito = [];
   List<TextEditingController> montoCredito = [];
 
-  int selectedPaymentId = -1;
   double total = 0;
   String currency = '';
 
-  final formKeyContado = GlobalKey<FormState>();
   final formKeyCredito = GlobalKey<FormState>();
-  
-  // FocusNodes para detectar cuando hay inputs enfocados
-  final FocusNode montoPagadoFocus = FocusNode();
-  final FocusNode numeroOperacionFocus = FocusNode();
-  final FocusNode diasCreditoFocus = FocusNode();
-  bool _hasInputFocus = false;
-  Timer? _expandTimer;
+
+  double get _totalPaid => _paymentEntries.fold(
+      0.0, (sum, e) => sum + (double.tryParse(e.amountController.text) ?? 0.0));
+
+  double get _remaining => (total - _totalPaid).clamp(0.0, double.infinity);
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      setState(() {});
-    });
-    
-    // Agregar listeners a los FocusNodes
-    montoPagadoFocus.addListener(_onFocusChange);
-    numeroOperacionFocus.addListener(_onFocusChange);
-    diasCreditoFocus.addListener(_onFocusChange);
+    _tabController.addListener(() => setState(() {}));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final providerTicket = ref.watch(ticketProvider);
       final ticket = providerTicket.ticket;
       final isEdit = providerTicket.isEdit;
-      
-      total = double.parse(
-          (ticket.totalVenta ?? 0).toStringAsFixed(2));
-      montoPagadoController.text = total.toStringAsFixed(2);
+
+      total = double.parse((ticket.totalVenta ?? 0).toStringAsFixed(2));
       currency = ticket.codigoMoneda ?? 'PEN';
       final sesion = ref.read(sesionProvider);
       paymentMethods = sesion.config?.formasPago ?? [];
-      
-      // Si es edición, cargar datos existentes
+
       if (isEdit) {
         _loadExistingPaymentData(ticket);
       } else {
-        // Valores por defecto para nueva venta
         diasCredito.text = "30";
       }
-      
+
       setState(() {});
     });
   }
 
   @override
   void dispose() {
-    _expandTimer?.cancel();
-    montoPagadoFocus.removeListener(_onFocusChange);
-    numeroOperacionFocus.removeListener(_onFocusChange);
-    diasCreditoFocus.removeListener(_onFocusChange);
-    
-    montoPagadoFocus.dispose();
-    numeroOperacionFocus.dispose();
-    diasCreditoFocus.dispose();
+    for (final e in _paymentEntries) {
+      e.dispose();
+    }
+    diasCredito.dispose();
     super.dispose();
   }
 
-  void _onFocusChange() {
-    final hasAnyFocus = montoPagadoFocus.hasFocus || 
-                       numeroOperacionFocus.hasFocus || 
-                       diasCreditoFocus.hasFocus;
-    
-    if (_hasInputFocus != hasAnyFocus) {
-      if (hasAnyFocus) {
-        // Si gana focus, cambiar inmediatamente (contraer)
-        _expandTimer?.cancel();
-        setState(() {
-          _hasInputFocus = true;
-        });
-      } else {
-        // Si pierde focus, esperar antes de expandir
-        _expandTimer?.cancel();
-        _expandTimer = Timer(const Duration(milliseconds: 150), () {
-          if (mounted) {
-            setState(() {
-              _hasInputFocus = false;
-            });
-          }
-        });
-      }
-    }
-  }
-
-  double get cambioDisponible =>
-      (double.tryParse(montoPagadoController.text) ?? 0) - total;
-
   void _autoprint(Ticket ticket) {
-    if (ticket.id == null || ticket.uuid == null || ticket.identificadorDocumento == null) return;
+    if (ticket.id == null ||
+        ticket.uuid == null ||
+        ticket.identificadorDocumento == null) {
+      return;
+    }
 
     final session = ref.read(sesionProvider);
     final printer = session.saleStation?.impresoraComprobante;
@@ -167,93 +150,89 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
   }
 
   void _loadExistingPaymentData(Ticket ticket) {
-    // Cargar datos de pago al contado si existe movimientoCaja
-    if (ticket.movimientoCaja != null && ticket.movimientoCaja!.pagos != null && ticket.movimientoCaja!.pagos!.isNotEmpty) {
-      final pago = ticket.movimientoCaja!.pagos!.first;
-      
-      // Buscar el método de pago correspondiente
-      selectedPaymentMethod = paymentMethods.firstWhere(
-        (p) => p.id == pago.metodoPago?.id,
-        orElse: () => pago.metodoPago ?? PaymentMethod(),
-      );
-      
-      if (selectedPaymentMethod != null) {
-        selectedPaymentId = selectedPaymentMethod!.id ?? -1;
-        montoPagadoController.text = (pago.montoPagado ?? pago.monto ?? 0).toStringAsFixed(2);
-        numeroOperacion.text = pago.numeroOperacion ?? '';
+    if (ticket.movimientoCaja?.pagos?.isNotEmpty == true) {
+      for (final pago in ticket.movimientoCaja!.pagos!) {
+        final method = paymentMethods.firstWhere(
+          (p) => p.id == pago.metodoPago?.id,
+          orElse: () => pago.metodoPago ?? PaymentMethod(),
+        );
+        if (method.id == null) continue;
+        _paymentEntries.add(_PaymentEntry.fromExisting(
+          method: method,
+          amount: (pago.montoPagado ?? pago.monto ?? 0).toStringAsFixed(2),
+          operation: pago.numeroOperacion ?? '',
+        ));
       }
-      
-      // Mantener en tab de contado
       _tabController.index = 0;
     }
-    
-    // Cargar datos de crédito si existen cuotas
-    if (ticket.cuotas != null && ticket.cuotas!.isNotEmpty) {
+
+    if (ticket.cuotas?.isNotEmpty == true) {
       diasCredito.text = (ticket.diasCredito ?? 0).toString();
-      
-      // Cargar cuotas existentes
       fechaCredito.clear();
       montoCredito.clear();
-      
-      for (var cuota in ticket.cuotas!) {
+      for (final cuota in ticket.cuotas!) {
         fechaCredito.add(TextEditingController(
-          text: DateFormat('yyyy-MM-dd').format(cuota.fecha ?? DateTime.now())
+          text: DateFormat('yyyy-MM-dd')
+              .format(cuota.fecha ?? DateTime.now()),
         ));
         montoCredito.add(TextEditingController(
-          text: (cuota.monto ?? 0).toStringAsFixed(2)
+          text: (cuota.monto ?? 0).toStringAsFixed(2),
         ));
       }
-      
-      // Cambiar a tab de crédito
       _tabController.index = 1;
     }
-    
-    // Si no hay ningún dato de pago, establecer valores por defecto
-    if (ticket.movimientoCaja == null && (ticket.cuotas == null || ticket.cuotas!.isEmpty)) {
+
+    if (ticket.movimientoCaja == null &&
+        (ticket.cuotas?.isEmpty ?? true)) {
       diasCredito.text = (ticket.diasCredito ?? 30).toString();
     }
   }
 
   List<PaymentMethod> getFilteredPaymentMethods() {
-    final efectivo = paymentMethods.firstWhere(
-      (p) => (p.formaPago ?? '').toUpperCase() == 'EFECTIVO',
-      orElse: () => PaymentMethod(),
-    );
-
-    final filtered = paymentMethods.where(
-      (p) =>
-          (p.tipoMovimiento ?? '').toLowerCase() == 'ingreso' &&
-          (p.tipoTarjeta != null),
-    );
-
     final Map<int, PaymentMethod> uniqueMap = {};
-    if (efectivo.id != null) uniqueMap[efectivo.id!] = efectivo;
-    for (var p in filtered) {
-      if (!uniqueMap.containsKey(p.id)) uniqueMap[p.id!] = p;
+    bool efectivoAdded = false;
+    for (final p in paymentMethods) {
+      if (p.id == null) continue;
+      final forma = (p.formaPago ?? '').toUpperCase();
+      final movimiento = (p.tipoMovimiento ?? '').toLowerCase();
+      if (forma == 'EFECTIVO') {
+        if (!efectivoAdded) {
+          uniqueMap[p.id!] = p;
+          efectivoAdded = true;
+        }
+      } else if (movimiento == 'ingreso') {
+        uniqueMap.putIfAbsent(p.id!, () => p);
+      }
     }
     return uniqueMap.values.toList();
   }
 
+  void _addPayment(PaymentMethod method) {
+    if (method.id == null) return;
+    if (_paymentEntries.any((e) => e.method.id == method.id)) return;
+    setState(() {
+      _paymentEntries.add(_PaymentEntry(method: method, initialAmount: _remaining));
+    });
+  }
+
+  void _removePayment(int index) {
+    _paymentEntries[index].dispose();
+    setState(() => _paymentEntries.removeAt(index));
+  }
+
   void addCuota() {
     final dias = int.tryParse(diasCredito.text) ?? 0;
-
-    // Obtener la fecha base: última fecha o fecha actual
     DateTime fechaBase;
     if (fechaCredito.isNotEmpty) {
-      // Tomar la última fecha existente y sumarle los días
-      fechaBase =
-          DateTime.parse(fechaCredito.last.text).add(Duration(days: dias));
+      fechaBase = DateTime.parse(fechaCredito.last.text)
+          .add(Duration(days: dias));
     } else {
-      // No hay cuotas aún, partir desde hoy
       fechaBase = DateTime.now().add(Duration(days: dias));
     }
-
-    // Insertar al final
-    fechaCredito.add(
-      TextEditingController(text: DateFormat('yyyy-MM-dd').format(fechaBase)),
-    );
+    fechaCredito.add(TextEditingController(
+      text: DateFormat('yyyy-MM-dd').format(fechaBase),
+    ));
     montoCredito.add(TextEditingController());
-
     redistribuirMontos();
     setState(() {});
   }
@@ -267,8 +246,8 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
   void redistribuirMontos() {
     final montoEquitativo =
         total / (montoCredito.isNotEmpty ? montoCredito.length : 1);
-    for (var controller in montoCredito) {
-      controller.text = montoEquitativo.toStringAsFixed(2);
+    for (var c in montoCredito) {
+      c.text = montoEquitativo.toStringAsFixed(2);
     }
     setState(() {});
   }
@@ -276,7 +255,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
   Future<void> _selectDate(int index) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    DateTime? picked = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: today,
       firstDate: today,
@@ -290,9 +269,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
               onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blue,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.blue),
             ),
           ),
           child: child!,
@@ -307,7 +284,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
 
   void procesoCredito() {
     final provider = ref.read(ticketProvider.notifier);
-    List<TicketFee> cuotas = [];
+    final List<TicketFee> cuotas = [];
     for (int i = 0; i < fechaCredito.length; i++) {
       final fecha = fechaCredito[i].text;
       final monto = montoCredito[i].text;
@@ -327,166 +304,120 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
           "Todos los montos de las cuotas deben ser mayores a cero");
       return;
     }
-    if (cuotas.any((c) => c.fecha == null)) {
-      errorNotification("Todas las fechas de las cuotas deben ser válidas");
-      return;
-    }
     provider.setCuotas(cuotas);
   }
 
   void procesoContado() {
     final provider = ref.read(ticketProvider.notifier);
+    final pagos = _paymentEntries
+        .where((e) => (double.tryParse(e.amountController.text) ?? 0.0) > 0)
+        .map((e) {
+      final amount = double.tryParse(e.amountController.text) ?? 0.0;
+      return PaymentDetail(
+        formaPago: e.method.formaPago,
+        monto: amount,
+        montoPagado: amount,
+        metodoPago: e.method,
+        numeroOperacion: e.operationController.text.isNotEmpty
+            ? e.operationController.text
+            : null,
+        nombre: e.method.nombre,
+        tipoTarjeta: e.method.tipoTarjeta,
+      );
+    }).toList();
+
+    final cambio = (_totalPaid - total).clamp(0.0, double.infinity);
     provider.setMovimientoCaja(
       total: total,
-      pagado: montoPagadoController.text,
-      cambio: cambioDisponible.toStringAsFixed(2),
-      numOperacion: numeroOperacion.text,
-      metodoPago: selectedPaymentMethod ?? PaymentMethod(),
+      pagos: pagos,
+      cambio: cambio,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final visiblePaymentMethods = getFilteredPaymentMethods();
     final ticket = ref.watch(ticketProvider).ticket;
     final notifier = ref.read(ticketProvider.notifier);
     final ticketP = ref.watch(ticketProvider);
-    
-    // Usar detección de focus en lugar de teclado
-    final containerHeight = _hasInputFocus ? size.height * 0.5 : size.height * 0.7;
-    
-    return Center(
-      child: Container(
-        width: size.width * 1,
-        height: containerHeight,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: ColorSchema.primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('Pago', style: TextStyle(fontSize: 17)),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white60,
+          indicatorColor: Colors.white,
+          tabs: const [
+            Tab(text: "Contado"),
+            Tab(text: "Crédito"),
+          ],
         ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      ),
+      body: Column(
+        children: [
+          // ── Switch Agrupar ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: CustomSwitch(
+              small: true,
+              title: "Agrupar ítems",
+              rightAlign: false,
+              border: false,
+              value: ticket.agruparItems ?? false,
+              onChanged: notifier.setAgruparItems,
+            ),
+          ),
+          Divider(height: 1, color: Colors.grey.shade200),
+          Expanded(
+            child: IndexedStack(
+              index: _tabController.index,
               children: [
-                CustomSwitch(
-                  small: true,
-                  title: "   Agrupar",
-                  rightAlign: true,
-                  border: false,
-                  value: ticket.agruparItems ?? false,
-                  onChanged: notifier.setAgruparItems,
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    alignment: Alignment.bottomRight,
-                    child: Icon(Icons.close, color: ColorSchema.primaryColor),
-                  ),
-                ),
-              ],
-            ),
-            TabBar(
-              controller: _tabController,
-              labelColor: ColorSchema.primaryColor,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: ColorSchema.primaryColor,
-              tabs: const [
-                Tab(text: "Contado"),
-                Tab(text: "Crédito"),
-              ],
-            ),
-            if (selectedPaymentId != -1 && _tabController.index == 0)
-              SizedBox(height: 25),
-            Expanded(
-              child: IndexedStack(
-                index: _tabController.index,
-                children: [
-                  Form(
-                    key: formKeyContado,
-                    child: Column(
-                      children: [
-                        if (selectedPaymentId != -1 &&
-                            _tabController.index == 0)
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: (selectedPaymentMethod?.formaPago !=
-                                        'EFECTIVO')
-                                    ? 1
-                                    : 2,
-                                child: TextFieldSection(
-                                  borderColor:
-                                      ColorSchema.primaryColor.withOpacity(0.8),
-                                  label:
-                                      "${selectedPaymentMethod?.formaPago == 'EFECTIVO' ? selectedPaymentMethod?.formaPago : selectedPaymentMethod?.nombre} (*)",
-                                  hint: 'Cantidad pagado',
-                                  inputType: TextInputType.number,
-                                  controller: montoPagadoController,
-                                  focusNode: montoPagadoFocus,
-                                  onChanged: (value) => setState(() {}),
-                                  validator: (p0) {
-                                    if (p0 == null || p0.isEmpty) {
-                                      return 'Monto requerido';
-                                    }
-                                    final value = double.tryParse(p0);
-                                    if (value == null || value < 0) {
-                                      return 'Monto invalido';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              if (selectedPaymentMethod?.formaPago !=
-                                  'EFECTIVO') ...[
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  flex: 1,
-                                  child: TextFieldSection(
-                                    borderColor: ColorSchema.primaryColor
-                                        .withOpacity(0.8),
-                                    label: "# Operación",
-                                    hint: 'Número de operación',
-                                    inputType: TextInputType.number,
-                                    controller: numeroOperacion,
-                                    focusNode: numeroOperacionFocus,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        SizedBox(height: 10),
-                        Expanded(
-                          child: GridView.builder(
-                            padding:
-                                const EdgeInsets.only(top: 12.0, bottom: 16.0),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1.2,
-                            ),
-                            itemCount: visiblePaymentMethods.length,
-                            itemBuilder: (context, index) {
-                              final payment = visiblePaymentMethods[index];
-                              final isSelected =
-                                  selectedPaymentId == payment.id;
-                              return PaymentCardWidget(
-                                paymentMethod: payment,
-                                isSelecelted: isSelected,
-                                onTap: () => setState(() {
-                                  selectedPaymentId = payment.id ?? -1;
-                                  selectedPaymentMethod = payment;
-                                }),
-                              );
-                            },
-                          ),
+                // ── Tab Contado ─────────────────────────────────────────────
+                Column(
+                  children: [
+                    // Lista de pagos seleccionados
+                    if (_paymentEntries.isNotEmpty) ...[
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                        itemCount: _paymentEntries.length,
+                        itemBuilder: (_, i) => _buildPaymentEntryRow(i),
+                      ),
+                      Divider(height: 1, color: Colors.grey.shade200),
+                    ],
+                    // Grid de métodos disponibles
+                    Expanded(
+                      child: GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1.0,
                         ),
-                      ],
+                        itemCount: visiblePaymentMethods.length,
+                        itemBuilder: (_, index) {
+                          final payment = visiblePaymentMethods[index];
+                          final isSelected = _paymentEntries
+                              .any((e) => e.method.id == payment.id);
+                          return PaymentCardWidget(
+                            paymentMethod: payment,
+                            isSelecelted: isSelected,
+                            onTap: () => _addPayment(payment),
+                          );
+                        },
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+                  // ── Tab Crédito ───────────────────────────────────────────
                   Form(
                     key: formKeyCredito,
                     child: SingleChildScrollView(
@@ -494,7 +425,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 0, vertical: 15),
+                                horizontal: 20, vertical: 15),
                             child: Row(
                               children: [
                                 Expanded(
@@ -503,7 +434,6 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                                     hint: 'Ingrese días',
                                     inputType: TextInputType.text,
                                     controller: diasCredito,
-                                    focusNode: diasCreditoFocus,
                                     onChanged: (_) {},
                                     validator: (p0) =>
                                         (p0 == null || p0.isEmpty)
@@ -516,17 +446,20 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                                 ),
                                 IconButton(
                                   onPressed: addCuota,
-                                  icon: Icon(Icons.add_circle,
+                                  icon: const Icon(Icons.add_circle,
                                       color: ColorSchema.primaryColor),
                                 ),
                               ],
                             ),
                           ),
-                          Text("------ Cuotas de crédito ------",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: ColorSchema.primaryColor)),
+                          Text(
+                            "------ Cuotas de crédito ------",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: ColorSchema.primaryColor,
+                            ),
+                          ),
                           ...List.generate(fechaCredito.length, (index) {
                             return Padding(
                               padding:
@@ -554,7 +487,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     flex: 2,
                                     child: TextFieldSection(
@@ -565,14 +498,15 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                                       validator: (p0) =>
                                           (p0 == null || p0.isEmpty)
                                               ? 'Monto requerido'
-                                              : (double.tryParse(p0) == null ||
+                                              : (double.tryParse(p0) ==
+                                                          null ||
                                                       double.parse(p0) <= 0)
                                                   ? 'Monto invalido'
                                                   : null,
                                     ),
                                   ),
                                   IconButton(
-                                    icon: Icon(Icons.remove_circle,
+                                    icon: const Icon(Icons.remove_circle,
                                         color: Colors.red),
                                     onPressed: () => eliminarCuota(index),
                                   ),
@@ -583,30 +517,43 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                         ],
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
-            SummaryBarSales(showOnlyTotal: true,),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SummaryBarSales(showOnlyTotal: true),
+            ),
+            // ── Botón finalizar ───────────────────────────────────────────────
+            SafeArea(
+              top: false,
+              child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
                     onPressed: () async {
                       final notifier = ref.read(ticketProvider.notifier);
                       final isContado = _tabController.index == 0;
-                      if (isContado && selectedPaymentMethod == null) {
-                        errorNotification("Debe seleccionar un método de pago");
-                        return;
-                      }
-                      final isValid = isContado
-                          ? (formKeyContado.currentState?.validate() ?? false)
-                          : (formKeyCredito.currentState?.validate() ?? false);
-                      if (!isValid) return;
 
                       if (isContado) {
+                        if (_paymentEntries.isEmpty) {
+                          errorNotification(
+                              "Debe seleccionar al menos un método de pago");
+                          return;
+                        }
+                        if (_totalPaid < total - 0.009) {
+                          errorNotification(
+                              "El monto pagado es menor al total de la venta");
+                          return;
+                        }
                         procesoContado();
                       } else {
+                        final isValid =
+                            formKeyCredito.currentState?.validate() ?? false;
+                        if (!isValid) return;
                         procesoCredito();
                       }
 
@@ -614,9 +561,9 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                       final checkId = ticketState.ticket.cuentaRestaurante;
 
                       if (checkId != null) {
-                        // ── Flujo cobrador: PUT /checks/{id} ──────────────────
                         final ticketPayload = notifier.getTicketPayload();
-                        final customer = ref.read(customerSaleProvider).customer;
+                        final customer =
+                            ref.read(customerSaleProvider).customer;
                         final originalItems = ref
                             .read(productSaleProvider)
                             .productsSales
@@ -624,16 +571,18 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                             .whereType<CommandDetail>()
                             .toList();
                         final checkPayload = Check(
-                          cliente: (customer.razonSocial?.isNotEmpty ?? false)
-                              ? customer
-                              : null,
+                          cliente:
+                              (customer.razonSocial?.isNotEmpty ?? false)
+                                  ? customer
+                                  : null,
                           pagado: true,
                           items: originalItems,
                           comprobante: ticketPayload,
                         );
                         try {
-                          final checkResult = await RestaurantRepositoryImpl()
-                              .updateCheck(checkId, checkPayload);
+                          final checkResult =
+                              await RestaurantRepositoryImpl()
+                                  .updateCheck(checkId, checkPayload);
                           ref.invalidate(ticketProvider);
                           ref.invalidate(productSaleProvider);
                           ref.invalidate(customerSaleProvider);
@@ -648,10 +597,10 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                             Get.back();
                           }
                         } catch (e) {
-                          errorNotification("Error al registrar el pago: $e");
+                          errorNotification(
+                              "Error al registrar el pago: $e");
                         }
                       } else {
-                        // ── Flujo normal: POST /tickets ───────────────────────
                         final Ticket? ticketResponse =
                             await notifier.proceessTicket();
                         if (ticketResponse != null) {
@@ -678,17 +627,67 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text( ticketP.isEdit ? 'Finalizar Edición' : 'Finalizar Pago'),
-                        SizedBox(width: 8),
-                        Icon(Icons.check_circle),
+                        Text(ticketP.isEdit
+                            ? 'Finalizar Edición'
+                            : 'Finalizar Pago'),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.check_circle),
                       ],
                     ),
                   ),
                 ),
               ],
             ),
+          ),
+            ),
           ],
         ),
+    );
+  }
+
+  Widget _buildPaymentEntryRow(int index) {
+    final entry = _paymentEntries[index];
+    final isCash =
+        (entry.method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Campo monto con nombre del método como label
+          Expanded(
+            flex: 2,
+            child: TextFieldSection(
+              label: entry.method.nombre ?? 'Monto',
+              hint: '0.00',
+              inputType: TextInputType.number,
+              controller: entry.amountController,
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          // Campo # operación (solo tarjetas)
+          if (!isCash) ...[
+            const SizedBox(width: 6),
+            Expanded(
+              flex: 2,
+              child: TextFieldSection(
+                label: '# Op.',
+                hint: 'Número',
+                inputType: TextInputType.number,
+                controller: entry.operationController,
+              ),
+            ),
+          ],
+          // Botón eliminar
+          IconButton(
+            onPressed: () => _removePayment(index),
+            icon: const Icon(Icons.delete_outline_rounded,
+                color: Colors.redAccent, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
       ),
     );
   }

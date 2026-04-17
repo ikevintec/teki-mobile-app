@@ -2,7 +2,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/paymentDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
@@ -118,28 +117,15 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
-  void setMovimientoCaja(
-      {required double total,
-      required String pagado,
-      required String cambio,
-      required String numOperacion,
-      required PaymentMethod metodoPago}) {
+  void setMovimientoCaja({
+    required double total,
+    required List<PaymentDetail> pagos,
+    required double cambio,
+  }) {
     Ticket ticketToUpdate = state.ticket.copyWith(
       cuotas: null,
-      movimientoCaja: CashRegisterDetail(
-        pagos: [
-          PaymentDetail(
-            formaPago: metodoPago.formaPago,
-            monto: total,
-            montoPagado: double.parse(pagado),
-            metodoPago: metodoPago,
-            numeroOperacion: numOperacion,
-            nombre: metodoPago.nombre,
-            tipoTarjeta: metodoPago.tipoTarjeta,
-          )
-        ],
-      ),
-      cambio: double.parse(cambio),
+      movimientoCaja: CashRegisterDetail(pagos: pagos),
+      cambio: cambio,
     );
     state = state.copyWith(ticket: ticketToUpdate);
   }

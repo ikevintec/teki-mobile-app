@@ -7,7 +7,6 @@ import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/otros_da
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_widget.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
-import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
@@ -479,13 +478,11 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                               ref
                                   .read(ticketProvider.notifier)
                                   .setTicketsData();
-                              showCustomModal(
-                                  context: context,
-                                  child: PaymentWidget(),
-                                  tittle: '',
-                                  showButtoms: false,
-                                  scrolleable: false,
-                                  allowButtons: true);
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const PaymentWidget(),
+                                ),
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,

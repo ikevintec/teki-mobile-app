@@ -12,6 +12,36 @@ class PaymentCardWidget extends StatelessWidget {
       required this.isSelecelted,
       this.onTap});
 
+  Widget _buildMethodImage() {
+    const double size = 50;
+    final url = paymentMethod.imagenUrl;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _fallbackImage(size),
+      );
+    }
+    return _fallbackImage(size);
+  }
+
+  Widget _fallbackImage(double size) {
+    if (paymentMethod.formaPago == 'EFECTIVO') {
+      return Image.asset(
+        getImageFromPayment(paymentMethod.formaPago ?? ''),
+        width: size,
+        height: size,
+      );
+    }
+    return SvgPicture.asset(
+      getImageFromPayment(paymentMethod.tipoTarjeta ?? ''),
+      width: size,
+      height: size,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -20,11 +50,11 @@ class PaymentCardWidget extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
             color: isSelecelted
-                ? Colors.blue.withOpacity(0.1)
+                ? Colors.blue.withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8.0),
             border: Border.all(
-              color: isSelecelted ? Colors.blue : Colors.grey.withOpacity(0.5),
+              color: isSelecelted ? Colors.blue : Colors.grey.withValues(alpha: 0.5),
               width: 1.0,
             ),
           ),
@@ -32,18 +62,7 @@ class PaymentCardWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (paymentMethod.formaPago == "EFECTIVO")
-              Image.asset(
-                getImageFromPayment(paymentMethod.formaPago ?? ''),
-                width: 50,
-                height: 50,
-              ),
-              if (paymentMethod.formaPago != "EFECTIVO")
-              SvgPicture.asset(
-                getImageFromPayment(paymentMethod.tipoTarjeta ?? ''),
-                width: 50,
-                height: 50,
-              ),
+              _buildMethodImage(),
               const SizedBox(height: 8.0),
               Text(
               paymentMethod.nombre ?? '',
