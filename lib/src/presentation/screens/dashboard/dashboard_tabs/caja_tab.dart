@@ -141,6 +141,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
           padding: const EdgeInsets.only(top: 0, left: 8, right: 4),
           child: CustomDatePicker(
             onDateSelected: _onDateChanged,
+            singleDayPicker: true,
           ),
         ),
         SizedBox(height: 12),

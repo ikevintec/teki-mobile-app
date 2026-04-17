@@ -6,7 +6,12 @@ enum CalendarFilter { day, week, month, year, custom }
 
 class CustomDatePicker extends StatefulWidget {
   final Function(DateTimeRange) onDateSelected;
-  const CustomDatePicker({super.key, required this.onDateSelected});
+  final bool singleDayPicker;
+  const CustomDatePicker({
+    super.key,
+    required this.onDateSelected,
+    this.singleDayPicker = false,
+  });
 
   @override
   State<CustomDatePicker> createState() => _CustomDatePickerState();
@@ -173,6 +178,43 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
     );
   }
 
+  Future<void> _pickSingleDay() async {
+    final now = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedRange?.start ?? now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
+      locale: const Locale('es'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: ColorSchema.primaryColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: ColorSchema.primaryColor,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final range = DateTimeRange(start: picked, end: picked);
+      setState(() {
+        _selectedFilter = CalendarFilter.custom;
+        _selectedRange = range;
+      });
+      widget.onDateSelected(range);
+    }
+  }
+
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -235,8 +277,9 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
                         .format(item.start)
                         .toUpperCase(),
                     CalendarFilter.year: '${item.start.year}',
-                    CalendarFilter.custom:
-                        '${DateFormat('dd MMM', 'es').format(item.start)} - ${DateFormat('dd MMM', 'es').format(item.end)}',
+                    CalendarFilter.custom: item.start == item.end
+                        ? DateFormat('dd MMM', 'es').format(item.start)
+                        : '${DateFormat('dd MMM', 'es').format(item.start)} - ${DateFormat('dd MMM', 'es').format(item.end)}',
                   }[_selectedFilter]!;
 
                   return GestureDetector(
@@ -276,7 +319,9 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
               Icons.calendar_month,
               color: ColorSchema.primaryColor,
             ),
-            onPressed: _showFilterSelector,
+            onPressed: widget.singleDayPicker
+                ? _pickSingleDay
+                : _showFilterSelector,
           ),
         ],
       ),
