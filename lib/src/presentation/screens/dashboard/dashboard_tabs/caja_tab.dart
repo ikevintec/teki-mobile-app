@@ -78,9 +78,14 @@ class _CajaTabState extends ConsumerState<CajaTab> {
           fecha: fechaStr,
         );
     if (!mounted) return;
-    _loadDetail();
+    // justo después
+    final cajaState = ref.read(cashRegisterProvider);
+    if (cajaState.registers.isEmpty) {
+      ref.read(cashRegisterDetailProvider.notifier).clear();
+    } else {
+      _loadDetail();
+    }
   }
-
   /// Calcula la moneda activa con la misma lógica que el build y dispara
   /// la carga del historial usando el primer registro disponible.
   void _loadDetail() {

@@ -767,6 +767,7 @@ class _PaymentMethodRow extends StatelessWidget {
                                 inputType: TextInputType.number,
                                 controller: entry!.amountController,
                                 onChanged: (_) => onAmountChanged(),
+                                showDoneButton: true,
                               ),
                             ),
                             if (!_isCash) ...[
@@ -778,6 +779,7 @@ class _PaymentMethodRow extends StatelessWidget {
                                   hint: 'Número',
                                   inputType: TextInputType.number,
                                   controller: entry!.operationController,
+                                  showDoneButton: true,
                                 ),
                               ),
                             ],

@@ -118,6 +118,10 @@ class CashRegisterDetailNotifier
     await load(idCaja: state.idCaja!, tipo: state.tipo, moneda: newMoneda);
   }
 
+  void clear() {
+    state = CashRegisterDetailState();
+  }
+
   @override
   void dispose() {
     _cancelToken?.cancel();
