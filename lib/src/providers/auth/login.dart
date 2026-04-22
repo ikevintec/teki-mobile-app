@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/config.dart';
 import 'package:teki_app/src/data/models/response/login.dart';
+import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/repositories/auth_repository_impl.dart';
@@ -226,10 +227,25 @@ Future<void> setConfigProvider(
   LoginResponse login,
   SaleStationRepository saleStationRepository,
 ) async {
-  final int companyId = login.user?.puntosVenta?[0].id ?? 0;
+  final user = login.user;
+  final puntosVenta = user?.puntosVenta ?? [];
+  final estacionAsignada = user?.estacionVenta;
+
+  Office? defaultPv;
+  if (estacionAsignada != null) {
+    defaultPv = puntosVenta.firstWhere(
+      (pv) => pv.id == estacionAsignada.puntoVenta?.id,
+      orElse: () => puntosVenta.isNotEmpty ? puntosVenta.first : Office(),
+    );
+  } else {
+    final pvCompany = puntosVenta.where((pv) => pv.rucAsignado == user?.rucAsignado).firstOrNull;
+    defaultPv = pvCompany ?? (puntosVenta.isNotEmpty ? puntosVenta.first : Office());
+  }
+
+  final int idPuntoVenta = defaultPv.id ?? 0;
   List<SaleStation> saleStations = [];
   try {
-    saleStations = await saleStationRepository.getSaleStations(companyId);
+    saleStations = await saleStationRepository.getSaleStations(idPuntoVenta);
   } on DioException catch (e) {
     return Future.error(
         'Error al obtener los puntos de venta: ${e.response?.data['message'] ?? 'Error de conexión'}');
