@@ -74,11 +74,45 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
   String currency = '';
 
   final formKeyCredito = GlobalKey<FormState>();
+  bool _submitAttempted = false;
 
   double get _totalPaid => _paymentEntries.fold(
       0.0, (sum, e) => sum + (double.tryParse(e.amountController.text) ?? 0.0));
 
   double get _remaining => (total - _totalPaid).clamp(0.0, double.infinity);
+
+  bool get _hasCash => _paymentEntries.any(
+      (e) => (e.method.formaPago ?? '').toUpperCase() == 'EFECTIVO');
+
+  bool get _hasNonCash => _paymentEntries.any(
+      (e) => (e.method.formaPago ?? '').toUpperCase() != 'EFECTIVO');
+
+  double get _cashTotal => _paymentEntries
+      .where((e) => (e.method.formaPago ?? '').toUpperCase() == 'EFECTIVO')
+      .fold(0.0, (sum, e) => sum + (double.tryParse(e.amountController.text) ?? 0.0));
+
+  double get _nonCashTotal => _paymentEntries
+      .where((e) => (e.method.formaPago ?? '').toUpperCase() != 'EFECTIVO')
+      .fold(0.0, (sum, e) => sum + (double.tryParse(e.amountController.text) ?? 0.0));
+
+  double get _cambio {
+    if (!_hasCash) return 0.0;
+    final cashNeeded = (total - _nonCashTotal).clamp(0.0, double.infinity);
+    return (_cashTotal - cashNeeded).clamp(0.0, double.infinity);
+  }
+
+  String? get _contadoError {
+    if (_paymentEntries.isEmpty) {
+      return _submitAttempted ? "Debe seleccionar al menos un método de pago" : null;
+    }
+    if (_totalPaid < total) {
+      return "El monto pagado es menor al total de la venta";
+    }
+    if (_hasNonCash && _totalPaid > total) {
+      return "Al incluir métodos no efectivo el monto debe ser exacto";
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -320,8 +354,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       );
     }).toList();
 
-    final cambio = (_totalPaid - total).clamp(0.0, double.infinity);
-    provider.setMovimientoCaja(total: total, pagos: pagos, cambio: cambio);
+    provider.setMovimientoCaja(total: total, pagos: pagos, cambio: _cambio);
   }
 
   @override
@@ -507,18 +540,48 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
               ],
             ),
           ),
+          // ── Error inline (contado) ────────────────────────────────────────
+          if (_tabController.index == 0)
+            Builder(builder: (_) {
+              final error = _contadoError;
+              if (error == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    border: Border.all(color: Colors.red.shade200),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red.shade600, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          error,
+                          style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
           // ── Total ────────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Builder(builder: (_) {
               final isContado = _tabController.index == 0;
               final hasEntries = _paymentEntries.isNotEmpty;
-              final cambio = (_totalPaid - total).clamp(0.0, double.infinity);
               return SummaryBarSales(
                 showOnlyTotal: true,
-                showCambio: isContado && hasEntries,
+                showCambio: isContado && hasEntries && _hasCash,
                 montoPagado: _totalPaid,
-                cambio: cambio,
+                showMontoPagado: isContado && hasEntries,
+                cambio: _cambio,
               );
             }),
           ),
@@ -535,16 +598,9 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                     final isContado = _tabController.index == 0;
 
                     if (isContado) {
-                      if (_paymentEntries.isEmpty) {
-                        errorNotification(
-                            "Debe seleccionar al menos un método de pago");
-                        return;
-                      }
-                      if (_totalPaid < total - 0.009) {
-                        errorNotification(
-                            "El monto pagado es menor al total de la venta");
-                        return;
-                      }
+                      setState(() => _submitAttempted = true);
+                      final error = _contadoError;
+                      if (error != null) return;
                       procesoContado();
                     } else {
                       final isValid =
