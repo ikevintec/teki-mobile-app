@@ -114,7 +114,9 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
         clipBehavior: Clip.none,
         children: [
           // ── Tarjeta principal ──────────────────────────────────────────
-          Container(
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Container(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -284,10 +286,11 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
           ],
         ),
       ),
+          ),
 
           // ── Chip "Ver detalles" en el borde superior derecho ───────────
           Positioned(
-            top: -15,
+            top: -5,
             right: 0,
             child: GestureDetector(
               onTap: () => Get.toNamed(AppRoutes.analytics),
