@@ -107,7 +107,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
           const SizedBox(height: 8),
           const Expanded(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 5),
               child: TicketListSection(),
             ),
           ),

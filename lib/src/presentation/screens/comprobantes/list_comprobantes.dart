@@ -82,7 +82,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
         final ticket = tickets[index];
 
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: DismissibleActionWidget(
             actions: createComprobanteActions(
               onEdit: () {

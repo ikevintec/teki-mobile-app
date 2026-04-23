@@ -252,9 +252,11 @@ class _InventoryCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 3),
                     Text(
-                      inventory.producto?.unidad?.codigo?.isNotEmpty == true
+                      inventory.producto?.unidad?.abreviatura?.isNotEmpty == true
+                          ? inventory.producto!.unidad!.abreviatura!
+                          : inventory.producto?.unidad?.codigo?.isNotEmpty == true
                           ? inventory.producto!.unidad!.codigo!
-                          : 'und',
+                          : '',
                       style: GoogleFonts.roboto(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,

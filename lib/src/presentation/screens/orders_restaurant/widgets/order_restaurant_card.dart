@@ -189,7 +189,7 @@ class OrderRestaurantCard extends ConsumerWidget {
       child: Card(
       elevation: 0.5,
       color: Colors.white,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
         padding: const EdgeInsets.all(12),

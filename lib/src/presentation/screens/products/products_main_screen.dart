@@ -130,13 +130,16 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: EdgeInsets.zero,
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const SizedBox(height: 20),
-          SearchField(
-            onTextChanged: onSearchChanged,
-            controller: searchController,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 0),
+            child: SearchField(
+              onTextChanged: onSearchChanged,
+              controller: searchController,
+            ),
           ),
           const SizedBox(height: 10),
           if (isLoading)
