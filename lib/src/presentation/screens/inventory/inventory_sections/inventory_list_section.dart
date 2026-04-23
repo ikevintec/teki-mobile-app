@@ -277,8 +277,8 @@ class _InventoryCard extends StatelessWidget {
                         minHeight: 28,
                       ),
                       icon: Icon(
-                        Icons.history_rounded,
-                        size: 28,
+                        Icons.sync_alt_rounded,
+                        size: 24,
                         color: ColorSchema.primaryColor.withValues(alpha: 0.8),
                       ),
                     ),
