@@ -11,6 +11,11 @@ class CustomSwitch extends StatelessWidget {
   final bool? border;
   final bool? rightAlign;
   final bool? small;
+  final Color? textColor;
+  final Color? activeColor;
+  final Color? activeToggleColor;
+  final Color? activeTextColor;
+  final Color? inactiveTextColor;
 
   const CustomSwitch({
     super.key,
@@ -22,6 +27,11 @@ class CustomSwitch extends StatelessWidget {
     this.border = true,
     this.rightAlign = false,
     this.small = false,
+    this.textColor,
+    this.activeColor,
+    this.activeToggleColor,
+    this.activeTextColor,
+    this.inactiveTextColor,
   });
 
   @override
@@ -46,11 +56,15 @@ class CustomSwitch extends StatelessWidget {
                 style: TextStyle(
                   fontSize: small == true ? 12 : 14,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF4B5563),
+                  color: textColor ?? const Color(0xFF4B5563),
                 ),
               ),
+              SizedBox(width: small == true ? 8 : 12),
             FlutterSwitch(
-              activeColor: ColorSchema.primaryColor,
+              activeColor: activeColor ?? ColorSchema.primaryColor,
+              activeToggleColor: activeToggleColor ?? Colors.white,
+              activeTextColor: activeTextColor ?? Colors.white,
+              inactiveTextColor: inactiveTextColor ?? Colors.white,
               inactiveColor: const Color.fromARGB(255, 176, 178, 181),
               height: small == true ? 25 : 30,
               width: small == true ? 50 : 60,

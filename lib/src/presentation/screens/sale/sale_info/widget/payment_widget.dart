@@ -413,53 +413,51 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
             // ── Header ────────────────────────────────────────────────────
             Container(
               color: ColorSchema.primaryColor,
-              child: Column(
+              padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+              child: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 8, 16, 0),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        const Text(
-                          'Pago',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  const Text(
+                    'Pago',
+                    style: TextStyle(
+                      fontSize: 17,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  TabBar(
-                    controller: _tabController,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: Colors.white60,
-                    indicatorColor: Colors.white,
-                    tabs: const [
-                      Tab(text: "Contado"),
-                      Tab(text: "Crédito"),
-                    ],
+                  const Spacer(),
+                  CustomSwitch(
+                    small: true,
+                    title: "Agrupar ítems",
+                    rightAlign: false,
+                    border: false,
+                    textColor: Colors.white,
+                    activeColor: Colors.white,
+                    activeToggleColor: ColorSchema.primaryColor,
+                    activeTextColor: ColorSchema.primaryColor,
+                    value: ticket.agruparItems ?? false,
+                    onChanged: notifier.setAgruparItems,
                   ),
                 ],
               ),
             ),
-            // ── Switch Agrupar ──────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: CustomSwitch(
-                small: true,
-                title: "Agrupar ítems",
-                rightAlign: false,
-                border: false,
-                value: ticket.agruparItems ?? false,
-                onChanged: notifier.setAgruparItems,
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                controller: _tabController,
+                labelColor: ColorSchema.primaryColor,
+                unselectedLabelColor: Colors.grey.shade400,
+                indicatorColor: ColorSchema.primaryColor,
+                dividerColor: Colors.grey.shade200,
+                tabs: const [
+                  Tab(text: "Contado"),
+                  Tab(text: "Crédito"),
+                ],
               ),
             ),
-            Divider(height: 1, color: Colors.grey.shade200),
             // ── Tabs ────────────────────────────────────────────────────────
             Expanded(
               child: IndexedStack(
