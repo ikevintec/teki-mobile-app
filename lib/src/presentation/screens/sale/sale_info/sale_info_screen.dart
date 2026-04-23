@@ -478,11 +478,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                               ref
                                   .read(ticketProvider.notifier)
                                   .setTicketsData();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const PaymentWidget(),
-                                ),
-                              );
+                              PaymentWidget.show(context);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,
