@@ -400,6 +400,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     final ticket = ref.watch(ticketProvider).ticket;
     final notifier = ref.read(ticketProvider.notifier);
     final ticketP = ref.watch(ticketProvider);
+    final canAgrupar = ref.read(sesionProvider).config?.agruparItemsVenta ?? false;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
@@ -429,18 +430,19 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                     ),
                   ),
                   const Spacer(),
-                  CustomSwitch(
-                    small: true,
-                    title: "Agrupar ítems",
-                    rightAlign: false,
-                    border: false,
-                    textColor: Colors.white,
-                    activeColor: Colors.white,
-                    activeToggleColor: ColorSchema.primaryColor,
-                    activeTextColor: ColorSchema.primaryColor,
-                    value: ticket.agruparItems ?? false,
-                    onChanged: notifier.setAgruparItems,
-                  ),
+                  if (canAgrupar)
+                    CustomSwitch(
+                      small: true,
+                      title: "Agrupar ítems",
+                      rightAlign: false,
+                      border: false,
+                      textColor: Colors.white,
+                      activeColor: Colors.white,
+                      activeToggleColor: ColorSchema.primaryColor,
+                      activeTextColor: ColorSchema.primaryColor,
+                      value: ticket.agruparItems ?? false,
+                      onChanged: notifier.setAgruparItems,
+                    ),
                 ],
               ),
             ),
@@ -465,7 +467,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                 children: [
                   // ── Tab Contado ──────────────────────────────────────────
                   ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
                     itemCount: visiblePaymentMethods.length,
                     itemBuilder: (_, index) {
                       final payment = visiblePaymentMethods[index];
@@ -768,6 +770,7 @@ class _PaymentMethodRow extends StatelessWidget {
 
   bool get _isSelected => entry != null;
   bool get _isCash => (method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
+  Color get _activeColor => _isCash ? Colors.green.shade600 : ColorSchema.primaryColor;
 
   Widget _buildIcon() {
     const double size = 28;
@@ -786,7 +789,7 @@ class _PaymentMethodRow extends StatelessWidget {
 
   Widget _fallbackIcon(double size) => Icon(
         _isCash ? Icons.payments_rounded : Icons.credit_card_rounded,
-        color: _isSelected ? ColorSchema.primaryColor : Colors.grey.shade500,
+        color: _isSelected ? _activeColor : Colors.grey.shade500,
         size: size,
       );
 
@@ -796,23 +799,21 @@ class _PaymentMethodRow extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
           color: _isSelected
-              ? ColorSchema.primaryColor.withValues(alpha: 0.04)
+              ? _activeColor.withValues(alpha: 0.04)
               : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: _isSelected
-                ? ColorSchema.primaryColor
-                : Colors.grey.shade200,
+            color: _isSelected ? _activeColor : Colors.grey.shade200,
             width: _isSelected ? 1.5 : 1,
           ),
           boxShadow: _isSelected
               ? [
                   BoxShadow(
-                    color: ColorSchema.primaryColor.withValues(alpha: 0.08),
-                    blurRadius: 8,
+                    color: _activeColor.withValues(alpha: 0.08),
+                    blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ]
@@ -823,23 +824,20 @@ class _PaymentMethodRow extends StatelessWidget {
           children: [
             // ── Cabecera del método ────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
-                  SizedBox(width: 32, child: Center(child: _buildIcon())),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 26, child: Center(child: _buildIcon())),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       method.nombre ?? '',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: _isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,
-                        color: _isSelected
-                            ? ColorSchema.primaryColor
-                            : Colors.grey.shade800,
+                        color: _isSelected ? _activeColor : Colors.grey.shade800,
                       ),
                     ),
                   ),
@@ -848,17 +846,17 @@ class _PaymentMethodRow extends StatelessWidget {
                     child: _isSelected
                         ? Container(
                             key: const ValueKey('check'),
-                            width: 22,
-                            height: 22,
-                            decoration: const BoxDecoration(
-                              color: ColorSchema.primaryColor,
+                            width: 18,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: _activeColor,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.check_rounded,
-                                color: Colors.white, size: 13),
+                                color: Colors.white, size: 11),
                           )
                         : const SizedBox(
-                            key: ValueKey('empty'), width: 22),
+                            key: ValueKey('empty'), width: 18),
                   ),
                 ],
               ),
@@ -867,48 +865,48 @@ class _PaymentMethodRow extends StatelessWidget {
             if (_isSelected) ...[
               Divider(
                   height: 1,
-                  indent: 16,
-                  endIndent: 16,
-                  color: ColorSchema.primaryColor.withValues(alpha: 0.2)),
+                  indent: 12,
+                  endIndent: 12,
+                  color: _activeColor.withValues(alpha: 0.2)),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
                 child: Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: TextFieldSection(
-                                label: 'Monto',
-                                hint: '0.00',
-                                inputType: TextInputType.number,
-                                controller: entry!.amountController,
-                                onChanged: (_) => onAmountChanged(),
-                                showDoneButton: true,
-                              ),
-                            ),
-                            if (!_isCash) ...[
-                              const SizedBox(width: 10),
-                              Expanded(
-                                flex: 2,
-                                child: TextFieldSection(
-                                  label: '# Operación',
-                                  hint: 'Número',
-                                  inputType: TextInputType.number,
-                                  controller: entry!.operationController,
-                                  showDoneButton: true,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(width: 4),
-                            IconButton(
-                              onPressed: onRemove,
-                              icon: const Icon(Icons.delete_outline_rounded,
-                                  color: Colors.redAccent, size: 20),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFieldSection(
+                        label: 'Monto',
+                        hint: '0.00',
+                        inputType: TextInputType.number,
+                        controller: entry!.amountController,
+                        onChanged: (_) => onAmountChanged(),
+                        showDoneButton: true,
+                      ),
+                    ),
+                    if (!_isCash) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: TextFieldSection(
+                          label: '# Operación',
+                          hint: 'Número',
+                          inputType: TextInputType.number,
+                          controller: entry!.operationController,
+                          showDoneButton: true,
                         ),
                       ),
+                    ],
+                    const SizedBox(width: 4),
+                    IconButton(
+                      onPressed: onRemove,
+                      icon: const Icon(Icons.delete_outline_rounded,
+                          color: Colors.redAccent, size: 18),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ],
         ),
