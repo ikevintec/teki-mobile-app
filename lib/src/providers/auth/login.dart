@@ -263,7 +263,7 @@ Future<void> setConfigProvider(
   if (saleStations.isEmpty) {
     return Future.error('No se encontraron puntos de venta para la empresa.');
   }
-  ref.read(sesionProvider.notifier).setFullConfig(login, saleStations);
+  ref.read(sesionProvider.notifier).setFullConfig(login, saleStations, defaultPv);
 }
 
 Future<ConfigCompany> setConfigCompanies(Ref ref, ConfigRepository configRepository) async {

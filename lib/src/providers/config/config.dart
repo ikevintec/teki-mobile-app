@@ -37,13 +37,14 @@ class SesionNotifier extends StateNotifier<SesionState> {
     final estacionAsignada = state.login.user?.estacionVenta;
     if (estacionAsignada == null) return saleStations;
     final filtered = saleStations.where((se) => se.id == estacionAsignada.id).toList();
-    return filtered.isNotEmpty ? filtered : saleStations;
+    return filtered;
   }
 
-  void setFullConfig(LoginResponse login, List<SaleStation> saleStations) async {
-    Office? oficinaEncontrada = login.user?.puntosVenta?.firstWhere(
+  void setFullConfig(LoginResponse login, List<SaleStation> saleStations, Office? defaultPv) async {
+    
+    Office? oficinaEncontrada = defaultPv ?? login.user?.puntosVenta?.firstWhere(
       (office) => office.rucAsignado == login.user?.rucAsignado,
-      orElse: () => Office(),
+      orElse: () => login.user?.puntosVenta?[0] ?? Office(),
     );
 
     final estacionAsignada = login.user?.estacionVenta;
