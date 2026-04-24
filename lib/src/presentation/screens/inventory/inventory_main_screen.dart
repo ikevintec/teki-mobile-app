@@ -224,36 +224,33 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
                       ],
                     )
                   : hasError
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            const SizedBox(height: 80),
-                            Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.wifi_off_rounded,
-                                      size: 56, color: Colors.grey.shade300),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Sin conexión a internet',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Desliza hacia abajo para reintentar',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  ),
-                                ],
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'No hay conexión',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.grey.shade600,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: _reloadInventory,
+                                child: Text(
+                                  'Reintentar',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: ColorSchema.primaryColor,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: ColorSchema.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         )
                       : InventoryListSection(items: state.items),
             ),

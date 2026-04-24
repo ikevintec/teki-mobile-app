@@ -14,11 +14,15 @@ import 'package:teki_app/src/utils/contstants.dart';
 class InicioTab extends ConsumerStatefulWidget {
   final int idPuntoVenta;
   final ValueNotifier<int> refreshNotifier;
+  final VoidCallback? onConnectionError;
+  final VoidCallback? onConnectionResolved;
 
   const InicioTab({
     super.key,
     required this.idPuntoVenta,
     required this.refreshNotifier,
+    this.onConnectionError,
+    this.onConnectionResolved,
   });
 
   @override
@@ -27,6 +31,8 @@ class InicioTab extends ConsumerStatefulWidget {
 
 class _InicioTabState extends ConsumerState<InicioTab> {
   Key _todayReportKey = UniqueKey();
+  bool _hasConnectionError = false;
+  bool _isRetrying = false;
 
   @override
   void initState() {
@@ -41,7 +47,32 @@ class _InicioTabState extends ConsumerState<InicioTab> {
   }
 
   void _onRefresh() {
-    setState(() => _todayReportKey = UniqueKey());
+    setState(() {
+      _hasConnectionError = false;
+      _isRetrying = false;
+      _todayReportKey = UniqueKey();
+    });
+  }
+
+  void _retry() {
+    setState(() {
+      _hasConnectionError = false;
+      _isRetrying = true;
+      _todayReportKey = UniqueKey();
+    });
+  }
+
+  void _onConnectionError() {
+    setState(() {
+      _hasConnectionError = true;
+      _isRetrying = false;
+    });
+    widget.onConnectionError?.call();
+  }
+
+  void _onLoadSuccess() {
+    setState(() => _isRetrying = false);
+    widget.onConnectionResolved?.call();
   }
 
   Future<void> _openNewSale() async {
@@ -174,7 +205,9 @@ class _InicioTabState extends ConsumerState<InicioTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    if (_hasConnectionError) return _buildNoConnectionScreen();
+
+    final dashboardContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Ventas del Día — fijo, no escrolea ───────────────────────────
@@ -183,6 +216,8 @@ class _InicioTabState extends ConsumerState<InicioTab> {
           child: TodayReportsSection(
             key: _todayReportKey,
             idPuntoVenta: widget.idPuntoVenta,
+            onConnectionError: _onConnectionError,
+            onLoadSuccess: _onLoadSuccess,
           ),
         ),
         const SizedBox(height: 24),
@@ -210,6 +245,101 @@ class _InicioTabState extends ConsumerState<InicioTab> {
           ),
         ),
       ],
+    );
+
+    // Durante el reintento mantenemos TodayReportsSection montado (para que
+    // ejecute las peticiones) pero lo cubrimos con el spinner.
+    if (_isRetrying) {
+      return Stack(
+        children: [
+          dashboardContent,
+          Positioned.fill(
+            child: ColoredBox(
+              color: const Color.fromARGB(255, 246, 248, 255),
+              child: _buildRetryingScreen(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return dashboardContent;
+  }
+
+  Widget _buildNoConnectionScreen() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.wifi_off_rounded,
+              size: 80,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Sin conexión a internet',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Verifica tu conexión e intenta nuevamente',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.raleway(
+                fontSize: 13,
+                color: Colors.grey.shade500,
+              ),
+            ),
+            const SizedBox(height: 28),
+            ElevatedButton.icon(
+              onPressed: _retry,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(
+                'Reintentar',
+                style: GoogleFonts.raleway(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorSchema.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRetryingScreen() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(
+            color: ColorSchema.primaryColor,
+            strokeWidth: 2,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Conectando...',
+            style: GoogleFonts.raleway(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -28,6 +28,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _selectedTab = 0;
+  bool _dashboardConnectionError = false;
 
   /// Tabs que ya han sido visitados al menos una vez.
   /// Solo se monta el widget real del tab cuando se visita por primera vez.
@@ -165,6 +166,8 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
                 InicioTab(
                   idPuntoVenta: idPuntoVenta,
                   refreshNotifier: _refreshNotifiers[0],
+                  onConnectionError: () => setState(() => _dashboardConnectionError = true),
+                  onConnectionResolved: () => setState(() => _dashboardConnectionError = false),
                 ),
                 InventarioTab(
                   refreshNotifier: _refreshNotifiers[1],
@@ -177,7 +180,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: _dashboardConnectionError ? null : _buildBottomNav(),
     );
   }
 

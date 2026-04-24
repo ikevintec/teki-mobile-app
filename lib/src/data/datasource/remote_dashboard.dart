@@ -23,6 +23,7 @@ class RemoteDashboardDatasource implements DashboardDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) rethrow;
       final resData = e.response?.data;
       final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       return Future.error('❌ Ventas: $message');
@@ -45,6 +46,7 @@ class RemoteDashboardDatasource implements DashboardDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) rethrow;
       final resData = e.response?.data;
       final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       return Future.error('❌ Clientes: $message');
@@ -136,6 +138,7 @@ class RemoteDashboardDatasource implements DashboardDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) rethrow;
       final resData = e.response?.data;
       final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error al obtener montos';
       return Future.error('❌ Montos por moneda: $message');

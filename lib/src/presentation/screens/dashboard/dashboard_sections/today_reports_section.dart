@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -8,7 +9,9 @@ import 'package:teki_app/src/routes/app_routes.dart';
 
 class TodayReportsSection extends StatefulWidget {
   final int idPuntoVenta;
-  const TodayReportsSection({super.key, required this.idPuntoVenta});
+  final VoidCallback? onConnectionError;
+  final VoidCallback? onLoadSuccess;
+  const TodayReportsSection({super.key, required this.idPuntoVenta, this.onConnectionError, this.onLoadSuccess});
 
   @override
   State<TodayReportsSection> createState() => _TodayReportsSectionState();
@@ -32,29 +35,36 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     _load();
   }
 
+  bool _isNetworkError(dynamic e) =>
+      e is DioException && e.response == null;
+
   Future<void> _load() async {
     final now = DateTime.now();
     final fmt = DateFormat('dd-MM-yyyy H:mm:ss');
     final desde = fmt.format(DateTime(now.year, now.month, now.day, 0, 0, 0));
     final hasta = fmt.format(DateTime(now.year, now.month, now.day, 23, 59, 59));
 
-    _repo.getCustomerCount().then((r) {
+    int networkFailures = 0;
+
+    final f1 = _repo.getCustomerCount().then((r) {
       if (!mounted) return;
       setState(() { totalClientes = r.total; loadingClientes = false; });
-    }).catchError((_) {
+    }).catchError((e) {
+      if (_isNetworkError(e)) networkFailures++;
       if (!mounted) return;
       setState(() => loadingClientes = false);
     });
 
-    _repo.getSalesCount(widget.idPuntoVenta).then((r) {
+    final f2 = _repo.getSalesCount(widget.idPuntoVenta).then((r) {
       if (!mounted) return;
       setState(() { totalVentas = r.total; loadingVentas = false; });
-    }).catchError((_) {
+    }).catchError((e) {
+      if (_isNetworkError(e)) networkFailures++;
       if (!mounted) return;
       setState(() => loadingVentas = false);
     });
 
-    _repo.getAmountsByCurrency({
+    final f3 = _repo.getAmountsByCurrency({
       'filtroEstadoAnulacion': 'false',
       'filtroDesde': desde,
       'filtroHasta': hasta,
@@ -64,9 +74,19 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
       setState(() { montosPorMoneda = r; loadingMontos = false; });
     }).catchError((e) {
       printError(info: '❌ Error montos: $e');
+      if (_isNetworkError(e)) networkFailures++;
       if (!mounted) return;
       setState(() => loadingMontos = false);
     });
+
+    await Future.wait([f1, f2, f3]);
+
+    if (!mounted) return;
+    if (networkFailures > 1) {
+      widget.onConnectionError?.call();
+    } else {
+      widget.onLoadSuccess?.call();
+    }
   }
 
   List<String> get _monedas {

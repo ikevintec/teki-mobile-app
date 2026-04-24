@@ -90,6 +90,7 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
   Widget build(BuildContext context) {
     final state = ref.watch(inventoryProvider);
     final isLoading = state.isLoading && state.items.isEmpty;
+    final hasError = !state.isLoading && state.errorMessage != null && state.items.isEmpty;
 
     ref.listen<InventoryState>(inventoryProvider, (previous, next) {
       if (next.filterGlobal == null && _searchController.text.isNotEmpty) {
@@ -209,7 +210,36 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
                       ),
                     ],
                   )
-                : InventoryListSection(items: state.items),
+                : hasError
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'No hay conexión',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: _onRefresh,
+                              child: Text(
+                                'Reintentar',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorSchema.primaryColor,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: ColorSchema.primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : InventoryListSection(items: state.items),
           ),
         ),
       ],
