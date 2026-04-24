@@ -123,7 +123,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           ),
                         ),
                         Text(
-                          "V 1.0.4",
+                          "V 1.0.5",
                           style: GoogleFonts.roboto(
                             color: Colors.white,
                             fontSize: 16,
