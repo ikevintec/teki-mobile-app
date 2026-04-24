@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,11 +15,14 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isPasswordHidden = true;
   bool _submitted = false;
+  bool _rememberEmail = false;
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _userEmailAddressController =
       TextEditingController();
   final TextEditingController _userPasswordController = TextEditingController();
+
+  static const String _savedEmailKey = 'remembered_email';
 
   // Derivados del primaryColor (#2C6AE5 - azul)
   static const Color _gradientTop = Color.fromARGB(255, 244, 248, 255);
@@ -30,6 +34,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.initState();
     _userEmailAddressController.addListener(() => setState(() {}));
     _userPasswordController.addListener(() => setState(() {}));
+    _loadSavedEmail();
+  }
+
+  Future<void> _loadSavedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString(_savedEmailKey);
+    if (savedEmail != null && savedEmail.isNotEmpty) {
+      setState(() {
+        _userEmailAddressController.text = savedEmail;
+        _rememberEmail = true;
+      });
+    }
+  }
+
+  Future<void> _onRememberToggle(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!value) {
+      await prefs.remove(_savedEmailKey);
+    }
+    setState(() => _rememberEmail = value);
   }
 
   @override
@@ -136,7 +160,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 20),
+                        _buildRememberCheckbox(),
+                        const SizedBox(height: 20),
                         _buildLoginButton(),
                       ],
                     ),
@@ -185,13 +211,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  void _login() {
+  Future<void> _login() async {
     setState(() => _submitted = true);
     if (_formKey.currentState!.validate()) {
       final email = _userEmailAddressController.text.trim();
       final password = _userPasswordController.text.trim();
+      final prefs = await SharedPreferences.getInstance();
+      if (_rememberEmail) {
+        await prefs.setString(_savedEmailKey, email);
+      } else {
+        await prefs.remove(_savedEmailKey);
+      }
       ref.read(authStateProvider.notifier).login(email, password);
     }
+  }
+
+  Widget _buildRememberCheckbox() {
+    return GestureDetector(
+      onTap: () => _onRememberToggle(!_rememberEmail),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            'Recordar correo',
+            style: GoogleFonts.raleway(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: Checkbox(
+              value: _rememberEmail,
+              onChanged: (val) => _onRememberToggle(val ?? false),
+              activeColor: ColorSchema.primaryColor,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              side: BorderSide(color: Colors.grey.shade400, width: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   TextFormField _buildTextField(String hint, TextInputType keyboardType) {
@@ -199,7 +263,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       controller: _userEmailAddressController,
       keyboardType: keyboardType,
       autovalidateMode: _submitted ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
-      style: GoogleFonts.raleway(fontSize: 15, fontWeight: FontWeight.w500),
+      style: GoogleFonts.roboto(fontSize: 15),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return "El correo electrónico es requerido";
@@ -247,7 +311,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       controller: _userPasswordController,
       obscureText: _isPasswordHidden,
       autovalidateMode: _submitted ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
-      style: GoogleFonts.raleway(fontSize: 15, fontWeight: FontWeight.w500),
+      style: GoogleFonts.roboto(fontSize: 15),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return "La contraseña es requerida";

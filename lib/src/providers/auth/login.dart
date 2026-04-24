@@ -152,8 +152,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         if (userId != null) {
           NotificationService.instance.initialize(userId);
         }
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 401) {
+          logout();
+        } else {
+          errorNotification('Error de conexión al cargar la configuración.');
+        }
       } catch (e) {
-        logout();
         errorNotification(e.toString());
       }
     } else {
@@ -247,8 +252,11 @@ Future<void> setConfigProvider(
   try {
     saleStations = await saleStationRepository.getSaleStations(idPuntoVenta);
   } on DioException catch (e) {
-    return Future.error(
-        'Error al obtener los puntos de venta: ${e.response?.data['message'] ?? 'Error de conexión'}');
+    if (e.response?.statusCode == 401) {
+      rethrow;
+    }
+    final message = (e.response?.data is Map ? e.response?.data['message'] : null) ?? 'Error de conexión';
+    return Future.error('Error al obtener los puntos de venta: $message');
   } catch (e) {
     return Future.error('Error al obtener los puntos de venta: ${e.toString()}');
   }
