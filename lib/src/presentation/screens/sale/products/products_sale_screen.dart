@@ -4,6 +4,7 @@ import 'package:get/route_manager.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/presentation/screens/sale/client/client_sale_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/product_item_card.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/search_products.dart';
@@ -327,7 +328,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                         );
                                                       },
                                                     ),
-                                                  if (products[index].producto?.tipoLote == 'SERIE')
+                                                  if (_requiresSeriesValidation(products[index].producto))
                                                     DismissibleActionData(
                                                       type: DismissibleActionType.edit,
                                                       label: 'Series',
@@ -404,7 +405,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
 
                                           if (form.valid) {
                                             final seriesInvalidas = products.where((p) =>
-                                              p.producto?.tipoLote == 'SERIE' &&
+                                              _requiresSeriesValidation(p.producto) &&
                                               (p.lotes?.length ?? 0) != (p.cantidad ?? 1).toInt()
                                             ).toList();
                                             if (seriesInvalidas.isNotEmpty) {
@@ -558,4 +559,11 @@ void _syncFormArrayWithProvider(
       control.control('description').markAsTouched();
     }
   }
+}
+
+bool _requiresSeriesValidation(Product? product) {
+  if (product == null) return false;
+  return product.tipoLote == 'SERIE' &&
+      (product.validacionLote ?? false) &&
+      (product.tipoProducto == 'ARTICULO' || product.tipoProducto == 'INSUMO');
 }

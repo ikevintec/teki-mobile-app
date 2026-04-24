@@ -6,6 +6,7 @@ import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
 import 'package:teki_app/src/presentation/widgets/form/smart_price_value_accessor.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -318,7 +319,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                               ),
                             ],
                           ),
-                          if (widget.productTicketDetail.producto?.tipoLote == 'SERIE')
+                          if (_requiresSeriesValidation(widget.productTicketDetail.producto))
                             Builder(builder: (context) {
                               final cantidad = (widget.productTicketDetail.cantidad ?? 1).toInt();
                               final seleccionadas = (widget.productTicketDetail.lotes ?? []).length;
@@ -558,4 +559,11 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
       ),
     );
   }
+}
+
+bool _requiresSeriesValidation(Product? product) {
+  if (product == null) return false;
+  return product.tipoLote == 'SERIE' &&
+      (product.validacionLote ?? false) &&
+      (product.tipoProducto == 'ARTICULO' || product.tipoProducto == 'INSUMO');
 }
