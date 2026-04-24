@@ -117,17 +117,21 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: products.map((product) {
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        _ignoreNextSearch = true;
-                        ref.read(productSaleProvider.notifier).setProductsSales(product, null);
-                        controller.closeView("");
-                        FocusScope.of(context).unfocus();
-                      },
-                      child: ItemProduct(
-                        product: product,
-                      ),
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            _ignoreNextSearch = true;
+                            ref.read(productSaleProvider.notifier).setProductsSales(product, null);
+                            controller.closeView("");
+                            FocusScope.of(context).unfocus();
+                          },
+                          child: ItemProduct(product: product),
+                        ),
+                        Divider(height: 1, thickness: 1, color: Colors.grey.shade300),
+                      ],
                     );
                   }).toList(),
                 );
@@ -180,42 +184,88 @@ class ItemProduct extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final puntoVenta = ref.watch(sesionProvider).office;
+    final precio = (product.preciosVenta?.firstWhere(
+          (p) => p.tipoPrecio == "POR_DEFECTO",
+          orElse: () => ProductPrice(precio: 0.0),
+        ).precio ?? 0.0);
+    final stock = product.inventarios
+            ?.firstWhere(
+              (inv) => inv.puntoVenta?.id == puntoVenta?.id,
+              orElse: () => Inventory(stock: 0.0),
+            )
+            .stock ??
+        0.0;
+    final inicial = (product.nombre?.isNotEmpty == true)
+        ? product.nombre![0].toUpperCase()
+        : 'P';
+
     return Padding(
-      padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 5),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
         children: [
-          Text((product.nombre ?? "").trim(),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: ColorSchema.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              inicial,
               style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black)),
-          SizedBox(height: 5),
-          Row(
-            children: [
-              Text(
-                '${product.moneda} ${(product.preciosVenta!.firstWhere(
-                      (p) => p.tipoPrecio == "POR_DEFECTO",
-                      orElse: () => ProductPrice(precio: 0.0),
-                    ).precio)!.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-                maxLines: 2,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ColorSchema.primaryColor,
               ),
-              const SizedBox(width: 5),
-              Text("-"),
-              const SizedBox(width: 5),
-              Text(
-                'Stock: ${(product.inventarios?.firstWhere((inv) => inv.puntoVenta!.id == puntoVenta!.id, orElse: () => Inventory(stock: 0.0)).stock ?? 0)}',
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-                maxLines: 2,
-              ),
-              const Icon(Icons.category, size: 16, color: Colors.grey),
-            ],
+            ),
           ),
-          Divider(
-            color: Colors.grey.withOpacity(0.5),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  (product.nombre ?? '').trim(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: ColorSchema.primaryColor.withValues(alpha: 0.09),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${product.moneda ?? ''} ${precio.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: ColorSchema.primaryColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.inventory_2_outlined, size: 12, color: Colors.grey.shade500),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Stock: $stock',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
+          Icon(Icons.add_circle_outline, size: 20, color: ColorSchema.primaryColor.withValues(alpha: 0.5)),
         ],
       ),
     );
