@@ -1,6 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
@@ -19,22 +19,119 @@ class SearchProducts extends ConsumerStatefulWidget {
   ConsumerState<ConsumerStatefulWidget> createState() => _SearchProductsState();
 }
 
-class _SearchProductsState extends ConsumerState<SearchProducts> {
+class _SearchProductsState extends ConsumerState<SearchProducts>
+    with WidgetsBindingObserver {
   Timer? _debounce;
-  bool _ignoreNextSearch = false;
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  double _fieldTopY = 0;
+
+  final ValueNotifier<List<Product>> _results = ValueNotifier([]);
+  final ValueNotifier<bool> _isSearching = ValueNotifier(false);
+  final ValueNotifier<bool> _hasSearched = ValueNotifier(false);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _focusNode.addListener(_onFocusChange);
+    _controller.addListener(_onTextChange);
+  }
+
+  @override
+  void didChangeMetrics() {
+    // Rebuild overlay when keyboard appears/disappears
+    _overlayEntry?.markNeedsBuild();
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _debounce?.cancel();
+    _controller.removeListener(_onTextChange);
+    _focusNode.removeListener(_onFocusChange);
+    _controller.dispose();
+    _focusNode.dispose();
+    _results.dispose();
+    _isSearching.dispose();
+    _hasSearched.dispose();
+    _removeOverlay();
     super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      _showOverlay();
+    } else {
+      _removeOverlay();
+    }
+  }
+
+  void _onTextChange() {
+    setState(() {}); // rebuild for clear button visibility
+    final query = _controller.text.trim();
+    if (query.isEmpty) {
+      _debounce?.cancel();
+      _results.value = [];
+      _isSearching.value = false;
+      _hasSearched.value = false;
+      return;
+    }
+    _isSearching.value = true;
+    _hasSearched.value = false;
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 800), () async {
+      final products = await ref.read(productSaleProvider.notifier).getProducts(query);
+      if (mounted) {
+        _results.value = products;
+        _isSearching.value = false;
+        _hasSearched.value = true;
+      }
+    });
+  }
+
+  void _selectProduct(Product product) {
+    _controller.clear();
+    _results.value = [];
+    _hasSearched.value = false;
+    _focusNode.unfocus();
+    ref.read(productSaleProvider.notifier).setProductsSales(product, null);
+  }
+
+  void _showOverlay() {
+    _removeOverlay();
+    final renderBox = context.findRenderObject() as RenderBox?;
+    final fieldWidth = renderBox != null ? renderBox.size.width - 58 : 280.0;
+    if (renderBox != null) {
+      final offset = renderBox.localToGlobal(Offset.zero);
+      _fieldTopY = offset.dy;
+    }
+    _overlayEntry = OverlayEntry(
+      builder: (_) => _SuggestionsDropdown(
+        layerLink: _layerLink,
+        width: fieldWidth,
+        fieldTopY: _fieldTopY,
+        results: _results,
+        isSearching: _isSearching,
+        hasSearched: _hasSearched,
+        controller: _controller,
+        onSelect: _selectProduct,
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
   }
 
   Future<void> _onScanBarcode() async {
     final code = await BarcodeScannerSheet.show(context);
     if (code == null || code.isEmpty) return;
-
-    final product =
-        await ref.read(productSaleProvider.notifier).getProductByBarcode(code);
+    final product = await ref.read(productSaleProvider.notifier).getProductByBarcode(code);
     if (!mounted) return;
     if (product != null) {
       ref.read(productSaleProvider.notifier).setProductsSales(product, null);
@@ -43,103 +140,64 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
     }
   }
 
-  Future<List<Product>> onSearchChanged(String query) async {
-    if (_ignoreNextSearch) {
-      _ignoreNextSearch = false;
-      return [];
-    }
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    final completer = Completer<List<Product>>();
-    _debounce = Timer(const Duration(seconds: 1), () async {
-      if (query.isNotEmpty) {
-        final products =
-            await ref.read(productSaleProvider.notifier).getProducts(query);
-        completer.complete(products);
-        print(completer);
-      } else {
-        completer.complete([]);
-      }
-    });
-
-    return completer.future;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isBarcodeSearching =
-        ref.watch(productSaleProvider).isBarcodeSearching;
+    final isBarcodeSearching = ref.watch(productSaleProvider).isBarcodeSearching;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           Expanded(
-            child: AbsorbPointer(
-              absorbing: isBarcodeSearching,
-              child: SearchAnchor.bar(
-        barHintText: "Buscar producto",
-        barBackgroundColor: WidgetStateProperty.all(Colors.white),
-        dividerColor: ColorSchema.primaryColor,
-        barOverlayColor: WidgetStateProperty.all(Colors.white),
-        viewBackgroundColor: Colors.white,
-        isFullScreen: false,
-        suggestionsBuilder: (context, controller) {
-          if (controller.text.isEmpty) {
-            return [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: const Text(
-                    "Sin elementos...",
+            child: CompositedTransformTarget(
+              link: _layerLink,
+              child: AbsorbPointer(
+                absorbing: isBarcodeSearching,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.07),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    style: const TextStyle(fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar producto',
+                      hintStyle: const TextStyle(fontSize: 14, color: Colors.black38),
+                      prefixIcon: const Icon(Icons.search, color: ColorSchema.primaryColor, size: 22),
+                      suffixIcon: _controller.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 18, color: Colors.black38),
+                              onPressed: () {
+                                _controller.clear();
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: ColorSchema.primaryColor, width: 1.5),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ]; // Mostrar el texto cuando está vacío
-          }
-          return [
-            FutureBuilder<List<Product>>(
-              future: onSearchChanged(controller.text),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const ListTile(
-                    title: Text("Buscando..."),
-                  );
-                } else if (snapshot.hasError) {
-                  return ListTile(
-                    title: Text("Error: ${snapshot.error}"),
-                  );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const ListTile(
-                    title: Text("No se encontraron resultados."),
-                  );
-                }
-
-                final products = snapshot.data!;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: products.map((product) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            _ignoreNextSearch = true;
-                            ref.read(productSaleProvider.notifier).setProductsSales(product, null);
-                            controller.closeView("");
-                            FocusScope.of(context).unfocus();
-                          },
-                          child: ItemProduct(product: product),
-                        ),
-                        Divider(height: 1, thickness: 1, color: Colors.grey.shade300),
-                      ],
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-          ];
-        },
-      ),
             ),
           ),
           const SizedBox(width: 8),
@@ -167,11 +225,123 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(Icons.qr_code_scanner,
-                      color: ColorSchema.primaryColor, size: 22),
+                  : const Icon(Icons.qr_code_scanner, color: ColorSchema.primaryColor, size: 22),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SuggestionsDropdown extends StatelessWidget {
+  final LayerLink layerLink;
+  final double width;
+  final double fieldTopY;
+  final ValueNotifier<List<Product>> results;
+  final ValueNotifier<bool> isSearching;
+  final ValueNotifier<bool> hasSearched;
+  final TextEditingController controller;
+  final void Function(Product) onSelect;
+
+  const _SuggestionsDropdown({
+    required this.layerLink,
+    required this.width,
+    required this.fieldTopY,
+    required this.results,
+    required this.isSearching,
+    required this.hasSearched,
+    required this.controller,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    // Space from bottom of field (fieldTopY + 54px offset) to top of keyboard (or screen bottom)
+    final keyboardTop = mq.size.height - mq.viewInsets.bottom;
+    final dropdownTop = fieldTopY + 54;
+    final maxHeight = (keyboardTop - dropdownTop - 8).clamp(80.0, double.infinity);
+
+    return CompositedTransformFollower(
+      link: layerLink,
+      showWhenUnlinked: false,
+      offset: const Offset(0, 54),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          width: width,
+          child: ListenableBuilder(
+            listenable: Listenable.merge([results, isSearching, hasSearched, controller]),
+            builder: (context, _) {
+              final query = controller.text.trim();
+              final Widget content;
+
+              if (query.isEmpty) {
+                return const SizedBox.shrink();
+              } else if (isSearching.value) {
+                content = const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: ColorSchema.primaryColor),
+                      ),
+                      SizedBox(width: 10),
+                      Text('Buscando...', style: TextStyle(fontSize: 13, color: Colors.black54)),
+                    ],
+                  ),
+                );
+              } else if (hasSearched.value && results.value.isEmpty) {
+                content = const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    'No se encontraron resultados.',
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
+                );
+              } else if (results.value.isNotEmpty) {
+                content = ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: maxHeight),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: results.value.map((product) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => onSelect(product),
+                              child: ItemProduct(product: product),
+                            ),
+                            if (product != results.value.last)
+                              Divider(height: 1, thickness: 1, color: Colors.grey.shade300),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+
+              return Material(
+                elevation: 6,
+                borderRadius: BorderRadius.circular(14),
+                color: Colors.white,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: content,
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

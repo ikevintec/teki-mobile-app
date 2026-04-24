@@ -37,7 +37,7 @@ class SesionNotifier extends StateNotifier<SesionState> {
     final estacionAsignada = state.login.user?.estacionVenta;
     if (estacionAsignada == null) return saleStations;
     final filtered = saleStations.where((se) => se.id == estacionAsignada.id).toList();
-    return filtered;
+    return filtered.isNotEmpty ? filtered : [SaleStation(id: -1, nombre: 'Estación no asignada')];
   }
 
   void setFullConfig(LoginResponse login, List<SaleStation> saleStations, Office? defaultPv) async {
