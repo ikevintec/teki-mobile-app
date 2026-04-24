@@ -530,7 +530,7 @@ void _syncFormArrayWithProvider(
             validators: [Validators.required, Validators.min(1)]),
       }));
     }
-    if (scroll != null && formArray.controls.isNotEmpty) {
+    if (scroll != null && products.length > 5) {
       scroll();
     }
   } else {
