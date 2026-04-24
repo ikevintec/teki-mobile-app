@@ -18,6 +18,10 @@ class RemoteCustomers extends CustomersDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       return Future.error(errorMessage);
@@ -54,6 +58,14 @@ class RemoteCustomers extends CustomersDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
+      }
+      
+      if (e.response == null) {
+      
+        errorNotification('Sin conexión a internet');
+      
+        return Future.error('Sin conexión a internet');
+      
       }
       
       final resData = e.response?.data;
@@ -129,6 +141,10 @@ class RemoteCustomers extends CustomersDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
       }
       errorNotification(e.toString());
       return [];

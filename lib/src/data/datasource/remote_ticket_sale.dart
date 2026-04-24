@@ -35,6 +35,10 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       errorNotification("Error al obtener series por oficina: $e");
       return Future.error(e.toString());
     } catch (e) {
@@ -72,6 +76,10 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(errorMessage);
@@ -100,6 +108,10 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
       }
       final resData = e.response?.data;
       final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error desconocido del servidor';
@@ -172,6 +184,10 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
       final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       print("Error al obtener comprobantes 1: $message");
@@ -211,6 +227,10 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
       final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification("Error al obtener totales por moneda 1: $message");
@@ -233,6 +253,10 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
       }
       final resData = e.response?.data;
       final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error desconocido del servidor';

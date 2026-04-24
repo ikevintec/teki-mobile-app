@@ -19,6 +19,10 @@ class RemoteInventoryAdjustment extends InventoryAdjustmentDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(errorMessage);
@@ -63,6 +67,10 @@ class RemoteInventoryAdjustment extends InventoryAdjustmentDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
       }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error al guardar ajuste';
