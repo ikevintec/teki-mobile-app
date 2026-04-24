@@ -33,12 +33,11 @@ class RemoteCashRegister extends CashRegisterDatasource {
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
-      final msg = (resData is Map
-              ? (resData['mensaje'] ?? resData['message'])
-              : null) ??
-          e.message ??
-          'Error de conexión';
+      final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return Future.error(msg);
     } catch (e) {
@@ -67,17 +66,15 @@ class RemoteCashRegister extends CashRegisterDatasource {
         },
         cancelToken: cancelToken,
       );
-      return CashRegisterDetailPage.fromJson(
-          response.data as Map<String, dynamic>);
+      return CashRegisterDetailPage.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
-      final msg = (resData is Map
-              ? (resData['mensaje'] ?? resData['message'])
-              : null) ??
-          e.message ??
-          'Error de conexión';
+      final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return Future.error(msg);
     } catch (e) {
@@ -97,19 +94,15 @@ class RemoteCashRegister extends CashRegisterDatasource {
         cancelToken: cancelToken,
       );
       final data = response.data as List;
-      return data
-          .map((e) =>
-              CajaMetodoPagoBalance.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return data.map((e) => CajaMetodoPagoBalance.fromJson(e as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
-      final msg = (resData is Map
-              ? (resData['mensaje'] ?? resData['message'])
-              : null) ??
-          e.message ??
-          'Error de conexión';
+      final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return Future.error(msg);
     } catch (e) {
