@@ -118,6 +118,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts> {
                   mainAxisSize: MainAxisSize.min,
                   children: products.map((product) {
                     return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () {
                         _ignoreNextSearch = true;
                         ref.read(productSaleProvider.notifier).setProductsSales(product, null);
