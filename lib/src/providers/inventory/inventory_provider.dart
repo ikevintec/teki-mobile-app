@@ -25,10 +25,10 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
           sortOrder: 1,
           filterGlobal: null,
           idPuntoVenta: null,
+          errorMessage: null,
         ));
 
   Future<void> loadInventory(int idPuntoVenta) async {
-    // Usamos constructor directo para evitar el problema de nullable en copyWith
     state = InventoryState(
       items: [],
       isLoading: true,
@@ -37,36 +37,44 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
       perPage: state.perPage,
       sortField: state.sortField,
       sortOrder: state.sortOrder,
-      filterGlobal: null, // reset explícito
+      filterGlobal: null,
       idPuntoVenta: idPuntoVenta,
+      errorMessage: null,
     );
-    final response = await inventoryRepository
-        .getInventory(buildInventoryQueryParams(state));
-    state = state.copyWith(
-      items: response.content ?? [],
-      last: response.last ?? false,
-      isLoading: false,
-    );
+    try {
+      final response = await inventoryRepository
+          .getInventory(buildInventoryQueryParams(state));
+      state = state.copyWith(
+        items: response.content ?? [],
+        last: response.last ?? false,
+        isLoading: false,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoading: false, errorMessage: 'Sin conexión');
+    }
   }
 
   Future<void> loadNextPage() async {
     if (state.last || state.isLoading) return;
-    state = state.copyWith(
-      isLoading: true,
-      pageNumber: state.pageNumber + 1,
-    );
-    final response = await inventoryRepository
-        .getInventory(buildInventoryQueryParams(state));
-    state = state.copyWith(
-      items: [...state.items, ...?response.content],
-      last: response.last ?? false,
-      isLoading: false,
-    );
+    state = state.copyWith(isLoading: true, pageNumber: state.pageNumber + 1);
+    try {
+      final response = await inventoryRepository
+          .getInventory(buildInventoryQueryParams(state));
+      state = state.copyWith(
+        items: [...state.items, ...?response.content],
+        last: response.last ?? false,
+        isLoading: false,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        pageNumber: state.pageNumber - 1,
+      );
+    }
   }
 
   Future<void> searchInventory(String search) async {
     if (search.isEmpty) {
-      // Al limpiar la búsqueda recargamos desde cero sin filtro
       await loadInventory(state.idPuntoVenta ?? 0);
       return;
     }
@@ -75,14 +83,19 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
       pageNumber: 0,
       items: [],
       filterGlobal: search,
+      errorMessage: null,
     );
-    final response = await inventoryRepository
-        .getInventory(buildInventoryQueryParams(state));
-    state = state.copyWith(
-      items: response.content ?? [],
-      last: response.last ?? false,
-      isLoading: false,
-    );
+    try {
+      final response = await inventoryRepository
+          .getInventory(buildInventoryQueryParams(state));
+      state = state.copyWith(
+        items: response.content ?? [],
+        last: response.last ?? false,
+        isLoading: false,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoading: false, errorMessage: 'Sin conexión');
+    }
   }
 }
 
@@ -96,6 +109,7 @@ class InventoryState {
   final int sortOrder;
   final String? filterGlobal;
   final int? idPuntoVenta;
+  final String? errorMessage;
 
   InventoryState({
     required this.items,
@@ -107,6 +121,7 @@ class InventoryState {
     required this.sortOrder,
     required this.filterGlobal,
     required this.idPuntoVenta,
+    required this.errorMessage,
   });
 
   InventoryState copyWith({
@@ -119,6 +134,7 @@ class InventoryState {
     int? sortOrder,
     String? filterGlobal,
     int? idPuntoVenta,
+    String? errorMessage,
   }) =>
       InventoryState(
         items: items ?? this.items,
@@ -130,5 +146,6 @@ class InventoryState {
         sortOrder: sortOrder ?? this.sortOrder,
         filterGlobal: filterGlobal ?? this.filterGlobal,
         idPuntoVenta: idPuntoVenta ?? this.idPuntoVenta,
+        errorMessage: errorMessage ?? this.errorMessage,
       );
 }

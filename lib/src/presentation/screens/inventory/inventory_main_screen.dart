@@ -69,6 +69,7 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(inventoryProvider);
     final isLoading = state.isLoading && state.items.isEmpty;
+    final hasError = !state.isLoading && state.errorMessage != null && state.items.isEmpty;
 
     // Limpia el buscador cuando el provider resetea el filtro (ej: al volver del ajuste)
     ref.listen<InventoryState>(inventoryProvider, (previous, next) {
@@ -222,7 +223,39 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
                         ),
                       ],
                     )
-                  : InventoryListSection(items: state.items),
+                  : hasError
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 80),
+                            Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.wifi_off_rounded,
+                                      size: 56, color: Colors.grey.shade300),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Sin conexión a internet',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Desliza hacia abajo para reintentar',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      : InventoryListSection(items: state.items),
             ),
           ),
         ],
