@@ -390,9 +390,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                       child: Column(
                         children: [
                           Builder(
-                            builder: (context) => SummaryBarSales(
-                              isProcessingTotal: FocusScope.of(context).hasFocus,
-                            ),
+                            builder: (context) => SummaryBarSales(showIndicatorKeyboard: true,),
                           ),
                           Row(
                             children: [

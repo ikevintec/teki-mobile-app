@@ -145,7 +145,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       return "El monto pagado es menor al total de la venta";
     }
     if (_hasNonCash && _totalPaid > total) {
-      return "Al incluir métodos no efectivo el monto pagado debe ser exacto";
+      return "Al usar métodos de pago sin efectivo, el monto debe ser exacto.";
     }
     return null;
   }
@@ -378,10 +378,12 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
         .where((e) => (double.tryParse(e.amountController.text) ?? 0.0) > 0)
         .map((e) {
       final amount = double.tryParse(e.amountController.text) ?? 0.0;
+      final isCash = (e.method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
+      final effectiveAmount = isCash ? (amount - _cambio).clamp(0.0, amount) : amount;
       return PaymentDetail(
         formaPago: e.method.formaPago,
-        monto: amount,
-        montoPagado: amount,
+        monto: effectiveAmount,
+        montoPagado: effectiveAmount,
         metodoPago: e.method,
         numeroOperacion: e.operationController.text.isNotEmpty
             ? e.operationController.text

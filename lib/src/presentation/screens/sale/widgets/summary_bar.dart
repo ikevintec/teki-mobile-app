@@ -8,6 +8,7 @@ import 'package:teki_app/src/utils/formats.dart';
 class SummaryBarSales extends ConsumerStatefulWidget {
   final bool showOnlyTotal;
   final bool isProcessingTotal;
+  final bool showIndicatorKeyboard;
   final bool showMontoPagado;
   final bool showCambio;
   final double montoPagado;
@@ -17,6 +18,7 @@ class SummaryBarSales extends ConsumerStatefulWidget {
     super.key,
     this.showOnlyTotal = false,
     this.isProcessingTotal = false,
+    this.showIndicatorKeyboard = false,
     this.showMontoPagado = false,
     this.showCambio = false,
     this.montoPagado = 0,
@@ -27,15 +29,38 @@ class SummaryBarSales extends ConsumerStatefulWidget {
   ConsumerState<SummaryBarSales> createState() => _SummaryBarSalesState();
 }
 
-class _SummaryBarSalesState extends ConsumerState<SummaryBarSales> {
+class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
+    with WidgetsBindingObserver {
   bool isExpanded = false;
+  bool _isKeyboardVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeMetrics() {
+    final bottomInset = WidgetsBinding.instance.window.viewInsets.bottom;
+    final visible = bottomInset > 0;
+    if (visible != _isKeyboardVisible) {
+      setState(() => _isKeyboardVisible = visible);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final providerTicket = ref.watch(ticketProvider);
     final provider = ref.watch(productSaleProvider);
 
-    return widget.isProcessingTotal ? Center(child: Padding(
+    return widget.showIndicatorKeyboard && _isKeyboardVisible ? Center(child: Padding(
       padding: const EdgeInsets.all(8.0),
       child: GestureDetector(
         onTap: () {
