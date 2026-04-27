@@ -76,6 +76,14 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
     final config = ref.watch(sesionProvider);
     final idPuntoVenta = config.office?.id ?? 0;
 
+    ref.listen<SesionState>(sesionProvider, (prev, next) {
+      if (prev?.office?.id != next.office?.id) {
+        for (final n in _refreshNotifiers) {
+          n.value++;
+        }
+      }
+    });
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: DashboardDrawer(
