@@ -703,6 +703,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                           _autoprint(comprobante);
                           Get.off(() => ViewComponentScreen(
                                 ticket: comprobante,
+                                id: comprobante.id,
                                 fromSale: true,
                               ));
                         } else {
@@ -712,15 +713,29 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                         errorNotification("Error al registrar el pago: $e");
                       }
                     } else {
+                      final stateTicket = ref.read(ticketProvider).ticket;
                       final Ticket? ticketResponse =
                           await notifier.proceessTicket();
                       if (ticketResponse != null) {
+                        final ticketToShow = ticketResponse.copyWith(
+                          totalVenta: ticketResponse.totalVenta ?? stateTicket.totalVenta,
+                          totalValorVenta: ticketResponse.totalValorVenta ?? stateTicket.totalValorVenta,
+                          totalValorVentaGravada: ticketResponse.totalValorVentaGravada ?? stateTicket.totalValorVentaGravada,
+                          totalValorVentaInafecta: ticketResponse.totalValorVentaInafecta ?? stateTicket.totalValorVentaInafecta,
+                          totalValorVentaExonerada: ticketResponse.totalValorVentaExonerada ?? stateTicket.totalValorVentaExonerada,
+                          totalValorVentaExportacion: ticketResponse.totalValorVentaExportacion ?? stateTicket.totalValorVentaExportacion,
+                          totalIgv: ticketResponse.totalIgv ?? stateTicket.totalIgv,
+                          totalIsc: ticketResponse.totalIsc ?? stateTicket.totalIsc,
+                          totalTributosBolsas: ticketResponse.totalTributosBolsas ?? stateTicket.totalTributosBolsas,
+                          totalDescuento: ticketResponse.totalDescuento ?? stateTicket.totalDescuento,
+                          otrosCargos: ticketResponse.otrosCargos ?? stateTicket.otrosCargos,
+                        );
                         ref.invalidate(ticketProvider);
                         ref.invalidate(productSaleProvider);
                         ref.invalidate(customerSaleProvider);
                         _autoprint(ticketResponse);
                         Get.off(() => ViewComponentScreen(
-                              ticket: ticketResponse,
+                              ticket: ticketToShow,
                               fromSale: true,
                             ));
                       }
