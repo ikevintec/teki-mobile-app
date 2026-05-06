@@ -63,8 +63,8 @@ class TicketFee {
   Map<String, dynamic> toJson() => {
         'id': id,
         'numero': numero,
-        'fecha': fecha?.toIso8601String(),
-        'fechaPago': fechaPago?.toIso8601String(),
+        'fecha': fecha?.millisecondsSinceEpoch,
+        'fechaPago': fechaPago?.millisecondsSinceEpoch,
         'monto': monto,
         'ticket': ticket?.toJson(),
         'accountReceivable': accountReceivable?.toJson(),

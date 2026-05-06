@@ -368,7 +368,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       errorNotification("Todos los montos de las cuotas deben ser mayores a cero");
       return false;
     }
-    provider.setCuotas(cuotas);
+    provider.setCuotas(cuotas, diasCredito: int.tryParse(diasCredito.text));
     return true;
   }
 

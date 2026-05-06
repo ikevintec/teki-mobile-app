@@ -126,13 +126,18 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       cuotas: null,
       movimientoCaja: CashRegisterDetail(pagos: pagos),
       cambio: cambio,
+      tipoVenta: "CONTADO",
     );
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
-  void setCuotas(List<TicketFee> cuotas) {
-    Ticket ticketToUpdate =
-        state.ticket.copyWith(movimientoCaja: null, cuotas: cuotas);
+  void setCuotas(List<TicketFee> cuotas, {int? diasCredito}) {
+    Ticket ticketToUpdate = state.ticket.copyWith(
+      movimientoCaja: null,
+      cuotas: cuotas,
+      tipoVenta: "CREDITO",
+      diasCredito: diasCredito,
+    );
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
