@@ -49,7 +49,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
             validators: [Validators.required, Validators.minLength(3)]),
         'price': FormControl<double>(
             value: product.precioVentaUnitario ?? 0.0,
-            validators: [Validators.required, Validators.min(1)]),
+            validators: [Validators.required, Validators.min(0.01)]),
         'quantity': FormControl<int>(
             value: (product.cantidad ?? 1).toInt(),
             validators: [Validators.required, Validators.min(1)]),
@@ -113,7 +113,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
             value: "",
             validators: [Validators.required, Validators.minLength(3)]),
         'price': FormControl<double>(
-            value: 0.0, validators: [Validators.required, Validators.min(1)]),
+            value: 0.0, validators: [Validators.required, Validators.min(0.01)]),
         'quantity': FormControl<int>(
             value: 1, validators: [Validators.required, Validators.min(1)]),
       }),
@@ -523,7 +523,7 @@ void _syncFormArrayWithProvider(
             validators: [Validators.required, Validators.minLength(3)]),
         'price': FormControl<double>(
             value: product.precioVentaUnitario ?? 0,
-            validators: [Validators.required, Validators.min(1)]),
+            validators: [Validators.required, Validators.min(0.01)]),
         'quantity': FormControl<int>(
             value: (product.cantidad ?? 1).toInt(),
             validators: [Validators.required, Validators.min(1)]),

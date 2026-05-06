@@ -263,7 +263,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                         ),
                                         onSubmitted: (_) => FocusScope.of(context).unfocus(),
                                         validationMessages: {
-                                          ValidationMessage.min: (_) => 'Mínimo 1',
+                                          ValidationMessage.min: (_) => 'Mínimo 0.01',
                                           ValidationMessage.required: (_) => 'Precio requerido',
                                         },
                                       ),
