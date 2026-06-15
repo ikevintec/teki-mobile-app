@@ -137,11 +137,11 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
     }
   }
 
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String itemStatus) async {
+  Future<void> updateCommandItemStatus(int commandId, int itemId, String itemStatus, {String? motivoAnulacion}) async {
     final pvId = state.pvId;
     if (pvId == null) return;
     try {
-      await repository.updateCommandItemStatus(commandId, itemId, itemStatus);
+      await repository.updateCommandItemStatus(commandId, itemId, itemStatus, motivoAnulacion: motivoAnulacion);
       await reload(pvId);
     } catch (e) {
       errorNotification(e.toString());

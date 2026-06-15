@@ -24,7 +24,10 @@ import 'package:teki_app/src/utils/notifications.dart';
 void showOrderDetailDialog(BuildContext context, OrderRestaurant order) {
   showDialog(
     context: context,
-    builder: (_) => _OrderDetailDialog(order: order),
+    builder: (ctx) => MediaQuery(
+      data: MediaQuery.of(ctx).copyWith(viewInsets: EdgeInsets.zero),
+      child: _OrderDetailDialog(order: order),
+    ),
   );
 }
 
@@ -1065,9 +1068,9 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
                                 .updateCommandItemStatus(comanda.id!, item.id!, 'DESPACHADO')
                           : null,
                       onAnular: (comanda.id != null && item.id != null)
-                          ? () => ref
+                          ? (motivo) => ref
                                 .read(restaurantProvider.notifier)
-                                .updateCommandItemStatus(comanda.id!, item.id!, 'CANCELADO')
+                                .updateCommandItemStatus(comanda.id!, item.id!, 'CANCELADO', motivoAnulacion: motivo)
                           : null,
                     )),
                 if (items.any(ComandaDetailStatus.isCancelledItem))
@@ -1494,7 +1497,7 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
 class _CommandaItemRow extends StatefulWidget {
   final CommandDetail item;
   final VoidCallback? onServir;
-  final VoidCallback? onAnular;
+  final void Function(String? motivo)? onAnular;
   final bool showStatus;
 
   const _CommandaItemRow({
@@ -1531,6 +1534,61 @@ class _CommandaItemRowState extends State<_CommandaItemRow>
     super.dispose();
   }
 
+  void _showMotivoDialog(BuildContext context, String motivo) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.chat_bubble_outline, size: 16, color: Colors.red.shade400),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Motivo de anulación',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Icon(Icons.close, size: 18, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade100),
+                ),
+                child: Text(motivo, style: const TextStyle(fontSize: 13)),
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cerrar'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
@@ -1563,6 +1621,7 @@ class _CommandaItemRowState extends State<_CommandaItemRow>
                 onAnular: widget.onAnular,
               )
           : null,
+
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
@@ -1610,6 +1669,14 @@ class _CommandaItemRowState extends State<_CommandaItemRow>
                       size: 16,
                       color: borderAccent,
                     ),
+                  ),
+                ),
+              if (isCancelled && (item.motivoAnulacion?.isNotEmpty == true))
+                GestureDetector(
+                  onTap: () => _showMotivoDialog(context, item.motivoAnulacion!),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Icon(Icons.chat_bubble_outline, size: 13, color: Colors.red.shade300),
                   ),
                 ),
             ],

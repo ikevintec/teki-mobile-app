@@ -242,6 +242,23 @@ class CommandEscPosFormatter {
         ),
       ));
 
+      if (data.anulacion == true && item.motivoAnulacion != null) {
+        lines.add(EscPosOrder(
+          type: EscPosOrderType.TEXT,
+          text: EscPosOrderText(
+            value: 'Motivo anulación: ${item.motivoAnulacion}',
+            lineBreak: true,
+            style: const EscPosStyle(
+              bold: true,
+              fontSize: '_1',
+              justification: 'Right',
+              fontSizeX: '_1',
+              fontSizeY: '_2',
+            ),
+          ),
+        ));
+      }
+
       if (extras != null && extras.isNotEmpty) {
         lines.add(EscPosOrder(
           type: EscPosOrderType.TEXT,

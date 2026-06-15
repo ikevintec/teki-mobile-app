@@ -207,7 +207,7 @@ class RemoteRestaurant extends RestaurantDatasource {
   }
 
   @override
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String status) async {
+  Future<void> updateCommandItemStatus(int commandId, int itemId, String status, {String? motivoAnulacion}) async {
     try {
       await dio.patch(
         '/commands/$commandId/items/$itemId/estadoComandaDetalle',
@@ -215,6 +215,7 @@ class RemoteRestaurant extends RestaurantDatasource {
           'estadoComandaDetalle': status,
           'cantidad': null,
           'updateInventory': true,
+          if (motivoAnulacion != null) 'motivoAnulacion': motivoAnulacion,
         },
       );
     } on DioException catch (e) {

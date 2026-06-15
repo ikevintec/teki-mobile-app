@@ -48,6 +48,7 @@ class ConfigCompany {
   String? tipoClienteWhatsapp;
   bool? adicionarRetencionEnCotizacion;
   double? porcentajeRetencion;
+  bool? motivoAnulacionPlato;
 
   ConfigCompany({
     this.envioAutomaticoSunat,
@@ -94,6 +95,7 @@ class ConfigCompany {
     this.tipoClienteWhatsapp,
     this.adicionarRetencionEnCotizacion,
     this.porcentajeRetencion,
+    this.motivoAnulacionPlato,
   });
 
   factory ConfigCompany.fromJson(Map<String, dynamic> json) {
@@ -148,6 +150,7 @@ class ConfigCompany {
       tipoClienteWhatsapp: json['tipoClienteWhatsapp'],
       adicionarRetencionEnCotizacion: json['adicionarRetencionEnCotizacion'],
       porcentajeRetencion: (json['porcentajeRetencion'] as num?)?.toDouble(),
+      motivoAnulacionPlato: json['motivoAnulacionPlato'],
     );
   }
 
@@ -197,6 +200,7 @@ class ConfigCompany {
       'tipoClienteWhatsapp': tipoClienteWhatsapp,
       'adicionarRetencionEnCotizacion': adicionarRetencionEnCotizacion,
       'porcentajeRetencion': porcentajeRetencion,
+      'motivoAnulacionPlato': motivoAnulacionPlato,
     };
   }
 }
