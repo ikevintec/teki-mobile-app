@@ -21,6 +21,7 @@ class TicketListSection extends ConsumerStatefulWidget {
 
 class _TicketListSectionState extends ConsumerState<TicketListSection> {
   final ScrollController _scrollController = ScrollController();
+  OverlayEntry? _sunatOverlay;
 
   @override
   void initState() {
@@ -41,7 +42,38 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _sunatOverlay?.remove();
     super.dispose();
+  }
+
+  void _showSunatOverlay() {
+    _sunatOverlay = OverlayEntry(
+      builder: (_) => const ColoredBox(
+        color: Color(0xBB000000),
+        child: Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: Colors.white),
+                SizedBox(height: 12),
+                Text(
+                  'Verificando estado SUNAT...',
+                  style: TextStyle(color: Colors.white, fontSize: 15, decoration: TextDecoration.none),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_sunatOverlay!);
+  }
+
+  void _hideSunatOverlay() {
+    _sunatOverlay?.remove();
+    _sunatOverlay = null;
   }
 
   Future<void> _handleEdit(Ticket ticket) async {
@@ -58,6 +90,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
     }
 
     // Estado no aceptado — consultar en tiempo real
+    _showSunatOverlay();
     try {
       final resultado = await ref.read(comprobanteProvider.notifier).consultarEstadoSunat(ticket);
 
@@ -71,6 +104,8 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
       }
     } catch (_) {
       errorNotification('No se pudo verificar el estado SUNAT. Intente nuevamente.', fromTop: false);
+    } finally {
+      if (mounted) _hideSunatOverlay();
     }
   }
 
