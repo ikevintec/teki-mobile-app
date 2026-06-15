@@ -516,17 +516,39 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
       builder: (_) => const AnularOrdenDialog(),
     );
     if (result == null || !result.confirmed) return;
-    final pvId = ref.read(sesionProvider).office?.id;
+    final sesion = ref.read(sesionProvider);
+    final pvId = sesion.office?.id;
     final notifier = ref.read(restaurantProvider.notifier);
     Get.back();
     if (pvId != null) {
-      notifier.updateOrderStatus(
+      final changeItems = await notifier.updateOrderStatus(
         order.id!,
         'CANCELADO',
         pvId,
         updateInventory: result.updateInventory,
         observacion: result.observacion.isNotEmpty ? result.observacion : null,
       );
+
+      final office = sesion.office;
+      if (office?.id != null && changeItems.isNotEmpty) {
+        for (final ci in changeItems) {
+          final commandId = ci.comanda?.id;
+          if (commandId == null) continue;
+          final itemIds = (ci.items ?? [])
+              .map((item) => item.id)
+              .whereType<int>()
+              .toList();
+          CommandPrintService().processCommand(
+            commandId: commandId,
+            puntoVenta: office!,
+            escPos: sesion.config?.imprimeTicketsEscPos ?? false,
+            clientPrinter: sesion.config?.clienteImpresion,
+            idCompany: sesion.company?.id,
+            anulacion: true,
+            itemAfectado: itemIds,
+          );
+        }
+      }
     }
   }
 

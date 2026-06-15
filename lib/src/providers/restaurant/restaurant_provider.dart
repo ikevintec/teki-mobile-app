@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/lounge.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/orderRestaurantChangeStatusItems.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/restaurant_repository.dart';
@@ -127,13 +128,15 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
     }
   }
 
-  Future<void> updateOrderStatus(int orderId, String estado, int pvId, {bool updateInventory = true, String? observacion}) async {
+  Future<List<OrderRestaurantChangeStatusItems>> updateOrderStatus(int orderId, String estado, int pvId, {bool updateInventory = true, String? observacion}) async {
     try {
-      await repository.updateOrderStatus(orderId, estado, updateInventory: updateInventory, observacion: observacion);
+      final result = await repository.updateOrderStatus(orderId, estado, updateInventory: updateInventory, observacion: observacion);
       successNotification('Estado actualizado');
       await reload(pvId);
+      return result;
     } catch (e) {
       errorNotification(e.toString());
+      return [];
     }
   }
 

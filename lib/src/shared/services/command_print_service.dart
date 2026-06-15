@@ -151,8 +151,20 @@ class CommandPrintService {
   Map<String, dynamic> _paramsToMap(String params) {
     final map = <String, dynamic>{};
     for (final part in params.split('&')) {
-      final kv = part.split('=');
-      if (kv.length == 2) map[kv[0]] = kv[1];
+      final idx = part.indexOf('=');
+      if (idx < 0) continue;
+      final key = part.substring(0, idx);
+      final value = part.substring(idx + 1);
+      if (map.containsKey(key)) {
+        final existing = map[key];
+        if (existing is List) {
+          existing.add(value);
+        } else {
+          map[key] = [existing, value];
+        }
+      } else {
+        map[key] = value;
+      }
     }
     return map;
   }
