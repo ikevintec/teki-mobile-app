@@ -15,6 +15,7 @@ import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
+import 'package:teki_app/src/shared/services/command_print_service.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -1068,9 +1069,27 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
                                 .updateCommandItemStatus(comanda.id!, item.id!, 'DESPACHADO')
                           : null,
                       onAnular: (comanda.id != null && item.id != null)
-                          ? (motivo) => ref
-                                .read(restaurantProvider.notifier)
-                                .updateCommandItemStatus(comanda.id!, item.id!, 'CANCELADO', motivoAnulacion: motivo)
+                          ? (motivo) {
+                              final commandId = comanda.id!;
+                              ref
+                                  .read(restaurantProvider.notifier)
+                                  .updateCommandItemStatus(commandId, item.id!, 'CANCELADO', motivoAnulacion: motivo)
+                                  .then((_) {
+                                    final sesion = ref.read(sesionProvider);
+                                    final office = sesion.office;
+                                    if (office?.id != null) {
+                                      CommandPrintService().processCommand(
+                                        commandId: commandId,
+                                        puntoVenta: office!,
+                                        escPos: sesion.config?.imprimeTicketsEscPos ?? false,
+                                        clientPrinter: sesion.config?.clienteImpresion,
+                                        idCompany: sesion.company?.id,
+                                        anulacion: true,
+                                        itemAfectado: [item.id!],
+                                      );
+                                    }
+                                  });
+                            }
                           : null,
                     )),
                 if (items.any(ComandaDetailStatus.isCancelledItem))
