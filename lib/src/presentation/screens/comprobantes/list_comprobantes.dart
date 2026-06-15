@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen.dart/view_comprobante_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
+import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -38,8 +40,38 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
 
   @override
   void dispose() {
-    _scrollController.dispose(); // Limpieza necesaria
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleEdit(Ticket ticket) async {
+    final requiereValidacion = ticket.tipoComprobante == '03' || ticket.tipoComprobante == '07';
+
+    if (!requiereValidacion) {
+      Get.to(() => ProductsSaleScreen(id: ticket.id));
+      return;
+    }
+
+    if (ticket.estadoSunat == 'ACEPT') {
+      Get.to(() => ProductsSaleScreen(id: ticket.id));
+      return;
+    }
+
+    // Estado no aceptado — consultar en tiempo real
+    try {
+      final resultado = await ref.read(comprobanteProvider.notifier).consultarEstadoSunat(ticket);
+
+      if (resultado.codigo == 'ACEP') {
+        Get.to(() => ProductsSaleScreen(id: ticket.id));
+      } else {
+        warningNotification(
+          'El comprobante aún no ha sido aceptado por SUNAT. Estado actual: ${resultado.descripcion}',
+          fromTop: false,
+        );
+      }
+    } catch (_) {
+      errorNotification('No se pudo verificar el estado SUNAT. Intente nuevamente.', fromTop: false);
+    }
   }
 
   @override
@@ -85,19 +117,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: DismissibleActionWidget(
             actions: createComprobanteActions(
-              onEdit: () {
-                // Acción de editar
-                if (ticket.estadoSunat == 'ACEPT') {
-                  // Mostrar mensaje de error
-                  warningNotification(
-                      'No se puede editar un comprobante aceptado por SUNAT',
-                      fromTop: false);
-                  return; // Salir de la función sin hacer nada más
-                }
-                Get.to(() => ProductsSaleScreen(id: ticket.id));
-                print('Editar comprobante: ${ticket.id}');
-                // Aquí puedes agregar la navegación a la pantalla de edición
-              },
+              onEdit: () => _handleEdit(ticket),
               onRemision: () {
                 // Acción de remisión
                 print('Crear remisión para: ${ticket.id}');

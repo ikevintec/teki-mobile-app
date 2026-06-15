@@ -31,6 +31,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
     final state = ref.read(comprobantesSaleProvider);
     final desde = state.filtroDesde;
     final hasta = state.filtroHasta;
+    // ignore: unnecessary_null_comparison
     if (desde != null && hasta != null) {
       ref.read(comprobantesSaleProvider.notifier).loadFirstPage(
             desde: desde,

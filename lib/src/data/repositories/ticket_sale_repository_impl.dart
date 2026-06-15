@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
@@ -56,5 +57,10 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
   @override
   Future<Ticket> updateTicket(Ticket ticket) {
     return datasource.updateTicket(ticket);
+  }
+
+  @override
+  Future<EstadoSunatResponse> consultarEstadoSunat(Ticket ticket) {
+    return datasource.consultarEstadoSunat(ticket);
   }
 }

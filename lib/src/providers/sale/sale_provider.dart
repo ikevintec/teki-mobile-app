@@ -146,6 +146,11 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
+  void setPlacaVehiculo(String placa) {
+    Ticket ticketToUpdate = state.ticket.copyWith(placaVehiculo: placa.isEmpty ? null : placa.toUpperCase());
+    state = state.copyWith(ticket: ticketToUpdate);
+  }
+
   void resetTicket() {
     state = TicketProvider(
       ticket: Ticket(
@@ -303,6 +308,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       numeroCotizacion: state.ticket.numeroCotizacion,
       despachoPosterior: state.ticket.despachoPosterior,
       isRetencion: state.ticket.isRetencion,
+      placaVehiculo: state.ticket.placaVehiculo,
     );
   }
 

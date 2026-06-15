@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
@@ -282,6 +283,28 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       }
       final message =
           e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<EstadoSunatResponse> consultarEstadoSunat(Ticket ticket) async {
+    try {
+      final response = await dio.post(
+        '/tickets/consultarEstadoSunat',
+        data: ticket.toJson(),
+      );
+      return EstadoSunatResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());

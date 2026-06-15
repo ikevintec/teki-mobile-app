@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
@@ -11,6 +12,7 @@ import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selecto
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
@@ -33,6 +35,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   String? numeroCorrelativo;
   TextEditingController numeroController = TextEditingController();
   TextEditingController vendedorController = TextEditingController();
+  TextEditingController placaController = TextEditingController();
 
   @override
   void initState() {
@@ -69,6 +72,11 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
       // Cargar número de orden desde el provider
       if (provider.ticket.ordenCompra != null) {
         vendedorController.text = provider.ticket.ordenCompra!;
+      }
+
+      // Cargar placa de vehículo si existe (edición)
+      if (provider.ticket.placaVehiculo != null) {
+        placaController.text = provider.ticket.placaVehiculo!;
       }
       
       // Cargar serie y número desde el provider si existen
@@ -456,6 +464,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                               ],
                             ),
                             const SizedBox(height: 20),
+                            PlacaVehiculoField(controller: placaController),
+                            const SizedBox(height: 20),
                             OtherOptions(),
                             const SizedBox(height: 30),
                           ],
@@ -475,6 +485,13 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                 Navigator.of(context).pop();
                                 return;
                                 }
+                              final esGasolinera = ref.read(sesionProvider).config?.esGasolinera ?? false;
+                              final placa = placaController.text.trim();
+                              if (esGasolinera && placa.isNotEmpty && placa.length != 6) {
+                                warningNotification('La placa del vehículo debe tener exactamente 6 caracteres.');
+                                return;
+                              }
+                              ref.read(ticketProvider.notifier).setPlacaVehiculo(placa);
                               ref
                                   .read(ticketProvider.notifier)
                                   .setTicketsData();
@@ -536,6 +553,38 @@ DropdownMenuItem<String> buildMenuItem(String items) => DropdownMenuItem(
         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
       ),
     );
+
+class PlacaVehiculoField extends ConsumerWidget {
+  final TextEditingController controller;
+
+  const PlacaVehiculoField({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final esGasolinera = ref.watch(sesionProvider).config?.esGasolinera ?? false;
+    if (!esGasolinera) return const SizedBox.shrink();
+
+    return TextFieldSection(
+      label: 'PLACA VEHÍCULO',
+      hint: 'Ej: ABC123',
+      inputType: TextInputType.text,
+      controller: controller,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+        LengthLimitingTextInputFormatter(6),
+        _UpperCaseTextFormatter(),
+      ],
+      onChanged: (_) {},
+    );
+  }
+}
+
+class _UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return newValue.copyWith(text: newValue.text.toUpperCase());
+  }
+}
 
 class OtherOptions extends StatelessWidget {
   const OtherOptions({super.key});

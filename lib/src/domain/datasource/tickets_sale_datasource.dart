@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 
@@ -20,4 +21,6 @@ abstract class TicketSaleDatasource {
   Future<List<TotalesPorMoneda>> getTotalesPorMoneda(Map<String, dynamic> params);
 
   Future<Ticket> getTicketById(int id);
+
+  Future<EstadoSunatResponse> consultarEstadoSunat(Ticket ticket);
 }
