@@ -72,21 +72,27 @@ String formatExchange({required String moneda}) {
 
 String formatTipoComprobante(String tipoComprobante) {
   List<Map<String, String>> lista = tipoComprobantesVerVenta;
-  Map<String, String> item =
-      lista.firstWhere((item) => item['value'] == tipoComprobante);
+  Map<String, String> item = lista.firstWhere(
+    (item) => item['value'] == tipoComprobante,
+    orElse: () => const {},
+  );
   return item['label2'] ?? '';
 }
 
 String formatTipoComprobanteTitulo(String tipoComprobante) {
   List<Map<String, String>> lista = tipoComprobantesVerVenta;
-  Map<String, String> item =
-      lista.firstWhere((item) => item['value'] == tipoComprobante);
+  Map<String, String> item = lista.firstWhere(
+    (item) => item['value'] == tipoComprobante,
+    orElse: () => const {},
+  );
   return item['label'] ?? '';
 }
 
 String formatTipoDocumento(String tipo) {
   List<Map<String, String>> lista = tipoDocumento;
-  Map<String, String> item =
-      lista.firstWhere((item) => item['value'] == tipo);
+  Map<String, String> item = lista.firstWhere(
+    (item) => item['value'] == tipo,
+    orElse: () => const {},
+  );
   return item['label'] ?? '';
 }

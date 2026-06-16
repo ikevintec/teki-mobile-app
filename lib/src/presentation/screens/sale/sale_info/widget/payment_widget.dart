@@ -674,8 +674,9 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
 
                     final ticketState = ref.read(ticketProvider);
                     final checkId = ticketState.ticket.cuentaRestaurante;
-
-                    if (checkId != null) {
+                    
+                    // aca se define si se crea o se edita el check, si checkId es null se crea, si no se edita, pero solo si no es una edicion de ticket
+                    if (checkId != null && !ticketState.isEdit) {
                       final ticketPayload = notifier.getTicketPayload();
                       final customer = ref.read(customerSaleProvider).customer;
                       final originalItems = ref
@@ -717,7 +718,18 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                       final Ticket? ticketResponse =
                           await notifier.proceessTicket();
                       if (ticketResponse != null) {
-                        final ticketToShow = ticketResponse.copyWith(
+                        // La respuesta de edición solo trae id/uuid/identificadorDocumento
+                        // (y a veces los totales); el resto de campos para mostrar en
+                        // ViewComponentScreen se completan con el ticket local.
+                        final ticketToShow = stateTicket.copyWith(
+                          id: ticketResponse.id ?? stateTicket.id,
+                          uuid: ticketResponse.uuid ?? stateTicket.uuid,
+                          identificadorDocumento: ticketResponse.identificadorDocumento ??
+                              stateTicket.identificadorDocumento,
+                          serie: ticketResponse.serie ?? stateTicket.serie,
+                          numero: ticketResponse.numero ?? stateTicket.numero,
+                          tipoComprobante: ticketResponse.tipoComprobante ?? stateTicket.tipoComprobante,
+                          estadoSunat: ticketResponse.estadoSunat ?? stateTicket.estadoSunat,
                           totalVenta: ticketResponse.totalVenta ?? stateTicket.totalVenta,
                           totalValorVenta: ticketResponse.totalValorVenta ?? stateTicket.totalValorVenta,
                           totalValorVentaGravada: ticketResponse.totalValorVentaGravada ?? stateTicket.totalValorVentaGravada,
