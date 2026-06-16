@@ -167,7 +167,141 @@ class _InicioTabState extends ConsumerState<InicioTab> {
           'icon': 'assets/icons/icon_image/inventory_list.png',
           'action': () => Get.toNamed(AppRoutes.inventory),
         },
+        {
+          'title': 'Más\nOpciones',
+          'icon': 'assets/icons/icon_svg/plus_button.svg',
+          'action': () => _showMoreOptionsSheet(),
+        },
       ];
+
+  List<Map<String, dynamic>> get _documentosServices => [
+        {
+          'title': 'Crear Cotización',
+          'icon': 'assets/icons/icon_svg/generate_invoice.svg',
+          'action': () {},
+        },
+        {
+          'title': 'Ver Cotizaciones',
+          'icon': 'assets/icons/icon_svg/invoice_icon.svg',
+          'action': () {},
+        },
+      ];
+
+  List<Map<String, dynamic>> get _cuentasServices => [
+        {
+          'title': 'Cuentas por Cobrar',
+          'icon': 'assets/icons/icon_svg/add_payment.svg',
+          'action': () {},
+        },
+        {
+          'title': 'Cuentas por Pagar',
+          'icon': 'assets/icons/icon_svg/expense_payment.svg',
+          'action': () {},
+        },
+      ];
+
+  void _showMoreOptionsSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Más opciones',
+                  style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Divider(height: 1, color: Colors.grey.shade200),
+              _buildSheetSectionLabel('Cotizaciones'),
+              ..._documentosServices.map(_buildSheetOptionRow),
+              const SizedBox(height: 4),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          label,
+          style: GoogleFonts.raleway(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetOptionRow(Map<String, dynamic> service) {
+    final icon = service['icon'] as String;
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).pop();
+        (service['action'] as VoidCallback)();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: ColorSchema.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: SvgPicture.asset(
+                  icon,
+                  colorFilter: const ColorFilter.mode(
+                    ColorSchema.primaryColor,
+                    BlendMode.srcIn,
+                  ),
+                  width: 18,
+                  height: 18,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Text(
+              service['title'] as String,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: ColorSchema.primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   List<Map<String, dynamic>> get _generalServices => [
         {
@@ -235,6 +369,10 @@ class _InicioTabState extends ConsumerState<InicioTab> {
                 _buildSectionLabel('Restaurante'),
                 const SizedBox(height: 12),
                 _buildServicesGrid(_restauranteServices),
+                const SizedBox(height: 24),
+                _buildSectionLabel('Operaciones'),
+                const SizedBox(height: 12),
+                _buildServicesGrid(_cuentasServices),
                 const SizedBox(height: 24),
                 _buildSectionLabel('General'),
                 const SizedBox(height: 12),
@@ -380,9 +518,9 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 0.92,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 1.15,
       ),
       itemCount: services.length,
       itemBuilder: (context, index) {
@@ -437,26 +575,26 @@ class _ServiceCard extends StatelessWidget {
                   ColorSchema.primaryColor,
                   BlendMode.srcIn,
                 ),
-                width: 40,
-                height: 40,
+                width: 28,
+                height: 28,
               )
             else
               ImageIcon(
                 AssetImage(icon),
                 color: ColorSchema.primaryColor,
-                size: 40,
+                size: 28,
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               title,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.roboto(
-                fontSize: screenWidth * 0.028,
+                fontSize: screenWidth * 0.026,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey.shade700,
-                height: 1.2,
+                height: 1.15,
               ),
             ),
           ],
