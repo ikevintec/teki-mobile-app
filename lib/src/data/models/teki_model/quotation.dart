@@ -6,6 +6,7 @@ import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/quotationDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 class Quotation {
   final int? id;
@@ -129,8 +130,8 @@ class Quotation {
     serie: json['serie'],
     numero: json['numero'],
     fechaEmision: json['fechaEmision'],
-    fechaEmisionDate: json['fechaEmisionDate'] != null ? DateTime.parse(json['fechaEmisionDate']) : null,
-    fechaEntrega: json['fechaEntrega'] != null ? DateTime.parse(json['fechaEntrega']) : null,
+    fechaEmisionDate: parseDateTimeFlexible(json['fechaEmisionDate']),
+    fechaEntrega: parseDateTimeFlexible(json['fechaEntrega']),
     horaEmision: json['horaEmision'],
     ofertaValido: json['ofertaValido'],
     tiempoEntrega: json['tiempoEntrega'],

@@ -12,17 +12,29 @@ import 'package:teki_app/src/utils/contstants.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PdfViewerScreen extends ConsumerStatefulWidget {
-  final String uuid;
+  final String? uuid;
   final String fileName;
   final String? fileSize;
   final int? ticketId;
 
+  /// URL completa del PDF. Si se provee, se usa en lugar de construir
+  /// la URL a partir de [uuid]/[fileName] (caso de cotizaciones, que
+  /// usan un endpoint distinto al de tickets).
+  final String? customPdfUrl;
+
+  /// Si es false, se oculta por completo la UI de impresión física
+  /// (banner de advertencia y botón de imprimir). Usado por cotizaciones,
+  /// que no se imprimen por impresora física.
+  final bool allowPrint;
+
   const PdfViewerScreen({
     super.key,
-    required this.uuid,
+    this.uuid,
     required this.fileName,
     this.fileSize = 'A4',
     this.ticketId,
+    this.customPdfUrl,
+    this.allowPrint = true,
   });
 
   @override
@@ -35,6 +47,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
   bool _isDownloading = false;
 
   String get _pdfUrl {
+    if (widget.customPdfUrl != null) return widget.customPdfUrl!;
     final domain = Environment.apiUrl;
     return '$domain/public/pdf/tickets/${widget.uuid}/${widget.fileName}?tipo=${widget.fileSize}';
   }
@@ -85,7 +98,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
     final session = ref.watch(sesionProvider);
     final clienteImpresion = session.config?.clienteImpresion;
     final printer = session.saleStation?.impresoraComprobante;
-    final canPrint = clienteImpresion == 'COFFE' && printer != null;
+    final canPrint = widget.allowPrint && clienteImpresion == 'COFFE' && printer != null;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -128,7 +141,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         children: [
-          if (!canPrint)
+          if (widget.allowPrint && !canPrint)
             Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

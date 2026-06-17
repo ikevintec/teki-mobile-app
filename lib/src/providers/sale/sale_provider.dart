@@ -5,7 +5,9 @@ import 'package:teki_app/src/data/models/teki_model/paymentDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/data/repositories/quotation_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
+import 'package:teki_app/src/domain/repositories/quotation_repository.dart';
 import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -13,19 +15,28 @@ import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
+enum SaleMode { createVenta, editVenta, createCotizacion, editCotizacion }
+
 final ticketProvider =
     StateNotifierProvider<TicketNotifier, TicketProvider>((ref) {
   final TicketsSaleRepository ticketsSaleRepository =
       TicketSaleRepositoryImpl();
-  return TicketNotifier(ref: ref, ticketsSaleRepository: ticketsSaleRepository);
+  final QuotationRepository quotationRepository = QuotationRepositoryImpl();
+  return TicketNotifier(
+    ref: ref,
+    ticketsSaleRepository: ticketsSaleRepository,
+    quotationRepository: quotationRepository,
+  );
 });
 
 class TicketNotifier extends StateNotifier<TicketProvider> {
   final TicketsSaleRepository ticketsSaleRepository;
+  final QuotationRepository quotationRepository;
   final Ref ref;
   TicketNotifier({
     required this.ref,
     required this.ticketsSaleRepository,
+    required this.quotationRepository,
   }) : super(TicketProvider(
             ticket: Ticket(
                 items: [],
@@ -52,6 +63,12 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     Ticket ticketToUpdate =
         state.ticket.copyWith(tipoComprobante: tipoDocumento);
     state = state.copyWith(ticket: ticketToUpdate);
+  }
+
+  /// Inicia una cotización nueva: fuerza tipoComprobante 'CO' y cambia el modo.
+  void startNewQuotation() {
+    Ticket ticketToUpdate = state.ticket.copyWith(tipoComprobante: 'CO');
+    state = state.copyWith(ticket: ticketToUpdate, mode: SaleMode.createCotizacion);
   }
 
   void setTipoOperacion(String codigoTipoOperacion) {
@@ -174,7 +191,12 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   }
 
   void setEdited(bool isEdited) {
-    state = state.copyWith(isEdit: isEdited);
+    final isCotizacion = state.ticket.tipoComprobante == 'CO';
+    state = state.copyWith(
+      mode: isEdited
+          ? (isCotizacion ? SaleMode.editCotizacion : SaleMode.editVenta)
+          : (isCotizacion ? SaleMode.createCotizacion : SaleMode.createVenta),
+    );
   }
 
   /// Construye el payload del ticket listo para enviar al backend (sin llamar a la API).
@@ -204,7 +226,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       telefonoReceptor: state.ticket.telefonoReceptor,
       cliente: state.ticket.cliente,
       camposAdicionales: state.ticket.camposAdicionales,
-      cuotas: state.ticket.cuotas,
+      cuotas: state.isQuotation ? [] : state.ticket.cuotas,
       numeroOrdenRestaurante: state.ticket.numeroOrdenRestaurante,
       codigoTipoOtroDocumentoRelacionado: state.ticket.codigoTipoOtroDocumentoRelacionado,
       serieNumeroOtroDocumentoRelacionado: state.ticket.serieNumeroOtroDocumentoRelacionado,
@@ -258,7 +280,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       motivoAnulacion: state.ticket.motivoAnulacion,
       incIgv: state.ticket.incIgv,
       agruparItems: state.ticket.agruparItems,
-      efectivo: state.ticket.efectivo,
+      efectivo: state.isQuotation ? 0 : state.ticket.efectivo,
       cambio: state.ticket.cambio,
       items: state.ticket.items,
       anticipos: state.ticket.anticipos,
@@ -283,9 +305,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       puntoVenta: state.ticket.puntoVenta,
       estacionVenta: state.ticket.estacionVenta,
       cotizacion: state.ticket.cotizacion,
-      tipoVenta: state.ticket.tipoVenta,
+      tipoVenta: state.isQuotation ? 'CONTADO' : state.ticket.tipoVenta,
       esProduccion: state.ticket.esProduccion,
-      diasCredito: state.ticket.diasCredito,
+      diasCredito: state.isQuotation ? null : state.ticket.diasCredito,
       anulado: state.ticket.anulado,
       comprobanteSustituto: state.ticket.comprobanteSustituto,
       isSendBill: state.ticket.isSendBill,
@@ -295,7 +317,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       cuentaRestaurante: state.ticket.cuentaRestaurante,
       canal: state.ticket.canal,
       comprobanteAnterior: state.ticket.comprobanteAnterior,
-      movimientoCaja: state.ticket.movimientoCaja,
+      movimientoCaja: state.isQuotation
+          ? CashRegisterDetail(pagos: [])
+          : state.ticket.movimientoCaja,
       intentosSendSummary: state.ticket.intentosSendSummary,
       createdOn: state.ticket.createdOn,
       adelanto: state.ticket.adelanto,
@@ -315,6 +339,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   Future<Ticket?> proceessTicket() async {
     try {
       final ticketToSend = getTicketPayload();
+      if (state.isQuotation) {
+        return await quotationRepository.createQuotation(ticketToSend);
+      }
       if (state.isEdit && ticketToSend.id != null) {
         return await ticketsSaleRepository.updateTicket(ticketToSend);
       }
@@ -496,15 +523,46 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
 
 class TicketProvider {
   final Ticket ticket;
-  final bool isEdit;
-  TicketProvider({required this.ticket, this.isEdit = false});
+  final SaleMode mode;
+  TicketProvider({required this.ticket, this.mode = SaleMode.createVenta});
+
+  bool get isEdit => mode == SaleMode.editVenta || mode == SaleMode.editCotizacion;
+  bool get isQuotation =>
+      mode == SaleMode.createCotizacion || mode == SaleMode.editCotizacion;
+
+  String get continueButtonLabel {
+    switch (mode) {
+      case SaleMode.createVenta:
+        return 'Continuar';
+      case SaleMode.editVenta:
+        return 'Continuar Edición';
+      case SaleMode.createCotizacion:
+        return 'Cotizar';
+      case SaleMode.editCotizacion:
+        return 'Continuar Edición';
+    }
+  }
+
+  String get confirmButtonLabel {
+    switch (mode) {
+      case SaleMode.createVenta:
+        return 'Confirmar';
+      case SaleMode.editVenta:
+        return 'Confirmar Edición';
+      case SaleMode.createCotizacion:
+        return 'Confirmar Cotización';
+      case SaleMode.editCotizacion:
+        return 'Confirmar Edición';
+    }
+  }
+
   TicketProvider copyWith({
     Ticket? ticket,
-    bool? isEdit,
+    SaleMode? mode,
   }) {
     return TicketProvider(
       ticket: ticket ?? this.ticket,
-      isEdit: isEdit ?? this.isEdit,
+      mode: mode ?? this.mode,
     );
   }
 }

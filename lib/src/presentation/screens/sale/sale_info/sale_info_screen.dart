@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/static/lists.dart';
+import 'package:teki_app/src/presentation/screens/cotizaciones/view_quotation_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/otros_datos.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_widget.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
@@ -14,6 +16,7 @@ import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -192,7 +195,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
           navigateName: "Comprobante",
           subtitle: ticketP.ticket.pedidoRestaurante != null
               ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : null,
+              : (ticketP.isQuotation ? 'Cotización' : null),
+          subtitleEmphasis: ticketP.isQuotation,
         ),
       ),
       body: Container(
@@ -231,27 +235,61 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: CustomSegmentedSelectorMapped(
-                                    label: "Tipo de comprobante (*)",
-                                    dataSource: tipoComprobantesVenta,
-                                    labelKey: "label",
-                                    valueKey: "value",
-                                    initialValue:
-                                        provider.ticket.tipoComprobante ??
-                                            tipoDocumento,
-                                    disabled: provider.isEdit,
-                                    onChanged:  (value) {
-                                      notifier.setTipoComprobante(value);
-                                      tipoDocumento = value;
-                                      if (value == "NV") {
-                                        tipoOperacionSelected = "";
-                                      } else {
-                                        tipoOperacionSelected = "0101";
-                                      }
+                                  child: provider.isQuotation
+                                      ? Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 14, horizontal: 16),
+                                          decoration: BoxDecoration(
+                                            color: ColorSchema.quotationColor
+                                                .withValues(alpha: 0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: ColorSchema.quotationColor
+                                                  .withValues(alpha: 0.4),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.description_outlined,
+                                                color:
+                                                    ColorSchema.quotationColor,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              const Text(
+                                                'Cotización',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      ColorSchema.quotationColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : CustomSegmentedSelectorMapped(
+                                          label: "Tipo de comprobante (*)",
+                                          dataSource: tipoComprobantesVenta,
+                                          labelKey: "label",
+                                          valueKey: "value",
+                                          initialValue:
+                                              provider.ticket.tipoComprobante ??
+                                                  tipoDocumento,
+                                          disabled: provider.isEdit,
+                                          onChanged: (value) {
+                                            notifier.setTipoComprobante(value);
+                                            tipoDocumento = value;
+                                            if (value == "NV") {
+                                              tipoOperacionSelected = "";
+                                            } else {
+                                              tipoOperacionSelected = "0101";
+                                            }
 
-                                      cargarSeries();
-                                    },
-                                  ),
+                                            cargarSeries();
+                                          },
+                                        ),
                                 ),
                               ],
                             ),
@@ -492,9 +530,26 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                 return;
                               }
                               ref.read(ticketProvider.notifier).setPlacaVehiculo(placa);
-                              ref
-                                  .read(ticketProvider.notifier)
-                                  .setTicketsData();
+                              final ticketNotifier = ref.read(ticketProvider.notifier);
+                              ticketNotifier.setTicketsData();
+
+                              if (ticketP.isQuotation) {
+                                ticketNotifier.setMovimientoCaja(
+                                  total: 0,
+                                  pagos: [],
+                                  cambio: 0,
+                                );
+                                final result = await ticketNotifier.proceessTicket();
+                                if (result != null && result.id != null) {
+                                  ref.invalidate(ticketProvider);
+                                  ref.invalidate(productSaleProvider);
+                                  ref.invalidate(customerSaleProvider);
+                                  successNotification("Cotización registrada correctamente");
+                                  Get.off(() => ViewQuotationScreen(id: result.id!, fromSale: true));
+                                }
+                                return;
+                              }
+
                               PaymentWidget.show(context);
                             },
                             style: ElevatedButton.styleFrom(
@@ -509,7 +564,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('Confirmar ${ticketP.isEdit ? 'Edición' : ''}'),
+                                Text(ticketP.confirmButtonLabel),
                                 SizedBox(width: 8),
                                 Icon(Icons.check_circle),
                               ],

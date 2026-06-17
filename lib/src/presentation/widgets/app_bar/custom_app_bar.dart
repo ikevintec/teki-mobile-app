@@ -8,6 +8,8 @@ class CustomAppBar extends StatelessWidget {
   final String navigateName;
   final String? navigateRoute;
   final String? subtitle;
+  final Color? backgroundColor;
+  final bool subtitleEmphasis;
 
   /// Acciones adicionales que se insertan antes del botón de ajustes.
   final List<Widget>? actions;
@@ -20,6 +22,8 @@ class CustomAppBar extends StatelessWidget {
     required this.navigateName,
     this.navigateRoute,
     this.subtitle,
+    this.backgroundColor,
+    this.subtitleEmphasis = false,
     this.actions,
     this.onSettingsReturn,
   });
@@ -29,7 +33,7 @@ class CustomAppBar extends StatelessWidget {
     return AppBar(
       elevation: 0,
       surfaceTintColor: Colors.white,
-      backgroundColor: ColorSchema.primaryColor,
+      backgroundColor: backgroundColor ?? ColorSchema.primaryColor,
       centerTitle: true,
       actions: [
         if (actions != null) ...actions!,
@@ -56,9 +60,12 @@ class CustomAppBar extends StatelessWidget {
                 Text(
                   subtitle!,
                   style: GoogleFonts.raleway(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white.withValues(alpha: 0.75),
+                    fontSize: subtitleEmphasis ? 12 : 11,
+                    fontWeight: subtitleEmphasis ? FontWeight.w800 : FontWeight.w400,
+                    color: subtitleEmphasis
+                        ? ColorSchema.quotationColor
+                        : Colors.white.withValues(alpha: 0.75),
+                    letterSpacing: subtitleEmphasis ? 0.3 : 0,
                   ),
                 ),
               ],

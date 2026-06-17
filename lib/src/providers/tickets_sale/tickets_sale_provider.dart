@@ -4,7 +4,9 @@ import 'package:teki_app/src/data/models/teki_model/guiaRelacionada.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 
 // REPOSITORIO
+import 'package:teki_app/src/data/repositories/quotation_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
+import 'package:teki_app/src/domain/repositories/quotation_repository.dart';
 import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
@@ -16,15 +18,24 @@ import 'package:teki_app/src/utils/notifications.dart';
 
 final ticketSaleProvider = StateNotifierProvider<TicketSaleNotifier, TicketSaleState>((ref) {
   final TicketsSaleRepository ticketRepository = TicketSaleRepositoryImpl();
-  return TicketSaleNotifier(ticketsSaleRepository: ticketRepository,ref: ref);
+  final QuotationRepository quotationRepository = QuotationRepositoryImpl();
+  return TicketSaleNotifier(
+    ticketsSaleRepository: ticketRepository,
+    quotationRepository: quotationRepository,
+    ref: ref,
+  );
 });
 
 class TicketSaleNotifier extends StateNotifier<TicketSaleState> {
   final TicketsSaleRepository ticketsSaleRepository;
+  final QuotationRepository quotationRepository;
   final Ref ref;
 
-  TicketSaleNotifier({required this.ticketsSaleRepository,required this.ref})
-      : super(TicketSaleState.initial());
+  TicketSaleNotifier({
+    required this.ticketsSaleRepository,
+    required this.quotationRepository,
+    required this.ref,
+  }) : super(TicketSaleState.initial());
 
   Future<List<Ticket>> getTickets(String tipoDocumento, String serie) async {
     state = state.copyWith(isLoading: true);
@@ -46,10 +57,13 @@ class TicketSaleNotifier extends StateNotifier<TicketSaleState> {
 
   Future<void> getNextTicketNumber() async {
     state = state.copyWith(isLoading: true);
-    final tipoComprobante = ref.read(ticketProvider).ticket.tipoComprobante ?? 'NV'; // Por defecto NV
-    final serieSelected = ref.read(ticketProvider).ticket.serie ?? '';
+    final ticketState = ref.read(ticketProvider);
+    final tipoComprobante = ticketState.ticket.tipoComprobante ?? 'NV'; // Por defecto NV
+    final serieSelected = ticketState.ticket.serie ?? '';
     try {
-      final numero = await ticketsSaleRepository.getNextTicketNumber(tipoComprobante, serieSelected);
+      final numero = ticketState.isQuotation
+          ? await quotationRepository.getNextQuotationNumber(tipoComprobante, serieSelected)
+          : await ticketsSaleRepository.getNextTicketNumber(tipoComprobante, serieSelected);
       ref.read(ticketProvider.notifier).setNumero(numero);
       state = state.copyWith(
         isLoading: false,

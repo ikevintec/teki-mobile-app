@@ -1,13 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:teki_app/src/data/models/teki_model/quotation.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
+/// Widget de totales, reutilizado por el flujo de ventas (Ticket) y el de
+/// cotizaciones (Quotation) sin mezclar sus repositorios: ambos modelos
+/// comparten los mismos nombres de campo de totales, así que solo se lee
+/// el que esté presente (ticket ?? quotation) según cuál se haya pasado.
 class ComprobanteSummaryWidget extends StatelessWidget {
-  final Ticket ticket;
+  final Ticket? ticket;
+  final Quotation? quotation;
 
-  const ComprobanteSummaryWidget({super.key, required this.ticket});
+  const ComprobanteSummaryWidget({super.key, this.ticket, this.quotation});
+
+  double? get totalVenta => ticket?.totalVenta ?? quotation?.totalVenta;
+  String? get codigoMoneda => ticket?.codigoMoneda ?? quotation?.codigoMoneda;
+  double? get totalValorVentaGravada => ticket?.totalValorVentaGravada ?? quotation?.totalValorVentaGravada;
+  double? get totalValorVentaInafecta => ticket?.totalValorVentaInafecta ?? quotation?.totalValorVentaInafecta;
+  double? get totalValorVentaExonerada => ticket?.totalValorVentaExonerada ?? quotation?.totalValorVentaExonerada;
+  double? get totalValorVentaExportacion => ticket?.totalValorVentaExportacion ?? quotation?.totalValorVentaExportacion;
+  double? get totalIsc => ticket?.totalIsc ?? quotation?.totalIsc;
+  double? get totalTributosBolsas => ticket?.totalTributosBolsas ?? quotation?.totalTributosBolsas;
+  double? get otrosCargos => ticket?.otrosCargos ?? quotation?.otrosCargos;
+  double? get totalDescuento => ticket?.totalDescuento ?? quotation?.totalDescuento;
+  double? get totalIgv => ticket?.totalIgv ?? quotation?.totalIgv;
+  double? get totalValorVentaGratuita => ticket?.totalValorVentaGratuita ?? quotation?.totalValorVentaGratuita;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +52,7 @@ class ComprobanteSummaryWidget extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")} ',
+                      text: '${formatExchange(moneda: codigoMoneda ?? "PEN")} ',
                       style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -41,7 +60,7 @@ class ComprobanteSummaryWidget extends StatelessWidget {
                       ),
                     ),
                     TextSpan(
-                      text: ticket.totalVenta?.toStringAsFixed(2) ?? '--',
+                      text: totalVenta?.toStringAsFixed(2) ?? '--',
                       style: GoogleFonts.roboto(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
@@ -57,28 +76,28 @@ class ComprobanteSummaryWidget extends StatelessWidget {
           Divider(color: ColorSchema.primaryColor.withValues(alpha: 0.3), thickness: 1),
           _buildSummaryRow(
             'Subtotal (Gravada)',
-            ticket.totalValorVentaGravada,
-            ticket.codigoMoneda,
+            totalValorVentaGravada,
+            codigoMoneda,
           ),
-          if ((ticket.totalValorVentaInafecta ?? 0) > 0)
-            _buildSummaryRow('Inafecta', ticket.totalValorVentaInafecta, ticket.codigoMoneda),
-          if ((ticket.totalValorVentaExonerada ?? 0) > 0)
-            _buildSummaryRow('Exonerada', ticket.totalValorVentaExonerada, ticket.codigoMoneda),
-          if ((ticket.totalValorVentaExportacion ?? 0) > 0)
-            _buildSummaryRow('Exportación', ticket.totalValorVentaExportacion, ticket.codigoMoneda),
-          if ((ticket.totalIsc ?? 0) > 0)
-            _buildSummaryRow('ISC', ticket.totalIsc, ticket.codigoMoneda),
-          if ((ticket.totalTributosBolsas ?? 0) > 0)
-            _buildSummaryRow('ICBPER', ticket.totalTributosBolsas, ticket.codigoMoneda),
-          if ((ticket.otrosCargos ?? 0) > 0)
-            _buildSummaryRow('Otros Cargos', ticket.otrosCargos, ticket.codigoMoneda),
-          if ((ticket.totalDescuento ?? 0) > 0)
-            _buildSummaryRow('Descuento', -(ticket.totalDescuento ?? 0), ticket.codigoMoneda, isDiscount: true),
-          if ((ticket.totalIgv ?? 0) > 0)
-            _buildSummaryRow('IGV', ticket.totalIgv, ticket.codigoMoneda, isIgv: true),
-          if ((ticket.totalValorVentaGratuita ?? 0) > 0) ...[
+          if ((totalValorVentaInafecta ?? 0) > 0)
+            _buildSummaryRow('Inafecta', totalValorVentaInafecta, codigoMoneda),
+          if ((totalValorVentaExonerada ?? 0) > 0)
+            _buildSummaryRow('Exonerada', totalValorVentaExonerada, codigoMoneda),
+          if ((totalValorVentaExportacion ?? 0) > 0)
+            _buildSummaryRow('Exportación', totalValorVentaExportacion, codigoMoneda),
+          if ((totalIsc ?? 0) > 0)
+            _buildSummaryRow('ISC', totalIsc, codigoMoneda),
+          if ((totalTributosBolsas ?? 0) > 0)
+            _buildSummaryRow('ICBPER', totalTributosBolsas, codigoMoneda),
+          if ((otrosCargos ?? 0) > 0)
+            _buildSummaryRow('Otros Cargos', otrosCargos, codigoMoneda),
+          if ((totalDescuento ?? 0) > 0)
+            _buildSummaryRow('Descuento', -(totalDescuento ?? 0), codigoMoneda, isDiscount: true),
+          if ((totalIgv ?? 0) > 0)
+            _buildSummaryRow('IGV', totalIgv, codigoMoneda, isIgv: true),
+          if ((totalValorVentaGratuita ?? 0) > 0) ...[
             Divider(color: Colors.grey[300], thickness: 1),
-            _buildSummaryRow('Gratuita', ticket.totalValorVentaGratuita, ticket.codigoMoneda, isGratuita: true),
+            _buildSummaryRow('Gratuita', totalValorVentaGratuita, codigoMoneda, isGratuita: true),
           ],
           const SizedBox(height: 4),
         ],

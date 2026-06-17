@@ -141,6 +141,64 @@ class _InicioTabState extends ConsumerState<InicioTab> {
     }
   }
 
+  Future<void> _openNewQuotation() async {
+    final ticketState = ref.read(ticketProvider);
+    final ticket = ticketState.ticket;
+    final productState = ref.read(productSaleProvider);
+    final customerState = ref.read(customerSaleProvider);
+
+    final hasData = (ticket.items?.isNotEmpty ?? false) ||
+        ticketState.isEdit ||
+        productState.productsSales.isNotEmpty ||
+        (customerState.customer.razonSocial?.isNotEmpty ?? false);
+
+    void resetAndNavigate() {
+      ref.invalidate(ticketProvider);
+      ref.invalidate(productSaleProvider);
+      ref.invalidate(customerSaleProvider);
+      ref.read(ticketProvider.notifier).startNewQuotation();
+      Get.toNamed(AppRoutes.productsSales);
+    }
+
+    if (!hasData) {
+      ref.read(ticketProvider.notifier).startNewQuotation();
+      Get.toNamed(AppRoutes.productsSales);
+      return;
+    }
+
+    if (!mounted) return;
+    final continuar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Venta en progreso',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
+        content: const Text('Ya tienes una venta en curso. ¿Qué deseas hacer?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Nueva cotización'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorSchema.primaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+
+    if (continuar == false) {
+      resetAndNavigate();
+    }
+  }
+
   List<Map<String, dynamic>> get _ventaServices => [
         {
           'title': 'Nueva\nVenta',
@@ -178,12 +236,12 @@ class _InicioTabState extends ConsumerState<InicioTab> {
         {
           'title': 'Crear Cotización',
           'icon': 'assets/icons/icon_svg/generate_invoice.svg',
-          'action': () {},
+          'action': () => _openNewQuotation(),
         },
         {
           'title': 'Ver Cotizaciones',
           'icon': 'assets/icons/icon_svg/invoice_icon.svg',
-          'action': () {},
+          'action': () => Get.toNamed(AppRoutes.quotationsVer),
         },
       ];
 

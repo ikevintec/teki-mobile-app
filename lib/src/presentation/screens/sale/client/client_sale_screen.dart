@@ -143,7 +143,8 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
           navigateName: "Cliente",
           subtitle: ticketP.ticket.pedidoRestaurante != null
               ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : null,
+              : (ticketP.isQuotation ? 'Cotización' : null),
+          subtitleEmphasis: ticketP.isQuotation,
         ),
       ),
       body: Container(
@@ -477,7 +478,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(ticketP.isEdit ? 'Continuar Edición' : 'Continuar'),
+                                Text(ticketP.continueButtonLabel),
                                 SizedBox(width: 8),
                                 Icon(Icons.arrow_forward_ios),
                               ],

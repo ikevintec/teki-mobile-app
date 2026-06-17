@@ -152,6 +152,49 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   return params;
 }
 
+Map<String, dynamic> buildQuotationQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {};
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('esPedido', 0);
+  safeAdd('pageNumber', state.pageNumber);
+  safeAdd('perPage', state.perPage);
+  safeAdd('sortOrder', state.sortOrder);
+
+  try {
+    safeAdd('filtroDesde', state.filtroDesde);
+  } catch (_) {}
+  try {
+    safeAdd('filtroHasta', state.filtroHasta);
+  } catch (_) {}
+  try {
+    safeAdd('filtroRucEmisor', state.filtroRucEmisor);
+  } catch (_) {}
+  try {
+    safeAdd('idPuntoVenta', state.idPuntoVenta);
+  } catch (_) {}
+  try {
+    safeAdd('idVendedor', state.idVendedor);
+  } catch (_) {}
+  try {
+    safeAdd('filtroSerie', state.filtroSerie);
+  } catch (_) {}
+  try {
+    safeAdd('filtroNumero', state.filtroNumero);
+  } catch (_) {}
+  try {
+    if (state.filtroEstadoCotizacion != null &&
+        state.filtroEstadoCotizacion.toString().toLowerCase() != 'todos') {
+      safeAdd('estadoCotizacion', state.filtroEstadoCotizacion);
+    }
+  } catch (_) {}
+
+  return params;
+}
+
 Map<String, dynamic> buildOrdersRestaurantQueryParams(dynamic state) {
   final Map<String, dynamic> params = {};
 
