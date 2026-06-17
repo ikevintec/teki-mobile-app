@@ -1,4 +1,5 @@
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 
 class QuotationDetail {
   final int? id;
@@ -170,4 +171,50 @@ class QuotationDetail {
     'estado': estado,
     'producto': producto?.toJson(),
   };
+
+  /// Convierte este detalle de cotización en un detalle de ticket,
+  /// para poder reutilizar el formulario de venta en la edición de cotizaciones.
+  TicketDetail toTicketDetail() {
+    return TicketDetail(
+      id: id,
+      numeroOrden: numeroOrden,
+      numeroItem: numeroItem,
+      cantidad: cantidad,
+      codigoUnidadMedida: codigoUnidadMedida,
+      descripcion: descripcion,
+      detalle: detalle,
+      codigoProductoSunat: codigoProductoSunat,
+      codigoProducto: codigoProducto,
+      codigoProductoGS1: codigoProductoGS1,
+      valorUnitario: valorUnitario,
+      precioVentaUnitario: precioVentaUnitario,
+      valorReferencialUnitario: valorReferencialUnitario,
+      montoBaseIgv: montoBaseIgv,
+      montoBaseIvap: montoBaseIvap,
+      montoBaseExportacion: montoBaseExportacion,
+      montoBaseExonerado: montoBaseExonerado,
+      montoBaseInafecto: montoBaseInafecto,
+      montoBaseGratuito: montoBaseGratuito,
+      montoBaseIsc: montoBaseIsc,
+      tributoVentaGratuita: tributoVentaGratuita,
+      tributoBolsa: tributoBolsa,
+      ivap: ivap,
+      igv: igv,
+      isc: isc,
+      porcentajeIgv: porcentajeIgv,
+      porcentajeIvap: porcentajeIvap,
+      porcentajeIsc: porcentajeIsc,
+      porcentajeOtrosTributos: porcentajeOtrosTributos,
+      porcentajeTributoVentaGratuita: porcentajeTributoVentaGratuita,
+      codigoTipoCalculoIsc: codigoTipoCalculoIsc,
+      codigoTipoAfectacionIgv: codigoTipoAfectacionIgv,
+      valorVenta: valorVenta,
+      precioTotal: precioTotal,
+      montoBaseDescuento: montoBaseDescuento,
+      porcentajeDescuento: porcentajeDescuento,
+      descuento: descuento,
+      codigoDescuento: codigoDescuento,
+      producto: producto,
+    );
+  }
 }

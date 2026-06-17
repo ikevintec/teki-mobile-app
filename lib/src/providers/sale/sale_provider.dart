@@ -340,6 +340,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     try {
       final ticketToSend = getTicketPayload();
       if (state.isQuotation) {
+        if (state.isEdit && ticketToSend.id != null) {
+          return await quotationRepository.updateQuotation(ticketToSend);
+        }
         return await quotationRepository.createQuotation(ticketToSend);
       }
       if (state.isEdit && ticketToSend.id != null) {

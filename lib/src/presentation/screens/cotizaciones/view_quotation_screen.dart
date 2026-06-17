@@ -38,8 +38,12 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(quotationViewProvider.notifier).fetchQuotationById(widget.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await ref.read(quotationViewProvider.notifier).fetchQuotationById(widget.id);
+      } catch (_) {
+        // El error ya fue notificado dentro del provider.
+      }
     });
   }
 

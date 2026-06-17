@@ -12,6 +12,7 @@ import 'package:teki_app/src/domain/repositories/currency_repository.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/quotation/quotation_view_provider.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/products_sale_notifier_setters.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
@@ -107,7 +108,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     }
   }
 
-  void loadInitialData(int? id) async {
+  void loadInitialData(int? id, {int? quotationId}) async {
     setLoading(true);
     try {
       // Cargar currencies solo si no existen o si no se está editando
@@ -120,14 +121,26 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
           );
         }
       }
-      
-      // Cargar datos de edición independientemente del estado de currencies
-      if (id != null) {
+
+      final customerNotifier = ref.read(customerSaleProvider.notifier);
+      final productsSaleNotifier = ref.read(productSaleProvider.notifier);
+      final ticketSaleNotifier = ref.read(ticketProvider.notifier);
+
+      // Cargar datos de edición de cotización
+      if (quotationId != null) {
+        final quotationViewNotifier = ref.read(quotationViewProvider.notifier);
+        final quotation = await quotationViewNotifier.fetchQuotationById(quotationId);
+        final ticketFromQuotation = quotation.toTicketForEdit();
+        ticketSaleNotifier.updateTicket(ticketFromQuotation);
+        customerNotifier.setCustomerEntity(ticketFromQuotation.cliente ?? Customer());
+        productsSaleNotifier.setProductsSaleEntity(ticketFromQuotation.items ?? [],
+            monedaOrigen: ticketFromQuotation.codigoMoneda);
+        productsSaleNotifier.setIncIgv(ticketFromQuotation.incIgv ?? true);
+        productsSaleNotifier.setCurrency(ticketFromQuotation.codigoMoneda ?? 'PEN');
+        ticketSaleNotifier.setEdited(true);
+      } else if (id != null) {
+        // Cargar datos de edición de comprobante
         final comprobanteNotifier = ref.read(comprobanteProvider.notifier);
-        // Cargar el comprobante y sus datos relacionados
-        final customerNotifier = ref.read(customerSaleProvider.notifier);
-        final productsSaleNotifier = ref.read(productSaleProvider.notifier);
-        final ticketSaleNotifier = ref.read(ticketProvider.notifier);
         // Cargar el comprobante por ID
         Ticket comprobante = await comprobanteNotifier.fetchComprobanteById(id);
         ticketSaleNotifier.updateTicket(comprobante);

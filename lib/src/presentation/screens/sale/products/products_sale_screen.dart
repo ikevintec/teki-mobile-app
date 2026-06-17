@@ -26,7 +26,8 @@ import 'package:teki_app/src/utils/notifications.dart';
 
 class ProductsSaleScreen extends ConsumerStatefulWidget {
   final int? id;
-  const ProductsSaleScreen({super.key,this.id});
+  final int? quotationId;
+  const ProductsSaleScreen({super.key, this.id, this.quotationId});
 
   @override
   ConsumerState<ProductsSaleScreen> createState() => _ProductsSaleScreenState();
@@ -72,7 +73,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     
     final providerProductSale = ref.read(productSaleProvider.notifier);
     Future.microtask(() {
-      providerProductSale.loadInitialData(widget.id);
+      providerProductSale.loadInitialData(widget.id, quotationId: widget.quotationId);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

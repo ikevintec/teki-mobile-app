@@ -17,6 +17,11 @@ class QuotationRepositoryImpl extends QuotationRepository {
   }
 
   @override
+  Future<Ticket> updateQuotation(Ticket ticket) {
+    return datasource.updateQuotation(ticket);
+  }
+
+  @override
   Future<int> getNextQuotationNumber(String tipoDocumento, String serie) {
     return datasource.getNextQuotationNumber(tipoDocumento, serie);
   }
@@ -29,5 +34,10 @@ class QuotationRepositoryImpl extends QuotationRepository {
   @override
   Future<List<Quotation>> getQuotations(Map<String, dynamic> params) {
     return datasource.getQuotations(params);
+  }
+
+  @override
+  Future<void> deleteQuotation(int id) {
+    return datasource.deleteQuotation(id);
   }
 }

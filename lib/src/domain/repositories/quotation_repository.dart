@@ -5,6 +5,9 @@ abstract class QuotationRepository {
   /// Crea una cotización
   Future<Ticket> createQuotation(Ticket ticket);
 
+  /// Actualiza una cotización existente (modo edición)
+  Future<Ticket> updateQuotation(Ticket ticket);
+
   /// Obtiene el siguiente número de cotización según tipoDocumento y serie
   Future<int> getNextQuotationNumber(String tipoDocumento, String serie);
 
@@ -13,4 +16,7 @@ abstract class QuotationRepository {
 
   /// Lista paginada de cotizaciones según filtros
   Future<List<Quotation>> getQuotations(Map<String, dynamic> params);
+
+  /// Anula (elimina) una cotización por id
+  Future<void> deleteQuotation(int id);
 }

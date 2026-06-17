@@ -78,6 +78,23 @@ class QuotationListNotifier extends StateNotifier<QuotationListState> {
     await loadFirstPage(desde: state.filtroDesde, hasta: state.filtroHasta);
   }
 
+  Future<bool> deleteQuotation(int id) async {
+    try {
+      await repository.deleteQuotation(id);
+      await loadFirstPage(
+        desde: state.filtroDesde,
+        hasta: state.filtroHasta,
+        serie: state.filtroSerie,
+        numero: state.filtroNumero,
+        estadoCotizacion: state.filtroEstadoCotizacion,
+      );
+      return true;
+    } catch (e) {
+      errorNotification("Error al anular la cotización: $e");
+      return false;
+    }
+  }
+
   Future<void> fetchMoreQuotations() async {
     if (state.isLoading || !state.hasMore) return;
 

@@ -16,14 +16,16 @@ class QuotationViewNotifier extends StateNotifier<QuotationViewState> {
   QuotationViewNotifier({required this.repository})
       : super(QuotationViewState.initial());
 
-  Future<void> fetchQuotationById(int id) async {
+  Future<Quotation> fetchQuotationById(int id) async {
     state = state.copyWith(isLoading: true, id: id);
     try {
       final quotation = await repository.getQuotationById(id);
       state = state.copyWith(quotation: quotation, isLoading: false);
+      return quotation;
     } catch (e) {
       state = state.copyWith(isLoading: false);
       errorNotification("Error al cargar la cotización: $e");
+      return Future.error(e.toString());
     }
   }
 

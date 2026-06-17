@@ -5,6 +5,7 @@ import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/quotationDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -242,4 +243,63 @@ class Quotation {
     'incIgv': incIgv,
     'agruparItems': agruparItems,
   };
+
+  /// Convierte esta cotización en un Ticket para reutilizar el formulario
+  /// de venta (ProductsSaleScreen) en el flujo de edición de cotizaciones.
+  Ticket toTicketForEdit() {
+    return Ticket(
+      id: id,
+      serie: serie,
+      numero: numero,
+      fechaEmision: fechaEmision,
+      fechaEmisionDate: fechaEmisionDate,
+      horaEmision: horaEmision,
+      tipoComprobante: 'CO',
+      codigoMoneda: codigoMoneda,
+      fechaVencimiento: fechaVencimiento,
+      cliente: cliente,
+      tipoDocumentoReceptor: tipoDocumentoReceptor,
+      numeroDocumentoReceptor: numeroDocumentoReceptor,
+      denominacionReceptor: denominacionReceptor,
+      direccionReceptor: direccionReceptor,
+      emailReceptor: emailReceptor,
+      telefonoReceptor: telefonoReceptor,
+      totalValorVentaExportacion: totalValorVentaExportacion,
+      totalValorVentaGravada: totalValorVentaGravada,
+      totalValorVentaInafecta: totalValorVentaInafecta,
+      totalValorVentaExonerada: totalValorVentaExonerada,
+      totalValorVentaGratuita: totalValorVentaGratuita,
+      totalValorBaseIsc: totalValorBaseIsc,
+      totalValorBaseIgv: totalValorBaseIgv,
+      totalValorVentaGravadaIvap: totalValorVentaGravadaIvap,
+      totalTributosOperacionGratuita: totalTributosOperacionGratuita,
+      totalTributosBolsas: totalTributosBolsas,
+      totalIvap: totalIvap,
+      totalIgv: totalIgv,
+      totalIsc: totalIsc,
+      otrosTributos: otrosTributos,
+      otrosCargos: otrosCargos,
+      totalValorVenta: totalValorVenta,
+      totalVenta: totalVenta,
+      montoBaseDescuento: montoBaseDescuento,
+      porcentajeDescuento: porcentajeDescuento,
+      totalDescuento: totalDescuento,
+      codigoDescuento: codigoDescuento,
+      adelanto: adelanto,
+      items: items?.map((e) => e.toTicketDetail()).toList(),
+      observacion: observacion,
+      empresa: empresa,
+      empresaAdjunta: empresaAdjunta,
+      movimientoCaja: movimientoCaja,
+      puntoVenta: puntoVenta,
+      estacionVenta: estacionVenta,
+      vendedor: vendedor,
+      esProduccion: esProduccion,
+      tipoVenta: tipoVenta,
+      diasCredito: diasCredito,
+      rucEmisor: rucEmisor,
+      incIgv: incIgv,
+      agruparItems: agruparItems,
+    );
+  }
 }

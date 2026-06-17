@@ -25,8 +25,35 @@ class RemoteQuotationDatasource extends QuotationDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final message =
-          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+          e.message ??
+          'Error desconocido del servidor';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  /// Actualiza una cotización existente (modo edición).
+  /// El endpoint no devuelve la cotización actualizada en el body,
+  /// por lo que se retorna el mismo ticket enviado (ya trae el id).
+  @override
+  Future<Ticket> updateQuotation(Ticket ticket) async {
+    try {
+      await dio.put(
+        '/quotation',
+        data: ticket.toJson(),
+      );
+      return ticket;
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+          e.message ??
+          'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
@@ -57,8 +84,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final message =
-          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+          e.message ??
+          'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
@@ -75,8 +104,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
-      final message =
-          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+          e.message ??
+          'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
@@ -116,6 +147,25 @@ class RemoteQuotationDatasource extends QuotationDatasource {
       final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
           e.message ??
           'Error de conexión';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  /// Anula (elimina) una cotización por id
+  @override
+  Future<void> deleteQuotation(int id) async {
+    try {
+      await dio.delete('/quotation/$id');
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+          e.message ??
+          'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
