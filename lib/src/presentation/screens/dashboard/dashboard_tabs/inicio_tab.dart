@@ -227,7 +227,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
         },
         {
           'title': 'Más\nOpciones',
-          'icon': 'assets/icons/icon_svg/plus_button.svg',
+          'icon': 'assets/icons/icon_svg/dots-three.svg',
           'action': () => _showMoreOptionsSheet(),
         },
       ];

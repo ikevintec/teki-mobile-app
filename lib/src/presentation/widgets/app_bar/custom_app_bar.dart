@@ -52,14 +52,14 @@ class CustomAppBar extends StatelessWidget {
               children: [
                 Text(
                   navigateName,
-                  style: GoogleFonts.raleway(
+                  style: GoogleFonts.roboto(
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
                   ),
                 ),
                 Text(
                   subtitle!,
-                  style: GoogleFonts.raleway(
+                  style: GoogleFonts.roboto(
                     fontSize: subtitleEmphasis ? 12 : 11,
                     fontWeight: subtitleEmphasis ? FontWeight.w800 : FontWeight.w400,
                     color: subtitleEmphasis

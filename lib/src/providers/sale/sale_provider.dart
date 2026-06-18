@@ -17,8 +17,9 @@ import 'package:teki_app/src/utils/notifications.dart';
 
 enum SaleMode { createVenta, editVenta, createCotizacion, editCotizacion }
 
-final ticketProvider =
-    StateNotifierProvider<TicketNotifier, TicketProvider>((ref) {
+final ticketProvider = StateNotifierProvider<TicketNotifier, TicketProvider>((
+  ref,
+) {
   final TicketsSaleRepository ticketsSaleRepository =
       TicketSaleRepositoryImpl();
   final QuotationRepository quotationRepository = QuotationRepositoryImpl();
@@ -37,43 +38,52 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     required this.ref,
     required this.ticketsSaleRepository,
     required this.quotationRepository,
-  }) : super(TicketProvider(
-            ticket: Ticket(
-                items: [],
-                incIgv: true,
-                tipoComprobante: 'NV', // Factura
-                codigoMoneda: 'PEN',
-                agruparItems: false,
-                cambio: 0,
-                despachoPosterior: false,
-                isRetencion: false,
-                pagoAnticipado: false,
-                tipoVenta: "CONTADO",
-                ordenCompra: '0101',
-                codigoTipoOperacion: '0101', // Por defecto
-                vendedor: ref.read(authStateProvider).user,
-                puntoVenta: ref.read(sesionProvider).office,
-                fechaEmisionDate: DateTime.now())));
+  }) : super(
+         TicketProvider(
+           ticket: Ticket(
+             items: [],
+             incIgv: true,
+             tipoComprobante: 'NV', // Factura
+             codigoMoneda: 'PEN',
+             agruparItems: false,
+             cambio: 0,
+             despachoPosterior: false,
+             isRetencion: false,
+             pagoAnticipado: false,
+             tipoVenta: "CONTADO",
+             ordenCompra: '0101',
+             codigoTipoOperacion: '0101', // Por defecto
+             vendedor: ref.read(authStateProvider).user,
+             puntoVenta: ref.read(sesionProvider).office,
+             fechaEmisionDate: DateTime.now(),
+           ),
+         ),
+       );
 
   void updateTicket(Ticket ticket) {
     state = state.copyWith(ticket: ticket);
   }
 
   void setTipoComprobante(String tipoDocumento) {
-    Ticket ticketToUpdate =
-        state.ticket.copyWith(tipoComprobante: tipoDocumento);
+    Ticket ticketToUpdate = state.ticket.copyWith(
+      tipoComprobante: tipoDocumento,
+    );
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
   /// Inicia una cotización nueva: fuerza tipoComprobante 'CO' y cambia el modo.
   void startNewQuotation() {
     Ticket ticketToUpdate = state.ticket.copyWith(tipoComprobante: 'CO');
-    state = state.copyWith(ticket: ticketToUpdate, mode: SaleMode.createCotizacion);
+    state = state.copyWith(
+      ticket: ticketToUpdate,
+      mode: SaleMode.createCotizacion,
+    );
   }
 
   void setTipoOperacion(String codigoTipoOperacion) {
-    Ticket ticketToUpdate =
-        state.ticket.copyWith(codigoTipoOperacion: codigoTipoOperacion);
+    Ticket ticketToUpdate = state.ticket.copyWith(
+      codigoTipoOperacion: codigoTipoOperacion,
+    );
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
@@ -84,9 +94,10 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
 
   void setFechaEmision(DateTime fechaEmision) {
     Ticket ticketToUpdate = state.ticket.copyWith(
-        fechaEmision: DateFormat('yyyy-MM-dd').format(fechaEmision),
-        horaEmision: DateFormat('HH:mm:ss').format(fechaEmision),
-        fechaEmisionDate: fechaEmision);
+      fechaEmision: DateFormat('yyyy-MM-dd').format(fechaEmision),
+      horaEmision: DateFormat('HH:mm:ss').format(fechaEmision),
+      fechaEmisionDate: fechaEmision,
+    );
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
@@ -164,7 +175,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   }
 
   void setPlacaVehiculo(String placa) {
-    Ticket ticketToUpdate = state.ticket.copyWith(placaVehiculo: placa.isEmpty ? null : placa.toUpperCase());
+    Ticket ticketToUpdate = state.ticket.copyWith(
+      placaVehiculo: placa.isEmpty ? null : placa.toUpperCase(),
+    );
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
@@ -212,7 +225,8 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       codigoMoneda: state.ticket.codigoMoneda,
       fechaVencimiento: state.ticket.fechaVencimiento,
       fechaVencimientoDate: state.ticket.fechaVencimientoDate,
-      codigoTipoOperacion: (state.ticket.codigoTipoOperacion?.isNotEmpty ?? false)
+      codigoTipoOperacion:
+          (state.ticket.codigoTipoOperacion?.isNotEmpty ?? false)
           ? state.ticket.codigoTipoOperacion
           : '0101',
       rucEmisor: state.ticket.rucEmisor,
@@ -228,23 +242,50 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       camposAdicionales: state.ticket.camposAdicionales,
       cuotas: state.isQuotation ? [] : state.ticket.cuotas,
       numeroOrdenRestaurante: state.ticket.numeroOrdenRestaurante,
-      codigoTipoOtroDocumentoRelacionado: state.ticket.codigoTipoOtroDocumentoRelacionado,
-      serieNumeroOtroDocumentoRelacionado: state.ticket.serieNumeroOtroDocumentoRelacionado,
-      totalValorVentaExportacion: state.ticket.totalValorVentaExportacion == 0 ? null : state.ticket.totalValorVentaExportacion,
-      totalValorVentaGravada: state.ticket.totalValorVentaGravada == 0 ? null : state.ticket.totalValorVentaGravada,
-      totalValorVentaInafecta: state.ticket.totalValorVentaInafecta == 0 ? null : state.ticket.totalValorVentaInafecta,
-      totalValorVentaExonerada: state.ticket.totalValorVentaExonerada == 0 ? null : state.ticket.totalValorVentaExonerada,
-      totalValorVentaGratuita: state.ticket.totalValorVentaGratuita == 0 ? null : state.ticket.totalValorVentaGratuita,
-      totalValorBaseIsc: state.ticket.totalValorBaseIsc == 0 ? null : state.ticket.totalValorBaseIsc,
-      totalValorBaseIgv: state.ticket.totalValorBaseIgv == 0 ? null : state.ticket.totalValorBaseIgv,
-      totalValorVentaGravadaIvap: state.ticket.totalValorVentaGravadaIvap == 0 ? null : state.ticket.totalValorVentaGravadaIvap,
-      totalTributosOperacionGratuita: state.ticket.totalTributosOperacionGratuita == 0 ? null : state.ticket.totalTributosOperacionGratuita,
-      totalTributosBolsas: state.ticket.totalTributosBolsas == 0 ? null : state.ticket.totalTributosBolsas,
+      codigoTipoOtroDocumentoRelacionado:
+          state.ticket.codigoTipoOtroDocumentoRelacionado,
+      serieNumeroOtroDocumentoRelacionado:
+          state.ticket.serieNumeroOtroDocumentoRelacionado,
+      totalValorVentaExportacion: state.ticket.totalValorVentaExportacion == 0
+          ? null
+          : state.ticket.totalValorVentaExportacion,
+      totalValorVentaGravada: state.ticket.totalValorVentaGravada == 0
+          ? null
+          : state.ticket.totalValorVentaGravada,
+      totalValorVentaInafecta: state.ticket.totalValorVentaInafecta == 0
+          ? null
+          : state.ticket.totalValorVentaInafecta,
+      totalValorVentaExonerada: state.ticket.totalValorVentaExonerada == 0
+          ? null
+          : state.ticket.totalValorVentaExonerada,
+      totalValorVentaGratuita: state.ticket.totalValorVentaGratuita == 0
+          ? null
+          : state.ticket.totalValorVentaGratuita,
+      totalValorBaseIsc: state.ticket.totalValorBaseIsc == 0
+          ? null
+          : state.ticket.totalValorBaseIsc,
+      totalValorBaseIgv: state.ticket.totalValorBaseIgv == 0
+          ? null
+          : state.ticket.totalValorBaseIgv,
+      totalValorVentaGravadaIvap: state.ticket.totalValorVentaGravadaIvap == 0
+          ? null
+          : state.ticket.totalValorVentaGravadaIvap,
+      totalTributosOperacionGratuita:
+          state.ticket.totalTributosOperacionGratuita == 0
+          ? null
+          : state.ticket.totalTributosOperacionGratuita,
+      totalTributosBolsas: state.ticket.totalTributosBolsas == 0
+          ? null
+          : state.ticket.totalTributosBolsas,
       totalIvap: state.ticket.totalIvap == 0 ? null : state.ticket.totalIvap,
       totalIgv: state.ticket.totalIgv == 0 ? null : state.ticket.totalIgv,
       totalIsc: state.ticket.totalIsc == 0 ? null : state.ticket.totalIsc,
-      otrosTributos: state.ticket.otrosTributos == 0 ? null : state.ticket.otrosTributos,
-      otrosCargos: state.ticket.otrosCargos == 0 ? null : state.ticket.otrosCargos,
+      otrosTributos: state.ticket.otrosTributos == 0
+          ? null
+          : state.ticket.otrosTributos,
+      otrosCargos: state.ticket.otrosCargos == 0
+          ? null
+          : state.ticket.otrosCargos,
       porcentajeOtrosCargos: state.ticket.porcentajeOtrosCargos,
       totalValorVenta: state.ticket.totalValorVenta,
       totalVenta: state.ticket.totalVenta,
@@ -260,7 +301,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       porcentajeRetencion: state.ticket.porcentajeRetencion,
       montoBaseDescuento: state.ticket.montoBaseDescuento,
       porcentajeDescuento: state.ticket.porcentajeDescuento,
-      totalDescuento: state.ticket.totalDescuento == 0 ? null : state.ticket.totalDescuento,
+      totalDescuento: state.ticket.totalDescuento == 0
+          ? null
+          : state.ticket.totalDescuento,
       descuentoGlobal: state.ticket.descuentoGlobal,
       descuentoPorItem: state.ticket.descuentoPorItem,
       codigoDescuento: state.ticket.codigoDescuento,
@@ -413,18 +456,20 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
             : state.ticket.totalValorVentaGravadaIvap,
         totalTributosOperacionGratuita:
             state.ticket.totalTributosOperacionGratuita == 0
-                ? null
-                : state.ticket.totalTributosOperacionGratuita,
+            ? null
+            : state.ticket.totalTributosOperacionGratuita,
         totalTributosBolsas: state.ticket.totalTributosBolsas == 0
             ? null
             : state.ticket.totalTributosBolsas,
         totalIvap: state.ticket.totalIvap == 0 ? null : state.ticket.totalIvap,
         totalIgv: state.ticket.totalIgv == 0 ? null : state.ticket.totalIgv,
         totalIsc: state.ticket.totalIsc == 0 ? null : state.ticket.totalIsc,
-        otrosTributos:
-            state.ticket.otrosTributos == 0 ? null : state.ticket.otrosTributos,
-        otrosCargos:
-            state.ticket.otrosCargos == 0 ? null : state.ticket.otrosCargos,
+        otrosTributos: state.ticket.otrosTributos == 0
+            ? null
+            : state.ticket.otrosTributos,
+        otrosCargos: state.ticket.otrosCargos == 0
+            ? null
+            : state.ticket.otrosCargos,
         porcentajeOtrosCargos: state.ticket.porcentajeOtrosCargos,
         totalValorVenta: state.ticket.totalValorVenta,
         totalVenta: state.ticket.totalVenta,
@@ -441,8 +486,8 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
         montoBaseDescuento: state.ticket.montoBaseDescuento,
         porcentajeDescuento: state.ticket.porcentajeDescuento,
         totalDescuento: state.ticket.totalDescuento == 0
-                ? null
-                : state.ticket.totalDescuento,
+            ? null
+            : state.ticket.totalDescuento,
         descuentoGlobal: state.ticket.descuentoGlobal,
         descuentoPorItem: state.ticket.descuentoPorItem,
         codigoDescuento: state.ticket.codigoDescuento,
@@ -529,9 +574,24 @@ class TicketProvider {
   final SaleMode mode;
   TicketProvider({required this.ticket, this.mode = SaleMode.createVenta});
 
-  bool get isEdit => mode == SaleMode.editVenta || mode == SaleMode.editCotizacion;
+  bool get isEdit =>
+      mode == SaleMode.editVenta || mode == SaleMode.editCotizacion;
   bool get isQuotation =>
       mode == SaleMode.createCotizacion || mode == SaleMode.editCotizacion;
+  bool get isSaleFromQuotation => ticket.cotizacion != null;
+
+  /// Subtítulo a mostrar en el AppBar a lo largo de todo el flujo de venta
+  /// (Cliente, Productos, Resumen) cuando se está creando/editando una
+  /// cotización, o cuando se está generando una venta a partir de una.
+  String? get subtitleLabel {
+    if (isQuotation) return 'Cotización';
+    if (isSaleFromQuotation) {
+      return 'Venta cotizada de ${ticket.cotizacion?.serie ?? '--'}-${ticket.cotizacion?.numero ?? '--'}';
+    }
+    return null;
+  }
+
+  bool get subtitleEmphasis => isQuotation || isSaleFromQuotation;
 
   String get continueButtonLabel {
     switch (mode) {
@@ -559,10 +619,7 @@ class TicketProvider {
     }
   }
 
-  TicketProvider copyWith({
-    Ticket? ticket,
-    SaleMode? mode,
-  }) {
+  TicketProvider copyWith({Ticket? ticket, SaleMode? mode}) {
     return TicketProvider(
       ticket: ticket ?? this.ticket,
       mode: mode ?? this.mode,

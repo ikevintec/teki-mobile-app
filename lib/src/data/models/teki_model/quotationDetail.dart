@@ -86,7 +86,9 @@ class QuotationDetail {
     this.producto,
   });
 
-  factory QuotationDetail.fromJson(Map<String, dynamic> json) => QuotationDetail(
+  factory QuotationDetail.fromJson(
+    Map<String, dynamic> json,
+  ) => QuotationDetail(
     id: json['id'],
     numeroOrden: json['numeroOrden'],
     numeroItem: json['numeroItem'],
@@ -99,7 +101,8 @@ class QuotationDetail {
     codigoProductoGS1: json['codigoProductoGS1'],
     valorUnitario: (json['valorUnitario'] as num?)?.toDouble(),
     precioVentaUnitario: (json['precioVentaUnitario'] as num?)?.toDouble(),
-    valorReferencialUnitario: (json['valorReferencialUnitario'] as num?)?.toDouble(),
+    valorReferencialUnitario: (json['valorReferencialUnitario'] as num?)
+        ?.toDouble(),
     montoBaseIgv: (json['montoBaseIgv'] as num?)?.toDouble(),
     montoBaseIvap: (json['montoBaseIvap'] as num?)?.toDouble(),
     montoBaseExportacion: (json['montoBaseExportacion'] as num?)?.toDouble(),
@@ -115,8 +118,10 @@ class QuotationDetail {
     porcentajeIgv: (json['porcentajeIgv'] as num?)?.toDouble(),
     porcentajeIvap: (json['porcentajeIvap'] as num?)?.toDouble(),
     porcentajeIsc: (json['porcentajeIsc'] as num?)?.toDouble(),
-    porcentajeOtrosTributos: (json['porcentajeOtrosTributos'] as num?)?.toDouble(),
-    porcentajeTributoVentaGratuita: (json['porcentajeTributoVentaGratuita'] as num?)?.toDouble(),
+    porcentajeOtrosTributos: (json['porcentajeOtrosTributos'] as num?)
+        ?.toDouble(),
+    porcentajeTributoVentaGratuita:
+        (json['porcentajeTributoVentaGratuita'] as num?)?.toDouble(),
     codigoTipoCalculoIsc: json['codigoTipoCalculoIsc'],
     codigoTipoAfectacionIgv: json['codigoTipoAfectacionIgv'],
     valorVenta: (json['valorVenta'] as num?)?.toDouble(),
@@ -126,7 +131,9 @@ class QuotationDetail {
     descuento: (json['descuento'] as num?)?.toDouble(),
     codigoDescuento: json['codigoDescuento'],
     estado: json['estado'],
-    producto: json['producto'] != null ? Product.fromJson(json['producto']) : null,
+    producto: json['producto'] != null
+        ? Product.fromJson(json['producto'])
+        : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -174,9 +181,13 @@ class QuotationDetail {
 
   /// Convierte este detalle de cotización en un detalle de ticket,
   /// para poder reutilizar el formulario de venta en la edición de cotizaciones.
-  TicketDetail toTicketDetail() {
+  /// [keepId]: false cuando el detalle se usa para crear un Ticket NUEVO
+  /// (p. ej. "Generar venta" desde una cotización). El id de QuotationDetail
+  /// no corresponde a una fila de TicketDetail; enviarlo hace que Hibernate
+  /// trate el detalle como una entidad "detached" y falle el persist.
+  TicketDetail toTicketDetail({bool keepId = true}) {
     return TicketDetail(
-      id: id,
+      id: keepId ? id : null,
       numeroOrden: numeroOrden,
       numeroItem: numeroItem,
       cantidad: cantidad,

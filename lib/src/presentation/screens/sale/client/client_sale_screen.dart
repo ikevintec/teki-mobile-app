@@ -33,7 +33,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   final GlobalKey _fieldKey = GlobalKey();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-// 1. Mapeo de códigos a texto
+  // 1. Mapeo de códigos a texto
   final Map<String, String> tipoDocumentoMap = {
     '0': 'DOC NO DOM SIN RUC',
     '1': 'DNI',
@@ -51,8 +51,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     final completer = Completer<List<Customer>>();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (query.trim().isNotEmpty) {
-        final customers =
-            await ref.read(customerSaleProvider.notifier).getCustomerss(query);
+        final customers = await ref
+            .read(customerSaleProvider.notifier)
+            .getCustomerss(query);
         completer.complete(customers);
       } else {
         ref.read(customerSaleProvider.notifier).clearCustomers();
@@ -71,8 +72,10 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
 
     // Si no hay cliente cargado, usar el cliente por defecto de la sesión
     if ((customer.razonSocial ?? '').isEmpty) {
-      final defaultCustomer =
-          ref.read(sesionProvider).config?.clientePorDefectoData;
+      final defaultCustomer = ref
+          .read(sesionProvider)
+          .config
+          ?.clientePorDefectoData;
       if (defaultCustomer != null) {
         customer = defaultCustomer;
         // Diferir la modificación del provider para evitar modificarlo durante el build
@@ -91,7 +94,8 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
       _emailController.text = customer.email ?? '';
       _telefonoController.text = customer.telefono ?? '';
       final tipoDocCodigo = customer.tipoDocumento?.toString();
-      if (tipoDocCodigo != null && tipoDocumentoMap.containsKey(tipoDocCodigo)) {
+      if (tipoDocCodigo != null &&
+          tipoDocumentoMap.containsKey(tipoDocCodigo)) {
         _selectedTipoDocumentoValue = tipoDocCodigo;
       }
     }
@@ -110,22 +114,21 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
 
   void updateCustomerDisplay(Customer customer) {
     ref.read(customerSaleProvider.notifier).selectCustomer(customer);
-    
+
     final customerName = customer.razonSocial ?? '';
-    
+
     _nombreController.text = customerName;
     if (_autocompleteController != null) {
       _autocompleteController!.text = customerName;
     }
-    
+
     _documentoController.text = customer.numeroDocumento ?? '';
     _direccionController.text = customer.direccionCompleta ?? '';
     _emailController.text = customer.email ?? '';
     _telefonoController.text = customer.telefono ?? '';
 
     final tipoDocCodigo = customer.tipoDocumento?.toString();
-    if (tipoDocCodigo != null &&
-        tipoDocumentoMap.containsKey(tipoDocCodigo)) {
+    if (tipoDocCodigo != null && tipoDocumentoMap.containsKey(tipoDocCodigo)) {
       setState(() {
         _selectedTipoDocumentoValue = tipoDocCodigo;
       });
@@ -138,13 +141,15 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     final ticketP = ref.watch(ticketProvider);
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(ticketP.ticket.pedidoRestaurante != null ? 72 : 60),
+        preferredSize: Size.fromHeight(
+          ticketP.ticket.pedidoRestaurante != null ? 72 : 60,
+        ),
         child: CustomAppBar(
           navigateName: "Cliente",
           subtitle: ticketP.ticket.pedidoRestaurante != null
               ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : (ticketP.isQuotation ? 'Cotización' : null),
-          subtitleEmphasis: ticketP.isQuotation,
+              : ticketP.subtitleLabel,
+          subtitleEmphasis: ticketP.subtitleEmphasis,
         ),
       ),
       body: Container(
@@ -186,117 +191,155 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                               Autocomplete<Customer>(
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) async {
-                                  if (textEditingValue.text.trim().isEmpty) {
-                                    clienteNotifier.clearCustomers();
-                                    return const Iterable<Customer>.empty();
-                                  }
+                                      if (textEditingValue.text
+                                          .trim()
+                                          .isEmpty) {
+                                        clienteNotifier.clearCustomers();
+                                        return const Iterable<Customer>.empty();
+                                      }
 
-                                  return await onSearchChanged(
-                                      textEditingValue.text);
-                                },
+                                      return await onSearchChanged(
+                                        textEditingValue.text,
+                                      );
+                                    },
                                 displayStringForOption: (Customer option) =>
                                     option.razonSocial ?? 'Sin nombre',
-                                fieldViewBuilder: (context, controller,
-                                    focusNode, onEditingComplete) {
-                                  _autocompleteController = controller;
-                                  
-                                  if (controller.text.isEmpty && _nombreController.text.isNotEmpty) {
-                                    controller.text = _nombreController.text;
-                                  }
+                                fieldViewBuilder:
+                                    (
+                                      context,
+                                      controller,
+                                      focusNode,
+                                      onEditingComplete,
+                                    ) {
+                                      _autocompleteController = controller;
 
-                                  _nombreController.value = controller.value;
+                                      if (controller.text.isEmpty &&
+                                          _nombreController.text.isNotEmpty) {
+                                        controller.text =
+                                            _nombreController.text;
+                                      }
 
-                                  return Container(
-                                    key: _fieldKey,
-                                    child: TextField(
-                                      controller: controller,
-                                      focusNode: focusNode,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Nombre',
-                                        hintText: 'Ingrese el nombre',
-                                        filled: true,
-                                        fillColor:
-                                            Color.fromARGB(255, 255, 255, 255),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(12)),
-                                          borderSide: BorderSide(
-                                              color: Color.fromARGB(
-                                                  255, 233, 233, 233)),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(30)),
-                                          borderSide: BorderSide(
-                                              color: Color.fromARGB(
-                                                  255, 194, 194, 194)),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(30)),
-                                          borderSide: BorderSide(
-                                            color: ColorSchema.primaryColor,
-                                            width: 1,
+                                      _nombreController.value =
+                                          controller.value;
+
+                                      return Container(
+                                        key: _fieldKey,
+                                        child: TextField(
+                                          controller: controller,
+                                          focusNode: focusNode,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Nombre',
+                                            hintText: 'Ingrese el nombre',
+                                            filled: true,
+                                            fillColor: Color.fromARGB(
+                                              255,
+                                              255,
+                                              255,
+                                              255,
+                                            ),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(12),
+                                              ),
+                                              borderSide: BorderSide(
+                                                color: Color.fromARGB(
+                                                  255,
+                                                  233,
+                                                  233,
+                                                  233,
+                                                ),
+                                              ),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(30),
+                                              ),
+                                              borderSide: BorderSide(
+                                                color: Color.fromARGB(
+                                                  255,
+                                                  194,
+                                                  194,
+                                                  194,
+                                                ),
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(30),
+                                              ),
+                                              borderSide: BorderSide(
+                                                color: ColorSchema.primaryColor,
+                                                width: 1,
+                                              ),
+                                            ),
+                                            prefixIcon: Icon(Icons.person),
                                           ),
-                                        ),
-                                        prefixIcon: Icon(Icons.person),
-                                      ),
-                                      style: const TextStyle(fontSize: 14),
-                                      onEditingComplete: () {
-                                        FocusScope.of(context).unfocus();
-                                      },
-                                    ),
-                                  );
-                                },
-                                optionsViewBuilder:
-                                    (context, onSelected, options) {
-                                  final renderBox = _fieldKey.currentContext
-                                      ?.findRenderObject() as RenderBox?;
-                                  final fieldWidth =
-                                      renderBox?.size.width ?? 400;
-
-                                  return Align(
-                                    alignment: Alignment.topLeft,
-                                    child: ConstrainedBox(
-                                      constraints:
-                                          BoxConstraints(maxWidth: fieldWidth),
-                                      child: Material(
-                                        elevation: 4,
-                                        borderRadius: BorderRadius.circular(12),
-                                        color: Colors.white,
-                                        child: ListView.separated(
-                                          padding: const EdgeInsets.all(8),
-                                          shrinkWrap: true,
-                                          itemCount: options.length,
-                                          separatorBuilder: (_, __) =>
-                                              const Divider(height: 1),
-                                          itemBuilder: (context, index) {
-                                            final customer =
-                                                options.elementAt(index);
-                                            return ListTile(
-                                              leading: const Icon(Icons.person),
-                                              title: Text(
-                                                customer.razonSocial ??
-                                                    'Sin nombre',
-                                                style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              subtitle: Text(
-                                                customer.numeroDocumento
-                                                        ?.toString() ??
-                                                    '',
-                                                style: const TextStyle(
-                                                    color: Colors.grey),
-                                              ),
-                                              onTap: () => onSelected(customer),
-                                            );
+                                          style: const TextStyle(fontSize: 14),
+                                          onEditingComplete: () {
+                                            FocusScope.of(context).unfocus();
                                           },
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
+                                      );
+                                    },
+                                optionsViewBuilder:
+                                    (context, onSelected, options) {
+                                      final renderBox =
+                                          _fieldKey.currentContext
+                                                  ?.findRenderObject()
+                                              as RenderBox?;
+                                      final fieldWidth =
+                                          renderBox?.size.width ?? 400;
+
+                                      return Align(
+                                        alignment: Alignment.topLeft,
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            maxWidth: fieldWidth,
+                                          ),
+                                          child: Material(
+                                            elevation: 4,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            color: Colors.white,
+                                            child: ListView.separated(
+                                              padding: const EdgeInsets.all(8),
+                                              shrinkWrap: true,
+                                              itemCount: options.length,
+                                              separatorBuilder: (_, __) =>
+                                                  const Divider(height: 1),
+                                              itemBuilder: (context, index) {
+                                                final customer = options
+                                                    .elementAt(index);
+                                                return ListTile(
+                                                  leading: const Icon(
+                                                    Icons.person,
+                                                  ),
+                                                  title: Text(
+                                                    customer.razonSocial ??
+                                                        'Sin nombre',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  subtitle: Text(
+                                                    customer.numeroDocumento
+                                                            ?.toString() ??
+                                                        '',
+                                                    style: const TextStyle(
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                  onTap: () =>
+                                                      onSelected(customer),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                 onSelected: (Customer selection) {
                                   FocusScope.of(context).unfocus();
                                   updateCustomerDisplay(selection);
@@ -307,12 +350,14 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 label: "Tipo documento",
                                 hint: "Selecciona un tipo documento",
                                 items: tipoDocumentoMap.values.toList(),
-                                selectionItem: tipoDocumentoMap[
-                                    _selectedTipoDocumentoValue ?? ''],
+                                selectionItem:
+                                    tipoDocumentoMap[_selectedTipoDocumentoValue ??
+                                        ''],
                                 onChanged: (value) {
                                   final selectedCode = tipoDocumentoMap.entries
                                       .firstWhere(
-                                          (entry) => entry.value == value)
+                                        (entry) => entry.value == value,
+                                      )
                                       .key;
                                   setState(() {
                                     _selectedTipoDocumentoValue = selectedCode;
@@ -331,66 +376,86 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                   if (value.isEmpty) {
                                     return;
                                   }
-                                    // Validar y buscar cliente según el tipo de documento y su longitud
-                                    final tipoDoc = _selectedTipoDocumentoValue;
-                                    if (tipoDoc == '6' && value.length == 11) {
+                                  // Validar y buscar cliente según el tipo de documento y su longitud
+                                  final tipoDoc = _selectedTipoDocumentoValue;
+                                  if (tipoDoc == '6' && value.length == 11) {
                                     // RUC
-                                    final customers = await ref.read(customerSaleProvider.notifier).getCustomerss(value);
+                                    final customers = await ref
+                                        .read(customerSaleProvider.notifier)
+                                        .getCustomerss(value);
                                     if (customers.isNotEmpty) {
                                       updateCustomerDisplay(customers.first);
                                     }
-                                    } else if (tipoDoc == '1' && value.length == 8) {
+                                  } else if (tipoDoc == '1' &&
+                                      value.length == 8) {
                                     // DNI
-                                    final customers = await ref.read(customerSaleProvider.notifier).getCustomerss(value);
+                                    final customers = await ref
+                                        .read(customerSaleProvider.notifier)
+                                        .getCustomerss(value);
                                     if (customers.isNotEmpty) {
                                       updateCustomerDisplay(customers.first);
                                     }
-                                    } else if (tipoDoc == '4' && value.length == 9) {
+                                  } else if (tipoDoc == '4' &&
+                                      value.length == 9) {
                                     // CARNET DE EXT.
-                                    final customers = await ref.read(customerSaleProvider.notifier).getCustomerss(value);
+                                    final customers = await ref
+                                        .read(customerSaleProvider.notifier)
+                                        .getCustomerss(value);
                                     if (customers.isNotEmpty) {
                                       updateCustomerDisplay(customers.first);
                                     }
-                                    } else if (tipoDoc == '7' && value.length >= 8 && value.length <= 12) {
+                                  } else if (tipoDoc == '7' &&
+                                      value.length >= 8 &&
+                                      value.length <= 12) {
                                     // PASAPORTE
-                                    final customers = await ref.read(customerSaleProvider.notifier).getCustomerss(value);
+                                    final customers = await ref
+                                        .read(customerSaleProvider.notifier)
+                                        .getCustomerss(value);
                                     if (customers.isNotEmpty) {
                                       updateCustomerDisplay(customers.first);
                                     }
-                                    }
+                                  }
                                 }, // Puedes enlazar con tu lógica si es necesario
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
                                     return 'Este campo es obligatorio';
                                   }
-                                  
+
                                   // Validaciones específicas por tipo de documento
                                   final tipoDoc = _selectedTipoDocumentoValue;
                                   final documento = value.trim();
-                                  
+
                                   switch (tipoDoc) {
                                     case '1': // DNI
-                                      if (!RegExp(r'^\d{8}$').hasMatch(documento)) {
+                                      if (!RegExp(
+                                        r'^\d{8}$',
+                                      ).hasMatch(documento)) {
                                         return 'DNI debe tener exactamente 8 dígitos';
                                       }
                                       break;
                                     case '6': // RUC
-                                      if (!RegExp(r'^\d{11}$').hasMatch(documento)) {
+                                      if (!RegExp(
+                                        r'^\d{11}$',
+                                      ).hasMatch(documento)) {
                                         return 'RUC debe tener exactamente 11 dígitos';
                                       }
                                       break;
                                     case '4': // CARNET DE EXTRANJERÍA
-                                      if (!RegExp(r'^\d{9}$').hasMatch(documento)) {
+                                      if (!RegExp(
+                                        r'^\d{9}$',
+                                      ).hasMatch(documento)) {
                                         return 'Carnet de extranjería debe tener 9 dígitos';
                                       }
                                       break;
                                     case '7': // PASAPORTE
-                                      if (!RegExp(r'^[A-Za-z0-9]{8,12}$').hasMatch(documento)) {
+                                      if (!RegExp(
+                                        r'^[A-Za-z0-9]{8,12}$',
+                                      ).hasMatch(documento)) {
                                         return 'Pasaporte debe tener entre 8 y 12 caracteres alfanuméricos';
                                       }
                                       break;
                                   }
-                                  
+
                                   return null;
                                 },
                               ),
@@ -403,7 +468,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 //icon: const Icon(Icons.location_on),
                                 //maxLength: 100,
                                 onChanged:
-                                    (_) {}, // Puedes manejar cambios si es necesario
+                                    (
+                                      _,
+                                    ) {}, // Puedes manejar cambios si es necesario
                                 validator: (value) {
                                   return null;
                                 },
@@ -417,7 +484,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 //icon: const Icon(Icons.email),
                                 //maxLength: 100,
                                 onChanged:
-                                    (_) {}, // Puedes manejar cambios si lo necesitas
+                                    (
+                                      _,
+                                    ) {}, // Puedes manejar cambios si lo necesitas
                                 validator: (value) {
                                   return null;
                                 },
@@ -431,7 +500,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 //icon: const Icon(Icons.phone),
                                 //maxLength: 9,
                                 onChanged:
-                                    (_) {}, // Puedes enlazar lógica aquí si lo necesitas
+                                    (
+                                      _,
+                                    ) {}, // Puedes enlazar lógica aquí si lo necesitas
                                 validator: (value) {
                                   return null;
                                 },
@@ -450,19 +521,21 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
                                 clienteNotifier.setCustomer(
-                                    id: id,
-                                    nombre: _nombreController.text,
-                                    direccion: _direccionController.text,
-                                    documento: _documentoController.text,
-                                    email: _emailController.text,
-                                    telefono: _telefonoController.text,
-                                    tipoDocumento:
-                                        _selectedTipoDocumentoValue ?? '');
+                                  id: id,
+                                  nombre: _nombreController.text,
+                                  direccion: _direccionController.text,
+                                  documento: _documentoController.text,
+                                  email: _emailController.text,
+                                  telefono: _telefonoController.text,
+                                  tipoDocumento:
+                                      _selectedTipoDocumentoValue ?? '',
+                                );
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SaleInfoScreen()),
+                                    builder: (context) =>
+                                        const SaleInfoScreen(),
+                                  ),
                                 );
                               }
                             },

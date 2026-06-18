@@ -177,6 +177,19 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                         backgroundColor: Colors.red.shade600,
                         onTap: () => _confirmAnular(quotation.id ?? -1),
                       ),
+                      DismissibleActionData(
+                        type: DismissibleActionType.generarVenta,
+                        label: 'Generar venta',
+                        icon: Icons.point_of_sale,
+                        backgroundColor: Colors.green.shade600,
+                        onTap: () {
+                          Get.to(
+                            () => ProductsSaleScreen(
+                              quotationIdForSale: quotation.id,
+                            ),
+                          );
+                        },
+                      ),
                     ],
               child: Column(
                 children: [

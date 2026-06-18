@@ -138,7 +138,9 @@ class Quotation {
     tiempoEntrega: json['tiempoEntrega'],
     codigoMoneda: json['codigoMoneda'],
     fechaVencimiento: json['fechaVencimiento'],
-    cliente: json['cliente'] != null ? Customer.fromJson(json['cliente']) : null,
+    cliente: json['cliente'] != null
+        ? Customer.fromJson(json['cliente'])
+        : null,
     tipoDocumentoReceptor: json['tipoDocumentoReceptor'],
     numeroDocumentoReceptor: json['numeroDocumentoReceptor'],
     denominacionReceptor: json['denominacionReceptor'],
@@ -146,15 +148,22 @@ class Quotation {
     emailReceptor: json['emailReceptor'],
     telefonoReceptor: json['telefonoReceptor'],
     isQuotation: json['isQuotation'],
-    totalValorVentaExportacion: (json['totalValorVentaExportacion'] as num?)?.toDouble(),
-    totalValorVentaGravada: (json['totalValorVentaGravada'] as num?)?.toDouble(),
-    totalValorVentaInafecta: (json['totalValorVentaInafecta'] as num?)?.toDouble(),
-    totalValorVentaExonerada: (json['totalValorVentaExonerada'] as num?)?.toDouble(),
-    totalValorVentaGratuita: (json['totalValorVentaGratuita'] as num?)?.toDouble(),
+    totalValorVentaExportacion: (json['totalValorVentaExportacion'] as num?)
+        ?.toDouble(),
+    totalValorVentaGravada: (json['totalValorVentaGravada'] as num?)
+        ?.toDouble(),
+    totalValorVentaInafecta: (json['totalValorVentaInafecta'] as num?)
+        ?.toDouble(),
+    totalValorVentaExonerada: (json['totalValorVentaExonerada'] as num?)
+        ?.toDouble(),
+    totalValorVentaGratuita: (json['totalValorVentaGratuita'] as num?)
+        ?.toDouble(),
     totalValorBaseIsc: (json['totalValorBaseIsc'] as num?)?.toDouble(),
     totalValorBaseIgv: (json['totalValorBaseIgv'] as num?)?.toDouble(),
-    totalValorVentaGravadaIvap: (json['totalValorVentaGravadaIvap'] as num?)?.toDouble(),
-    totalTributosOperacionGratuita: (json['totalTributosOperacionGratuita'] as num?)?.toDouble(),
+    totalValorVentaGravadaIvap: (json['totalValorVentaGravadaIvap'] as num?)
+        ?.toDouble(),
+    totalTributosOperacionGratuita:
+        (json['totalTributosOperacionGratuita'] as num?)?.toDouble(),
     totalTributosBolsas: (json['totalTributosBolsas'] as num?)?.toDouble(),
     totalIvap: (json['totalIvap'] as num?)?.toDouble(),
     totalIgv: (json['totalIgv'] as num?)?.toDouble(),
@@ -169,13 +178,23 @@ class Quotation {
     codigoDescuento: json['codigoDescuento'],
     adelanto: (json['adelanto'] as num?)?.toDouble(),
     estadoCotizacion: json['estadoCotizacion'],
-    items: (json['items'] as List?)?.map((e) => QuotationDetail.fromJson(e)).toList(),
+    items: (json['items'] as List?)
+        ?.map((e) => QuotationDetail.fromJson(e))
+        .toList(),
     observacion: json['observacion'],
     empresa: json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
-    empresaAdjunta: json['empresaAdjunta'] != null ? AttachedCompany.fromJson(json['empresaAdjunta']) : null,
-    movimientoCaja: json['movimientoCaja'] != null ? CashRegisterDetail.fromJson(json['movimientoCaja']) : null,
-    puntoVenta: json['puntoVenta'] != null ? Office.fromJson(json['puntoVenta']) : null,
-    estacionVenta: json['estacionVenta'] != null ? SaleStation.fromJson(json['estacionVenta']) : null,
+    empresaAdjunta: json['empresaAdjunta'] != null
+        ? AttachedCompany.fromJson(json['empresaAdjunta'])
+        : null,
+    movimientoCaja: json['movimientoCaja'] != null
+        ? CashRegisterDetail.fromJson(json['movimientoCaja'])
+        : null,
+    puntoVenta: json['puntoVenta'] != null
+        ? Office.fromJson(json['puntoVenta'])
+        : null,
+    estacionVenta: json['estacionVenta'] != null
+        ? SaleStation.fromJson(json['estacionVenta'])
+        : null,
     vendedor: json['vendedor'] != null ? User.fromJson(json['vendedor']) : null,
     esProduccion: json['esProduccion'],
     tipoVenta: json['tipoVenta'],
@@ -243,6 +262,43 @@ class Quotation {
     'incIgv': incIgv,
     'agruparItems': agruparItems,
   };
+
+  /// Convierte esta cotización en un Ticket nuevo (sin id) para "Generar venta":
+  /// reutiliza cliente/items de la cotización pero se crea como un ticket normal
+  /// (tipoComprobante editable, por defecto Boleta), enlazado a la cotización
+  /// de origen mediante el campo `cotizacion` para que el backend la concrete.
+  Ticket toTicketForSale() {
+    return Ticket(
+      tipoComprobante: '03',
+      codigoMoneda: codigoMoneda,
+      cliente: cliente,
+      tipoDocumentoReceptor: tipoDocumentoReceptor,
+      numeroDocumentoReceptor: numeroDocumentoReceptor,
+      denominacionReceptor: denominacionReceptor,
+      direccionReceptor: direccionReceptor,
+      emailReceptor: emailReceptor,
+      telefonoReceptor: telefonoReceptor,
+      items: items?.map((e) => e.toTicketDetail(keepId: false)).toList(),
+      observacion: observacion,
+      empresa: empresa,
+      empresaAdjunta: empresaAdjunta,
+      puntoVenta: puntoVenta,
+      estacionVenta: estacionVenta,
+      vendedor: vendedor,
+      esProduccion: esProduccion,
+      tipoVenta: tipoVenta,
+      diasCredito: diasCredito,
+      rucEmisor: rucEmisor,
+      incIgv: incIgv,
+      agruparItems: agruparItems,
+      montoBaseDescuento: montoBaseDescuento,
+      porcentajeDescuento: porcentajeDescuento,
+      totalDescuento: totalDescuento,
+      codigoDescuento: codigoDescuento,
+      adelanto: adelanto,
+      cotizacion: Quotation(id: id, serie: serie, numero: numero),
+    );
+  }
 
   /// Convierte esta cotización en un Ticket para reutilizar el formulario
   /// de venta (ProductsSaleScreen) en el flujo de edición de cotizaciones.

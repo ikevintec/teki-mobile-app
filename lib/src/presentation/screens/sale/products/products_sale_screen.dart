@@ -27,7 +27,13 @@ import 'package:teki_app/src/utils/notifications.dart';
 class ProductsSaleScreen extends ConsumerStatefulWidget {
   final int? id;
   final int? quotationId;
-  const ProductsSaleScreen({super.key, this.id, this.quotationId});
+  final int? quotationIdForSale;
+  const ProductsSaleScreen({
+    super.key,
+    this.id,
+    this.quotationId,
+    this.quotationIdForSale,
+  });
 
   @override
   ConsumerState<ProductsSaleScreen> createState() => _ProductsSaleScreenState();
@@ -44,20 +50,24 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final formArray = form.control('products') as FormArray;
     formArray.clear();
     for (final product in products) {
-      formArray.add(FormGroup({
-        'description': FormControl<String>(
+      formArray.add(
+        FormGroup({
+          'description': FormControl<String>(
             value: "",
-            validators: [Validators.required, Validators.minLength(3)]),
-        'price': FormControl<double>(
+            validators: [Validators.required, Validators.minLength(3)],
+          ),
+          'price': FormControl<double>(
             value: product.precioVentaUnitario ?? 0.0,
-            validators: [Validators.required, Validators.min(0.01)]),
-        'quantity': FormControl<int>(
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+          'quantity': FormControl<int>(
             value: (product.cantidad ?? 1).toInt(),
-            validators: [Validators.required, Validators.min(1)]),
-      }));
+            validators: [Validators.required, Validators.min(1)],
+          ),
+        }),
+      );
     }
   }
-
 
   @override
   void initState() {
@@ -70,22 +80,26 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
         _syncAllProductsToProvider();
       }
     });
-    
+
     final providerProductSale = ref.read(productSaleProvider.notifier);
     Future.microtask(() {
-      providerProductSale.loadInitialData(widget.id, quotationId: widget.quotationId);
+      providerProductSale.loadInitialData(
+        widget.id,
+        quotationId: widget.quotationId,
+        quotationIdForSale: widget.quotationIdForSale,
+      );
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusManager.instance.primaryFocus?.unfocus();
     });
   }
-  
+
   void _syncAllProductsToProvider() {
     // Recopilar todos los datos de los formularios
     final formArray = form.control('products') as FormArray;
     final formsData = <Map<String, dynamic>>[];
-    
+
     for (int i = 0; i < formArray.controls.length; i++) {
       final formGroup = formArray.controls[i] as FormGroup;
       formsData.add({
@@ -94,7 +108,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
         'quantity': formGroup.control('quantity').value ?? 1,
       });
     }
-    
+
     // Llamar al método global del provider
     ref.read(productSaleProvider.notifier).syncAllProductsFromForms(formsData);
   }
@@ -108,19 +122,25 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
   }
 
   final form = FormGroup({
-    'products': FormArray([
-      FormGroup({
-        'description': FormControl<String>(
+    'products': FormArray(
+      [
+        FormGroup({
+          'description': FormControl<String>(
             value: "",
-            validators: [Validators.required, Validators.minLength(3)]),
-        'price': FormControl<double>(
-            value: 0.0, validators: [Validators.required, Validators.min(0.01)]),
-        'quantity': FormControl<int>(
-            value: 1, validators: [Validators.required, Validators.min(1)]),
-      }),
-    ], validators: [
-      Validators.minLength(1),
-    ]),
+            validators: [Validators.required, Validators.minLength(3)],
+          ),
+          'price': FormControl<double>(
+            value: 0.0,
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+          'quantity': FormControl<int>(
+            value: 1,
+            validators: [Validators.required, Validators.min(1)],
+          ),
+        }),
+      ],
+      validators: [Validators.minLength(1)],
+    ),
   });
 
   @override
@@ -142,32 +162,33 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     });
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(ticketP.ticket.pedidoRestaurante != null ? 72 : 60),
+        preferredSize: Size.fromHeight(
+          ticketP.ticket.pedidoRestaurante != null ? 72 : 60,
+        ),
         child: CustomAppBar(
           navigateName: "Escoge los productos",
           subtitle: ticketP.ticket.pedidoRestaurante != null
               ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : (ticketP.isQuotation ? 'Cotización' : null),
-          subtitleEmphasis: ticketP.isQuotation,
+              : ticketP.subtitleLabel,
+          subtitleEmphasis: ticketP.subtitleEmphasis,
         ),
       ),
       body: isLoading
-          ? ScreenLoader(
-              message: 'Cargando Información',
-            )
+          ? ScreenLoader(message: 'Cargando Información')
           : ReactiveForm(
               formGroup: form,
               child: Container(
                 color: ColorSchema.primaryColor,
                 child: Column(
                   children: [
-                    SearchProducts(
-                      form: form,
-                    ),
+                    SearchProducts(form: form),
                     // add row with 2 buttons add product and add service
                     Padding(
-                      padding:
-                          const EdgeInsets.only(left: 20, top: 15, right: 20),
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                        top: 15,
+                        right: 20,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -178,8 +199,9 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                               },
                               borderRadius: BorderRadius.circular(30),
                               child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.transparent,
                                   borderRadius: BorderRadius.circular(30),
@@ -192,7 +214,9 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                     Text(
                                       'Crear Producto',
                                       style: TextStyle(
-                                          color: Colors.white, fontSize: 14),
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -207,8 +231,9 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                               },
                               borderRadius: BorderRadius.circular(30),
                               child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.transparent,
                                   borderRadius: BorderRadius.circular(30),
@@ -221,7 +246,9 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                     Text(
                                       'Producto Libre',
                                       style: TextStyle(
-                                          color: Colors.white, fontSize: 14),
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -234,18 +261,26 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
 
                     Container(
                       padding: const EdgeInsets.only(
-                          top: 20, bottom: 10, left: 20, right: 20),
+                        top: 20,
+                        bottom: 10,
+                        left: 20,
+                        right: 20,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(40),
-                            topRight: Radius.circular(40)),
+                          topLeft: Radius.circular(40),
+                          topRight: Radius.circular(40),
+                        ),
                       ),
                       child: Column(
                         children: [
                           Container(
                             padding: const EdgeInsets.only(
-                                top: 3, bottom: 5, left: 16),
+                              top: 3,
+                              bottom: 5,
+                              left: 16,
+                            ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -259,7 +294,8 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                         .currencies
                                         .map((c) => c.codigoMoneda!)
                                         .toList(),
-                                    selectionItem: provider.currency?.codigoMoneda,
+                                    selectionItem:
+                                        provider.currency?.codigoMoneda,
                                     onChanged: (value) {
                                       notifier.setCurrency(value!);
                                     },
@@ -286,8 +322,9 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                         color: Colors.white,
                         child: products.isEmpty
                             ? Center(
-                                child:
-                                    Text("Aun no hay productos seleccionados"),
+                                child: Text(
+                                  "Aun no hay productos seleccionados",
+                                ),
                               )
                             : Focus(
                                 focusNode: _listFocusNode,
@@ -295,104 +332,142 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                   formArray:
                                       form.control('products') as FormArray,
                                   builder: (context, formArray, child) {
-                                  final controls = formArray.controls;
-                                  final visibleItems =
-                                      products.length < controls.length
-                                          ? products.length
-                                          : controls.length;
-                                  return Stack(
-                                    children: [
-                                      ListView.builder(
-                                        controller: _scrollController,
-                                        itemCount: visibleItems,
-                                        itemBuilder: (context, index) {
-                                          final formGroup = formArray
-                                              .controls[index] as FormGroup;
-                                          return Column(
-                                            children: [
-                                              DismissibleActionWidget(
-                                                actions: [
-                                                  if (products[index].producto != null)
-                                                    DismissibleActionData(
-                                                      type: DismissibleActionType.edit,
-                                                      label: 'Ver',
-                                                      icon: Icons.visibility,
-                                                      backgroundColor: ColorSchema.primaryColor,
-                                                      onTap: () {
-                                                        showCustomModal(
-                                                          context: context,
-                                                          child: ModalProductView(
-                                                            product: products[index].producto!,
+                                    final controls = formArray.controls;
+                                    final visibleItems =
+                                        products.length < controls.length
+                                        ? products.length
+                                        : controls.length;
+                                    return Stack(
+                                      children: [
+                                        ListView.builder(
+                                          controller: _scrollController,
+                                          itemCount: visibleItems,
+                                          itemBuilder: (context, index) {
+                                            final formGroup =
+                                                formArray.controls[index]
+                                                    as FormGroup;
+                                            return Column(
+                                              children: [
+                                                DismissibleActionWidget(
+                                                  actions: [
+                                                    if (products[index]
+                                                            .producto !=
+                                                        null)
+                                                      DismissibleActionData(
+                                                        type:
+                                                            DismissibleActionType
+                                                                .edit,
+                                                        label: 'Ver',
+                                                        icon: Icons.visibility,
+                                                        backgroundColor:
+                                                            ColorSchema
+                                                                .primaryColor,
+                                                        onTap: () {
+                                                          showCustomModal(
+                                                            context: context,
+                                                            child: ModalProductView(
+                                                              product:
+                                                                  products[index]
+                                                                      .producto!,
+                                                              index: index,
+                                                            ),
+                                                            tittle:
+                                                                "Ver Producto",
+                                                            allowButtons: false,
+                                                          );
+                                                        },
+                                                      ),
+                                                    if (_requiresSeriesValidation(
+                                                      products[index].producto,
+                                                    ))
+                                                      DismissibleActionData(
+                                                        type:
+                                                            DismissibleActionType
+                                                                .edit,
+                                                        label: 'Series',
+                                                        icon: Icons.list_alt,
+                                                        backgroundColor:
+                                                            ColorSchema
+                                                                .primaryColor
+                                                                .withValues(
+                                                                  alpha: 0.8,
+                                                                ),
+                                                        onTap: () {
+                                                          showSeriesConfigSheet(
+                                                            context,
+                                                            ticketDetail:
+                                                                products[index],
                                                             index: index,
-                                                          ),
-                                                          tittle: "Ver Producto",
-                                                          allowButtons: false
-                                                        );
-                                                      },
-                                                    ),
-                                                  if (_requiresSeriesValidation(products[index].producto))
-                                                    DismissibleActionData(
-                                                      type: DismissibleActionType.edit,
-                                                      label: 'Series',
-                                                      icon: Icons.list_alt,
-                                                      backgroundColor: ColorSchema.primaryColor.withValues(alpha: 0.8),
-                                                      onTap: () {
-                                                        showSeriesConfigSheet(
-                                                          context,
-                                                          ticketDetail: products[index],
-                                                          index: index,
-                                                        );
-                                                      },
-                                                    ),
-                                                  if (products[index].comandaDetalle == null)
-                                                    DismissibleActionData(
-                                                      type: DismissibleActionType.edit,
-                                                      label: 'Eliminar',
-                                                      icon: Icons.delete,
-                                                      backgroundColor: Colors.redAccent,
-                                                      onTap: () {
-                                                        Future.delayed(const Duration(milliseconds: 150), () {
-                                                          ref
-                                                              .read(productSaleProvider
-                                                                  .notifier)
-                                                              .removeProductSale(index);
-                                                        });
-                                                      },
-                                                    ),
-                                                ],
-                                                child: ProductItemCard(
-                                                  key: UniqueKey(),
-                                                  productTicketDetail:
-                                                      products[index],
-                                                  index: index,
-                                                  formGroup: formGroup,
-                                                  onQuantityChanged: _syncAllProductsToProvider,
+                                                          );
+                                                        },
+                                                      ),
+                                                    if (products[index]
+                                                            .comandaDetalle ==
+                                                        null)
+                                                      DismissibleActionData(
+                                                        type:
+                                                            DismissibleActionType
+                                                                .edit,
+                                                        label: 'Eliminar',
+                                                        icon: Icons.delete,
+                                                        backgroundColor:
+                                                            Colors.redAccent,
+                                                        onTap: () {
+                                                          Future.delayed(
+                                                            const Duration(
+                                                              milliseconds: 150,
+                                                            ),
+                                                            () {
+                                                              ref
+                                                                  .read(
+                                                                    productSaleProvider
+                                                                        .notifier,
+                                                                  )
+                                                                  .removeProductSale(
+                                                                    index,
+                                                                  );
+                                                            },
+                                                          );
+                                                        },
+                                                      ),
+                                                  ],
+                                                  child: ProductItemCard(
+                                                    key: UniqueKey(),
+                                                    productTicketDetail:
+                                                        products[index],
+                                                    index: index,
+                                                    formGroup: formGroup,
+                                                    onQuantityChanged:
+                                                        _syncAllProductsToProvider,
+                                                  ),
                                                 ),
-                                              ),
-                                              SizedBox(height:10),
-                                            ],
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                },
+                                                SizedBox(height: 10),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
                       ),
                     ),
 
                     Container(
                       padding: const EdgeInsets.only(
-                          top: 5, bottom: 20, left: 20, right: 20),
-                      //add border top
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+                        top: 5,
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
                       ),
+                      //add border top
+                      decoration: BoxDecoration(color: Colors.white),
                       child: Column(
                         children: [
                           Builder(
-                            builder: (context) => SummaryBarSales(showIndicatorKeyboard: true,),
+                            builder: (context) =>
+                                SummaryBarSales(showIndicatorKeyboard: true),
                           ),
                           Row(
                             children: [
@@ -404,34 +479,45 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                           form.markAllAsTouched();
 
                                           if (form.valid) {
-                                            final seriesInvalidas = products.where((p) =>
-                                              _requiresSeriesValidation(p.producto) &&
-                                              (p.lotes?.length ?? 0) != (p.cantidad ?? 1).toInt()
-                                            ).toList();
+                                            final seriesInvalidas = products
+                                                .where(
+                                                  (p) =>
+                                                      _requiresSeriesValidation(
+                                                        p.producto,
+                                                      ) &&
+                                                      (p.lotes?.length ?? 0) !=
+                                                          (p.cantidad ?? 1)
+                                                              .toInt(),
+                                                )
+                                                .toList();
                                             if (seriesInvalidas.isNotEmpty) {
                                               errorNotification(
-                                                "Configura las series de todos los productos (${seriesInvalidas.length} pendiente${seriesInvalidas.length > 1 ? 's' : ''})");
+                                                "Configura las series de todos los productos (${seriesInvalidas.length} pendiente${seriesInvalidas.length > 1 ? 's' : ''})",
+                                              );
                                               return;
                                             }
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      ClientSaleScreen()),
+                                                builder: (context) =>
+                                                    ClientSaleScreen(),
+                                              ),
                                             );
                                           }
                                           if (form
                                               .control('products')
                                               .hasError('minLength')) {
                                             errorNotification(
-                                                "Debe seleccionar al menos un producto");
+                                              "Debe seleccionar al menos un producto",
+                                            );
                                           }
                                         },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: ColorSchema.primaryColor,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
+                                      vertical: 12,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -451,7 +537,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                           ),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -465,9 +551,7 @@ void showSettingsModal(BuildContext context) {
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Colors.white,
         title: const Text("Opciones"),
         content: Column(
@@ -509,27 +593,35 @@ void showSettingsModal(BuildContext context) {
 }
 
 void _syncFormArrayWithProvider(
-    List<TicketDetail> products, FormGroup form, bool incIgv,
-    [void Function()? scroll]) {
+  List<TicketDetail> products,
+  FormGroup form,
+  bool incIgv, [
+  void Function()? scroll,
+]) {
   final formArray = form.control('products') as FormArray;
 
   if (formArray.controls.length != products.length) {
     formArray.clear();
     for (int i = 0; i < products.length; i++) {
       final product = products[i];
-      formArray.add(FormGroup({
-        'description': FormControl<String>(
+      formArray.add(
+        FormGroup({
+          'description': FormControl<String>(
             value: product.descripcion == ''
                 ? "Producto ${i + 1}"
                 : product.descripcion,
-            validators: [Validators.required, Validators.minLength(3)]),
-        'price': FormControl<double>(
+            validators: [Validators.required, Validators.minLength(3)],
+          ),
+          'price': FormControl<double>(
             value: product.precioVentaUnitario ?? 0,
-            validators: [Validators.required, Validators.min(0.01)]),
-        'quantity': FormControl<int>(
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+          'quantity': FormControl<int>(
             value: (product.cantidad ?? 1).toInt(),
-            validators: [Validators.required, Validators.min(1)]),
-      }));
+            validators: [Validators.required, Validators.min(1)],
+          ),
+        }),
+      );
     }
     if (scroll != null && products.length > 5) {
       scroll();
@@ -549,11 +641,14 @@ void _syncFormArrayWithProvider(
       } else if (precioControl != precioUnitario && !incIgv) {
         control.control('price').updateValue(precioUnitario);
       }
-      control.control('description').updateValue(
-          products[i].descripcion == ''
-              ? "Producto ${i + 1}"
-              : products[i].descripcion,
-          emitEvent: false);
+      control
+          .control('description')
+          .updateValue(
+            products[i].descripcion == ''
+                ? "Producto ${i + 1}"
+                : products[i].descripcion,
+            emitEvent: false,
+          );
       control.control('quantity').markAsTouched();
       control.control('price').markAsTouched();
       control.control('description').markAsTouched();
