@@ -101,8 +101,28 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       return;
     }
 
+    // Sin datos reales en curso: igual hay que garantizar el modo venta,
+    // por si quedó en modo cotización de un intento previo sin completar.
     if (!hasData) {
-      Get.toNamed(AppRoutes.productsSales);
+      if (ticketState.isQuotation) {
+        resetAndNavigate();
+      } else {
+        Get.toNamed(AppRoutes.productsSales);
+      }
+      return;
+    }
+
+    // Si lo que hay en curso es una cotización, no tiene sentido preguntar
+    // "continuar venta": se reinicia directo en modo venta.
+    if (ticketState.isQuotation) {
+      resetAndNavigate();
+      return;
+    }
+
+    // Si lo en curso es la edición de una venta ya existente, "Nueva venta"
+    // debe forzar una creación nueva, nunca continuar esa edición.
+    if (ticketState.isEdit) {
+      resetAndNavigate();
       return;
     }
 
@@ -166,6 +186,20 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       return;
     }
 
+    // Si lo que hay en curso es una venta normal, no tiene sentido preguntar
+    // "continuar cotización": se reinicia directo en modo cotización.
+    if (!ticketState.isQuotation) {
+      resetAndNavigate();
+      return;
+    }
+
+    // Si lo en curso es la edición de una cotización ya existente, "Nueva
+    // cotización" debe forzar una creación nueva, nunca continuar esa edición.
+    if (ticketState.isEdit) {
+      resetAndNavigate();
+      return;
+    }
+
     if (!mounted) return;
     final continuar = await showDialog<bool>(
       context: context,
@@ -194,7 +228,9 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       ),
     );
 
-    if (continuar == false) {
+    if (continuar == true) {
+      Get.toNamed(AppRoutes.productsSales);
+    } else if (continuar == false) {
       resetAndNavigate();
     }
   }
