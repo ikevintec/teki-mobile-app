@@ -285,12 +285,12 @@ class _InicioTabState extends ConsumerState<InicioTab> {
         {
           'title': 'Cuentas por Cobrar',
           'icon': 'assets/icons/icon_svg/add_payment.svg',
-          'action': () {},
+          'action': () => Get.toNamed(AppRoutes.accountsReceivable),
         },
         {
           'title': 'Cuentas por Pagar',
           'icon': 'assets/icons/icon_svg/expense_payment.svg',
-          'action': () {},
+          'action': () => Get.toNamed(AppRoutes.accountsPayable),
         },
       ];
 
