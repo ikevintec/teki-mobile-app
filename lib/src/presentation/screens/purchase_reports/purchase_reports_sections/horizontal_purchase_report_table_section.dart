@@ -74,14 +74,14 @@ class HorizontalPurchaseReportTableSection extends StatelessWidget {
                 cells: [
                   DataCell(Text(
                     data['date'],
-                    style: GoogleFonts.nunito(textStyle: const TextStyle()),
+                    style: GoogleFonts.roboto(textStyle: const TextStyle()),
                   )),
                   DataCell(Text(data['company'],
-                      style: GoogleFonts.nunito(textStyle: const TextStyle()))),
+                      style: GoogleFonts.roboto(textStyle: const TextStyle()))),
                   DataCell(Text(data['name'],
-                      style: GoogleFonts.nunito(textStyle: const TextStyle()))),
+                      style: GoogleFonts.roboto(textStyle: const TextStyle()))),
                   DataCell(Text(data['unit'],
-                      style: GoogleFonts.nunito(textStyle: const TextStyle()))),
+                      style: GoogleFonts.roboto(textStyle: const TextStyle()))),
                 ],
               ),
             ),

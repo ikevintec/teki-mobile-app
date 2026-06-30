@@ -108,19 +108,19 @@ class _HorizontalUserReportTableSectionState
                     cells: [
                       DataCell(Text(
                         '${entry.key + 1}',
-                        style: GoogleFonts.nunito(textStyle: const TextStyle()),
+                        style: GoogleFonts.roboto(textStyle: const TextStyle()),
                       )),
                       DataCell(Text(entry.value['name'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['phone'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['role'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['email'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Container(
                         padding: const EdgeInsets.symmetric(horizontal: 5),
@@ -130,7 +130,7 @@ class _HorizontalUserReportTableSectionState
                                 width: 1),
                             borderRadius: BorderRadius.circular(30)),
                         child: Text(entry.value['status'],
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: TextStyle(
                                     color: Color(entry.value["statusColor"])))),
                       )),
@@ -147,7 +147,7 @@ class _HorizontalUserReportTableSectionState
                           alignment: Alignment.center,
                           hint: Text(
                             "Action",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               color: const Color(0xFF696AE9),
                             ),
                           ),
@@ -181,7 +181,7 @@ class _HorizontalUserReportTableSectionState
                                   const SizedBox(width: 8),
                                   Text(
                                     choice,
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                         textStyle: const TextStyle(
                                             color: Colors.black87)),
                                   ),

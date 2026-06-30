@@ -325,7 +325,7 @@ class _LoteEditableRowState extends ConsumerState<_LoteEditableRow> {
                       Expanded(
                         child: TextField(
                           controller: _nombreController,
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: Colors.black87,
@@ -343,7 +343,7 @@ class _LoteEditableRowState extends ConsumerState<_LoteEditableRow> {
                           controller: _cantidadController,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,

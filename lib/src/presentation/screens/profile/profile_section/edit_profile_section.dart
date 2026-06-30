@@ -166,7 +166,7 @@ class _EditProfileSectionState extends State<EditProfileSection> {
         fillColor: const Color(0xFFFCFCFC),
         filled: true,
         hintText: controller.text,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.w500,
@@ -215,7 +215,7 @@ class _EditProfileSectionState extends State<EditProfileSection> {
         fillColor: const Color(0xFFFCFCFC),
         filled: true,
         hintText: _passwordController.text,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.w500,

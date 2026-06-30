@@ -1,5 +1,6 @@
 import 'package:teki_app/src/data/models/teki_model/companySummary.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
+import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
 
 class User {
   final int? id;
@@ -13,6 +14,7 @@ class User {
   final String? rutaInicial;
   final String? rucAsignado;
   final String? nombreCompleto;
+  final SaleStation? estacionVenta;
 
   User({
     this.id,
@@ -26,6 +28,7 @@ class User {
     this.rutaInicial,
     this.rucAsignado,
     this.nombreCompleto,
+    this.estacionVenta,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -50,6 +53,9 @@ class User {
         avatarUrl: json['avatarUrl'],
         rutaInicial: json['rutaInicial'],
         rucAsignado: json['rucAsignado'],
+        estacionVenta: json['estacionVenta'] != null
+            ? SaleStation.fromJson(json['estacionVenta'])
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -64,5 +70,6 @@ class User {
         'avatarUrl': avatarUrl,
         'rutaInicial': rutaInicial,
         'rucAsignado': rucAsignado,
+        'estacionVenta': estacionVenta?.toJson(),
       };
 }

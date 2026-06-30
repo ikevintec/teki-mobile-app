@@ -353,7 +353,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         fillColor: Colors.white,
         filled: true,
         hintText: hint,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
             textStyle: const TextStyle(
                 color: Colors.grey, fontWeight: FontWeight.w600, fontSize: 16)),
         enabledBorder: OutlineInputBorder(

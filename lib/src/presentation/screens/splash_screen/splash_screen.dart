@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -18,11 +20,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  Timer? _navTimer;
 
   @override
   void initState() {
     super.initState();
-    initAuth();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -30,14 +32,27 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _animation = Tween<double>(begin: 0, end: 1).animate(_controller);
     _controller.forward();
 
-    Timer(const Duration(seconds: 5), () {
-      Navigator.pushNamed(context, AppRoutes.onboarding);
+    _navTimer = Timer(const Duration(seconds: 5), () async {
+      if (!mounted) return;
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+      if (onboardingCompleted) {
+        Get.offAllNamed(AppRoutes.login);
+      } else {
+        Get.offAllNamed(AppRoutes.onboarding);
+      }
     });
+
+    initAuth();
   }
 
   void initAuth() async {
     await ref.read(authStateProvider.notifier).checkAuthStatus();
-    // La navegación se hace dentro del propio checkAuthStatus() usando Get.offAllNamed()
+    if (!mounted) return;
+    if (ref.read(authStateProvider).isLoggedIn) {
+      _navTimer?.cancel();
+      Get.offAllNamed(AppRoutes.dashboard);
+    }
   }
 
   @override
@@ -101,15 +116,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         const SizedBox(height: 20),
                         Text(
                           "Teki Solutions",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                             fontSize: 18,
                           ),
                         ),
                         Text(
-                          "V 1.0.2",
-                          style: GoogleFonts.nunito(
+                          "V 1.0.5",
+                          style: GoogleFonts.roboto(
                             color: Colors.white,
                             fontSize: 16,
                           ),
@@ -129,6 +144,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   void dispose() {
+    _navTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

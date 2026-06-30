@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/static/lists.dart';
+import 'package:teki_app/src/presentation/screens/cotizaciones/view_quotation_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/otros_datos.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment_widget.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
-import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -34,6 +38,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   String? numeroCorrelativo;
   TextEditingController numeroController = TextEditingController();
   TextEditingController vendedorController = TextEditingController();
+  TextEditingController placaController = TextEditingController();
 
   @override
   void initState() {
@@ -42,41 +47,48 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
       // Cargar datos iniciales del ticketProvider
       final notifier = ref.read(ticketProvider.notifier);
       final provider = ref.read(ticketProvider);
-      
+
       // Cargar tipo de comprobante desde el provider
       final comprobante = provider.ticket.tipoComprobante ?? tipoDocumento;
       tipoDocumento = comprobante;
-      
+
       // Cargar fecha de emisión desde el provider o usar la actual
       final fechaEmision = provider.ticket.fechaEmisionDate ?? DateTime.now();
       notifier.setFechaEmision(fechaEmision);
       _dateController.text = fechaEmision.toString().split(" ")[0];
-      
-      // Cargar tipo de comprobante 
+
+      // Cargar tipo de comprobante
       notifier.setTipoComprobante(comprobante);
 
       // Cargar fecha de vencimiento si existe en el provider
       if (provider.ticket.fechaVencimientoDate != null) {
-        _dateController2.text = provider.ticket.fechaVencimientoDate.toString().split(" ")[0];
+        _dateController2.text = provider.ticket.fechaVencimientoDate
+            .toString()
+            .split(" ")[0];
       }
-      
+
       // Cargar tipo de operación: del provider o '0101' por defecto
       final tipoOp = (provider.ticket.codigoTipoOperacion?.isNotEmpty ?? false)
           ? provider.ticket.codigoTipoOperacion!
           : (comprobante == 'NV' ? '' : '0101');
       tipoOperacionSelected = tipoOp;
       notifier.setTipoOperacion(tipoOp);
-      
+
       // Cargar número de orden desde el provider
       if (provider.ticket.ordenCompra != null) {
         vendedorController.text = provider.ticket.ordenCompra!;
       }
-      
+
+      // Cargar placa de vehículo si existe (edición)
+      if (provider.ticket.placaVehiculo != null) {
+        placaController.text = provider.ticket.placaVehiculo!;
+      }
+
       // Cargar serie y número desde el provider si existen
       if (provider.ticket.serie != null) {
         selectedSerie = provider.ticket.serie;
       }
-      
+
       cargarSeries();
       setVendedor();
     });
@@ -115,9 +127,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
               onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blue,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.blue),
             ),
           ),
           child: child!,
@@ -143,9 +153,9 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   void cargarNextNumber() async {
     final provider = ref.read(ticketProvider);
     if (provider.ticket.numero != null) {
-        numeroCorrelativo = provider.ticket.numero.toString();
-        numeroController.text = numeroCorrelativo!;
-    return;
+      numeroCorrelativo = provider.ticket.numero.toString();
+      numeroController.text = numeroCorrelativo!;
+      return;
     }
     await ref.read(ticketSaleProvider.notifier).getNextTicketNumber();
     final actualNumber = ref.read(ticketProvider).ticket.numero;
@@ -180,12 +190,15 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     final ticketP = ref.watch(ticketProvider);
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(ticketP.ticket.pedidoRestaurante != null ? 72 : 60),
+        preferredSize: Size.fromHeight(
+          ticketP.ticket.pedidoRestaurante != null ? 72 : 60,
+        ),
         child: CustomAppBar(
           navigateName: "Comprobante",
           subtitle: ticketP.ticket.pedidoRestaurante != null
               ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : null,
+              : ticketP.subtitleLabel,
+          subtitleEmphasis: ticketP.subtitleEmphasis,
         ),
       ),
       body: Container(
@@ -224,27 +237,64 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: CustomSegmentedSelectorMapped(
-                                    label: "Tipo de comprobante (*)",
-                                    dataSource: tipoComprobantesVenta,
-                                    labelKey: "label",
-                                    valueKey: "value",
-                                    initialValue:
-                                        provider.ticket.tipoComprobante ??
-                                            tipoDocumento,
-                                    disabled: provider.isEdit,
-                                    onChanged:  (value) {
-                                      notifier.setTipoComprobante(value);
-                                      tipoDocumento = value;
-                                      if (value == "NV") {
-                                        tipoOperacionSelected = "";
-                                      } else {
-                                        tipoOperacionSelected = "0101";
-                                      }
+                                  child: provider.isQuotation
+                                      ? Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 14,
+                                            horizontal: 16,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: ColorSchema.quotationColor
+                                                .withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            border: Border.all(
+                                              color: ColorSchema.quotationColor
+                                                  .withValues(alpha: 0.4),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.description_outlined,
+                                                color:
+                                                    ColorSchema.quotationColor,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              const Text(
+                                                'Cotización',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: ColorSchema
+                                                      .quotationColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : CustomSegmentedSelectorMapped(
+                                          label: "Tipo de comprobante (*)",
+                                          dataSource: tipoComprobantesVenta,
+                                          labelKey: "label",
+                                          valueKey: "value",
+                                          initialValue:
+                                              provider.ticket.tipoComprobante ??
+                                              tipoDocumento,
+                                          disabled: provider.isEdit,
+                                          onChanged: (value) {
+                                            notifier.setTipoComprobante(value);
+                                            tipoDocumento = value;
+                                            if (value == "NV") {
+                                              tipoOperacionSelected = "";
+                                            } else {
+                                              tipoOperacionSelected = "0101";
+                                            }
 
-                                      cargarSeries();
-                                    },
-                                  ),
+                                            cargarSeries();
+                                          },
+                                        ),
                                 ),
                               ],
                             ),
@@ -270,12 +320,12 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                     label: "Número (*)",
                                     hint: "Número correlativo",
                                     inputType: TextInputType.number,
-                                    isReadOnly: provider.isEdit ,
+                                    isReadOnly: provider.isEdit,
                                     controller: numeroController,
                                     onChanged: (value) {
                                       final numero = int.tryParse(value);
                                       if (numero != null) {
-                                      notifier.setNumero(numero);
+                                        notifier.setNumero(numero);
                                       }
                                     },
                                     validator: (value) {
@@ -307,30 +357,37 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                         ),
                                       ),
                                       const SizedBox(
-                                          height:
-                                              6), // espacio entre label y campo
+                                        height: 6,
+                                      ), // espacio entre label y campo
                                       TextField(
                                         controller: _dateController,
                                         decoration: InputDecoration(
                                           filled: true,
                                           fillColor: Colors.white,
                                           prefixIcon: const Icon(
-                                              Icons.calendar_today,
-                                              size: 20),
+                                            Icons.calendar_today,
+                                            size: 20,
+                                          ),
                                           contentPadding:
                                               const EdgeInsets.symmetric(
-                                                  vertical: 12, horizontal: 16),
+                                                vertical: 12,
+                                                horizontal: 16,
+                                              ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
                                             borderSide: const BorderSide(
-                                                color: Colors.grey),
+                                              color: Colors.grey,
+                                            ),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
                                             borderSide: const BorderSide(
-                                                color: Colors.black),
+                                              color: Colors.black,
+                                            ),
                                           ),
                                         ),
                                         style: const TextStyle(fontSize: 14),
@@ -354,40 +411,49 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                         ),
                                       ),
                                       const SizedBox(
-                                          height:
-                                              6), // espacio entre label y campo
+                                        height: 6,
+                                      ), // espacio entre label y campo
                                       TextField(
                                         controller: _dateController2,
                                         decoration: InputDecoration(
                                           filled: true,
                                           fillColor: Colors.white,
                                           prefixIcon: const Icon(
-                                              Icons.calendar_today,
-                                              size: 20),
-                                          suffixIcon: _dateController2.text.isNotEmpty
+                                            Icons.calendar_today,
+                                            size: 20,
+                                          ),
+                                          suffixIcon:
+                                              _dateController2.text.isNotEmpty
                                               ? IconButton(
                                                   icon: const Icon(
                                                     Icons.clear,
                                                     size: 20,
                                                     color: Colors.redAccent,
                                                   ),
-                                                  onPressed: _clearExpirationDate,
+                                                  onPressed:
+                                                      _clearExpirationDate,
                                                 )
                                               : null,
                                           contentPadding:
                                               const EdgeInsets.symmetric(
-                                                  vertical: 12, horizontal: 16),
+                                                vertical: 12,
+                                                horizontal: 16,
+                                              ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
                                             borderSide: const BorderSide(
-                                                color: Colors.grey),
+                                              color: Colors.grey,
+                                            ),
                                           ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(30),
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
                                             borderSide: const BorderSide(
-                                                color: Colors.black),
+                                              color: Colors.black,
+                                            ),
                                           ),
                                         ),
                                         style: const TextStyle(fontSize: 14),
@@ -403,7 +469,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SizedBox(
-                                    height: tipoDocumento == "NV" ? 15 : 20),
+                                  height: tipoDocumento == "NV" ? 15 : 20,
+                                ),
                                 if (tipoDocumento != "NV")
                                   DropdownFormFieldSection(
                                     label: "TIPO OPREACIÓN (*)",
@@ -420,7 +487,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                     },
                                   ),
                                 SizedBox(
-                                    height: tipoDocumento == "NV" ? 0 : 20),
+                                  height: tipoDocumento == "NV" ? 0 : 20,
+                                ),
                               ],
                             ),
                             Row(
@@ -431,8 +499,9 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                   child: TextFieldSection(
                                     label: "VENDEDOR",
                                     hint: "Vendedor",
-                                    controller:
-                                        TextEditingController(text: vendedor),
+                                    controller: TextEditingController(
+                                      text: vendedor,
+                                    ),
                                     inputType: TextInputType.text,
                                     isReadOnly: true,
                                     onChanged: (_) {},
@@ -457,6 +526,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                               ],
                             ),
                             const SizedBox(height: 20),
+                            PlacaVehiculoField(controller: placaController),
+                            const SizedBox(height: 20),
                             OtherOptions(),
                             const SizedBox(height: 30),
                           ],
@@ -470,22 +541,71 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              final clientProvider  = ref.read(customerSaleProvider);
-                                if ((clientProvider.customer.numeroDocumento?.length ?? 0) < 11 && tipoDocumento == "01") {
-                                warningNotification("Debe seleccionar un cliente con RUC para emitir una factura.");
+                              final clientProvider = ref.read(
+                                customerSaleProvider,
+                              );
+                              if ((clientProvider
+                                              .customer
+                                              .numeroDocumento
+                                              ?.length ??
+                                          0) <
+                                      11 &&
+                                  tipoDocumento == "01") {
+                                warningNotification(
+                                  "Debe seleccionar un cliente con RUC para emitir una factura.",
+                                );
                                 Navigator.of(context).pop();
                                 return;
-                                }
+                              }
+                              final esGasolinera =
+                                  ref
+                                      .read(sesionProvider)
+                                      .config
+                                      ?.esGasolinera ??
+                                  false;
+                              final placa = placaController.text.trim();
+                              if (esGasolinera &&
+                                  placa.isNotEmpty &&
+                                  placa.length != 6) {
+                                warningNotification(
+                                  'La placa del vehículo debe tener exactamente 6 caracteres.',
+                                );
+                                return;
+                              }
                               ref
                                   .read(ticketProvider.notifier)
-                                  .setTicketsData();
-                              showCustomModal(
-                                  context: context,
-                                  child: PaymentWidget(),
-                                  tittle: '',
-                                  showButtoms: false,
-                                  scrolleable: false,
-                                  allowButtons: true);
+                                  .setPlacaVehiculo(placa);
+                              final ticketNotifier = ref.read(
+                                ticketProvider.notifier,
+                              );
+                              ticketNotifier.setTicketsData();
+
+                              if (ticketP.isQuotation) {
+                                ticketNotifier.setMovimientoCaja(
+                                  total: 0,
+                                  pagos: [],
+                                  cambio: 0,
+                                );
+                                final result = await ticketNotifier
+                                    .proceessTicket();
+                                if (result != null && result.id != null) {
+                                  ref.invalidate(ticketProvider);
+                                  ref.invalidate(productSaleProvider);
+                                  ref.invalidate(customerSaleProvider);
+                                  successNotification(
+                                    "Cotización registrada correctamente",
+                                  );
+                                  Get.off(
+                                    () => ViewQuotationScreen(
+                                      id: result.id!,
+                                      fromSale: true,
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
+
+                              PaymentWidget.show(context);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,
@@ -499,7 +619,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('Confirmar ${ticketP.isEdit ? 'Edición' : ''}'),
+                                Text(ticketP.confirmButtonLabel),
                                 SizedBox(width: 8),
                                 Icon(Icons.check_circle),
                               ],
@@ -519,30 +639,60 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   }
 
   DropdownMenuItem<String> buildMenuItem(String item) => DropdownMenuItem(
-        value: item,
-        child: Text(
-          item,
-          style: const TextStyle(fontSize: 15),
-        ),
-      );
+    value: item,
+    child: Text(item, style: const TextStyle(fontSize: 15)),
+  );
 
   DropdownMenuItem<String> buildMenuItem2(String itemsOperacion) =>
       DropdownMenuItem(
         value: itemsOperacion,
-        child: Text(
-          itemsOperacion,
-          style: const TextStyle(fontSize: 15),
-        ),
+        child: Text(itemsOperacion, style: const TextStyle(fontSize: 15)),
       );
 }
 
 DropdownMenuItem<String> buildMenuItem(String items) => DropdownMenuItem(
-      value: items,
-      child: Text(
-        items,
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-      ),
+  value: items,
+  child: Text(
+    items,
+    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+  ),
+);
+
+class PlacaVehiculoField extends ConsumerWidget {
+  final TextEditingController controller;
+
+  const PlacaVehiculoField({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final esGasolinera =
+        ref.watch(sesionProvider).config?.esGasolinera ?? false;
+    if (!esGasolinera) return const SizedBox.shrink();
+
+    return TextFieldSection(
+      label: 'PLACA VEHÍCULO',
+      hint: 'Ej: ABC123',
+      inputType: TextInputType.text,
+      controller: controller,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+        LengthLimitingTextInputFormatter(6),
+        _UpperCaseTextFormatter(),
+      ],
+      onChanged: (_) {},
     );
+  }
+}
+
+class _UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return newValue.copyWith(text: newValue.text.toUpperCase());
+  }
+}
 
 class OtherOptions extends StatelessWidget {
   const OtherOptions({super.key});
@@ -559,17 +709,14 @@ class OtherOptions extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: ColorSchema.primaryColor,
-            width: 1,
-          ),
+          border: Border.all(color: ColorSchema.primaryColor, width: 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               "Otros datos",
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: ColorSchema.primaryColor,

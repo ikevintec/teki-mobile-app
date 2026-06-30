@@ -27,6 +27,7 @@ class CommandDetail {
   final DateTime? updatedOn;
   final int? deleteBy;
   final DateTime? deletedOn;
+  final String? motivoAnulacion;
 
   CommandDetail({
     this.id,
@@ -50,6 +51,7 @@ class CommandDetail {
     this.updatedOn,
     this.deleteBy,
     this.deletedOn,
+    this.motivoAnulacion,
   });
 
   factory CommandDetail.fromJson(Map<String, dynamic> json) => CommandDetail(
@@ -78,6 +80,7 @@ class CommandDetail {
         updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
         deleteBy: json['deleteBy'],
         deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
+        motivoAnulacion: json['motivoAnulacion'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -102,5 +105,6 @@ class CommandDetail {
         'updatedOn': updatedOn?.toIso8601String(),
         'deleteBy': deleteBy,
         'deletedOn': deletedOn?.toIso8601String(),
+        'motivoAnulacion': motivoAnulacion,
       };
 }

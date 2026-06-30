@@ -8,6 +8,7 @@ import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_
 import 'package:teki_app/src/presentation/screens/customer/widgets/customer_filters_modal.dart';
 import 'package:teki_app/src/presentation/screens/customer/customer_sections/customer_details_screen.dart';
 import 'package:teki_app/src/presentation/screens/customer/customer_sections/create_customer_section.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/customers/customers.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
@@ -82,8 +83,19 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
         (state.email?.isNotEmpty == true);
   }
 
+  void _reloadCustomers() {
+    ref.read(customersProvider.notifier).clearState();
+    ref.read(customersProvider.notifier).loadFirstPage();
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen(sesionProvider, (prev, next) {
+      if (next.office?.id != prev?.office?.id) {
+        _reloadCustomers();
+      }
+    });
+
     // final isSmallScreen = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
@@ -92,6 +104,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
         preferredSize: const Size.fromHeight(60),
         child: CustomAppBar(
           navigateName: "Clientes",
+          onSettingsReturn: _reloadCustomers,
         ),
       ),
       body: Container(
@@ -265,7 +278,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                         const SizedBox(height: 2),
                         Text(
                           formatTipoDocumento(customer.tipoDocumento ?? ''),
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFF9CA3AF),
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
@@ -286,7 +299,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                     ),
                     child: Text(
                       customer.numeroDocumento!,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
@@ -321,7 +334,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                                 Expanded(
                                   child: Text(
                                     customer.email!,
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                       color: const Color(0xFF6B7280),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
@@ -346,7 +359,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   customer.telefono!,
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                     color: const Color(0xFF6B7280),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w400,
@@ -371,7 +384,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                                 Expanded(
                                   child: Text(
                                     customer.direccionCompleta!,
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                       color: const Color(0xFF6B7280),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,

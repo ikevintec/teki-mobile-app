@@ -96,7 +96,7 @@ class _DashboardDrawerState extends State<DashboardDrawer> {
       theme: SidebarXTheme(
         selectedItemPadding:
             const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        textStyle: GoogleFonts.nunito(
+        textStyle: GoogleFonts.roboto(
             textStyle: const TextStyle(
                 color: Color(0xFF333333),
                 fontSize: 17,
@@ -159,13 +159,13 @@ class _DashboardDrawerState extends State<DashboardDrawer> {
               Text(
                 username,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                     textStyle: const TextStyle(color: Colors.black)),
               ),
               Text(
                 cargo,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                     textStyle: const TextStyle(color: Colors.grey)),
               ),
             ],

@@ -8,30 +8,16 @@ class ScreenLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorSchema.primaryColor,
-      body: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 25,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
+    return SizedBox.expand(
+      child: ColoredBox(
+        color: ColorSchema.primaryColor,
+        child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 8),
               const CircularProgressIndicator(
                 strokeWidth: 4,
-                color: ColorSchema.primaryColor,
+                color: Colors.white,
               ),
               const SizedBox(height: 20),
               Text(
@@ -40,7 +26,7 @@ class ScreenLoader extends StatelessWidget {
                 style: GoogleFonts.raleway(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: Colors.white,
                 ),
               ),
             ],

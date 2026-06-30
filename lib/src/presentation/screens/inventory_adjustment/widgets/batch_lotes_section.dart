@@ -65,7 +65,7 @@ class BatchLotesSection extends ConsumerWidget {
           },
           icon: const Icon(Icons.add, size: 15),
           label: Text('Agregar lote',
-              style: GoogleFonts.nunito(fontSize: 12)),
+              style: GoogleFonts.roboto(fontSize: 12)),
           style: OutlinedButton.styleFrom(
             foregroundColor: ColorSchema.primaryColor,
             padding:
@@ -231,7 +231,7 @@ class _BatchLoteRowState extends ConsumerState<_BatchLoteRow> {
                           Expanded(
                             child: TextField(
                               controller: _nombreController,
-                              style: GoogleFonts.nunito(
+                              style: GoogleFonts.roboto(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.black87,
@@ -265,7 +265,7 @@ class _BatchLoteRowState extends ConsumerState<_BatchLoteRow> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Cantidad',
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                         fontSize: 10,
                                         color: Colors.black45)),
                                 const SizedBox(height: 3),
@@ -275,7 +275,7 @@ class _BatchLoteRowState extends ConsumerState<_BatchLoteRow> {
                                       const TextInputType.numberWithOptions(
                                           decimal: true),
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold),
                                   onChanged: (v) {
@@ -299,7 +299,7 @@ class _BatchLoteRowState extends ConsumerState<_BatchLoteRow> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Precio compra',
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                         fontSize: 10,
                                         color: Colors.black45)),
                                 const SizedBox(height: 3),
@@ -310,7 +310,7 @@ class _BatchLoteRowState extends ConsumerState<_BatchLoteRow> {
                                           decimal: true),
                                   textAlign: TextAlign.center,
                                   style:
-                                      GoogleFonts.nunito(fontSize: 11),
+                                      GoogleFonts.roboto(fontSize: 11),
                                   onChanged: (v) {
                                     final val = double.tryParse(v);
                                     notifier.updateLotePrecio(

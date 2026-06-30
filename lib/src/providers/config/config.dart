@@ -33,18 +33,38 @@ class SesionNotifier extends StateNotifier<SesionState> {
           offices: [],
         ));
 
-  void setFullConfig(LoginResponse login, List<SaleStation> saleStations) async {
-    Office? oficinaEncontrada = login.user?.puntosVenta?.firstWhere(
+  List<SaleStation> _applyEstacionFilter(List<SaleStation> saleStations) {
+    final estacionAsignada = state.login.user?.estacionVenta;
+    if (estacionAsignada == null) return saleStations;
+    final filtered = saleStations.where((se) => se.id == estacionAsignada.id).toList();
+    return filtered.isNotEmpty ? filtered : [SaleStation(id: -1, nombre: 'Estación no asignada')];
+  }
+
+  void setFullConfig(LoginResponse login, List<SaleStation> saleStations, Office? defaultPv) async {
+    
+    Office? oficinaEncontrada = defaultPv ?? login.user?.puntosVenta?.firstWhere(
       (office) => office.rucAsignado == login.user?.rucAsignado,
-      orElse: () => Office(),
+      orElse: () => login.user?.puntosVenta?[0] ?? Office(),
     );
+
+    final estacionAsignada = login.user?.estacionVenta;
+    final List<SaleStation> filteredStations;
+    if (estacionAsignada != null) {
+      final matched = saleStations.where((se) => se.id == estacionAsignada.id).toList();
+      filteredStations = matched.isNotEmpty ? matched : saleStations;
+    } else {
+      filteredStations = saleStations;
+    }
+
+    final selectedSaleStation = filteredStations.isNotEmpty ? filteredStations.first : SaleStation();
+
     state = state.copyWith(
       company: login.user?.empresa,
       companySelected: login.user?.empresa,
       office: oficinaEncontrada,
       roles: login.roles ?? [],
-      saleStation: saleStations.isNotEmpty ? saleStations.first : SaleStation(),
-      saleStations: saleStations,
+      saleStation: selectedSaleStation,
+      saleStations: filteredStations,
       login: login,
       companies: [
         login.user?.empresa ?? Companysummary(),
@@ -66,6 +86,7 @@ class SesionNotifier extends StateNotifier<SesionState> {
       changeOffice(oficinaEncontrada!, false);
     }
   }
+
   void changeOffice(Office office, bool changeCompany) async{
     List<SaleStation> saleStations = [];
     try {
@@ -73,10 +94,11 @@ class SesionNotifier extends StateNotifier<SesionState> {
     } catch (e) {
       errorNotification(e.toString());
     }
+    final filtered = _applyEstacionFilter(saleStations);
     state = state.copyWith(
       office: office,
-      saleStation: saleStations.isNotEmpty ? saleStations.first : SaleStation(),
-      saleStations: saleStations,
+      saleStation: filtered.isNotEmpty ? filtered.first : SaleStation(),
+      saleStations: filtered,
     );
 
     if (changeCompany) {

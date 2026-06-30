@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
@@ -12,13 +13,13 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
   /// Obtiene las series disponibles por oficina (punto de venta) y tipo de documento
   @override
   Future<List<String>> getSeriesPorOficina(
-      int officeId, String tipoDocumento) async {
+    int officeId,
+    String tipoDocumento,
+  ) async {
     try {
       final response = await dio.get(
         '/series/office/$officeId',
-        queryParameters: {
-          'tipoDocumento': tipoDocumento,
-        },
+        queryParameters: {'tipoDocumento': tipoDocumento},
       );
 
       final List<dynamic> rawList = response.data;
@@ -35,6 +36,10 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       errorNotification("Error al obtener series por oficina: $e");
       return Future.error(e.toString());
     } catch (e) {
@@ -49,10 +54,7 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
     try {
       final response = await dio.get(
         '/tickets/operations/next-number',
-        queryParameters: {
-          'tipoDocumento': tipoDocumento,
-          'serie': serie,
-        },
+        queryParameters: {'tipoDocumento': tipoDocumento, 'serie': serie},
       );
 
       int numero;
@@ -72,8 +74,17 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
-      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      final errorMessage =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
       errorNotification(errorMessage);
       return Future.error(errorMessage);
     } catch (e) {
@@ -85,14 +96,13 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
   /// Obtiene los tickets existentes por tipoDocumento y serie
   @override
   Future<List<Ticket>> getTicketNumeros(
-      String tipoDocumento, String serie) async {
+    String tipoDocumento,
+    String serie,
+  ) async {
     try {
       final response = await dio.get(
         '/tickets/search',
-        queryParameters: {
-          'tipoDocumento': tipoDocumento,
-          'serie': serie,
-        },
+        queryParameters: {'tipoDocumento': tipoDocumento, 'serie': serie},
       );
 
       final data = response.data as List;
@@ -101,8 +111,17 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error desconocido del servidor';
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
@@ -113,10 +132,7 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
   @override
   Future<List<Ticket>> getComprobantes(Map<String, dynamic> params) async {
     try {
-      final response = await dio.get(
-        '/tickets',
-        queryParameters: params,
-      );
+      final response = await dio.get('/tickets', queryParameters: params);
 
       final List<dynamic> content = response.data['content'];
 
@@ -128,19 +144,19 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
               if (fixedJson['fechaEmisionDate'] is int) {
                 fixedJson['fechaEmisionDate'] =
                     DateTime.fromMillisecondsSinceEpoch(
-                            fixedJson['fechaEmisionDate'])
-                        .toIso8601String();
+                      fixedJson['fechaEmisionDate'],
+                    ).toIso8601String();
               }
               if (fixedJson['createdOn'] is int) {
-                fixedJson['createdOn'] =
-                    DateTime.fromMillisecondsSinceEpoch(fixedJson['createdOn'])
-                        .toIso8601String();
+                fixedJson['createdOn'] = DateTime.fromMillisecondsSinceEpoch(
+                  fixedJson['createdOn'],
+                ).toIso8601String();
               }
               if (fixedJson['fechaRegistro'] is int) {
                 fixedJson['fechaRegistro'] =
                     DateTime.fromMillisecondsSinceEpoch(
-                            fixedJson['fechaRegistro'])
-                        .toIso8601String();
+                      fixedJson['fechaRegistro'],
+                    ).toIso8601String();
               }
 
               if (fixedJson['cliente'] is Map<String, dynamic>) {
@@ -148,13 +164,13 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
                 if (cliente['fechaNacimiento'] is int) {
                   cliente['fechaNacimiento'] =
                       DateTime.fromMillisecondsSinceEpoch(
-                              cliente['fechaNacimiento'])
-                          .toIso8601String();
+                        cliente['fechaNacimiento'],
+                      ).toIso8601String();
                 }
                 if (cliente['createdOn'] is int) {
-                  cliente['createdOn'] =
-                      DateTime.fromMillisecondsSinceEpoch(cliente['createdOn'])
-                          .toIso8601String();
+                  cliente['createdOn'] = DateTime.fromMillisecondsSinceEpoch(
+                    cliente['createdOn'],
+                  ).toIso8601String();
                 }
                 fixedJson['cliente'] = cliente;
               }
@@ -172,8 +188,17 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
       print("Error al obtener comprobantes 1: $message");
       return Future.error(message);
     } catch (e, stack) {
@@ -186,7 +211,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
 
   @override
   Future<List<TotalesPorMoneda>> getTotalesPorMoneda(
-      Map<String, dynamic> params) async {
+    Map<String, dynamic> params,
+  ) async {
     try {
       final response = await dio.get(
         '/tickets/operations/totales',
@@ -211,8 +237,17 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
       errorNotification("Error al obtener totales por moneda 1: $message");
       return Future.error(message);
     } catch (e, stack) {
@@ -222,42 +257,83 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       return Future.error(e.toString());
     }
   }
-  
+
   @override
   Future<Ticket> getTicketById(int id) async {
     try {
-      final response = await dio.get(
-        '/tickets/$id',
-      );
+      final response = await dio.get('/tickets/$id');
       return Ticket.fromJson(response.data);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error desconocido del servidor';
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
     }
   }
 
-
   /// Crea un nuevo ticket de venta
   @override
   Future<Ticket> createTicket(Ticket ticket) async {
     try {
-      final response = await dio.post(
-        '/tickets',
-        data: ticket.toJson(),
-      );
+      final data = ticket.toJson();
+      // Si el ticket proviene de "Generar venta" desde una cotización, solo se
+      // envía el id de la cotización (el backend la concreta con esa referencia).
+      if (ticket.cotizacion?.id != null) {
+        data['cotizacion'] = {'id': ticket.cotizacion!.id};
+      }
+      final response = await dio.post('/tickets', data: data);
       return Ticket.fromJson(response.data);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      final resData = e.response?.data;
       final message =
-          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error desconocido del servidor';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<EstadoSunatResponse> consultarEstadoSunat(Ticket ticket) async {
+    try {
+      final response = await dio.post(
+        '/tickets/consultarEstadoSunat',
+        data: ticket.toJson(),
+      );
+      return EstadoSunatResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());
@@ -268,17 +344,19 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
   @override
   Future<Ticket> updateTicket(Ticket ticket) async {
     try {
-      final response = await dio.put(
-        '/tickets',
-        data: ticket.toJson(),
-      );
+      final response = await dio.put('/tickets', data: ticket.toJson());
       return Ticket.fromJson(response.data);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
       }
+      final resData = e.response?.data;
       final message =
-          e.response?.data?['mensaje'] ?? 'Error desconocido del servidor';
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error desconocido del servidor';
       return Future.error(message);
     } catch (e) {
       return Future.error(e.toString());

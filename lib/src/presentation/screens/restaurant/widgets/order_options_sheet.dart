@@ -15,6 +15,7 @@ import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
+import 'package:teki_app/src/shared/services/command_print_service.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
@@ -24,7 +25,10 @@ import 'package:teki_app/src/utils/notifications.dart';
 void showOrderDetailDialog(BuildContext context, OrderRestaurant order) {
   showDialog(
     context: context,
-    builder: (_) => _OrderDetailDialog(order: order),
+    builder: (ctx) => MediaQuery(
+      data: MediaQuery.of(ctx).copyWith(viewInsets: EdgeInsets.zero),
+      child: _OrderDetailDialog(order: order),
+    ),
   );
 }
 
@@ -512,17 +516,39 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
       builder: (_) => const AnularOrdenDialog(),
     );
     if (result == null || !result.confirmed) return;
-    final pvId = ref.read(sesionProvider).office?.id;
+    final sesion = ref.read(sesionProvider);
+    final pvId = sesion.office?.id;
     final notifier = ref.read(restaurantProvider.notifier);
     Get.back();
     if (pvId != null) {
-      notifier.updateOrderStatus(
+      final changeItems = await notifier.updateOrderStatus(
         order.id!,
         'CANCELADO',
         pvId,
         updateInventory: result.updateInventory,
         observacion: result.observacion.isNotEmpty ? result.observacion : null,
       );
+
+      final office = sesion.office;
+      if (office?.id != null && changeItems.isNotEmpty) {
+        for (final ci in changeItems) {
+          final commandId = ci.comanda?.id;
+          if (commandId == null) continue;
+          final itemIds = (ci.items ?? [])
+              .map((item) => item.id)
+              .whereType<int>()
+              .toList();
+          CommandPrintService().processCommand(
+            commandId: commandId,
+            puntoVenta: office!,
+            escPos: sesion.config?.imprimeTicketsEscPos ?? false,
+            clientPrinter: sesion.config?.clienteImpresion,
+            idCompany: sesion.company?.id,
+            anulacion: true,
+            itemAfectado: itemIds,
+          );
+        }
+      }
     }
   }
 
@@ -1065,9 +1091,27 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
                                 .updateCommandItemStatus(comanda.id!, item.id!, 'DESPACHADO')
                           : null,
                       onAnular: (comanda.id != null && item.id != null)
-                          ? () => ref
-                                .read(restaurantProvider.notifier)
-                                .updateCommandItemStatus(comanda.id!, item.id!, 'CANCELADO')
+                          ? (motivo) {
+                              final commandId = comanda.id!;
+                              ref
+                                  .read(restaurantProvider.notifier)
+                                  .updateCommandItemStatus(commandId, item.id!, 'CANCELADO', motivoAnulacion: motivo)
+                                  .then((_) {
+                                    final sesion = ref.read(sesionProvider);
+                                    final office = sesion.office;
+                                    if (office?.id != null) {
+                                      CommandPrintService().processCommand(
+                                        commandId: commandId,
+                                        puntoVenta: office!,
+                                        escPos: sesion.config?.imprimeTicketsEscPos ?? false,
+                                        clientPrinter: sesion.config?.clienteImpresion,
+                                        idCompany: sesion.company?.id,
+                                        anulacion: true,
+                                        itemAfectado: [item.id!],
+                                      );
+                                    }
+                                  });
+                            }
                           : null,
                     )),
                 if (items.any(ComandaDetailStatus.isCancelledItem))
@@ -1494,7 +1538,7 @@ class _OrderDetailDialogState extends ConsumerState<_OrderDetailDialog>
 class _CommandaItemRow extends StatefulWidget {
   final CommandDetail item;
   final VoidCallback? onServir;
-  final VoidCallback? onAnular;
+  final void Function(String? motivo)? onAnular;
   final bool showStatus;
 
   const _CommandaItemRow({
@@ -1531,6 +1575,61 @@ class _CommandaItemRowState extends State<_CommandaItemRow>
     super.dispose();
   }
 
+  void _showMotivoDialog(BuildContext context, String motivo) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.chat_bubble_outline, size: 16, color: Colors.red.shade400),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Motivo de anulación',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Icon(Icons.close, size: 18, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade100),
+                ),
+                child: Text(motivo, style: const TextStyle(fontSize: 13)),
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cerrar'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
@@ -1563,6 +1662,7 @@ class _CommandaItemRowState extends State<_CommandaItemRow>
                 onAnular: widget.onAnular,
               )
           : null,
+
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
@@ -1610,6 +1710,14 @@ class _CommandaItemRowState extends State<_CommandaItemRow>
                       size: 16,
                       color: borderAccent,
                     ),
+                  ),
+                ),
+              if (isCancelled && (item.motivoAnulacion?.isNotEmpty == true))
+                GestureDetector(
+                  onTap: () => _showMotivoDialog(context, item.motivoAnulacion!),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Icon(Icons.chat_bubble_outline, size: 13, color: Colors.red.shade300),
                   ),
                 ),
             ],

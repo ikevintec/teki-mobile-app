@@ -123,7 +123,7 @@ class SupportSection extends StatelessWidget {
             child: Text(
               desc,
               textAlign: TextAlign.center,
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                 color: Colors.black87,
                 fontSize: fontSizeDesc,
               ),

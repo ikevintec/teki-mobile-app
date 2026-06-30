@@ -100,19 +100,19 @@ class _HorizontalWarehouseReportTableSectionState
                     cells: [
                       DataCell(Text(
                         '${entry.key + 1}',
-                        style: GoogleFonts.nunito(textStyle: const TextStyle()),
+                        style: GoogleFonts.roboto(textStyle: const TextStyle()),
                       )),
                       DataCell(Text(entry.value['warehouse'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['phone'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['email'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Text(entry.value['address'],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               textStyle: const TextStyle()))),
                       DataCell(Container(
                         margin: const EdgeInsets.symmetric(vertical: 6),
@@ -127,7 +127,7 @@ class _HorizontalWarehouseReportTableSectionState
                           alignment: Alignment.center,
                           hint: Text(
                             "Action",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               color: const Color(0xFF696AE9),
                             ),
                           ),
@@ -164,7 +164,7 @@ class _HorizontalWarehouseReportTableSectionState
                                   const SizedBox(width: 8),
                                   Text(
                                     choice,
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.roboto(
                                         textStyle: const TextStyle(
                                             color: Colors.black87)),
                                   ),

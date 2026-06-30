@@ -57,6 +57,7 @@ class AccountsReceivable {
   final String? nombreProveedor;
   final double? totalCompra;
   final double? montoPagado;
+  final double? montoRestante;
 
   AccountsReceivable({
     this.id,
@@ -107,6 +108,7 @@ class AccountsReceivable {
     this.nombreProveedor,
     this.totalCompra,
     this.montoPagado,
+    this.montoRestante,
   });
 
   factory AccountsReceivable.fromJson(Map<String, dynamic> json) => AccountsReceivable(
@@ -160,6 +162,7 @@ class AccountsReceivable {
         nombreProveedor: json['nombreProveedor'],
         totalCompra: (json['totalCompra'] as num?)?.toDouble(),
         montoPagado: (json['montoPagado'] as num?)?.toDouble(),
+        montoRestante: (json['montoRestante'] as num?)?.toDouble(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -211,5 +214,6 @@ class AccountsReceivable {
         'nombreProveedor': nombreProveedor,
         'totalCompra': totalCompra,
         'montoPagado': montoPagado,
+        'montoRestante': montoRestante,
       };
 }

@@ -2,18 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/providers/whatsapp/whatsapp_provider.dart';
-import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/notifications.dart';
-import 'package:teki_app/src/utils/whatsapp_helper.dart';
+
+/// Datos mínimos que necesita el formulario para enviar el documento por
+/// WhatsApp, desacoplado del modelo de origen (Ticket o Quotation).
+class WhatsappSendData {
+  final String? initialPhone;
+  final String message;
+  final String filename;
+  final String documentUrl;
+
+  const WhatsappSendData({
+    this.initialPhone,
+    required this.message,
+    required this.filename,
+    required this.documentUrl,
+  });
+}
 
 class FormSendWhatsapp extends ConsumerStatefulWidget {
-  final Ticket ticket;
+  final WhatsappSendData data;
 
   const FormSendWhatsapp({
-    super.key, 
-    required this.ticket,
+    super.key,
+    required this.data,
   });
 
   @override
@@ -32,8 +45,8 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
   }
 
   void _initializeForm() {
-    if (widget.ticket.telefonoReceptor?.isNotEmpty == true) {
-      _phoneController.text = widget.ticket.telefonoReceptor!;
+    if (widget.data.initialPhone?.isNotEmpty == true) {
+      _phoneController.text = widget.data.initialPhone!;
     }
   }
 
@@ -69,16 +82,12 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
   void _sendWhatsAppInBackground() async {
     try {
       final whatsappNotifier = ref.read(whatsappProvider.notifier);
-      final sesion = ref.read(sesionProvider);
-      
-      final nombreComercial = sesion.company?.nombreComercial ?? 'Empresa';
-      final dataSend = WhatsappHelper.getDataSend(widget.ticket, nombreComercial);
-      
+
       final response = await whatsappNotifier.sendWhatsapp(
         phoneNumber: _phoneController.text.trim(),
-        message: dataSend.textMessage,
-        filename: dataSend.nameMessage,
-        documentUrl: dataSend.url,
+        message: widget.data.message,
+        filename: widget.data.filename,
+        documentUrl: widget.data.documentUrl,
       );
         if (response.success) {
           successNotification(response.message ?? 'Mensaje enviado correctamente');
@@ -132,7 +141,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                     LengthLimitingTextInputFormatter(15),
                   ],
                   validator: _validatePhone,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -147,7 +156,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                       ),
                       child: Text(
                         '+51',
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.grey[700],
@@ -204,7 +213,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                     ),
                     child: Text(
                       'Volver',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -240,7 +249,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                       : const Icon(Icons.send, size: 18),
                     label: Text(
                       _isLoading ? 'Enviando...' : 'Enviar',
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -265,7 +274,7 @@ class _FormSendWhatsappState extends ConsumerState<FormSendWhatsapp> {
                 Expanded(
                   child: Text(
                     'Se enviará el recibo vía WhatsApp al número proporcionado.',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       fontSize: 12,
                       color: Colors.grey[500],
                       fontWeight: FontWeight.w400,

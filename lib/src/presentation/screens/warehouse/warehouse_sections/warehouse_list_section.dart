@@ -71,7 +71,7 @@ class _WarehouseListSectionState extends State<WarehouseListSection> {
                         const SizedBox(width: 8),
                         Text(
                           "${warehouseData["phone"]}",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFFA0A0A3),
                             fontSize: 16,
                           ),
@@ -86,7 +86,7 @@ class _WarehouseListSectionState extends State<WarehouseListSection> {
                         const SizedBox(width: 8),
                         Text(
                           "${warehouseData["email"]}",
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFFA0A0A3),
                             fontSize: 16,
                           ),
@@ -102,7 +102,7 @@ class _WarehouseListSectionState extends State<WarehouseListSection> {
                         Expanded(
                           child: Text(
                             "${warehouseData["address"]}",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               color: const Color(0xFFA0A0A3),
                               fontSize: 16,
                             ),

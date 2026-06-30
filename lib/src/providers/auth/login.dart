@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/config.dart';
 import 'package:teki_app/src/data/models/response/login.dart';
+import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/repositories/auth_repository_impl.dart';
@@ -151,8 +152,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         if (userId != null) {
           NotificationService.instance.initialize(userId);
         }
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 401) {
+          logout();
+        } else {
+          errorNotification('Error de conexión al cargar la configuración.');
+        }
       } catch (e) {
-        logout();
         errorNotification(e.toString());
       }
     } else {
@@ -226,20 +232,38 @@ Future<void> setConfigProvider(
   LoginResponse login,
   SaleStationRepository saleStationRepository,
 ) async {
-  final int companyId = login.user?.puntosVenta?[0].id ?? 0;
+  final user = login.user;
+  final puntosVenta = user?.puntosVenta ?? [];
+  final estacionAsignada = user?.estacionVenta;
+
+  Office? defaultPv;
+  if (estacionAsignada != null) {
+    defaultPv = puntosVenta.firstWhere(
+      (pv) => pv.id == estacionAsignada.puntoVenta?.id,
+      orElse: () => puntosVenta.isNotEmpty ? puntosVenta.first : Office(),
+    );
+  } else {
+    final pvCompany = puntosVenta.where((pv) => pv.rucAsignado == user?.rucAsignado).firstOrNull;
+    defaultPv = pvCompany ?? (puntosVenta.isNotEmpty ? puntosVenta.first : Office());
+  }
+
+  final int idPuntoVenta = defaultPv.id ?? 0;
   List<SaleStation> saleStations = [];
   try {
-    saleStations = await saleStationRepository.getSaleStations(companyId);
+    saleStations = await saleStationRepository.getSaleStations(idPuntoVenta);
   } on DioException catch (e) {
-    return Future.error(
-        'Error al obtener los puntos de venta: ${e.response?.data['message'] ?? 'Error de conexión'}');
+    if (e.response?.statusCode == 401) {
+      rethrow;
+    }
+    final message = (e.response?.data is Map ? e.response?.data['message'] : null) ?? 'Error de conexión';
+    return Future.error('Error al obtener los puntos de venta: $message');
   } catch (e) {
     return Future.error('Error al obtener los puntos de venta: ${e.toString()}');
   }
   if (saleStations.isEmpty) {
     return Future.error('No se encontraron puntos de venta para la empresa.');
   }
-  ref.read(sesionProvider.notifier).setFullConfig(login, saleStations);
+  ref.read(sesionProvider.notifier).setFullConfig(login, saleStations, defaultPv);
 }
 
 Future<ConfigCompany> setConfigCompanies(Ref ref, ConfigRepository configRepository) async {

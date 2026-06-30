@@ -3,6 +3,7 @@ import 'package:teki_app/src/data/models/esc_pos/command_print.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/printer.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/productionArea.dart';
 import 'package:teki_app/src/shared/services/command_esc_pos_formatter.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
@@ -22,6 +23,8 @@ class CommandPrintService {
     required bool escPos,
     required String? clientPrinter,
     required int? idCompany,
+    bool anulacion = false,
+    List<int> itemAfectado = const <int>[],
   }) async {
     if (clientPrinter != 'COFFE') return;
 
@@ -35,8 +38,8 @@ class CommandPrintService {
 
     final areasProductions = <ProductionArea>[];
 
-    void processProduct(dynamic producto) {
-      final area = producto?.categoria?.areaProduccion as ProductionArea?;
+    void processProduct(Product producto) {
+      final area = producto.categoria?.areaProduccion;
       if (area == null) return;
       final hasMatchingPrinter = area.impresoras?.any((imp) =>
               imp.puntoVenta?.id == puntoVenta.id &&
@@ -46,9 +49,21 @@ class CommandPrintService {
     }
 
     for (final cd in command.items ?? []) {
-      processProduct(cd.producto);
+      final producto = cd.producto as Product?;
+      if (producto == null) continue;
+      if (producto.tipoProducto == 'COMBO') {
+        processProduct(producto);
+        for (final gp in producto.comboPlatillos ?? []) {
+          processProduct(gp);
+        }
+      } else {
+        processProduct(producto);
+      }
+
       for (final gp in cd.grupoProductoOpciones ?? []) {
-        processProduct(gp.producto);
+        if (gp.producto?.categoria?.areaProduccion.impresoras?.any((imp) => imp.puntoVenta?.id == puntoVenta.id) == true) {
+          processProduct(gp.producto);
+        }
       }
     }
 
@@ -64,7 +79,7 @@ class CommandPrintService {
       );
       if (printer?.id == null) continue;
 
-      final params = 'idArea=$idArea&anulacion=false';
+      final params = 'idArea=$idArea&anulacion=$anulacion${itemAfectado.map((id) => '&itemAfectado=$id').join()}';
       await _printCommand(
         commandId: commandId,
         params: params,
@@ -136,8 +151,20 @@ class CommandPrintService {
   Map<String, dynamic> _paramsToMap(String params) {
     final map = <String, dynamic>{};
     for (final part in params.split('&')) {
-      final kv = part.split('=');
-      if (kv.length == 2) map[kv[0]] = kv[1];
+      final idx = part.indexOf('=');
+      if (idx < 0) continue;
+      final key = part.substring(0, idx);
+      final value = part.substring(idx + 1);
+      if (map.containsKey(key)) {
+        final existing = map[key];
+        if (existing is List) {
+          existing.add(value);
+        } else {
+          map[key] = [existing, value];
+        }
+      } else {
+        map[key] = value;
+      }
     }
     return map;
   }

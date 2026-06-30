@@ -2,13 +2,15 @@ class CommandItemPrint {
   final String? producto;
   final String? extras;
   final String? cantidad;
+  final String? motivoAnulacion;
 
-  CommandItemPrint({this.producto, this.extras, this.cantidad});
+  CommandItemPrint({this.producto, this.extras, this.cantidad, this.motivoAnulacion});
 
   factory CommandItemPrint.fromJson(Map<String, dynamic> json) => CommandItemPrint(
         producto: json['producto']?.toString(),
         extras: json['extras']?.toString(),
         cantidad: json['cantidad']?.toString(),
+        motivoAnulacion: json['motivoAnulacion']?.toString(),
       );
 }
 

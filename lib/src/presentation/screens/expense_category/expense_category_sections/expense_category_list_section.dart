@@ -65,7 +65,7 @@ class _ExpenseCategoryListSectionState
                       ),
                       child: Text(
                         category["subCategory-name"],
-                        style: GoogleFonts.nunito(),
+                        style: GoogleFonts.roboto(),
                       ),
                     ),
                     trailing: Row(

@@ -168,56 +168,56 @@ class _SaleGenerateInvoiceSectionState
                     DataRow(
                       cells: [
                         DataCell(Text("3D Cannon Camera",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("30566205",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("pc",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("25.00",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("1",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("10%",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("5%",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("23.00",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                       ],
                     ),
                     DataRow(
                       cells: [
                         DataCell(Text("Green Lemon",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("30566206",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("kg",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("70.00",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("1",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("0%",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("0%",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                         DataCell(Text("70.00",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 textStyle: const TextStyle()))),
                       ],
                     ),
@@ -331,7 +331,7 @@ class _SaleGenerateInvoiceSectionState
                         color: Colors.black87, fontWeight: FontWeight.w500)),
                 TextSpan(
                     text: "N/A",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.grey,
                     ))
               ])),
@@ -348,7 +348,7 @@ class _SaleGenerateInvoiceSectionState
                         color: Colors.black87, fontWeight: FontWeight.w500)),
                 TextSpan(
                     text: "N/A",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.grey,
                     ))
               ])),
@@ -365,7 +365,7 @@ class _SaleGenerateInvoiceSectionState
                         color: Colors.black87, fontWeight: FontWeight.w500)),
                 TextSpan(
                     text: "Richard Joseph",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.grey,
                     ))
               ])),
@@ -382,7 +382,7 @@ class _SaleGenerateInvoiceSectionState
                         color: Colors.black87, fontWeight: FontWeight.w500)),
                 TextSpan(
                     text: "info@example.com",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.grey,
                     ))
               ])),
@@ -434,14 +434,14 @@ class _SaleGenerateInvoiceSectionState
         children: [
           Text(
             title,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               color: Colors.white60,
               fontWeight: FontWeight.w600,
             ),
           ),
           Text(
             value,
-            style: GoogleFonts.nunito(
+            style: GoogleFonts.roboto(
               color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
@@ -496,7 +496,7 @@ class _SaleGenerateInvoiceSectionState
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.nunito(color: Colors.grey),
+              style: GoogleFonts.roboto(color: Colors.grey),
             ),
           ),
         ],

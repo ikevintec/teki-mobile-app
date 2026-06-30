@@ -64,10 +64,19 @@ class _RestaurantMesasScreenState
     super.dispose();
   }
 
+  /// Recarga rápida (socket): solo mesas + órdenes, conserva salones.
   void _reload() {
     final pvId = ref.read(sesionProvider).office?.id;
     if (pvId != null) {
       ref.read(restaurantProvider.notifier).reload(pvId);
+    }
+  }
+
+  /// Recarga completa desde salones (volver de ajustes / cambio de PV).
+  void _reloadFull() {
+    final pvId = ref.read(sesionProvider).office?.id;
+    if (pvId != null) {
+      ref.read(restaurantProvider.notifier).loadData(pvId);
     }
   }
 
@@ -121,6 +130,10 @@ class _RestaurantMesasScreenState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(sesionProvider, (prev, next) {
+      if (next.office?.id != prev?.office?.id) _reloadFull();
+    });
+
     final state = ref.watch(restaurantProvider);
     final notifier = ref.read(restaurantProvider.notifier);
     final tables = notifier.tablesWithOrders;
@@ -137,18 +150,13 @@ class _RestaurantMesasScreenState
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              final pvId = ref.read(sesionProvider).office?.id;
-              Get.toNamed(
-                AppRoutes.restaurantCobrador,
-                arguments: {'pvId': pvId},
-              );
+          IconButton(
+            tooltip: 'Ajustes',
+            onPressed: () async {
+              await Get.toNamed(AppRoutes.settings);
+              if (mounted) _reloadFull();
             },
-            child: const Text(
-              'Cobrador',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
+            icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
           ),
         ],
       ),

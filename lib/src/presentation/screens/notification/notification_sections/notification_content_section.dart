@@ -46,7 +46,7 @@ class NotificationContentScreen extends StatelessWidget {
                       ),
                       Text(
                         "${notificationData["date"]} ${notificationData["time"]}",
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                             textStyle: TextStyle(
                                 color: Colors.grey,
                                 fontSize: screenWidth * 0.035)),
@@ -86,7 +86,7 @@ class NotificationContentScreen extends StatelessWidget {
                   children: [
                     Text(
                       "Hi,",
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                           textStyle: TextStyle(
                               color: const Color(0xFF616161),
                               fontSize: screenWidth * 0.04,
@@ -97,7 +97,7 @@ class NotificationContentScreen extends StatelessWidget {
                     ),
                     Text(
                       notificationData["messageContent"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                           textStyle: TextStyle(
                               fontSize: screenWidth * 0.04,
                               color: const Color(0xFF616161))),
@@ -105,7 +105,7 @@ class NotificationContentScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     Text(
                       notificationData["messageBody"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                           textStyle: TextStyle(
                               fontSize: screenWidth * 0.04,
                               color: const Color(0xFF616161))),
@@ -113,7 +113,7 @@ class NotificationContentScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     Text(
                       notificationData["messageEnd"],
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                           textStyle: TextStyle(
                               fontSize: screenWidth * 0.04,
                               color: const Color(0xFF616161))),
@@ -123,7 +123,7 @@ class NotificationContentScreen extends StatelessWidget {
                     ),
                     Text(
                       "Thanks!",
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                           textStyle: TextStyle(
                               color: const Color(0xFF616161),
                               fontSize: screenWidth * 0.04,

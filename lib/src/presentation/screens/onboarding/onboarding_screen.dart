@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_onboarding_slider/flutter_onboarding_slider.dart';
 import 'package:get/route_manager.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
+
+  Future<void> _markOnboardingCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_completed', true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +25,8 @@ class OnboardingScreen extends StatelessWidget {
         child: OnBoardingSlider(
           pageBackgroundColor: Colors.white,
           finishButtonText: "Iniciar Sesión",
-          onFinish: () {
+          onFinish: () async {
+            await _markOnboardingCompleted();
             Get.toNamed(AppRoutes.login);
           },
           finishButtonStyle: const FinishButtonStyle(
@@ -102,7 +109,7 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'Teki app es un sistema de punto de venta que permite a los usuarios acceder de forma segura a su información desde cualquier lugar y en cualquier momento.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                         textStyle: TextStyle(
                             color: ColorSchema.subTitleTextColor,
                             fontSize: screenWidth * 0.045,
@@ -138,7 +145,7 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'Ofrecemos intuitivas y sencillas herramientas para que puedas gestionar tu negocio de manera eficiente.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                         textStyle: TextStyle(
                             color: ColorSchema.subTitleTextColor,
                             fontSize: screenWidth * 0.045,
@@ -173,7 +180,7 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'Con Teki app puedes gestionar tu inventario, ventas y reportes desde una sola plataforma.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                         textStyle: TextStyle(
                             color: ColorSchema.subTitleTextColor,
                             fontSize: screenWidth * 0.045,

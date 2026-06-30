@@ -143,6 +143,7 @@ class Ticket {
   final String? numeroCotizacion;
   final bool? despachoPosterior;
   final bool? isRetencion;
+  final String? placaVehiculo;
 
   Ticket({
     this.id,
@@ -271,6 +272,7 @@ class Ticket {
     this.numeroCotizacion,
     this.despachoPosterior,
     this.isRetencion,
+    this.placaVehiculo,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
@@ -438,6 +440,7 @@ class Ticket {
         numeroCotizacion: json['numeroCotizacion'],
         despachoPosterior: json['despachoPosterior'] ?? false,
         isRetencion: json['isRetencion'] ?? false,
+        placaVehiculo: json['placaVehiculo'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -569,6 +572,7 @@ class Ticket {
         'numeroCotizacion': numeroCotizacion,
         'despachoPosterior': despachoPosterior ?? false,
         'isRetencion': isRetencion ?? false,
+        'placaVehiculo': placaVehiculo,
       };
 
   Ticket copyWith({
@@ -698,6 +702,7 @@ class Ticket {
     String? numeroCotizacion,
     bool? despachoPosterior,
     bool? isRetencion,
+    String? placaVehiculo,
   }) {
     return Ticket(
       id: id ?? this.id,
@@ -847,6 +852,7 @@ class Ticket {
       numeroCotizacion: numeroCotizacion ?? this.numeroCotizacion,
       despachoPosterior: despachoPosterior ?? this.despachoPosterior,
       isRetencion: isRetencion ?? this.isRetencion,
+      placaVehiculo: placaVehiculo ?? this.placaVehiculo,
     );
   }
 }

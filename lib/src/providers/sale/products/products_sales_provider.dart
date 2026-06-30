@@ -12,6 +12,7 @@ import 'package:teki_app/src/domain/repositories/currency_repository.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/quotation/quotation_view_provider.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/products_sale_notifier_setters.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
@@ -20,17 +21,15 @@ import 'package:teki_app/src/utils/price.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
 
 final productSaleProvider =
-    StateNotifierProvider<ProductsSaleNotifier, ProductsSaleState>(
-  (ref) {
-    final ProductsRepository productsRepository = ProductsRepositoryImpl();
-    final CurrencyRepository currencyRepository = CurrencyRepositoryImpl();
-    return ProductsSaleNotifier(
-      productsRepository: productsRepository,
-      currencyRepository: currencyRepository,
-      ref: ref,
-    );
-  },
-);
+    StateNotifierProvider<ProductsSaleNotifier, ProductsSaleState>((ref) {
+      final ProductsRepository productsRepository = ProductsRepositoryImpl();
+      final CurrencyRepository currencyRepository = CurrencyRepositoryImpl();
+      return ProductsSaleNotifier(
+        productsRepository: productsRepository,
+        currencyRepository: currencyRepository,
+        ref: ref,
+      );
+    });
 
 class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     with ProductsSaleNotifierSettersMixin {
@@ -42,37 +41,40 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     required this.ref,
     required this.productsRepository,
     required this.currencyRepository,
-  }) : super(ProductsSaleState(
-          tipoComprobante:
-              ref.watch(sesionProvider).config!.tipoComprobantePorDefecto ??
-                  'NV', // Factura
-          productsSales: [],
-          currencies: [],
-          incIgv: true,
-          currency: null,
-          isLoading: true,
-          isBarcodeSearching: false,
-          error: null,
-          pageNumber: 0,
-          paginacion: true,
-          perPage: 20,
-          sortField: 'id',
-          sortOrder: 1,
-          filterGlobal: '',
-          idPuntoVenta: null,
-          otrosTributos: null,
-          porcentajeDescuentoGlobal: null,
-          flagRetencion: false,
-          porcentajeRetencion:
-              ref.watch(sesionProvider).config!.porcentajeRetencion ?? 0.0,
-          codigoTipoOperacion: '0101',
-        ));
+  }) : super(
+         ProductsSaleState(
+           tipoComprobante:
+               ref.watch(sesionProvider).config!.tipoComprobantePorDefecto ??
+               'NV', // Factura
+           productsSales: [],
+           currencies: [],
+           incIgv: true,
+           currency: null,
+           isLoading: true,
+           isBarcodeSearching: false,
+           error: null,
+           pageNumber: 0,
+           paginacion: true,
+           perPage: 20,
+           sortField: 'id',
+           sortOrder: 1,
+           filterGlobal: '',
+           idPuntoVenta: null,
+           otrosTributos: null,
+           porcentajeDescuentoGlobal: null,
+           flagRetencion: false,
+           porcentajeRetencion:
+               ref.watch(sesionProvider).config!.porcentajeRetencion ?? 0.0,
+           codigoTipoOperacion: '0101',
+         ),
+       );
 
   Future<List<Product>> getProducts(String? filter) async {
     setFilterGlobal(filter);
     try {
-      final response =
-          await productsRepository.getProducts(buildProductQueryParams(state));
+      final response = await productsRepository.getProducts(
+        buildProductQueryParams(state),
+      );
       if (response.content != null || response.content!.isNotEmpty) {
         return response.content!;
       }
@@ -107,34 +109,78 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     }
   }
 
-  void loadInitialData(int? id) async {
+  void loadInitialData(
+    int? id, {
+    int? quotationId,
+    int? quotationIdForSale,
+  }) async {
     setLoading(true);
     try {
       // Cargar currencies solo si no existen o si no se está editando
       if (state.currencies.isEmpty) {
         final response = await currencyRepository.getCurrencies();
         if (response.isNotEmpty) {
-          state = state.copyWith(
-            currencies: response,
-            currency: response[0],
-          );
+          state = state.copyWith(currencies: response, currency: response[0]);
         }
       }
-      
-      // Cargar datos de edición independientemente del estado de currencies
-      if (id != null) {
+
+      final customerNotifier = ref.read(customerSaleProvider.notifier);
+      final productsSaleNotifier = ref.read(productSaleProvider.notifier);
+      final ticketSaleNotifier = ref.read(ticketProvider.notifier);
+
+      // Generar una venta nueva a partir de una cotización (no es edición)
+      if (quotationIdForSale != null) {
+        final quotationViewNotifier = ref.read(quotationViewProvider.notifier);
+        final quotation = await quotationViewNotifier.fetchQuotationById(
+          quotationIdForSale,
+        );
+        final ticketFromQuotation = quotation.toTicketForSale();
+        ticketSaleNotifier.updateTicket(ticketFromQuotation);
+        customerNotifier.setCustomerEntity(
+          ticketFromQuotation.cliente ?? Customer(),
+        );
+        productsSaleNotifier.setProductsSaleEntity(
+          ticketFromQuotation.items ?? [],
+          monedaOrigen: ticketFromQuotation.codigoMoneda,
+        );
+        productsSaleNotifier.setIncIgv(ticketFromQuotation.incIgv ?? true);
+        productsSaleNotifier.setCurrency(
+          ticketFromQuotation.codigoMoneda ?? 'PEN',
+        );
+        ticketSaleNotifier.setEdited(false);
+      } else if (quotationId != null) {
+        // Cargar datos de edición de cotización
+        final quotationViewNotifier = ref.read(quotationViewProvider.notifier);
+        final quotation = await quotationViewNotifier.fetchQuotationById(
+          quotationId,
+        );
+        final ticketFromQuotation = quotation.toTicketForEdit();
+        ticketSaleNotifier.updateTicket(ticketFromQuotation);
+        customerNotifier.setCustomerEntity(
+          ticketFromQuotation.cliente ?? Customer(),
+        );
+        productsSaleNotifier.setProductsSaleEntity(
+          ticketFromQuotation.items ?? [],
+          monedaOrigen: ticketFromQuotation.codigoMoneda,
+        );
+        productsSaleNotifier.setIncIgv(ticketFromQuotation.incIgv ?? true);
+        productsSaleNotifier.setCurrency(
+          ticketFromQuotation.codigoMoneda ?? 'PEN',
+        );
+        ticketSaleNotifier.setEdited(true);
+      } else if (id != null) {
+        // Cargar datos de edición de comprobante
         final comprobanteNotifier = ref.read(comprobanteProvider.notifier);
-        // Cargar el comprobante y sus datos relacionados
-        final customerNotifier = ref.read(customerSaleProvider.notifier);
-        final productsSaleNotifier = ref.read(productSaleProvider.notifier);
-        final ticketSaleNotifier = ref.read(ticketProvider.notifier);
         // Cargar el comprobante por ID
         Ticket comprobante = await comprobanteNotifier.fetchComprobanteById(id);
         ticketSaleNotifier.updateTicket(comprobante);
-        customerNotifier.setCustomerEntity(comprobante.cliente?? Customer());
-        productsSaleNotifier.setProductsSaleEntity(comprobante.items ?? [], monedaOrigen: comprobante.codigoMoneda);
-        productsSaleNotifier.setIncIgv( comprobante.incIgv ?? true);
-        productsSaleNotifier.setCurrency( comprobante.codigoMoneda ?? 'PEN');
+        customerNotifier.setCustomerEntity(comprobante.cliente ?? Customer());
+        productsSaleNotifier.setProductsSaleEntity(
+          comprobante.items ?? [],
+          monedaOrigen: comprobante.codigoMoneda,
+        );
+        productsSaleNotifier.setIncIgv(comprobante.incIgv ?? true);
+        productsSaleNotifier.setCurrency(comprobante.codigoMoneda ?? 'PEN');
 
         ticketSaleNotifier.setEdited(true);
       }
@@ -161,7 +207,8 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
       ref.read(ticketProvider.notifier).resetTicket();
 
       // Resolver cliente: del check o el cliente por defecto de la sesión
-      final customer = check.cliente ??
+      final customer =
+          check.cliente ??
           ref.read(sesionProvider).config?.clientePorDefectoData ??
           Customer();
       ref.read(customerSaleProvider.notifier).setCustomerEntity(customer);
@@ -189,26 +236,28 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
           'igv': sesion.config!.igv,
           'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
         });
-        items.add(TicketDetail(
-          cantidad: qty,
-          precioVentaUnitario: price,
-          montoOriginal: price,
-          valorUnitario: 0,
-          descripcion: detail.producto!.nombre ?? '',
-          codigoProducto: detail.producto!.codigo,
-          codigoUnidadMedida: detail.producto!.unidad?.codigo ?? 'NIU',
-          codigoTipoAfectacionIgv: detail.producto!.tipoAfectacion ?? '10',
-          tieneImpuestoBolsas: detail.producto!.tieneImpuestoBolsas ?? false,
-          esAnticipo: null,
-          descuento: 0,
-          producto: detail.producto,
-          comandaDetalle: detail,
-          monedaOriginal: detail.producto!.moneda ?? 'PEN',
-          precioCompraUnitario: detail.producto!.precioCompra ?? 0,
-          porcentajeOtrosCargos: detail.producto!.tipoProducto == 'PLAN'
-              ? detail.producto!.porcentajeOtrosCargos
-              : null,
-        ));
+        items.add(
+          TicketDetail(
+            cantidad: qty,
+            precioVentaUnitario: price,
+            montoOriginal: price,
+            valorUnitario: 0,
+            descripcion: detail.producto!.nombre ?? '',
+            codigoProducto: detail.producto!.codigo,
+            codigoUnidadMedida: detail.producto!.unidad?.codigo ?? 'NIU',
+            codigoTipoAfectacionIgv: detail.producto!.tipoAfectacion ?? '10',
+            tieneImpuestoBolsas: detail.producto!.tieneImpuestoBolsas ?? false,
+            esAnticipo: null,
+            descuento: 0,
+            producto: detail.producto,
+            comandaDetalle: detail,
+            monedaOriginal: detail.producto!.moneda ?? 'PEN',
+            precioCompraUnitario: detail.producto!.precioCompra ?? 0,
+            porcentajeOtrosCargos: detail.producto!.tipoProducto == 'PLAN'
+                ? detail.producto!.porcentajeOtrosCargos
+                : null,
+          ),
+        );
 
         // Productos de grupoProductoOpciones (también bloqueados como items del check)
         for (final option in (detail.grupoProductoOpciones ?? [])) {
@@ -221,7 +270,11 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
           // en una copia del producto para que getPriceProduct aplique
           // correctamente IGV, recargo y otrosCargos sin alterar el método.
           final productForPricing = (option.precio ?? 0) > 0
-              ? _productWithOverridePrice(option.producto!, option.precio!, sesion.office!.id)
+              ? _productWithOverridePrice(
+                  option.producto!,
+                  option.precio!,
+                  sesion.office!.id,
+                )
               : option.producto!;
 
           double optPrice = getPriceProduct(productForPricing, sesion.office!, {
@@ -235,45 +288,50 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
             optPrice = option.precio!.toDouble();
           }
 
-          items.add(TicketDetail(
-            cantidad: optQty,
-            precioVentaUnitario: optPrice,
-            montoOriginal: optPrice,
-            valorUnitario: 0,
-            descripcion: option.producto!.nombre ?? option.nombreOpcion ?? '',
-            codigoProducto: option.producto!.codigo,
-            codigoUnidadMedida: option.producto!.unidad?.codigo ?? 'NIU',
-            codigoTipoAfectacionIgv: option.producto!.tipoAfectacion ?? '10',
-            tieneImpuestoBolsas: option.producto!.tieneImpuestoBolsas ?? false,
-            esAnticipo: null,
-            descuento: 0,
-            producto: option.producto,
-            comandaDetalle: detail, // heredar del padre para bloqueo
-            monedaOriginal: option.producto!.moneda ?? 'PEN',
-            precioCompraUnitario: option.producto!.precioCompra ?? 0,
-          ));
+          items.add(
+            TicketDetail(
+              cantidad: optQty,
+              precioVentaUnitario: optPrice,
+              montoOriginal: optPrice,
+              valorUnitario: 0,
+              descripcion: option.producto!.nombre ?? option.nombreOpcion ?? '',
+              codigoProducto: option.producto!.codigo,
+              codigoUnidadMedida: option.producto!.unidad?.codigo ?? 'NIU',
+              codigoTipoAfectacionIgv: option.producto!.tipoAfectacion ?? '10',
+              tieneImpuestoBolsas:
+                  option.producto!.tieneImpuestoBolsas ?? false,
+              esAnticipo: null,
+              descuento: 0,
+              producto: option.producto,
+              comandaDetalle: detail, // heredar del padre para bloqueo
+              monedaOriginal: option.producto!.moneda ?? 'PEN',
+              precioCompraUnitario: option.producto!.precioCompra ?? 0,
+            ),
+          );
         }
       }
 
       // Agregar servicio delivery como ítem si aplica
       final montoDelivery = check.pedido?.montoDelivery;
       if (montoDelivery != null && montoDelivery > 0) {
-        items.add(TicketDetail(
-          cantidad: 1.0,
-          precioVentaUnitario: montoDelivery,
-          montoOriginal: montoDelivery,
-          valorUnitario: 0,
-          descripcion: 'Servicio delivery',
-          codigoUnidadMedida: 'ZZ',
-          codigoTipoAfectacionIgv: '10',
-          tieneImpuestoBolsas: false,
-          esAnticipo: null,
-          descuento: 0,
-          producto: null,
-          comandaDetalle: null,
-          monedaOriginal: 'PEN',
-          precioCompraUnitario: 0,
-        ));
+        items.add(
+          TicketDetail(
+            cantidad: 1.0,
+            precioVentaUnitario: montoDelivery,
+            montoOriginal: montoDelivery,
+            valorUnitario: 0,
+            descripcion: 'Servicio delivery',
+            codigoUnidadMedida: 'ZZ',
+            codigoTipoAfectacionIgv: '10',
+            tieneImpuestoBolsas: false,
+            esAnticipo: null,
+            descuento: 0,
+            producto: null,
+            comandaDetalle: null,
+            monedaOriginal: 'PEN',
+            precioCompraUnitario: 0,
+          ),
+        );
       }
 
       setProductsSaleEntity(items, monedaOrigen: 'PEN');
@@ -281,10 +339,13 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
       // Vincular la cuenta y pedido de restaurante al ticket
       final ticketNotifier = ref.read(ticketProvider.notifier);
       ticketNotifier.updateTicket(
-        ref.read(ticketProvider).ticket.copyWith(
-          cuentaRestaurante: check.id,
-          pedidoRestaurante: check.pedido,
-        ),
+        ref
+            .read(ticketProvider)
+            .ticket
+            .copyWith(
+              cuentaRestaurante: check.id,
+              pedidoRestaurante: check.pedido,
+            ),
       );
     } catch (e) {
       setError(e.toString());
@@ -292,22 +353,25 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
       setLoading(false);
     }
   }
-
 }
 
 /// Devuelve una copia del [product] con un [preciosVenta] sintético que
 /// usa [overridePrice] como precio base en lugar del precio original.
 /// Esto permite que [getPriceProduct] aplique IGV, recargo y otrosCargos
 /// normalmente sin modificar ese método.
-Product _productWithOverridePrice(Product product, double overridePrice, int? officeId) {
+Product _productWithOverridePrice(
+  Product product,
+  double overridePrice,
+  int? officeId,
+) {
   // Preservar el puntoVenta del primer precio existente (si aplica por PV)
   // para que el filtro interno de getPriceProduct lo encuentre.
   final usaPorPuntoVenta = product.preciosPorPuntoVenta == true;
   final existingPv = usaPorPuntoVenta
       ? (product.preciosVenta ?? [])
-          .where((p) => p.puntoVenta?.id == officeId)
-          .map((p) => p.puntoVenta)
-          .firstOrNull
+            .where((p) => p.puntoVenta?.id == officeId)
+            .map((p) => p.puntoVenta)
+            .firstOrNull
       : null;
 
   final syntheticPrice = ProductPrice(
@@ -408,7 +472,7 @@ class ProductsSaleState {
       tipoComprobante: tipoComprobante ?? this.tipoComprobante,
       otrosTributos: otrosTributos ?? this.otrosTributos,
       porcentajeDescuentoGlobal:
-      porcentajeDescuentoGlobal ?? this.porcentajeDescuentoGlobal,
+          porcentajeDescuentoGlobal ?? this.porcentajeDescuentoGlobal,
       flagRetencion: flagRetencion ?? this.flagRetencion,
       porcentajeRetencion: porcentajeRetencion ?? this.porcentajeRetencion,
       codigoTipoOperacion: codigoTipoOperacion ?? this.codigoTipoOperacion,

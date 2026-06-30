@@ -135,7 +135,7 @@ class _CustomerFiltersModalState extends ConsumerState<CustomerFiltersModal> {
                   ),
                   child: Text(
                     'Cancelar',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.black87,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -159,7 +159,7 @@ class _CustomerFiltersModalState extends ConsumerState<CustomerFiltersModal> {
                   ),
                   child: Text(
                     'Aplicar',
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,

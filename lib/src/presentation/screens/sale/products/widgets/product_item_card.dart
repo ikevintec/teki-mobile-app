@@ -6,6 +6,7 @@ import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
 import 'package:teki_app/src/presentation/widgets/form/smart_price_value_accessor.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -123,29 +124,23 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     final imageUrl = widget.productTicketDetail.producto?.imagenUrl;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
           color: const Color(0xFFF5F6FA),
+          borderRadius: BorderRadius.circular(10),
         ),
         clipBehavior: Clip.antiAlias,
         child: Image.network(
           imageUrl,
-          width: 40,
-          height: 40,
+          width: 44,
+          height: 44,
           fit: BoxFit.contain,
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
-            return const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            );
+            return const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)));
           },
-          errorBuilder: (_, __, ___) => _buildInitialCircle(),
+          errorBuilder: (c, e, s) => _buildInitialCircle(),
         ),
       );
     }
@@ -153,22 +148,23 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   }
 
   Widget _buildInitialCircle() {
+    final label = widget.productTicketDetail.descripcion?.isNotEmpty == true
+        ? widget.productTicketDetail.descripcion![0].toUpperCase()
+        : 'P';
     return Container(
-      width: 40,
-      height: 40,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: ColorSchema.primaryColor,
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: ColorSchema.primaryColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,
       child: Text(
-        widget.productTicketDetail.descripcion != ''
-            ? widget.productTicketDetail.descripcion![0].toUpperCase()
-            : 'P',
+        label,
         style: const TextStyle(
-          color: Colors.white,
+          color: ColorSchema.primaryColor,
           fontWeight: FontWeight.bold,
-          fontSize: 18,
+          fontSize: 20,
         ),
       ),
     );
@@ -179,255 +175,221 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     final isIos = Theme.of(context).platform == TargetPlatform.iOS;
     final provider = ref.watch(productSaleProvider);
 
-    final card = Stack(
-      clipBehavior: Clip.none,
+    return Column(
       children: [
-        Container(
-          margin: const EdgeInsets.only(top: 8, bottom: 8),
-          padding: const EdgeInsets.only(
-            left: 30,
-            right: 35,
-            top: 0,
-          ),
-          child: ReactiveForm(
-            formGroup: widget.formGroup,
-            child: Column(
-              children: [
-                Row(
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 44, 12),
+              child: ReactiveForm(
+                formGroup: widget.formGroup,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _buildProductAvatar(),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 12),
                     Expanded(
-                        child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        if (widget.productTicketDetail.producto != null)
-                          Text(
-                            widget.productTicketDetail.producto!.nombre ?? '',
-                            style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                        if (widget.productTicketDetail.producto == null)
-                          ReactiveTextField<String>(
-                            formControlName: 'description',
-                            keyboardType: TextInputType.name,
-                            textInputAction: TextInputAction.next,
-                            focusNode: _descriptionFocusNode,
-                            controller: _descriptionController,
-                            onSubmitted: (control) {
-                              // Cambiar focus al campo de precio al presionar Enter
-                              _priceFocusNode.requestFocus();
-                            },
-                            style: const TextStyle(
-                              color: Colors.black, // Texto en color negro
-                            ),
-                            decoration: InputDecoration(
-                              isDense: true, // Reduce altura vertical
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 0, // ↓ Espacio vertical mínimo
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (widget.productTicketDetail.producto != null)
+                            Text(
+                              widget.productTicketDetail.producto!.nombre ?? '',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
                               ),
-                              suffixIcon: (isIos && _isDescriptionFocused)
-                                  ? GestureDetector(
-                                      onTap: () => FocusScope.of(context).unfocus(),
-                                      child: const Icon(
-                                        Icons.keyboard_hide,
-                                        size: 15,
-                                        color: Colors.grey,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          if (widget.productTicketDetail.producto == null)
+                            ReactiveTextField<String>(
+                              formControlName: 'description',
+                              keyboardType: TextInputType.name,
+                              textInputAction: TextInputAction.next,
+                              focusNode: _descriptionFocusNode,
+                              controller: _descriptionController,
+                              onSubmitted: (_) => _priceFocusNode.requestFocus(),
+                              style: const TextStyle(color: Colors.black87),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                                suffixIcon: (isIos && _isDescriptionFocused)
+                                    ? GestureDetector(
+                                        onTap: () => FocusScope.of(context).unfocus(),
+                                        child: const Icon(Icons.keyboard_hide, size: 15, color: Colors.grey),
+                                      )
+                                    : null,
+                              ),
+                              validationMessages: {
+                                ValidationMessage.minLength: (_) => 'Mínimo 3 caracteres',
+                                ValidationMessage.required: (_) => 'Nombre requerido',
+                              },
+                            ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              _isPriceEditMode
+                                  ? SizedBox(
+                                      width: 150,
+                                      child: ReactiveTextField<double>(
+                                        formControlName: 'price',
+                                        valueAccessor: SmartPriceValueAccessor(),
+                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                        textInputAction: TextInputAction.done,
+                                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
+                                        focusNode: _priceFocusNode,
+                                        controller: _priceController,
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          labelText: provider.incIgv ? 'Precio Venta' : 'Valor unitario',
+                                          prefixText: formatExchange(moneda: provider.currency!.codigoMoneda!),
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                            borderSide: const BorderSide(color: ColorSchema.primaryColor),
+                                          ),
+                                          suffixIcon: (isIos && _isPriceFocused)
+                                              ? GestureDetector(
+                                                  onTap: () => FocusScope.of(context).unfocus(),
+                                                  child: const Icon(Icons.keyboard_hide, size: 15, color: Colors.grey),
+                                                )
+                                              : null,
+                                        ),
+                                        onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                                        validationMessages: {
+                                          ValidationMessage.min: (_) => 'Mínimo 0.01',
+                                          ValidationMessage.required: (_) => 'Precio requerido',
+                                        },
                                       ),
                                     )
-                                  : null,
-                            ),
-                            validationMessages: {
-                              ValidationMessage.minLength: (error) => 'Mínimo 3 caracteres',
-                              ValidationMessage.required: (error) =>
-                                  'Nombre requerido',
-                            },
-                          ),
-                        const SizedBox(height: 5),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Control de precio
-                            SizedBox(
-                              width: 160,
-                              child: _isPriceEditMode
-                                ? ReactiveTextField<double>(
-                                    formControlName: 'price',
-                                    valueAccessor: SmartPriceValueAccessor(),
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    textInputAction: TextInputAction.done,
-                                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                                    focusNode: _priceFocusNode,
-                                    controller: _priceController,
-                                    decoration: InputDecoration(
-                                      labelText: provider.incIgv
-                                          ? 'Precio Venta'
-                                          : 'Valor unitario',
-                                      prefixText: formatExchange(
-                                          moneda: provider.currency!
-                                              .codigoMoneda!), // ← Aquí colocas tu prefijo
-                                      suffixIcon: (isIos && _isPriceFocused)
-                                          ? GestureDetector(
-                                              onTap: () => FocusScope.of(context).unfocus(),
-                                              child: const Icon(
-                                                Icons.keyboard_hide,
-                                                size: 15,
-                                                color: Colors.grey,
-                                              ),
-                                            )
-                                          : null,
-                                    ),
-                                    onSubmitted: (control) {
-                                      // Cerrar teclado al presionar Done
-                                      FocusScope.of(context).unfocus();
-                                    },
-                                    validationMessages: {
-                                      ValidationMessage.min: (error) => 'Mínimo 1',
-                                      ValidationMessage.required: (error) => 'Precio requerido',
-                                    },
-                                  )
-                                : GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _isPriceEditMode = true;
-                                      });
-                                      // Dar focus al campo después de un frame
-                                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                                        _priceFocusNode.requestFocus();
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+                                  : GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () {
+                                        setState(() => _isPriceEditMode = true);
+                                        WidgetsBinding.instance.addPostFrameCallback((_) => _priceFocusNode.requestFocus());
+                                      },
                                       child: ReactiveFormConsumer(
-                                        builder: (context, form, child) {
+                                        builder: (context, form, _) {
                                           final priceControl = form.control('price') as FormControl<double>;
                                           final priceValue = priceControl.value ?? 0.0;
                                           final hasError = priceControl.hasErrors && priceControl.touched;
-                
-                                          return Text(
-                                            '${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${priceValue.toStringAsFixed(2)}',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: hasError ? Colors.red : Colors.black,
+                                          return Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: hasError
+                                                  ? Colors.red.withValues(alpha: 0.08)
+                                                  : ColorSchema.primaryColor.withValues(alpha: 0.09),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  '${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${priceValue.toStringAsFixed(2)}',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: hasError ? Colors.red : ColorSchema.primaryColor,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.edit_outlined,
+                                                  size: 11,
+                                                  color: hasError
+                                                      ? Colors.red
+                                                      : ColorSchema.primaryColor.withValues(alpha: 0.5),
+                                                ),
+                                              ],
                                             ),
                                           );
                                         },
                                       ),
                                     ),
-                                  ),
-                            ),
-                            // Control de cantidad
-                            QuantityControl(
-                              formGroup: widget.formGroup,
-                              onQuantityChanged: widget.onQuantityChanged ?? () {},
-                              locked: widget.productTicketDetail.comandaDetalle != null,
-                            ),
-                          ],
-                        ),
-                      ],
-                    )),
-                
-                  ],
-                ),
-                if (widget.productTicketDetail.producto?.tipoLote == 'SERIE')
-                  Builder(builder: (context) {
-                    final cantidad = (widget.productTicketDetail.cantidad ?? 1).toInt();
-                    final seleccionadas = (widget.productTicketDetail.lotes ?? []).length;
-                    final valido = seleccionadas == cantidad;
-                    return Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
-                        child: GestureDetector(
-                          onTap: () {
-                            showSeriesConfigSheet(
-                              context,
-                              ticketDetail: widget.productTicketDetail,
-                              index: widget.index,
-                            );
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                valido ? Icons.visibility : Icons.warning_amber_rounded,
-                                size: 14,
-                                color: valido ? ColorSchema.primaryColor : Colors.red.shade600,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                valido
-                                    ? 'Ver series ($seleccionadas/$cantidad)'
-                                    : 'Series requeridas ($seleccionadas/$cantidad)',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: valido ? ColorSchema.primaryColor : Colors.red.shade600,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              QuantityControl(
+                                formGroup: widget.formGroup,
+                                onQuantityChanged: widget.onQuantityChanged ?? () {},
+                                locked: widget.productTicketDetail.comandaDetalle != null,
                               ),
                             ],
                           ),
+                          if (_requiresSeriesValidation(widget.productTicketDetail.producto))
+                            Builder(builder: (context) {
+                              final cantidad = (widget.productTicketDetail.cantidad ?? 1).toInt();
+                              final seleccionadas = (widget.productTicketDetail.lotes ?? []).length;
+                              final valido = seleccionadas == cantidad;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: GestureDetector(
+                                  onTap: () => showSeriesConfigSheet(
+                                    context,
+                                    ticketDetail: widget.productTicketDetail,
+                                    index: widget.index,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        valido ? Icons.check_circle_outline : Icons.warning_amber_rounded,
+                                        size: 13,
+                                        color: valido ? ColorSchema.primaryColor : Colors.red.shade600,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        valido
+                                            ? 'Ver series ($seleccionadas/$cantidad)'
+                                            : 'Series requeridas ($seleccionadas/$cantidad)',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: valido ? ColorSchema.primaryColor : Colors.red.shade600,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: AnimatedBuilder(
+                animation: _shakeAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(-_shakeAnimation.value, 0),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => _shakeController.forward().then((_) => _shakeController.reverse()),
+                        child: const SizedBox(
+                          width: 36,
+                          child: Icon(Icons.chevron_left_rounded, size: 22, color: ColorSchema.primaryColor),
                         ),
                       ),
-                    );
-                  }),
-                      
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          right: 0,
-          top: 0,
-          bottom: 0,
-          child: AnimatedBuilder(
-            animation: _shakeAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(-_shakeAnimation.value, 0),
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius:
-                      const BorderRadius.horizontal(left: Radius.circular(30)),
-                  child: InkWell(
-                    borderRadius:
-                        const BorderRadius.horizontal(left: Radius.circular(30)),
-                    onTap: () {
-                      // Activar animación de shake para indicar que puede deslizar
-                      _shakeController.forward().then((_) {
-                        _shakeController.reverse();
-                      });
-                    },
-                    child: SizedBox(
-                      width: 30,
-                      height: 30,
-                      child: const Icon(Icons.arrow_back_ios_new_rounded,
-                          size: 18, color: ColorSchema.primaryColor),
                     ),
-                  ),
-                ),
-              );
-            },
-          ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-      ],
-    );
-
-    // Divider casi imperceptible entre items
-    return Column(
-      children: [
-        card,
-        Divider(
-          height: 2,
-          thickness: 0.5,
-          color: Colors.grey[200],
-          indent: 20,
-          endIndent: 20,
-        ),
+        Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
       ],
     );
   }
@@ -597,4 +559,11 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
       ),
     );
   }
+}
+
+bool _requiresSeriesValidation(Product? product) {
+  if (product == null) return false;
+  return product.tipoLote == 'SERIE' &&
+      (product.validacionLote ?? false) &&
+      (product.tipoProducto == 'ARTICULO' || product.tipoProducto == 'INSUMO');
 }

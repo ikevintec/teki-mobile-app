@@ -28,7 +28,7 @@ class CheckCardWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 3,

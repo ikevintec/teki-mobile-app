@@ -21,6 +21,10 @@ class RemoteRestaurant extends RestaurantDatasource {
       return list.map((e) => Lounge.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return [];
@@ -39,6 +43,10 @@ class RemoteRestaurant extends RestaurantDatasource {
       return list.map((e) => Table.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return [];
@@ -57,6 +65,10 @@ class RemoteRestaurant extends RestaurantDatasource {
       return list.map((e) => OrderRestaurant.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return [];
@@ -157,6 +169,10 @@ class RemoteRestaurant extends RestaurantDatasource {
       return list.map((e) => Check.fromJson(e)).toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
       final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(msg);
       return [];
@@ -191,7 +207,7 @@ class RemoteRestaurant extends RestaurantDatasource {
   }
 
   @override
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String status) async {
+  Future<void> updateCommandItemStatus(int commandId, int itemId, String status, {String? motivoAnulacion}) async {
     try {
       await dio.patch(
         '/commands/$commandId/items/$itemId/estadoComandaDetalle',
@@ -199,6 +215,7 @@ class RemoteRestaurant extends RestaurantDatasource {
           'estadoComandaDetalle': status,
           'cantidad': null,
           'updateInventory': true,
+          if (motivoAnulacion != null) 'motivoAnulacion': motivoAnulacion,
         },
       );
     } on DioException catch (e) {

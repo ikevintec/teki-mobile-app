@@ -90,7 +90,7 @@ class _PayCompleteSectionState extends State<PayCompleteSection> {
                   ),
                   Text(
                     widget.identificador,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       textStyle: const TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 20,

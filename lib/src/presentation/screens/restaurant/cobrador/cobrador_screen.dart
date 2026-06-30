@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/cobrador_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'widgets/cobrador_filter_bar.dart';
@@ -19,17 +22,32 @@ class CobradorScreen extends ConsumerStatefulWidget {
 }
 
 class _CobradorScreenState extends ConsumerState<CobradorScreen> {
+  late int _currentPvId;
+
   @override
   void initState() {
     super.initState();
+    _currentPvId = widget.pvId;
     Future.microtask(() {
       if (!mounted) return;
-      ref.read(cobradorProvider.notifier).init(widget.pvId);
+      ref.read(cobradorProvider.notifier).init(_currentPvId);
     });
+  }
+
+  void _reload() {
+    ref.read(cobradorProvider.notifier).init(_currentPvId);
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(sesionProvider, (prev, next) {
+      final newPvId = next.office?.id;
+      if (newPvId != null && newPvId != prev?.office?.id) {
+        setState(() => _currentPvId = newPvId);
+        ref.read(cobradorProvider.notifier).init(newPvId);
+      }
+    });
+
     final state = ref.watch(cobradorProvider);
 
     return Scaffold(
@@ -41,13 +59,23 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
           'Cobrador',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Ajustes',
+            onPressed: () async {
+              await Get.toNamed(AppRoutes.settings);
+              if (mounted) _reload();
+            },
+            icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          CobradorFilterBar(pvId: widget.pvId),
+          CobradorFilterBar(pvId: _currentPvId),
           Expanded(
             child: CheckListWidget(
-              pvId: widget.pvId,
+              pvId: _currentPvId,
               checks: state.checks,
               isLoading: state.isLoading,
               onTap: _showCheckDetail,

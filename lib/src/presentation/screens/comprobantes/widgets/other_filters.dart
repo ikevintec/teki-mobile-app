@@ -216,7 +216,7 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
               ),
               child: Text(
               'Volver',
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                 color: Colors.black87,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -237,7 +237,7 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
               ),
               child: Text(
               'Aplicar',
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,

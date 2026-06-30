@@ -281,7 +281,7 @@ class _PosBillsSectionState extends State<PosBillsSection> {
                                 ),
                                 Text(
                                   "Batch :  ${widget.product[index]["barcode"]}",
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: TextStyle(
                                           color: Colors.grey.shade500)),
                                 )
@@ -289,14 +289,14 @@ class _PosBillsSectionState extends State<PosBillsSection> {
                             )),
                             DataCell(Text(
                                 "${widget.product[index]["product-tax"]}%",
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                     textStyle: const TextStyle()))),
                             DataCell(Text(
                                 "${widget.product[index]["product-discount"]}%",
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                     textStyle: const TextStyle()))),
                             DataCell(Text("\$${widget.product[index]['price']}",
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                     textStyle: const TextStyle()))),
                             DataCell(Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -331,7 +331,7 @@ class _PosBillsSectionState extends State<PosBillsSection> {
                                 ),
                                 Text(
                                   "${quantities[index]}",
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       textStyle: const TextStyle(fontSize: 18)),
                                 ),
                                 const SizedBox(
@@ -364,7 +364,7 @@ class _PosBillsSectionState extends State<PosBillsSection> {
                               ],
                             )),
                             DataCell(Text("\$${subtotals[index]}",
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                     textStyle: const TextStyle()))),
                             DataCell(
                               GestureDetector(
@@ -448,7 +448,7 @@ class _PosBillsSectionState extends State<PosBillsSection> {
         child: Text(
           "Grand Total : \$$totalSubtotals",
           textAlign: TextAlign.center,
-          style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w700),
+          style: GoogleFonts.roboto(fontSize: 24, fontWeight: FontWeight.w700),
         ),
       ),
     );
@@ -496,11 +496,11 @@ class _PosBillsSectionState extends State<PosBillsSection> {
           DataRow(cells: [
             DataCell(Text(
               "\$$totalSubtotals",
-              style: GoogleFonts.nunito(textStyle: const TextStyle()),
+              style: GoogleFonts.roboto(textStyle: const TextStyle()),
             )),
             DataCell(Text(
               "${widget.product.length}",
-              style: GoogleFonts.nunito(textStyle: const TextStyle()),
+              style: GoogleFonts.roboto(textStyle: const TextStyle()),
             )),
             DataCell(buildTextField("Enter Tax")),
             DataCell(buildTextField("Discount")),
@@ -553,7 +553,7 @@ class _PosBillsSectionState extends State<PosBillsSection> {
         fillColor: const Color(0xFFFCFCFC),
         filled: true,
         hintText: hint,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
             textStyle: const TextStyle(
           color: Colors.grey,
           fontWeight: FontWeight.w500,
@@ -713,7 +713,7 @@ class _PosBillsSectionState extends State<PosBillsSection> {
         ),
         content: Text(
           subText,
-          style: GoogleFonts.nunito(),
+          style: GoogleFonts.roboto(),
         ),
         actions: <Widget>[
           TextButton(

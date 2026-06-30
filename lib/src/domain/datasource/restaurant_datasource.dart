@@ -17,5 +17,5 @@ abstract class RestaurantDatasource {
   Future<List<Check>> getChecks(Map<String, dynamic> params);
   Future<Check> getCheckById(int id);
   Future<Check> updateCheck(int id, Check check);
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String status);
+  Future<void> updateCommandItemStatus(int commandId, int itemId, String status, {String? motivoAnulacion});
 }

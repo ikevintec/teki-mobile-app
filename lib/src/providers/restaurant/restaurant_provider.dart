@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/lounge.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/orderRestaurantChangeStatusItems.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/restaurant_repository.dart';
@@ -31,7 +32,20 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
 
     // 1. Lounges
     final lounges = await repository.getLounges({'idPuntoVenta': pvId});
-    // Default: "Todos" (selectedLoungeId = null)
+
+    if (lounges.isEmpty) {
+      state = state.copyWith(
+        lounges: [],
+        tables: [],
+        orders: [],
+        selectedLoungeId: RestaurantState.kAllSelected,
+        pvId: pvId,
+        isLoading: false,
+      );
+      return;
+    }
+
+    // Default: "Todos" (selectedLoungeId = kAllSelected)
     state = state.copyWith(lounges: lounges, selectedLoungeId: RestaurantState.kAllSelected);
 
     // 2. Todas las mesas sin filtro de salón
@@ -114,21 +128,23 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
     }
   }
 
-  Future<void> updateOrderStatus(int orderId, String estado, int pvId, {bool updateInventory = true, String? observacion}) async {
+  Future<List<OrderRestaurantChangeStatusItems>> updateOrderStatus(int orderId, String estado, int pvId, {bool updateInventory = true, String? observacion}) async {
     try {
-      await repository.updateOrderStatus(orderId, estado, updateInventory: updateInventory, observacion: observacion);
+      final result = await repository.updateOrderStatus(orderId, estado, updateInventory: updateInventory, observacion: observacion);
       successNotification('Estado actualizado');
       await reload(pvId);
+      return result;
     } catch (e) {
       errorNotification(e.toString());
+      return [];
     }
   }
 
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String itemStatus) async {
+  Future<void> updateCommandItemStatus(int commandId, int itemId, String itemStatus, {String? motivoAnulacion}) async {
     final pvId = state.pvId;
     if (pvId == null) return;
     try {
-      await repository.updateCommandItemStatus(commandId, itemId, itemStatus);
+      await repository.updateCommandItemStatus(commandId, itemId, itemStatus, motivoAnulacion: motivoAnulacion);
       await reload(pvId);
     } catch (e) {
       errorNotification(e.toString());

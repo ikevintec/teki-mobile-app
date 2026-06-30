@@ -152,6 +152,49 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   return params;
 }
 
+Map<String, dynamic> buildQuotationQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {};
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('esPedido', 0);
+  safeAdd('pageNumber', state.pageNumber);
+  safeAdd('perPage', state.perPage);
+  safeAdd('sortOrder', state.sortOrder);
+
+  try {
+    safeAdd('filtroDesde', state.filtroDesde);
+  } catch (_) {}
+  try {
+    safeAdd('filtroHasta', state.filtroHasta);
+  } catch (_) {}
+  try {
+    safeAdd('filtroRucEmisor', state.filtroRucEmisor);
+  } catch (_) {}
+  try {
+    safeAdd('idPuntoVenta', state.idPuntoVenta);
+  } catch (_) {}
+  try {
+    safeAdd('idVendedor', state.idVendedor);
+  } catch (_) {}
+  try {
+    safeAdd('filtroSerie', state.filtroSerie);
+  } catch (_) {}
+  try {
+    safeAdd('filtroNumero', state.filtroNumero);
+  } catch (_) {}
+  try {
+    if (state.filtroEstadoCotizacion != null &&
+        state.filtroEstadoCotizacion.toString().toLowerCase() != 'todos') {
+      safeAdd('estadoCotizacion', state.filtroEstadoCotizacion);
+    }
+  } catch (_) {}
+
+  return params;
+}
+
 Map<String, dynamic> buildOrdersRestaurantQueryParams(dynamic state) {
   final Map<String, dynamic> params = {};
 
@@ -255,6 +298,76 @@ Map<String, dynamic> buildCustomersQueryParams(dynamic state) {
   } catch (_) {}
   try {
     safeAdd('email', state.email);
+  } catch (_) {}
+
+  return params;
+}
+
+Map<String, dynamic> buildAccountsReceivableQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {};
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('tipoCuenta', state.tipoCuenta);
+  safeAdd('pageNumber', state.pageNumber);
+  safeAdd('perPage', state.perPage);
+  safeAdd('sortOrder', 1);
+
+  // idPuntoVenta: null significa "Todos" -> no se envía el parámetro
+  try {
+    safeAdd('idPuntoVenta', state.idPuntoVenta);
+  } catch (_) {}
+
+  try {
+    safeAdd('idVendedor', state.idVendedor);
+  } catch (_) {}
+
+  try {
+    safeAdd('filtroEmisionDesde', state.filtroEmisionDesde);
+  } catch (_) {}
+  try {
+    safeAdd('filtroEmisionHasta', state.filtroEmisionHasta);
+  } catch (_) {}
+  try {
+    safeAdd('filtroVencimientoDesde', state.filtroVencimientoDesde);
+  } catch (_) {}
+  try {
+    safeAdd('filtroVencimientoHasta', state.filtroVencimientoHasta);
+  } catch (_) {}
+
+  try {
+    if (state.tipoComprobante != null && state.tipoComprobante.isNotEmpty) {
+      params['tipoComprobante'] = state.tipoComprobante;
+    }
+  } catch (_) {}
+
+  try {
+    if (state.estadoCredito != null && state.estadoCredito.isNotEmpty) {
+      params['estadoCredito'] = state.estadoCredito;
+    }
+  } catch (_) {}
+
+  try {
+    final diasCredito = state.diasCredito;
+    if (diasCredito != null && diasCredito.toString().trim().isNotEmpty) {
+      final parsed = int.tryParse(diasCredito.toString().trim());
+      if (parsed != null) params['diasCredito'] = parsed;
+    }
+  } catch (_) {}
+
+  // Campos específicos por tipo de cuenta
+  try {
+    if (state.tipoCuenta == 'CC') {
+      safeAdd('serie', state.serie);
+      safeAdd('numero', state.numero);
+    } else {
+      safeAdd('comprobante', state.comprobante);
+    }
+  } catch (_) {}
+  try {
+    safeAdd('cliente', state.cliente);
   } catch (_) {}
 
   return params;

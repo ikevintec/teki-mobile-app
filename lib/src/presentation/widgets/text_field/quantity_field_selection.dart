@@ -66,7 +66,7 @@ class _QuantityFieldSectionState extends State<QuantityFieldSection> {
       controller: _controller,
       enabled: widget.enabled,
       validator: widget.validator,
-      style: GoogleFonts.nunito(
+      style: GoogleFonts.roboto(
         fontWeight: FontWeight.w600,
         fontSize: 10,
       ),
@@ -82,7 +82,7 @@ class _QuantityFieldSectionState extends State<QuantityFieldSection> {
         fillColor: Colors.white,
         filled: true,
         hintText: widget.hint,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.w500,

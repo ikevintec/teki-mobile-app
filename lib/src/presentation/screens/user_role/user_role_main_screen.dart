@@ -126,7 +126,7 @@ class _UserRoleMainScreenState extends State<UserRoleMainScreen> {
                               ),
                               Text(
                                 userRole["description"],
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                     color: const Color(0xFF5F6672)),
                               )
                             ],

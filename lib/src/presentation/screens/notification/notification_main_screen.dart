@@ -125,7 +125,7 @@ class NotificationMainScreen extends StatelessWidget {
                       ),
                       Text(
                         "Message",
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.normal,
                             fontSize: 14,
@@ -141,13 +141,13 @@ class NotificationMainScreen extends StatelessWidget {
                         children: [
                           Text(
                             "${notification["date"]}",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               textStyle: const TextStyle(color: Colors.grey),
                             ),
                           ),
                           Text(
                             "${notification["time"]}",
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               textStyle: const TextStyle(color: Colors.grey),
                             ),
                           ),

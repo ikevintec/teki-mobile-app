@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/comanda_detail_item_tile.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/utils/contstants.dart';
 
 /// Shows a bottom sheet with available actions for a [CommandDetail] item
 /// based on its [status].
@@ -16,7 +19,7 @@ class ItemActionBottomSheet {
     required CommandDetail item,
     required String status,
     VoidCallback? onServir,
-    VoidCallback? onAnular,
+    void Function(String? motivo)? onAnular,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -34,11 +37,11 @@ class ItemActionBottomSheet {
   }
 }
 
-class _ItemActionSheetContent extends StatelessWidget {
+class _ItemActionSheetContent extends ConsumerStatefulWidget {
   final CommandDetail item;
   final String status;
   final VoidCallback? onServir;
-  final VoidCallback? onAnular;
+  final void Function(String? motivo)? onAnular;
 
   const _ItemActionSheetContent({
     required this.item,
@@ -48,8 +51,34 @@ class _ItemActionSheetContent extends StatelessWidget {
   });
 
   @override
+  ConsumerState<_ItemActionSheetContent> createState() => _ItemActionSheetContentState();
+}
+
+class _ItemActionSheetContentState extends ConsumerState<_ItemActionSheetContent> {
+  Future<void> _handleAnular() async {
+    final requiresMotivo = ref.read(sesionProvider).config?.motivoAnulacionPlato == true;
+
+    if (!requiresMotivo) {
+      Navigator.of(context).pop();
+      widget.onAnular?.call(null);
+      return;
+    }
+
+    final motivo = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _MotivoAnulacionDialog(),
+    );
+
+    if (motivo == null) return;
+
+    if (mounted) Navigator.of(context).pop();
+    widget.onAnular?.call(motivo);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final upperStatus = status.toUpperCase();
+    final upperStatus = widget.status.toUpperCase();
     final showServir = upperStatus == ComandaDetailStatus.preparado;
 
     return SafeArea(
@@ -82,7 +111,7 @@ class _ItemActionSheetContent extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.producto?.nombre ?? '-',
+                          widget.item.producto?.nombre ?? '-',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -90,7 +119,7 @@ class _ItemActionSheetContent extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${(item.cantidad ?? 1).toInt()}x  ·  S/. ${((item.precioVenta ?? 0) * (item.cantidad ?? 1)).toStringAsFixed(2)}',
+                          '${(widget.item.cantidad ?? 1).toInt()}x  ·  S/. ${((widget.item.precioVenta ?? 0) * (widget.item.cantidad ?? 1)).toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -116,7 +145,7 @@ class _ItemActionSheetContent extends StatelessWidget {
                 color: const Color(0xFF1E88E5),
                 onTap: () {
                   Navigator.of(context).pop();
-                  onServir?.call();
+                  widget.onServir?.call();
                 },
               ),
 
@@ -125,15 +154,176 @@ class _ItemActionSheetContent extends StatelessWidget {
               icon: Icons.cancel_outlined,
               label: 'Anular item',
               color: const Color(0xFFE53935),
-              onTap: () {
-                Navigator.of(context).pop();
-                onAnular?.call();
-              },
+              onTap: _handleAnular,
             ),
 
             const SizedBox(height: 4),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Motivo anulacion dialog ──────────────────────────────────────────────────
+
+class _MotivoAnulacionDialog extends StatefulWidget {
+  const _MotivoAnulacionDialog();
+
+  @override
+  State<_MotivoAnulacionDialog> createState() => _MotivoAnulacionDialogState();
+}
+
+class _MotivoAnulacionDialogState extends State<_MotivoAnulacionDialog> {
+  final _controller = TextEditingController();
+  bool _submitted = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _confirmar() {
+    setState(() => _submitted = true);
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    Navigator.of(context).pop(text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEmpty = _submitted && _controller.text.trim().isEmpty;
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: SingleChildScrollView(
+        child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFFE53935),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.cancel_outlined, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Motivo de anulación',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                ),
+              ],
+            ),
+          ),
+          // Body
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Motivo',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: const TextStyle(fontSize: 13),
+                  onChanged: (_) {
+                    if (_submitted) setState(() {});
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Ingrese el motivo de anulación',
+                    hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                    errorText: isEmpty ? 'El motivo es requerido' : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: ColorSchema.primaryColor),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE53935)),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE53935)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Actions
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey.shade700,
+                      side: BorderSide(color: Colors.grey.shade300),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _confirmar,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE53935),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Anular', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
       ),
     );
   }

@@ -312,7 +312,7 @@ class _DropdownActionButtonState extends State<DropdownActionButton>
         const SizedBox(width: 8),
         Text(
           widget.label,
-          style: GoogleFonts.nunito(
+          style: GoogleFonts.roboto(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: textColor,
@@ -470,7 +470,7 @@ class _DropdownOverlay extends StatelessWidget {
             Expanded(
               child: Text(
                 option.label,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.black87,

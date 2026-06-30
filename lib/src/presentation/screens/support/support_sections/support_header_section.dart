@@ -94,7 +94,7 @@ class SupportHeaderSection extends StatelessWidget {
                                 ),
                                 Text(
                                   "help with front? Discussion",
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
@@ -132,7 +132,7 @@ class SupportHeaderSection extends StatelessWidget {
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: "Search Something",
-                      hintStyle: GoogleFonts.nunito(
+                      hintStyle: GoogleFonts.roboto(
                         textStyle: const TextStyle(
                           color: Color(0xFF939393),
                           fontWeight: FontWeight.w700,

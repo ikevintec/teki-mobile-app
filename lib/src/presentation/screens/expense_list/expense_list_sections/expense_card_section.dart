@@ -43,7 +43,7 @@ class ExpenseCardSection extends StatelessWidget {
                 ),
                 Text(
                   "30,000",
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     color: const Color(0xFF5D6571),
                     fontWeight: FontWeight.w700,
                     fontSize: 22,
@@ -94,7 +94,7 @@ class ExpenseCardSection extends StatelessWidget {
             ),
             Text(
               amount,
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.roboto(
                 color: const Color(0xFF5D6571),
                 fontWeight: FontWeight.w700,
                 fontSize: 18,

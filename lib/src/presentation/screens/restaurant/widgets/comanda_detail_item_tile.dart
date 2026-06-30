@@ -63,7 +63,7 @@ class ComandaDetailItemTile extends StatelessWidget {
   final VoidCallback? onServir;
 
   /// Called when the user confirms "Anular" for this item.
-  final VoidCallback? onAnular;
+  final void Function(String? motivo)? onAnular;
 
   const ComandaDetailItemTile({
     super.key,

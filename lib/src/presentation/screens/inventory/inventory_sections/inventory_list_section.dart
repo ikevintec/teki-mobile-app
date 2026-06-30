@@ -220,40 +220,90 @@ class _InventoryCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Stock: ${formatDouble(stock)} ${inventory.producto?.unidad?.codigo ?? ''}',
-                    style: GoogleFonts.nunito(
-                        fontSize: 12, color: Colors.black54),
-                  ),
-                  if (fechaActualizacion != null)
+                  if (fechaActualizacion != null) ...[
+                    const SizedBox(height: 2),
                     Text(
-                      'Actualizado: $fechaActualizacion',
-                      style: GoogleFonts.nunito(
+                      'Act: $fechaActualizacion',
+                      style: GoogleFonts.roboto(
                           fontSize: 11, color: Colors.black38),
                     ),
+                  ],
                 ],
               ),
             ),
-            // Movimientos button
-            IconButton(
-              tooltip: 'Ver historial',
-              onPressed: onMovementsPressed,
-              icon: Icon(
-                Icons.history_rounded,
-                color: ColorSchema.primaryColor.withValues(alpha: 0.8),
-              ),
-            ),
-            // Ajuste button
-            IconButton(
-              tooltip: 'Ajustar inventario',
-              onPressed: onAdjustPressed,
-              icon: Icon(
-                Icons.edit_note_rounded,
-                color: onAdjustPressed != null
-                    ? ColorSchema.primaryColor.withValues(alpha: 0.8)
-                    : Colors.black26,
-              ),
+            // Stock + botones apilados
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Stock destacado
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      formatDouble(stock),
+                      style: GoogleFonts.roboto(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black54,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      inventory.producto?.unidad?.abreviatura?.isNotEmpty == true
+                          ? inventory.producto!.unidad!.abreviatura!
+                          : inventory.producto?.unidad?.codigo?.isNotEmpty == true
+                          ? inventory.producto!.unidad!.codigo!
+                          : '',
+                      style: GoogleFonts.roboto(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black38,
+                      ),
+                    ),
+                  ],
+                ),
+                // Botones
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Ver historial',
+                      onPressed: onMovementsPressed,
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
+                      icon: Icon(
+                        Icons.sync_alt_rounded,
+                        size: 24,
+                        color: ColorSchema.primaryColor.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Ajustar inventario',
+                      onPressed: onAdjustPressed,
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
+                      icon: Icon(
+                        Icons.edit_note_rounded,
+                        size: 28,
+                        color: onAdjustPressed != null
+                            ? ColorSchema.primaryColor.withValues(alpha: 0.8)
+                            : Colors.black26,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),

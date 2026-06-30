@@ -30,6 +30,8 @@ Future<void> showCustomModal({
 
   WidgetsBinding.instance.addPostFrameCallback((_) => updateScrollHint());
 
+  FocusManager.instance.primaryFocus?.unfocus();
+
   return showGeneralDialog(
     barrierDismissible: allowButtons,
     barrierLabel: tittle,
@@ -95,7 +97,11 @@ Future<void> showCustomModal({
         ],
       );
     },
-  );
+  ).then((_) {
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => FocusManager.instance.primaryFocus?.unfocus(),
+    );
+  });
 }
 
 Widget _buildModalContent({
@@ -123,7 +129,7 @@ Widget _buildModalContent({
               Expanded(
                 child: Text(
                   tittle,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,

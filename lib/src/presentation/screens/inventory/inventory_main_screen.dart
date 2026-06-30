@@ -40,6 +40,14 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
     super.dispose();
   }
 
+  void _reloadInventory() {
+    final idPuntoVenta = ref.read(sesionProvider).office?.id;
+    if (idPuntoVenta != null) {
+      _searchController.clear();
+      ref.read(inventoryProvider.notifier).loadInventory(idPuntoVenta);
+    }
+  }
+
   void _onSearchChanged(String value) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 700), () {
@@ -61,6 +69,7 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(inventoryProvider);
     final isLoading = state.isLoading && state.items.isEmpty;
+    final hasError = !state.isLoading && state.errorMessage != null && state.items.isEmpty;
 
     // Limpia el buscador cuando el provider resetea el filtro (ej: al volver del ajuste)
     ref.listen<InventoryState>(inventoryProvider, (previous, next) {
@@ -69,11 +78,18 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
       }
     });
 
+    ref.listen(sesionProvider, (prev, next) {
+      if (next.office?.id != prev?.office?.id) _reloadInventory();
+    });
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: CustomAppBar(navigateName: 'Inventario'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: CustomAppBar(
+          navigateName: 'Inventario',
+          onSettingsReturn: _reloadInventory,
+        ),
       ),
       body: Column(
         children: [
@@ -207,7 +223,36 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
                         ),
                       ],
                     )
-                  : InventoryListSection(items: state.items),
+                  : hasError
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'No hay conexión',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: _reloadInventory,
+                                child: Text(
+                                  'Reintentar',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: ColorSchema.primaryColor,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: ColorSchema.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : InventoryListSection(items: state.items),
             ),
           ),
         ],

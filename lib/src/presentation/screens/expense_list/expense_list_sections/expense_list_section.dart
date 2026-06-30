@@ -48,7 +48,7 @@ class ExpenseListSection extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     "${expenseList["voucher"]}",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: const Color(0xFF5D6571),
                       fontWeight: FontWeight.w700,
                     ),
@@ -67,7 +67,7 @@ class ExpenseListSection extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 "${expenseList["start-date"]} - ${expenseList["end-date"]}",
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.roboto(
                   color: const Color(0xFFA0A0A3),
                   fontWeight: FontWeight.w500,
                   fontSize: 16,
@@ -84,7 +84,7 @@ class ExpenseListSection extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     "${expenseList["amount"]}",
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.roboto(
                       color: const Color(0xFF5D6571),
                       fontWeight: FontWeight.w700,
                       fontSize: 18,

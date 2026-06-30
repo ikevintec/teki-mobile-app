@@ -55,162 +55,174 @@ class _AnalyticsChartSectionTwoState extends State<AnalyticsChartSectionTwo> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
 
         final data = snapshot.data ?? [];
-
         if (data.isEmpty) {
           return const Center(child: Text('No hay datos para mostrar.'));
         }
 
         final rawBarGroups = List.generate(data.length, (index) {
           final item = data[index];
+          final f = item.totalFacturas.toDouble();
+          final b = item.totalBoletas.toDouble();
+          final nv = item.totalNotasVenta.toDouble();
+          final nc = item.totalNotasCredito.toDouble();
+          final nd = item.totalNotasDebito.toDouble();
+          final total = f + b + nv + nc + nd;
 
           return BarChartGroupData(
             x: index,
-            barsSpace: 2,
             barRods: [
               BarChartRodData(
-                toY: item.totalFacturas.toDouble(),
-                color: widget.barColors[0],
-                width: width,
-              ),
-              BarChartRodData(
-                toY: item.totalBoletas.toDouble(),
-                color: widget.barColors[1],
-                width: width,
-              ),
-              BarChartRodData(
-                toY: item.totalNotasVenta.toDouble(),
-                color: widget.barColors[2],
-                width: width,
-              ),
-              BarChartRodData(
-                toY: item.totalNotasCredito.toDouble(),
-                color: widget.barColors[3],
-                width: width,
-              ),
-              BarChartRodData(
-                toY: item.totalNotasDebito.toDouble(),
-                color: widget.barColors[4],
-                width: width,
+                toY: total,
+                width: 28,
+                borderRadius: BorderRadius.circular(6),
+                rodStackItems: [
+                  BarChartRodStackItem(0, f, widget.barColors[0]),
+                  BarChartRodStackItem(f, f + b, widget.barColors[1]),
+                  BarChartRodStackItem(f + b, f + b + nv, widget.barColors[2]),
+                  BarChartRodStackItem(f + b + nv, f + b + nv + nc, widget.barColors[3]),
+                  BarChartRodStackItem(f + b + nv + nc, total, widget.barColors[4]),
+                ],
               ),
             ],
           );
         });
 
-        return AspectRatio(
-          aspectRatio: 1.3,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Center(
-                  child: Text(
-                    'Ventas por Mes',
-                    style: GoogleFonts.raleway(
-                      textStyle: TextStyle(
-                        color: ColorSchema.primaryColor.withOpacity(0.8),
-                        fontSize: MediaQuery.of(context).size.width * 0.06,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
+        final screenWidth = MediaQuery.of(context).size.width;
+        final chartWidth = (data.length * 90.0).clamp(screenWidth - 32, double.infinity);
+
+        final chart = SizedBox(
+          width: chartWidth,
+          height: 280,
+          child: BarChart(
+            BarChartData(
+              groupsSpace: 24,
+              maxY: _calculateMaxY(data),
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => const Color(0xFF2D2D2D),
+                  fitInsideVertically: true,
+                  fitInsideHorizontally: true,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final item = data[group.x];
+                    return BarTooltipItem(
+                      '${item.periodo}\n',
+                      GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      children: [
+                        if (item.totalFacturas > 0)
+                          TextSpan(
+                            text: 'Facturas: ${item.totalFacturas.toStringAsFixed(2)}\n',
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[0]),
+                          ),
+                        if (item.totalBoletas > 0)
+                          TextSpan(
+                            text: 'Boletas: ${item.totalBoletas.toStringAsFixed(2)}\n',
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[1]),
+                          ),
+                        if (item.totalNotasVenta > 0)
+                          TextSpan(
+                            text: 'Notas Venta: ${item.totalNotasVenta.toStringAsFixed(2)}\n',
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[2]),
+                          ),
+                        if (item.totalNotasCredito > 0)
+                          TextSpan(
+                            text: 'Notas Crédito: ${item.totalNotasCredito.toStringAsFixed(2)}\n',
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[3]),
+                          ),
+                        if (item.totalNotasDebito > 0)
+                          TextSpan(
+                            text: 'Notas Débito: ${item.totalNotasDebito.toStringAsFixed(2)}',
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: widget.barColors[4]),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 42,
+                    getTitlesWidget: (value, meta) {
+                      if (value.toInt() < data.length) {
+                        return SideTitleWidget(
+                          meta: meta,
+                          space: 8,
+                          child: Text(data[value.toInt()].periodo, style: GoogleFonts.roboto(fontSize: 11)),
+                        );
+                      }
+                      return const SizedBox();
+                    },
                   ),
                 ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: BarChart(
-                    BarChartData(
-                      maxY: _calculateMaxY(data),
-                      barTouchData: BarTouchData(
-                        touchTooltipData: BarTouchTooltipData(
-                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            final labels = [
-                              'Facturas',
-                              'Boletas',
-                              'Notas de Venta',
-                              'Notas de Crédito',
-                              'Notas de Débito'
-                            ];
-                            return BarTooltipItem(
-                              '${labels[rodIndex]}\n${rod.toY.toStringAsFixed(2)}',
-                              GoogleFonts.nunito(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      titlesData: FlTitlesData(
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 42,
-                            getTitlesWidget: (value, meta) {
-                              if (value.toInt() < data.length) {
-                                return SideTitleWidget(
-                                  meta: meta,
-                                  space: 8,
-                                  child: Text(
-                                    data[value.toInt()].periodo,
-                                    style: GoogleFonts.nunito(fontSize: 11),
-                                  ),
-                                );
-                              }
-                              return const SizedBox();
-                            },
-                          ),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 40,
-                            interval: _getInterval(data),
-                            getTitlesWidget: (value, meta) {
-                              final text = value >= 1000
-                                  ? '${(value / 1000).toStringAsFixed(0)}K'
-                                  : value.toStringAsFixed(0);
-                              return SideTitleWidget(
-                                meta: meta,
-                                child: Text(
-                                  text,
-                                  style: GoogleFonts.nunito(fontSize: 11),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false)),
-                      ),
-                      gridData: FlGridData(
-                        show: true,
-                        drawHorizontalLine: true,
-                        horizontalInterval: _getInterval(data),
-                        getDrawingHorizontalLine: (value) => FlLine(
-                          color: Colors.grey.withOpacity(0.3),
-                          strokeWidth: 1,
-                          dashArray: [4, 4],
-                        ),
-                        drawVerticalLine: false,
-                      ),
-                      borderData: FlBorderData(show: false),
-                      barGroups: rawBarGroups,
-                    ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 60,
+                    interval: _getInterval(data),
+                    getTitlesWidget: (value, meta) {
+                      if (value == meta.min || value == meta.max) return const SizedBox.shrink();
+                      final text = value >= 1000
+                          ? '${(value / 1000).toStringAsFixed(0)}K'
+                          : value.toStringAsFixed(0);
+                      return SideTitleWidget(
+                        meta: meta,
+                        child: Text(text, style: GoogleFonts.roboto(fontSize: 11)),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(height: 12),
-                Center(child: makeLegend()),
-              ],
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
+              gridData: FlGridData(
+                show: true,
+                drawHorizontalLine: true,
+                horizontalInterval: _getInterval(data),
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Colors.grey.withOpacity(0.3),
+                  strokeWidth: 1,
+                  dashArray: [4, 4],
+                ),
+                drawVerticalLine: false,
+              ),
+              borderData: FlBorderData(show: false),
+              barGroups: rawBarGroups,
             ),
+          ),
+        );
+
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Text(
+                  'Ventas por Mes',
+                  style: GoogleFonts.raleway(
+                    textStyle: TextStyle(
+                      color: ColorSchema.primaryColor.withOpacity(0.8),
+                      fontSize: screenWidth * 0.06,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: chart,
+              ),
+              const SizedBox(height: 12),
+              Center(child: makeLegend()),
+            ],
           ),
         );
       },
@@ -219,13 +231,7 @@ class _AnalyticsChartSectionTwoState extends State<AnalyticsChartSectionTwo> {
 
   double _calculateMaxY(List<MonthlySales> data) {
     return data
-            .map((e) => [
-                  e.totalFacturas,
-                  e.totalBoletas,
-                  e.totalNotasVenta,
-                  e.totalNotasCredito,
-                  e.totalNotasDebito,
-                ].reduce((a, b) => a > b ? a : b))
+            .map((e) => e.totalFacturas + e.totalBoletas + e.totalNotasVenta + e.totalNotasCredito + e.totalNotasDebito)
             .reduce((a, b) => a > b ? a : b) *
         1.2;
   }
@@ -257,7 +263,7 @@ class _AnalyticsChartSectionTwoState extends State<AnalyticsChartSectionTwo> {
           children: [
             Container(width: 10, height: 10, color: widget.barColors[index]),
             const SizedBox(width: 4),
-            Text(labels[index], style: GoogleFonts.nunito(fontSize: 12)),
+            Text(labels[index], style: GoogleFonts.roboto(fontSize: 12)),
           ],
         );
       }),

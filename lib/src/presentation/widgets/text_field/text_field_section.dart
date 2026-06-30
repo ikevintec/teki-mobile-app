@@ -87,8 +87,13 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       readOnly: widget.isReadOnly,
       controller: widget.controller,
       focusNode: _effectiveFocusNode,
+      // El teclado numérico de iOS no necesita autocorrección/sugerencias; dejarlas
+      // activas hace que UIKit reserve la franja de emoji/dictado (TUIKeyplane) y
+      // rompa esa constraint al mostrar el teclado numérico puro.
+      autocorrect: widget.inputType != TextInputType.number,
+      enableSuggestions: widget.inputType != TextInputType.number,
         inputFormatters: widget.inputType == TextInputType.number &&  (widget.inputFormatters ?? []).isEmpty ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))] : widget.inputFormatters,
-      style: GoogleFonts.nunito(
+      style: GoogleFonts.roboto(
         fontWeight: FontWeight.w600,
         fontSize: widget.fontSize,
       ),
@@ -114,7 +119,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
         fillColor: Colors.white,
         filled: true,
         hintText: widget.hint,
-        hintStyle: GoogleFonts.nunito(
+        hintStyle: GoogleFonts.roboto(
           textStyle: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.w500,

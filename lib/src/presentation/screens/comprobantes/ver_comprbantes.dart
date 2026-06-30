@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -9,7 +10,9 @@ import 'package:teki_app/src/presentation/screens/comprobantes/widgets/filter_ac
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/clean_filters_button.dart';
 
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 
 final filtroDesdeProvider = StateProvider<DateTime?>((ref) => null);
@@ -24,6 +27,19 @@ class VerComprobanteScreen extends ConsumerStatefulWidget {
 }
 
 class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
+  void _reloadWithCurrentDate() {
+    final state = ref.read(comprobantesSaleProvider);
+    final desde = state.filtroDesde;
+    final hasta = state.filtroHasta;
+    // ignore: unnecessary_null_comparison
+    if (desde != null && hasta != null) {
+      ref.read(comprobantesSaleProvider.notifier).loadFirstPage(
+            desde: desde,
+            hasta: hasta,
+          );
+    }
+  }
+
   void _handleDateRangeChanged(DateTimeRange range) {
     final provider = ref.read(comprobantesSaleProvider.notifier);
     final desde = DateFormat('dd-MM-yyyy H:mm:ss').format(DateTime(
@@ -36,6 +52,10 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(sesionProvider, (prev, next) {
+      if (next.office?.id != prev?.office?.id) _reloadWithCurrentDate();
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -43,6 +63,16 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
             style: TextStyle(color: Colors.white)),
         backgroundColor: ColorSchema.primaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            tooltip: 'Ajustes',
+            onPressed: () async {
+              await Get.toNamed(AppRoutes.settings);
+              if (mounted) _reloadWithCurrentDate();
+            },
+            icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -78,7 +108,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
           const SizedBox(height: 8),
           const Expanded(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 5),
               child: TicketListSection(),
             ),
           ),

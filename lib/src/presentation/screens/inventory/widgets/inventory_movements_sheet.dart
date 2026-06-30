@@ -127,7 +127,7 @@ class _InventoryMovementsSheetState
                         _inLoteDetail
                             ? 'Historial · $productName'
                             : productName,
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           fontSize: 12,
                           color: Colors.black45,
                         ),
@@ -273,7 +273,7 @@ class _TabButton extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: AnimatedDefaultTextStyle(
           duration: const Duration(milliseconds: 180),
-          style: GoogleFonts.nunito(
+          style: GoogleFonts.roboto(
             fontSize: 13,
             fontWeight: active ? FontWeight.bold : FontWeight.w500,
             color: active ? ColorSchema.primaryColor : Colors.black45,
@@ -324,7 +324,7 @@ class _MovementsListView extends StatelessWidget {
     if (state.logs.isEmpty) {
       return Center(
         child: Text('Sin movimientos registrados',
-            style: GoogleFonts.nunito(color: Colors.black45)),
+            style: GoogleFonts.roboto(color: Colors.black45)),
       );
     }
     return ListView.builder(
@@ -377,7 +377,7 @@ class _LotesListView extends StatelessWidget {
     if (lotes.isEmpty) {
       return Center(
         child: Text('Sin lotes registrados',
-            style: GoogleFonts.nunito(color: Colors.black45)),
+            style: GoogleFonts.roboto(color: Colors.black45)),
       );
     }
     return ListView.builder(
@@ -454,7 +454,7 @@ class _LoteCard extends StatelessWidget {
                           ),
                           child: Text(
                             isSerie ? 'SERIE' : 'LOTE',
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
                               color: accentColor,
@@ -469,7 +469,7 @@ class _LoteCard extends StatelessWidget {
                             children: [
                               Text(
                                 name,
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black87,
@@ -481,7 +481,7 @@ class _LoteCard extends StatelessWidget {
                                   !isSerie)
                                 Text(
                                   'Vence: ${DateFormat('dd/MM/yyyy').format(lote.fechaVencimiento!)}',
-                                  style: GoogleFonts.nunito(
+                                  style: GoogleFonts.roboto(
                                       fontSize: 11, color: Colors.black45),
                                 ),
                             ],
@@ -536,7 +536,7 @@ class _LoteMovementsView extends StatelessWidget {
     if (registros.isEmpty) {
       return Center(
         child: Text('Sin movimientos para este lote',
-            style: GoogleFonts.nunito(color: Colors.black45)),
+            style: GoogleFonts.roboto(color: Colors.black45)),
       );
     }
 
@@ -583,21 +583,21 @@ class _LogItem extends StatelessWidget {
               children: [
                 Text(
                   record.concepto ?? record.tipo ?? '-',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                       fontWeight: FontWeight.w600, fontSize: 13),
                 ),
                 if (record.detalle != null && record.detalle!.isNotEmpty)
                   Text(
                     record.detalle!,
                     style:
-                        GoogleFonts.nunito(fontSize: 11, color: Colors.black54),
+                        GoogleFonts.roboto(fontSize: 11, color: Colors.black54),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 Text(
                   fecha,
                   style:
-                      GoogleFonts.nunito(fontSize: 11, color: Colors.black45),
+                      GoogleFonts.roboto(fontSize: 11, color: Colors.black45),
                 ),
               ],
             ),
@@ -608,7 +608,7 @@ class _LogItem extends StatelessWidget {
               Text(
                 '${record.cantidadAnterior ?? '-'} → ${record.cantidadActual ?? '-'}',
                 style:
-                    GoogleFonts.nunito(fontSize: 11, color: Colors.black54),
+                    GoogleFonts.roboto(fontSize: 11, color: Colors.black54),
               ),
               Text(
                 record.cantidad != null
@@ -669,7 +669,7 @@ class _LoteLogItem extends StatelessWidget {
               children: [
                 Text(
                   record.concepto ?? record.tipo ?? '-',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     color: Colors.black87,
@@ -683,7 +683,7 @@ class _LoteLogItem extends StatelessWidget {
                     const SizedBox(width: 3),
                     Text(
                       fecha,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.roboto(
                           fontSize: 11, color: Colors.black45),
                     ),
                   ],
@@ -698,7 +698,7 @@ class _LoteLogItem extends StatelessWidget {
                       Expanded(
                         child: Text(
                           responsable,
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                               fontSize: 11, color: Colors.black45),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

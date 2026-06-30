@@ -15,7 +15,7 @@ class ProductList extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Text(
           'No hay productos en este comprobante',
-          style: GoogleFonts.nunito(
+          style: GoogleFonts.roboto(
             fontSize: 14,
             color: Colors.grey[600],
             fontStyle: FontStyle.italic,
@@ -46,7 +46,7 @@ class ProductList extends StatelessWidget {
                 flex: 3,
                 child: Text(
                   'Nombre',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: ColorSchema.primaryColor,
@@ -57,7 +57,7 @@ class ProductList extends StatelessWidget {
                 flex: 1,
                 child: Text(
                   'Cant.',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: ColorSchema.primaryColor,
@@ -69,7 +69,7 @@ class ProductList extends StatelessWidget {
                 flex: 1,
                 child: Text(
                   'Precio unit.',
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.roboto(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: ColorSchema.primaryColor,
@@ -119,7 +119,7 @@ class ProductList extends StatelessWidget {
                         children: [
                           Text(
                             detalle.producto?.nombre ?? 'Producto sin nombre',
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
@@ -130,7 +130,7 @@ class ProductList extends StatelessWidget {
                           if (detalle.producto?.codigo?.isNotEmpty == true)
                             Text(
                               'Código: ${detalle.producto!.codigo}',
-                              style: GoogleFonts.nunito(
+                              style: GoogleFonts.roboto(
                                 fontSize: 12,
                                 color: Colors.grey[700],
                               ),
@@ -143,7 +143,7 @@ class ProductList extends StatelessWidget {
                       flex: 1,
                       child: Text(
                         (detalle.cantidad ?? 0).toString(),
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           fontSize: 14,
                           color: Colors.black87,
                         ),
@@ -155,7 +155,7 @@ class ProductList extends StatelessWidget {
                       flex: 1,
                       child: Text(
                         _formatPrice(detalle.valorUnitario ?? 0),
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,

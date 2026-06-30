@@ -75,7 +75,7 @@ class _PurchaseReturnListSectionState extends State<PurchaseReturnListSection> {
                               width: 5,
                             ),
                             Text(purchase["remark"],
-                                style: GoogleFonts.nunito(
+                                style: GoogleFonts.roboto(
                                     color: const Color(0xFF5D6571),
                                     fontWeight: FontWeight.w600,
                                     fontSize: 15))
@@ -102,7 +102,7 @@ class _PurchaseReturnListSectionState extends State<PurchaseReturnListSection> {
                       ),
                       Text(
                         purchase["date"],
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.roboto(
                           color: const Color(0xFFA0A0A3),
                           fontSize: 16,
                         ),
@@ -132,7 +132,7 @@ class _PurchaseReturnListSectionState extends State<PurchaseReturnListSection> {
                         padding: const EdgeInsets.only(left: 2.0),
                         child: Text(
                           purchase["warehouse"],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFFA0A0A3),
                             fontSize: 16,
                           ),
@@ -163,7 +163,7 @@ class _PurchaseReturnListSectionState extends State<PurchaseReturnListSection> {
                         padding: const EdgeInsets.only(left: 2.0),
                         child: Text(
                           purchase["reference"],
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFFA0A0A3),
                             fontSize: 16,
                           ),
@@ -192,7 +192,7 @@ class _PurchaseReturnListSectionState extends State<PurchaseReturnListSection> {
                           ),
                           Text(
                             purchase["amount"],
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.roboto(
                                 color: const Color(0xFF5D6571),
                                 fontWeight: FontWeight.w600,
                                 fontSize: 18),

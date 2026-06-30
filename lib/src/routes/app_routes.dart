@@ -53,7 +53,9 @@ import 'package:teki_app/src/presentation/screens/tax_report/tax_report_main_scr
 import 'package:teki_app/src/presentation/screens/unit/unit_management_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/user_reports/user_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/user_role/user_role_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/accounts_receivable/accounts_receivable_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/ver_comprbantes.dart';
+import 'package:teki_app/src/presentation/screens/cotizaciones/ver_quotations_screen.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/orders_restaurant_main_screen.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
@@ -72,6 +74,7 @@ import 'package:teki_app/src/routes/middleware/auth_middleware.dart';
 
 class AppRoutes {
   static const String comprobantesVer = "/ver_comprobantes";
+  static const String quotationsVer = "/ver_cotizaciones";
   static const String onboarding = "/onboarding";
   static const String login = "/login";
   static const String register = "/register";
@@ -142,6 +145,9 @@ class AppRoutes {
   static const String restaurantCobrador = "/restaurant/cobrador";
   static const String ordersRestaurant = "/restaurant/orders";
   static const String restaurantDishReady = "/restaurant/dish-ready";
+  // Cuentas por cobrar / pagar
+  static const String accountsReceivable = "/accounts-receivable";
+  static const String accountsPayable = "/accounts-payable";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -153,6 +159,7 @@ class AppRoutes {
     GetPage(name: analytics, page: () => const AnalyticsMainScreen()),
 //Route Comprobantes
     GetPage(name: comprobantesVer, page: () => const VerComprobanteScreen()),
+    GetPage(name: quotationsVer, page: () => const VerQuotationsScreen()),
     GetPage(name: sales, page: () => const SalesMainScreen()),
     GetPage(name: posSales, page: () => const POSSalesMainScreen()),
     GetPage(name: purchase, page: () => const PurchaseMainScreen()),
@@ -280,6 +287,15 @@ class AppRoutes {
           itemId: args['itemId'] as int,
         );
       },
+    ),
+    // Cuentas por cobrar / pagar
+    GetPage(
+      name: accountsReceivable,
+      page: () => const AccountsReceivableMainScreen(tipoCuenta: 'CC'),
+    ),
+    GetPage(
+      name: accountsPayable,
+      page: () => const AccountsReceivableMainScreen(tipoCuenta: 'CP'),
     ),
   ];
 
