@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
+import 'package:teki_app/src/presentation/screens/accounts_receivable/widgets/account_actions_sheet.dart';
 import 'package:teki_app/src/providers/accounts_receivable/accounts_receivable_notifier.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -135,6 +136,12 @@ class _AccountsReceivableListSectionState
             child: Column(
               children: [
                 ListTile(
+                  onTap: () => showAccountActionsSheet(
+                    context,
+                    ref,
+                    item,
+                    widget.tipoCuenta,
+                  ),
                   leading: Icon(
                     widget.tipoCuenta == 'CC'
                         ? Icons.call_received_rounded

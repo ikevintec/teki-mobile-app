@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/accounts_receivable_total_response.dart';
 import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
+import 'package:teki_app/src/data/models/teki_model/accountReceivableDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 import 'package:teki_app/src/domain/datasource/accounts_receivable_datasource.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
@@ -87,5 +88,69 @@ class RemoteAccountsReceivable implements AccountsReceivableDatasource {
     }));
 
     return results.whereType<AccountsReceivableTotalResponse>().toList();
+  }
+
+  @override
+  Future<List<AccountsReceivableDetail>> getDetails(int id) async {
+    try {
+      final response = await dio.get(
+        '/accounts-receivable-detail',
+        queryParameters: {'id': id},
+      );
+      final List<dynamic> data = response.data;
+      return data
+          .map((json) => AccountsReceivableDetail.fromJson(json))
+          .toList();
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final resData = e.response?.data;
+      final message = (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<void> cancel(int id) async {
+    try {
+      await dio.put('/accounts-receivable/operations/cancel/$id');
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final resData = e.response?.data;
+      final message = (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<void> extend(int id, int dias) async {
+    try {
+      await dio.put(
+        '/accounts-receivable/operations/extend/$id',
+        queryParameters: {'dias': dias},
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final resData = e.response?.data;
+      final message = (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
   }
 }

@@ -10,6 +10,63 @@ import 'package:teki_app/src/providers/accounts_receivable/seller_provider.dart'
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
+class _FilterButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool hasActiveFilter;
+  final bool isLoading;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+
+  const _FilterButton({
+    required this.label,
+    required this.icon,
+    required this.hasActiveFilter,
+    required this.isLoading,
+    required this.onTap,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        OutlinedButton.icon(
+          onPressed: isLoading ? null : onTap,
+          icon: Icon(icon, color: isLoading ? Colors.grey : ColorSchema.primaryColor),
+          label: Text(
+            label,
+            style: TextStyle(color: isLoading ? Colors.grey : ColorSchema.primaryColor),
+          ),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 40),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            side: BorderSide(color: isLoading ? Colors.grey : ColorSchema.primaryColor),
+          ),
+        ),
+        if (hasActiveFilter && !isLoading)
+          Positioned(
+            top: -6,
+            right: -6,
+            child: GestureDetector(
+              onTap: onClear,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: const BoxDecoration(
+                  color: ColorSchema.primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.cleaning_services, size: 13, color: Colors.white),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class AccountsReceivableMainScreen extends ConsumerStatefulWidget {
   /// 'CC' = Cuentas por Cobrar, 'CP' = Cuentas por Pagar
   final String tipoCuenta;
@@ -57,8 +114,59 @@ class _AccountsReceivableMainScreenState
     );
   }
 
+  bool _hasDateFilters(AccountsReceivableState state) {
+    return state.filtroEmisionDesde != null ||
+        state.filtroEmisionHasta != null ||
+        state.filtroVencimientoDesde != null ||
+        state.filtroVencimientoHasta != null;
+  }
+
+  bool _hasOtherFilters(AccountsReceivableState state) {
+    return (state.tipoComprobante?.isNotEmpty ?? false) ||
+        state.numero != null ||
+        state.serie != null ||
+        state.cliente != null ||
+        state.comprobante != null ||
+        state.diasCredito != null ||
+        (state.estadoCredito?.isNotEmpty ?? false) ||
+        state.idVendedor != null ||
+        state.idPuntoVenta != null;
+  }
+
+  void _clearDateFilters() {
+    ref
+        .read(accountsReceivableProvider(widget.tipoCuenta).notifier)
+        .applyDateFilters(
+          filtroEmisionDesde: null,
+          filtroEmisionHasta: null,
+          filtroVencimientoDesde: null,
+          filtroVencimientoHasta: null,
+        );
+  }
+
+  void _clearOtherFilters() {
+    ref
+        .read(accountsReceivableProvider(widget.tipoCuenta).notifier)
+        .applyOtherFilters(
+          tipoComprobante: null,
+          numero: null,
+          serie: null,
+          cliente: null,
+          comprobante: null,
+          diasCredito: null,
+          estadoCredito: null,
+          idVendedor: null,
+          idPuntoVenta: null,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(accountsReceivableProvider(widget.tipoCuenta));
+    final isLoading = state.isLoading;
+    final hasDateFilters = _hasDateFilters(state);
+    final hasOtherFilters = _hasOtherFilters(state);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -73,38 +181,24 @@ class _AccountsReceivableMainScreenState
             child: Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _openDateFiltersModal,
-                    icon: const Icon(Icons.calendar_month,
-                        color: ColorSchema.primaryColor),
-                    label: const Text(
-                      'Fechas',
-                      style: TextStyle(color: ColorSchema.primaryColor),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      side: const BorderSide(color: ColorSchema.primaryColor),
-                    ),
+                  child: _FilterButton(
+                    label: 'Fechas',
+                    icon: Icons.calendar_month,
+                    hasActiveFilter: hasDateFilters,
+                    isLoading: isLoading,
+                    onTap: _openDateFiltersModal,
+                    onClear: _clearDateFilters,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _openOtherFiltersModal,
-                    icon: const Icon(Icons.filter_list_outlined,
-                        color: ColorSchema.primaryColor),
-                    label: const Text(
-                      'Otros filtros',
-                      style: TextStyle(color: ColorSchema.primaryColor),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      side: const BorderSide(color: ColorSchema.primaryColor),
-                    ),
+                  child: _FilterButton(
+                    label: 'Otros filtros',
+                    icon: Icons.filter_list_outlined,
+                    hasActiveFilter: hasOtherFilters,
+                    isLoading: isLoading,
+                    onTap: _openOtherFiltersModal,
+                    onClear: _clearOtherFilters,
                   ),
                 ),
               ],
@@ -114,7 +208,7 @@ class _AccountsReceivableMainScreenState
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: _buildTotalesSection(),
+              child: _buildTotalesSection(state),
             ),
           ),
           const SizedBox(height: 8),
@@ -129,12 +223,8 @@ class _AccountsReceivableMainScreenState
     );
   }
 
-  Widget _buildTotalesSection() {
-    final totales = ref
-        .watch(accountsReceivableProvider(widget.tipoCuenta))
-        .totales
-        .where((t) => t.saldo > 1)
-        .toList();
+  Widget _buildTotalesSection(AccountsReceivableState state) {
+    final totales = state.totales.where((t) => t.saldo > 1).toList();
 
     if (totales.isEmpty) return const SizedBox.shrink();
 
