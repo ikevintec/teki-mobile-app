@@ -177,7 +177,7 @@ class _AccountsReceivableMainScreenState
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12, top: 20),
             child: Row(
               children: [
                 Expanded(
