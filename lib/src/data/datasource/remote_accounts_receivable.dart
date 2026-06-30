@@ -91,6 +91,36 @@ class RemoteAccountsReceivable implements AccountsReceivableDatasource {
   }
 
   @override
+  Future<AccountsReceivable> getById(int id) async {
+    try {
+      final response = await dio.get('/accounts-receivable/$id');
+      final json = Map<String, dynamic>.from(response.data);
+      if (json['fechaVencimiento'] is int) {
+        json['fechaVencimiento'] = DateTime.fromMillisecondsSinceEpoch(
+          json['fechaVencimiento'],
+        ).toIso8601String();
+      }
+      if (json['fechaEmisionDate'] is int) {
+        json['fechaEmisionDate'] = DateTime.fromMillisecondsSinceEpoch(
+          json['fechaEmisionDate'],
+        ).toIso8601String();
+      }
+      return AccountsReceivable.fromJson(json);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final resData = e.response?.data;
+      final message = (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
   Future<List<AccountsReceivableDetail>> getDetails(int id) async {
     try {
       final response = await dio.get(
@@ -152,5 +182,85 @@ class RemoteAccountsReceivable implements AccountsReceivableDatasource {
     } catch (e) {
       return Future.error(e.toString());
     }
+  }
+
+  @override
+  Future<void> registerPayment({
+    required AccountsReceivable account,
+    required String descripcion,
+    String? detalle,
+    required double monto,
+    required String moneda,
+    required List<Map<String, dynamic>> pagos,
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  }) async {
+    try {
+      await dio.post(
+        '/accounts-receivable-detail',
+        queryParameters: {
+          'idPuntoVenta': idPuntoVenta,
+          'idEstacionVenta': idEstacionVenta,
+        },
+        data: {
+          'cashRegisterDetail': {
+            'tipoMovimientoCaja': 'INGRESO',
+            'conceptoMovimientoCaja': 'OTROS_INGRESOS',
+            'monedaMovimientoCaja': moneda,
+            'pagos': pagos,
+            'monto': monto.toStringAsFixed(2),
+            'descripcion': descripcion,
+            if (detalle != null) 'detalle': detalle,
+          },
+          'accountsReceivable': _buildAccountMap(account),
+        },
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final resData = e.response?.data;
+      final message = (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error de conexión';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  Map<String, dynamic> _buildAccountMap(AccountsReceivable account) {
+    return {
+      'id': account.id,
+      if (account.diasCredito != null) 'diasCredito': account.diasCredito,
+      if (account.extendido != null) 'extendido': account.extendido,
+      if (account.diasExtendidos != null) 'diasExtendidos': account.diasExtendidos,
+      if (account.fechaVencimiento != null)
+        'fechaVencimiento': account.fechaVencimiento!.millisecondsSinceEpoch,
+      if (account.estadoCredito != null) 'estadoCredito': account.estadoCredito,
+      if (account.tipoCuenta != null) 'tipoCuenta': account.tipoCuenta,
+      if (account.empresa != null) 'empresa': account.empresa!.toJson(),
+      if (account.serie != null) 'serie': account.serie,
+      if (account.numero != null) 'numero': account.numero,
+      if (account.fechaEmision != null) 'fechaEmision': account.fechaEmision,
+      if (account.fechaEmisionDate != null)
+        'fechaEmisionDate': account.fechaEmisionDate!.millisecondsSinceEpoch,
+      if (account.cliente != null) 'cliente': account.cliente!.toJson(),
+      if (account.vendedor != null) 'vendedor': account.vendedor!.toJson(),
+      if (account.razonSocialEmisor != null) 'razonSocialEmisor': account.razonSocialEmisor,
+      if (account.tipoDocumentoReceptor != null) 'tipoDocumentoReceptor': account.tipoDocumentoReceptor,
+      if (account.numeroDocumentoReceptor != null) 'numeroDocumentoReceptor': account.numeroDocumentoReceptor,
+      if (account.denominacionReceptor != null) 'denominacionReceptor': account.denominacionReceptor,
+      if (account.emailReceptor != null) 'emailReceptor': account.emailReceptor,
+      if (account.telefonoReceptor != null) 'telefonoReceptor': account.telefonoReceptor,
+      if (account.codigoMoneda != null) 'codigoMoneda': account.codigoMoneda,
+      if (account.puntoVenta != null) 'puntoVenta': account.puntoVenta!.toJson(),
+      if (account.uuid != null) 'uuid': account.uuid,
+      'totalVenta': account.totalVenta,
+      'montoPagado': account.montoPagado,
+      'montoRestante': account.montoRestante,
+      'totalVentaCredito': account.totalVentaCredito,
+      'totalNotaCredito': account.totalNotaCredito,
+    };
   }
 }

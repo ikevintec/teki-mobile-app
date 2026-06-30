@@ -26,6 +26,11 @@ class AccountsReceivableRepositoryImpl extends AccountsReceivableRepository {
   }
 
   @override
+  Future<AccountsReceivable> getById(int id) {
+    return datasource.getById(id);
+  }
+
+  @override
   Future<List<AccountsReceivableDetail>> getDetails(int id) {
     return datasource.getDetails(id);
   }
@@ -38,5 +43,28 @@ class AccountsReceivableRepositoryImpl extends AccountsReceivableRepository {
   @override
   Future<void> extend(int id, int dias) {
     return datasource.extend(id, dias);
+  }
+
+  @override
+  Future<void> registerPayment({
+    required AccountsReceivable account,
+    required String descripcion,
+    String? detalle,
+    required double monto,
+    required String moneda,
+    required List<Map<String, dynamic>> pagos,
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  }) {
+    return datasource.registerPayment(
+      account: account,
+      descripcion: descripcion,
+      detalle: detalle,
+      monto: monto,
+      moneda: moneda,
+      pagos: pagos,
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
+    );
   }
 }

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
 import 'package:teki_app/src/data/models/teki_model/accountReceivableDetail.dart';
 import 'package:teki_app/src/data/repositories/accounts_receivable_repository_impl.dart';
+import 'package:teki_app/src/presentation/screens/accounts_receivable/widgets/amortize_sheet.dart';
 import 'package:teki_app/src/providers/accounts_receivable/accounts_receivable_notifier.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -108,6 +109,24 @@ class _AccountActionsContent extends StatelessWidget {
                 _showPaymentsModal(pageContext);
               },
             ),
+            if (account.estadoCredito != 'ANULADO' &&
+                account.estadoCredito != 'PAGADO') ...[
+              _ActionTile(
+                icon: Icons.account_balance_wallet_outlined,
+                label: 'Amortizar',
+                onTap: () {
+                  Navigator.pop(context);
+                  showAmortizeSheet(
+                    pageContext,
+                    account.id!,
+                    tipoCuenta: tipoCuenta,
+                    onSuccess: () => ref
+                        .read(accountsReceivableProvider(tipoCuenta).notifier)
+                        .loadFirstPage(),
+                  );
+                },
+              ),
+            ],
             if (account.estadoCredito != 'ANULADO') ...[
               _ActionTile(
                 icon: Icons.update_outlined,
@@ -354,10 +373,13 @@ class _PaymentsSheetState extends State<_PaymentsSheet> {
                   }
                   return ListView.separated(
                     controller: scrollController,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.only(bottom: 24),
                     itemCount: details.length,
-                    separatorBuilder: (context, i) => const SizedBox(height: 10),
-                    itemBuilder: (_, i) => _PaymentCard(detail: details[i]),
+                    separatorBuilder: (_, i) => Divider(
+                      height: 1,
+                      color: Colors.grey[200],
+                    ),
+                    itemBuilder: (_, i) => _PaymentTile(detail: details[i]),
                   );
                 },
               ),
@@ -369,80 +391,178 @@ class _PaymentsSheetState extends State<_PaymentsSheet> {
   }
 }
 
-class _PaymentCard extends StatelessWidget {
+class _PaymentTile extends StatelessWidget {
   final AccountsReceivableDetail detail;
 
-  const _PaymentCard({required this.detail});
+  const _PaymentTile({required this.detail});
 
   @override
   Widget build(BuildContext context) {
     final crd = detail.cashRegisterDetail;
     final moneda = crd?.monedaMovimientoCaja ?? 'PEN';
-    final monto = crd?.monto != null
-        ? '${formatExchange(moneda: moneda)}${crd!.monto!.toStringAsFixed(2)}'
+    final simbolo = formatExchange(moneda: moneda);
+    final montoStr = crd?.monto != null
+        ? '$simbolo${crd!.monto!.toStringAsFixed(2)}'
+        : '--';
+    final fecha = crd?.fechaMovimiento != null
+        ? DateFormat('dd/MM/yyyy').format(crd!.fechaMovimiento!)
+        : '--';
+    final pagos = crd?.pagos ?? [];
+    final metodosLabel = pagos.isEmpty
+        ? null
+        : pagos.length == 1
+            ? (pagos.first.nombre ?? pagos.first.formaPago ?? '--')
+            : '${pagos.length} métodos de pago';
+
+    return InkWell(
+      onTap: () => _showDetail(context),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    montoStr,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: ColorSchema.primaryColor,
+                    ),
+                  ),
+                  if (metodosLabel != null)
+                    Text(
+                      metodosLabel,
+                      style: GoogleFonts.roboto(
+                          fontSize: 11, color: Colors.black45),
+                    ),
+                ],
+              ),
+            ),
+            Text(
+              fecha,
+              style: GoogleFonts.roboto(fontSize: 11, color: Colors.black45),
+            ),
+            const SizedBox(width: 6),
+            const Icon(Icons.chevron_right, size: 16, color: Colors.black26),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDetail(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _PaymentDetailSheet(detail: detail),
+    );
+  }
+}
+
+class _PaymentDetailSheet extends StatelessWidget {
+  final AccountsReceivableDetail detail;
+
+  const _PaymentDetailSheet({required this.detail});
+
+  @override
+  Widget build(BuildContext context) {
+    final crd = detail.cashRegisterDetail;
+    final moneda = crd?.monedaMovimientoCaja ?? 'PEN';
+    final simbolo = formatExchange(moneda: moneda);
+    final montoStr = crd?.monto != null
+        ? '$simbolo${crd!.monto!.toStringAsFixed(2)} $moneda'
         : '--';
     final fecha = crd?.fechaMovimiento != null
         ? DateFormat('dd/MM/yyyy HH:mm').format(crd!.fechaMovimiento!)
         : '--';
-    final formasPago = (crd?.pagos ?? [])
-        .map((p) => p.nombre ?? p.formaPago ?? '')
-        .where((s) => s.isNotEmpty)
-        .join(', ');
-    final usuario = crd?.usuario?.nombreCompleto ?? '--';
-    final descripcion = crd?.descripcion ?? '--';
+    final descripcion =
+        crd?.descripcion?.trim().isNotEmpty == true ? crd!.descripcion! : null;
+    final pagos = crd?.pagos ?? [];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text(
+              'Detalle del pago',
+              style: GoogleFonts.poppins(
+                  fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 14),
+            _DetailRow(label: 'Monto', value: montoStr, bold: true),
+            _DetailRow(label: 'Fecha', value: fecha),
+            if (descripcion != null)
+              _DetailRow(label: 'Descripción', value: descripcion),
+            if (pagos.isNotEmpty) ...[
+              const SizedBox(height: 14),
               Text(
-                monto,
+                'Métodos de pago',
                 style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   color: ColorSchema.primaryColor,
                 ),
               ),
-              Text(
-                fecha,
-                style: GoogleFonts.roboto(
-                  fontSize: 11,
-                  color: Colors.black54,
-                ),
-              ),
+              const SizedBox(height: 8),
+              ...pagos.map((p) => _MethodRow(pago: p)),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool bold;
+
+  const _DetailRow({required this.label, required this.value, this.bold = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(label,
+                style: GoogleFonts.roboto(fontSize: 13, color: Colors.black54)),
           ),
-          const SizedBox(height: 4),
-          Text(
-            descripcion,
-            style: GoogleFonts.roboto(fontSize: 13, color: Colors.black87),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              _Chip(label: moneda),
-              if (formasPago.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                _Chip(label: formasPago),
-              ],
-              const Spacer(),
-              Text(
-                usuario,
-                style: GoogleFonts.roboto(
-                  fontSize: 11,
-                  color: Colors.black45,
-                ),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.roboto(
+                fontSize: 13,
+                color: Colors.black87,
+                fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -450,26 +570,36 @@ class _PaymentCard extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  final String label;
+class _MethodRow extends StatelessWidget {
+  final dynamic pago;
 
-  const _Chip({required this.label});
+  const _MethodRow({required this.pago});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: ColorSchema.primaryColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.roboto(
-          fontSize: 11,
-          color: ColorSchema.primaryColor,
-          fontWeight: FontWeight.w500,
-        ),
+    final nombre = pago.nombre ?? pago.formaPago ?? '--';
+    final montoStr =
+        pago.monto != null ? pago.monto!.toStringAsFixed(2) : '--';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          const Icon(Icons.payment_outlined, size: 16, color: Colors.black38),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(nombre,
+                style: GoogleFonts.roboto(fontSize: 13, color: Colors.black87)),
+          ),
+          Text(
+            montoStr,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: ColorSchema.primaryColor,
+            ),
+          ),
+        ],
       ),
     );
   }

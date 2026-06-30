@@ -179,7 +179,7 @@ class _AccountsReceivableListSectionState
                     ],
                   ),
                   trailing: Text(
-                    '${formatExchange(moneda: item.codigoMoneda ?? 'PEN')}${(item.montoRestante ?? 0).toStringAsFixed(2)}',
+                    '${formatExchange(moneda: item.codigoMoneda ?? 'PEN')}${((widget.tipoCuenta == 'CC' ? item.totalVenta : item.totalCompra) ?? 0).toStringAsFixed(2)}',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       color: ColorSchema.primaryColor,

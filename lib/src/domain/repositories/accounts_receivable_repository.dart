@@ -11,9 +11,22 @@ abstract class AccountsReceivableRepository {
     List<Currency> currencies,
   );
 
+  Future<AccountsReceivable> getById(int id);
+
   Future<List<AccountsReceivableDetail>> getDetails(int id);
 
   Future<void> cancel(int id);
 
   Future<void> extend(int id, int dias);
+
+  Future<void> registerPayment({
+    required AccountsReceivable account,
+    required String descripcion,
+    String? detalle,
+    required double monto,
+    required String moneda,
+    required List<Map<String, dynamic>> pagos,
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  });
 }
