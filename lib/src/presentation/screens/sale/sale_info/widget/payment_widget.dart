@@ -111,6 +111,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
 
   final formKeyCredito = GlobalKey<FormState>();
   bool _submitAttempted = false;
+  bool _isSubmitting = false;
 
   double get _totalPaid => _paymentEntries.fold(
       0.0, (sum, e) => sum + (double.tryParse(e.amountController.text) ?? 0.0));
@@ -656,120 +657,137 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    final notifier = ref.read(ticketProvider.notifier);
-                    final isContado = _tabController.index == 0;
+                  onPressed: _isSubmitting
+                      ? null
+                      : () async {
+                          final notifier = ref.read(ticketProvider.notifier);
+                          final isContado = _tabController.index == 0;
 
-                    if (isContado) {
-                      setState(() => _submitAttempted = true);
-                      final error = _contadoError;
-                      if (error != null) return;
-                      procesoContado();
-                    } else {
-                      final isValid =
-                          formKeyCredito.currentState?.validate() ?? false;
-                      if (!isValid) return;
-                      if (!procesoCredito()) return;
-                    }
+                          if (isContado) {
+                            setState(() => _submitAttempted = true);
+                            final error = _contadoError;
+                            if (error != null) return;
+                            procesoContado();
+                          } else {
+                            final isValid =
+                                formKeyCredito.currentState?.validate() ?? false;
+                            if (!isValid) return;
+                            if (!procesoCredito()) return;
+                          }
 
-                    final ticketState = ref.read(ticketProvider);
-                    final checkId = ticketState.ticket.cuentaRestaurante;
-                    
-                    // aca se define si se crea o se edita el check, si checkId es null se crea, si no se edita, pero solo si no es una edicion de ticket
-                    if (checkId != null && !ticketState.isEdit) {
-                      final ticketPayload = notifier.getTicketPayload();
-                      final customer = ref.read(customerSaleProvider).customer;
-                      final originalItems = ref
-                          .read(productSaleProvider)
-                          .productsSales
-                          .map((td) => td.comandaDetalle)
-                          .whereType<CommandDetail>()
-                          .toList();
-                      final checkPayload = Check(
-                        cliente: (customer.razonSocial?.isNotEmpty ?? false)
-                            ? customer
-                            : null,
-                        pagado: true,
-                        items: originalItems,
-                        comprobante: ticketPayload,
-                      );
-                      try {
-                        final checkResult = await RestaurantRepositoryImpl()
-                            .updateCheck(checkId, checkPayload);
-                        ref.invalidate(ticketProvider);
-                        ref.invalidate(productSaleProvider);
-                        ref.invalidate(customerSaleProvider);
-                        final comprobante = checkResult.comprobante;
-                        if (comprobante != null) {
-                          _autoprint(comprobante);
-                          Get.off(() => ViewComponentScreen(
-                                ticket: comprobante,
-                                id: comprobante.id,
-                                fromSale: true,
-                              ));
-                        } else {
-                          Get.back();
-                        }
-                      } catch (e) {
-                        errorNotification("Error al registrar el pago: $e");
-                      }
-                    } else {
-                      final stateTicket = ref.read(ticketProvider).ticket;
-                      final Ticket? ticketResponse =
-                          await notifier.proceessTicket();
-                      if (ticketResponse != null) {
-                        // La respuesta de edición solo trae id/uuid/identificadorDocumento
-                        // (y a veces los totales); el resto de campos para mostrar en
-                        // ViewComponentScreen se completan con el ticket local.
-                        final ticketToShow = stateTicket.copyWith(
-                          id: ticketResponse.id ?? stateTicket.id,
-                          uuid: ticketResponse.uuid ?? stateTicket.uuid,
-                          identificadorDocumento: ticketResponse.identificadorDocumento ??
-                              stateTicket.identificadorDocumento,
-                          serie: ticketResponse.serie ?? stateTicket.serie,
-                          numero: ticketResponse.numero ?? stateTicket.numero,
-                          tipoComprobante: ticketResponse.tipoComprobante ?? stateTicket.tipoComprobante,
-                          estadoSunat: ticketResponse.estadoSunat ?? stateTicket.estadoSunat,
-                          totalVenta: ticketResponse.totalVenta ?? stateTicket.totalVenta,
-                          totalValorVenta: ticketResponse.totalValorVenta ?? stateTicket.totalValorVenta,
-                          totalValorVentaGravada: ticketResponse.totalValorVentaGravada ?? stateTicket.totalValorVentaGravada,
-                          totalValorVentaInafecta: ticketResponse.totalValorVentaInafecta ?? stateTicket.totalValorVentaInafecta,
-                          totalValorVentaExonerada: ticketResponse.totalValorVentaExonerada ?? stateTicket.totalValorVentaExonerada,
-                          totalValorVentaExportacion: ticketResponse.totalValorVentaExportacion ?? stateTicket.totalValorVentaExportacion,
-                          totalIgv: ticketResponse.totalIgv ?? stateTicket.totalIgv,
-                          totalIsc: ticketResponse.totalIsc ?? stateTicket.totalIsc,
-                          totalTributosBolsas: ticketResponse.totalTributosBolsas ?? stateTicket.totalTributosBolsas,
-                          totalDescuento: ticketResponse.totalDescuento ?? stateTicket.totalDescuento,
-                          otrosCargos: ticketResponse.otrosCargos ?? stateTicket.otrosCargos,
-                        );
-                        ref.invalidate(ticketProvider);
-                        ref.invalidate(productSaleProvider);
-                        ref.invalidate(customerSaleProvider);
-                        _autoprint(ticketResponse);
-                        Get.off(() => ViewComponentScreen(
-                              ticket: ticketToShow,
-                              fromSale: true,
-                            ));
-                      }
-                    }
-                  },
+                          setState(() => _isSubmitting = true);
+                          try {
+                            final ticketState = ref.read(ticketProvider);
+                            final checkId = ticketState.ticket.cuentaRestaurante;
+
+                            if (checkId != null && !ticketState.isEdit) {
+                              final ticketPayload = notifier.getTicketPayload();
+                              final customer = ref.read(customerSaleProvider).customer;
+                              final originalItems = ref
+                                  .read(productSaleProvider)
+                                  .productsSales
+                                  .map((td) => td.comandaDetalle)
+                                  .whereType<CommandDetail>()
+                                  .toList();
+                              final checkPayload = Check(
+                                cliente: (customer.razonSocial?.isNotEmpty ?? false)
+                                    ? customer
+                                    : null,
+                                pagado: true,
+                                items: originalItems,
+                                comprobante: ticketPayload,
+                              );
+                              try {
+                                final checkResult = await RestaurantRepositoryImpl()
+                                    .updateCheck(checkId, checkPayload);
+                                ref.invalidate(ticketProvider);
+                                ref.invalidate(productSaleProvider);
+                                ref.invalidate(customerSaleProvider);
+                                final comprobante = checkResult.comprobante;
+                                if (comprobante != null) {
+                                  _autoprint(comprobante);
+                                  Get.off(() => ViewComponentScreen(
+                                        ticket: comprobante,
+                                        id: comprobante.id,
+                                        fromSale: true,
+                                      ));
+                                } else {
+                                  Get.back();
+                                }
+                              } catch (e) {
+                                errorNotification("Error al registrar el pago: $e");
+                                if (mounted) setState(() => _isSubmitting = false);
+                              }
+                            } else {
+                              final stateTicket = ref.read(ticketProvider).ticket;
+                              final Ticket? ticketResponse =
+                                  await notifier.proceessTicket();
+                              if (ticketResponse != null) {
+                                final ticketToShow = stateTicket.copyWith(
+                                  id: ticketResponse.id ?? stateTicket.id,
+                                  uuid: ticketResponse.uuid ?? stateTicket.uuid,
+                                  identificadorDocumento: ticketResponse.identificadorDocumento ??
+                                      stateTicket.identificadorDocumento,
+                                  serie: ticketResponse.serie ?? stateTicket.serie,
+                                  numero: ticketResponse.numero ?? stateTicket.numero,
+                                  tipoComprobante: ticketResponse.tipoComprobante ?? stateTicket.tipoComprobante,
+                                  estadoSunat: ticketResponse.estadoSunat ?? stateTicket.estadoSunat,
+                                  totalVenta: ticketResponse.totalVenta ?? stateTicket.totalVenta,
+                                  totalValorVenta: ticketResponse.totalValorVenta ?? stateTicket.totalValorVenta,
+                                  totalValorVentaGravada: ticketResponse.totalValorVentaGravada ?? stateTicket.totalValorVentaGravada,
+                                  totalValorVentaInafecta: ticketResponse.totalValorVentaInafecta ?? stateTicket.totalValorVentaInafecta,
+                                  totalValorVentaExonerada: ticketResponse.totalValorVentaExonerada ?? stateTicket.totalValorVentaExonerada,
+                                  totalValorVentaExportacion: ticketResponse.totalValorVentaExportacion ?? stateTicket.totalValorVentaExportacion,
+                                  totalIgv: ticketResponse.totalIgv ?? stateTicket.totalIgv,
+                                  totalIsc: ticketResponse.totalIsc ?? stateTicket.totalIsc,
+                                  totalTributosBolsas: ticketResponse.totalTributosBolsas ?? stateTicket.totalTributosBolsas,
+                                  totalDescuento: ticketResponse.totalDescuento ?? stateTicket.totalDescuento,
+                                  otrosCargos: ticketResponse.otrosCargos ?? stateTicket.otrosCargos,
+                                );
+                                ref.invalidate(ticketProvider);
+                                ref.invalidate(productSaleProvider);
+                                ref.invalidate(customerSaleProvider);
+                                _autoprint(ticketResponse);
+                                Get.off(() => ViewComponentScreen(
+                                      ticket: ticketToShow,
+                                      fromSale: true,
+                                    ));
+                              } else {
+                                if (mounted) setState(() => _isSubmitting = false);
+                              }
+                            }
+                          } catch (e) {
+                            errorNotification("Error inesperado: $e");
+                            if (mounted) setState(() => _isSubmitting = false);
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorSchema.primaryColor,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        ColorSchema.primaryColor.withValues(alpha: 0.5),
+                    disabledForegroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 2,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(ticketP.isEdit ? 'Finalizar Edición' : 'Finalizar Pago'),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.check_circle),
-                    ],
-                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(ticketP.isEdit ? 'Finalizar Edición' : 'Finalizar Pago'),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.check_circle),
+                          ],
+                        ),
                 ),
               ),
             ),

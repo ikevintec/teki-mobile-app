@@ -39,6 +39,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   TextEditingController numeroController = TextEditingController();
   TextEditingController vendedorController = TextEditingController();
   TextEditingController placaController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -540,90 +541,109 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () async {
-                              final clientProvider = ref.read(
-                                customerSaleProvider,
-                              );
-                              if ((clientProvider
-                                              .customer
-                                              .numeroDocumento
-                                              ?.length ??
-                                          0) <
-                                      11 &&
-                                  tipoDocumento == "01") {
-                                warningNotification(
-                                  "Debe seleccionar un cliente con RUC para emitir una factura.",
-                                );
-                                Navigator.of(context).pop();
-                                return;
-                              }
-                              final esGasolinera =
-                                  ref
-                                      .read(sesionProvider)
-                                      .config
-                                      ?.esGasolinera ??
-                                  false;
-                              final placa = placaController.text.trim();
-                              if (esGasolinera &&
-                                  placa.isNotEmpty &&
-                                  placa.length != 6) {
-                                warningNotification(
-                                  'La placa del vehículo debe tener exactamente 6 caracteres.',
-                                );
-                                return;
-                              }
-                              ref
-                                  .read(ticketProvider.notifier)
-                                  .setPlacaVehiculo(placa);
-                              final ticketNotifier = ref.read(
-                                ticketProvider.notifier,
-                              );
-                              ticketNotifier.setTicketsData();
+                            onPressed: _isSubmitting
+                                ? null
+                                : () async {
+                                    final clientProvider = ref.read(
+                                      customerSaleProvider,
+                                    );
+                                    if ((clientProvider
+                                                    .customer
+                                                    .numeroDocumento
+                                                    ?.length ??
+                                                0) <
+                                            11 &&
+                                        tipoDocumento == "01") {
+                                      warningNotification(
+                                        "Debe seleccionar un cliente con RUC para emitir una factura.",
+                                      );
+                                      Navigator.of(context).pop();
+                                      return;
+                                    }
+                                    final esGasolinera =
+                                        ref
+                                            .read(sesionProvider)
+                                            .config
+                                            ?.esGasolinera ??
+                                        false;
+                                    final placa = placaController.text.trim();
+                                    if (esGasolinera &&
+                                        placa.isNotEmpty &&
+                                        placa.length != 6) {
+                                      warningNotification(
+                                        'La placa del vehículo debe tener exactamente 6 caracteres.',
+                                      );
+                                      return;
+                                    }
+                                    ref
+                                        .read(ticketProvider.notifier)
+                                        .setPlacaVehiculo(placa);
+                                    final ticketNotifier = ref.read(
+                                      ticketProvider.notifier,
+                                    );
+                                    ticketNotifier.setTicketsData();
 
-                              if (ticketP.isQuotation) {
-                                ticketNotifier.setMovimientoCaja(
-                                  total: 0,
-                                  pagos: [],
-                                  cambio: 0,
-                                );
-                                final result = await ticketNotifier
-                                    .proceessTicket();
-                                if (result != null && result.id != null) {
-                                  ref.invalidate(ticketProvider);
-                                  ref.invalidate(productSaleProvider);
-                                  ref.invalidate(customerSaleProvider);
-                                  successNotification(
-                                    "Cotización registrada correctamente",
-                                  );
-                                  Get.off(
-                                    () => ViewQuotationScreen(
-                                      id: result.id!,
-                                      fromSale: true,
-                                    ),
-                                  );
-                                }
-                                return;
-                              }
+                                    if (ticketP.isQuotation) {
+                                      ticketNotifier.setMovimientoCaja(
+                                        total: 0,
+                                        pagos: [],
+                                        cambio: 0,
+                                      );
+                                      setState(() => _isSubmitting = true);
+                                      try {
+                                        final result = await ticketNotifier
+                                            .proceessTicket();
+                                        if (result != null && result.id != null) {
+                                          ref.invalidate(ticketProvider);
+                                          ref.invalidate(productSaleProvider);
+                                          ref.invalidate(customerSaleProvider);
+                                          successNotification(
+                                            "Cotización registrada correctamente",
+                                          );
+                                          Get.off(
+                                            () => ViewQuotationScreen(
+                                              id: result.id!,
+                                              fromSale: true,
+                                            ),
+                                          );
+                                        } else {
+                                          if (mounted) setState(() => _isSubmitting = false);
+                                        }
+                                      } catch (_) {
+                                        if (mounted) setState(() => _isSubmitting = false);
+                                      }
+                                      return;
+                                    }
 
-                              PaymentWidget.show(context);
-                            },
+                                    PaymentWidget.show(context);
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,
                               foregroundColor: Colors.white,
+                              disabledBackgroundColor:
+                                  ColorSchema.primaryColor.withValues(alpha: 0.5),
+                              disabledForegroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               elevation: 2,
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(ticketP.confirmButtonLabel),
-                                SizedBox(width: 8),
-                                Icon(Icons.check_circle),
-                              ],
-                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2),
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(ticketP.confirmButtonLabel),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.check_circle),
+                                    ],
+                                  ),
                           ),
                         ),
                       ],
