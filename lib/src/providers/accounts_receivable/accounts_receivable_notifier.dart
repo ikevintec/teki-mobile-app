@@ -130,6 +130,30 @@ class AccountsReceivableNotifier extends StateNotifier<AccountsReceivableState> 
     await loadFirstPage();
   }
 
+  Future<bool> cancelAccount(int id) async {
+    try {
+      await repository.cancel(id);
+      successNotification('Cuenta anulada correctamente');
+      await loadFirstPage();
+      return true;
+    } catch (e) {
+      errorNotification('Error al anular: $e');
+      return false;
+    }
+  }
+
+  Future<bool> extendAccount(int id, int dias) async {
+    try {
+      await repository.extend(id, dias);
+      successNotification('Plazo extendido correctamente');
+      await loadFirstPage();
+      return true;
+    } catch (e) {
+      errorNotification('Error al extender: $e');
+      return false;
+    }
+  }
+
   /// Aplica el resto de filtros y recarga desde la página 0.
   /// Solo se invoca cuando el usuario presiona "Aplicar" en el modal de otros filtros.
   Future<void> applyOtherFilters({

@@ -17,8 +17,20 @@ class DateFiltersModal extends ConsumerStatefulWidget {
 class _DateFiltersModalState extends ConsumerState<DateFiltersModal> {
   static const _format = 'dd-MM-yyyy';
 
-  DateTimeRange? _emisionRange;
-  DateTimeRange? _vencimientoRange;
+  DateTime? _emisionDesde;
+  DateTime? _emisionHasta;
+  DateTime? _vencimientoDesde;
+  DateTime? _vencimientoHasta;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = ref.read(accountsReceivableProvider(widget.tipoCuenta));
+    _emisionDesde = _parse(state.filtroEmisionDesde);
+    _emisionHasta = _parse(state.filtroEmisionHasta);
+    _vencimientoDesde = _parse(state.filtroVencimientoDesde);
+    _vencimientoHasta = _parse(state.filtroVencimientoHasta);
+  }
 
   DateTime? _parse(String? value) {
     if (value == null || value.isEmpty) return null;
@@ -29,37 +41,23 @@ class _DateFiltersModalState extends ConsumerState<DateFiltersModal> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    final state = ref.read(accountsReceivableProvider(widget.tipoCuenta));
-    final emisionDesde = _parse(state.filtroEmisionDesde);
-    final emisionHasta = _parse(state.filtroEmisionHasta);
-    final vencimientoDesde = _parse(state.filtroVencimientoDesde);
-    final vencimientoHasta = _parse(state.filtroVencimientoHasta);
-
-    if (emisionDesde != null && emisionHasta != null) {
-      _emisionRange = DateTimeRange(start: emisionDesde, end: emisionHasta);
-    }
-    if (vencimientoDesde != null && vencimientoHasta != null) {
-      _vencimientoRange =
-          DateTimeRange(start: vencimientoDesde, end: vencimientoHasta);
-    }
-  }
-
-  Future<void> _pickRange(DateTimeRange? current, ValueChanged<DateTimeRange> onPicked) async {
+  Future<void> _pick({
+    required DateTime? current,
+    required ValueChanged<DateTime?> onPicked,
+    DateTime? firstDate,
+    DateTime? lastDate,
+  }) async {
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
+    final picked = await showDatePicker(
       context: context,
-      initialDateRange: current,
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 5),
+      initialDate: current ?? now,
+      firstDate: firstDate ?? DateTime(now.year - 5),
+      lastDate: lastDate ?? DateTime(now.year + 5),
       locale: const Locale('es'),
-      initialEntryMode: DatePickerEntryMode.calendarOnly,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: ColorSchema.primaryColor,
               onPrimary: Colors.white,
               onSurface: Colors.black87,
@@ -72,80 +70,15 @@ class _DateFiltersModalState extends ConsumerState<DateFiltersModal> {
     if (picked != null) onPicked(picked);
   }
 
-  String _label(DateTimeRange? range) {
-    if (range == null) return 'Seleccionar rango';
-    final fmt = DateFormat('dd MMM yyyy', 'es');
-    return '${fmt.format(range.start)} - ${fmt.format(range.end)}';
-  }
-
-  Widget _buildRangeField({
-    required String label,
-    required DateTimeRange? range,
-    required VoidCallback onTap,
-    required VoidCallback? onClear,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.raleway(
-            color: const Color(0xFF444444),
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: onTap,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: const Color(0xFFE2E4E7)),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _label(range),
-                    style: GoogleFonts.roboto(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: range == null ? Colors.grey : Colors.black87,
-                    ),
-                  ),
-                ),
-                if (range != null && onClear != null)
-                  GestureDetector(
-                    onTap: onClear,
-                    child: const Icon(Icons.close, size: 18, color: Colors.grey),
-                  ),
-                const SizedBox(width: 6),
-                const Icon(Icons.calendar_month, color: ColorSchema.primaryColor),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   void _apply() {
     final fmt = DateFormat(_format);
     ref.read(accountsReceivableProvider(widget.tipoCuenta).notifier).applyDateFilters(
-          filtroEmisionDesde:
-              _emisionRange != null ? fmt.format(_emisionRange!.start) : null,
-          filtroEmisionHasta:
-              _emisionRange != null ? fmt.format(_emisionRange!.end) : null,
-          filtroVencimientoDesde: _vencimientoRange != null
-              ? fmt.format(_vencimientoRange!.start)
-              : null,
-          filtroVencimientoHasta: _vencimientoRange != null
-              ? fmt.format(_vencimientoRange!.end)
-              : null,
+          filtroEmisionDesde: _emisionDesde != null ? fmt.format(_emisionDesde!) : null,
+          filtroEmisionHasta: _emisionHasta != null ? fmt.format(_emisionHasta!) : null,
+          filtroVencimientoDesde:
+              _vencimientoDesde != null ? fmt.format(_vencimientoDesde!) : null,
+          filtroVencimientoHasta:
+              _vencimientoHasta != null ? fmt.format(_vencimientoHasta!) : null,
         );
     Navigator.of(context).pop();
   }
@@ -156,19 +89,20 @@ class _DateFiltersModalState extends ConsumerState<DateFiltersModal> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildRangeField(
+        _buildDateGroup(
           label: 'Fecha de emisión',
-          range: _emisionRange,
-          onTap: () => _pickRange(_emisionRange, (r) => setState(() => _emisionRange = r)),
-          onClear: () => setState(() => _emisionRange = null),
+          desde: _emisionDesde,
+          hasta: _emisionHasta,
+          onDesdeChanged: (d) => setState(() => _emisionDesde = d),
+          onHastaChanged: (d) => setState(() => _emisionHasta = d),
         ),
         const SizedBox(height: 20),
-        _buildRangeField(
+        _buildDateGroup(
           label: 'Fecha de vencimiento',
-          range: _vencimientoRange,
-          onTap: () => _pickRange(
-              _vencimientoRange, (r) => setState(() => _vencimientoRange = r)),
-          onClear: () => setState(() => _vencimientoRange = null),
+          desde: _vencimientoDesde,
+          hasta: _vencimientoHasta,
+          onDesdeChanged: (d) => setState(() => _vencimientoDesde = d),
+          onHastaChanged: (d) => setState(() => _vencimientoHasta = d),
         ),
         const SizedBox(height: 24),
         Row(
@@ -215,6 +149,119 @@ class _DateFiltersModalState extends ConsumerState<DateFiltersModal> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildDateGroup({
+    required String label,
+    required DateTime? desde,
+    required DateTime? hasta,
+    required ValueChanged<DateTime?> onDesdeChanged,
+    required ValueChanged<DateTime?> onHastaChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.raleway(
+            color: const Color(0xFF444444),
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _DateInput(
+                hint: 'Desde',
+                value: desde,
+                onTap: () => _pick(
+                  current: desde,
+                  lastDate: hasta,
+                  onPicked: onDesdeChanged,
+                ),
+                onClear: () => onDesdeChanged(null),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _DateInput(
+                hint: 'Hasta',
+                value: hasta,
+                onTap: () => _pick(
+                  current: hasta,
+                  firstDate: desde,
+                  onPicked: onHastaChanged,
+                ),
+                onClear: () => onHastaChanged(null),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DateInput extends StatelessWidget {
+  final String hint;
+  final DateTime? value;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+
+  const _DateInput({
+    required this.hint,
+    required this.value,
+    required this.onTap,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = value != null;
+    final label = hasValue ? DateFormat('dd-MM-yyyy').format(value!) : hint;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(
+            color: hasValue ? ColorSchema.primaryColor : const Color(0xFFE2E4E7),
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.calendar_today,
+              size: 14,
+              color: hasValue ? ColorSchema.primaryColor : Colors.grey,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.roboto(
+                  fontSize: 12,
+                  fontWeight: hasValue ? FontWeight.w600 : FontWeight.normal,
+                  color: hasValue ? Colors.black87 : Colors.grey,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (hasValue)
+              GestureDetector(
+                onTap: onClear,
+                child: const Icon(Icons.close, size: 14, color: Colors.grey),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
