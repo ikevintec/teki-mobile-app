@@ -19,7 +19,8 @@ class CommandEscPosFormatter {
       ..._buildFechaAnulacionLines(data),
       ..._buildCamareroLines(data, printer),
       ..._buildClienteLines(data, printer),
-      ..._buildMesaSalonLines(data, printer),
+      ..._buildMesaLines(data, printer),
+      ..._buildSalonLines(data, printer),
       ..._buildAreaLines(data, printer),
       ..._buildAnulacionLines(data),
       EscPosOrder(type: EscPosOrderType.FEED, feed: 1),
@@ -68,9 +69,9 @@ class CommandEscPosFormatter {
           style: EscPosStyle(
             justification: 'Center',
             bold: true,
-            fontSize: printer.fontsizeNumeroOrden ?? '_1',
+            fontSize: printer.fontsizeXNumeroOrden ?? '_1',
             fontSizeX: printer.fontsizeXNumeroOrden ?? '_1',
-            fontSizeY: printer.fontsizeYNumeroOrden ?? '_1',
+            fontSizeY: printer.fontsizeYNumeroOrden ?? '_2',
           ),
         ),
       ),
@@ -87,9 +88,9 @@ class CommandEscPosFormatter {
           lineBreak: true,
           style: EscPosStyle(
             bold: true,
-            fontSize: printer.fontsizeOcultarFecha ?? '_1',
-            fontSizeX: printer.fontsizeXOcultarFecha ?? '_1',
-            fontSizeY: printer.fontsizeYOcultarFecha ?? '_2',
+            fontSize: printer.fontsizeXFecha ?? '_1',
+            fontSizeX: printer.fontsizeXFecha ?? '_1',
+            fontSizeY: printer.fontsizeYFecha ?? '_2',
           ),
         ),
       ),
@@ -114,9 +115,9 @@ class CommandEscPosFormatter {
     if (printer.ocultarCamarero == true) return [];
     final style = EscPosStyle(
       bold: true,
-      fontSize: printer.fontsizeOcultarCamarero ?? '_1',
-      fontSizeX: printer.fontsizeXOcultarCamarero ?? '_1',
-      fontSizeY: printer.fontsizeYOcultarCamarero ?? '_2',
+      fontSize: printer.fontsizeXCamarero ?? '_1',
+      fontSizeX: printer.fontsizeXCamarero ?? '_1',
+      fontSizeY: printer.fontsizeYCamarero ?? '_2',
     );
     return [
       EscPosOrder(
@@ -138,9 +139,9 @@ class CommandEscPosFormatter {
     if (printer.ocultarCliente == true) return [];
     final style = EscPosStyle(
       bold: true,
-      fontSize: printer.fontsizeOcultarCliente ?? '_1',
-      fontSizeX: printer.fontsizeXOcultarCliente ?? '_1',
-      fontSizeY: printer.fontsizeYOcultarCliente ?? '_2',
+      fontSize: printer.fontsizeXCliente ?? '_1',
+      fontSizeX: printer.fontsizeXCliente ?? '_1',
+      fontSizeY: printer.fontsizeYCliente ?? '_2',
     );
     return [
       EscPosOrder(
@@ -154,25 +155,38 @@ class CommandEscPosFormatter {
     ];
   }
 
-  List<EscPosOrder> _buildMesaSalonLines(CommandPrint data, Printer printer) {
-    final mostrarMesa = printer.ocultarMesa != true;
-    final mostrarSalon = printer.ocultarSalon != true;
-    if (!mostrarMesa && !mostrarSalon) return [];
-
-    final value = (mostrarMesa ? 'MESA: ${data.mesa?.toUpperCase()}     ' : '') +
-        (mostrarSalon ? 'SALON: ${data.salon?.toUpperCase()}' : '');
-
+  List<EscPosOrder> _buildMesaLines(CommandPrint data, Printer printer) {
+    if (printer.ocultarMesa == true) return [];
     return [
       EscPosOrder(
         type: EscPosOrderType.TEXT,
         text: EscPosOrderText(
-          value: value,
+          value: 'MESA: ${data.mesa?.toUpperCase()}',
           lineBreak: true,
           style: EscPosStyle(
             bold: true,
-            fontSize: printer.fontsizeOcultarSalon ?? '_1',
-            fontSizeX: printer.fontsizeXOcultarSalon ?? '_1',
-            fontSizeY: printer.fontsizeYOcultarSalon ?? '_2',
+            fontSize: printer.fontsizeXMesa ?? '_1',
+            fontSizeX: printer.fontsizeXMesa ?? '_1',
+            fontSizeY: printer.fontsizeYMesa ?? '_2',
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<EscPosOrder> _buildSalonLines(CommandPrint data, Printer printer) {
+    if (printer.ocultarSalon == true) return [];
+    return [
+      EscPosOrder(
+        type: EscPosOrderType.TEXT,
+        text: EscPosOrderText(
+          value: 'SALON: ${data.salon?.toUpperCase()}',
+          lineBreak: true,
+          style: EscPosStyle(
+            bold: true,
+            fontSize: printer.fontsizeXSalon ?? '_1',
+            fontSizeX: printer.fontsizeXSalon ?? '_1',
+            fontSizeY: printer.fontsizeYSalon ?? '_2',
           ),
         ),
       ),
@@ -189,9 +203,9 @@ class CommandEscPosFormatter {
           lineBreak: true,
           style: EscPosStyle(
             bold: true,
-            fontSize: printer.fontsizeOcultarArea ?? '_2',
-            fontSizeX: printer.fontsizeXOcultarArea ?? '_1',
-            fontSizeY: printer.fontsizeYOcultarArea ?? '_2',
+            fontSize: printer.fontsizeXArea ?? '_1',
+            fontSizeX: printer.fontsizeXArea ?? '_1',
+            fontSizeY: printer.fontsizeYArea ?? '_2',
           ),
         ),
       ),
@@ -235,9 +249,9 @@ class CommandEscPosFormatter {
           lineBreak: true,
           style: EscPosStyle(
             bold: true,
-            fontSize: printer.fontsizeOcultarItems ?? fontSize,
-            fontSizeX: printer.fontsizeXOcultarItems ?? '_1',
-            fontSizeY: printer.fontsizeYOcultarItems ?? '_2',
+            fontSize: printer.fontsizeXItems ?? fontSize,
+            fontSizeX: printer.fontsizeXItems ?? '_1',
+            fontSizeY: printer.fontsizeYItems ?? '_2',
           ),
         ),
       ));
@@ -248,12 +262,11 @@ class CommandEscPosFormatter {
           text: EscPosOrderText(
             value: 'Motivo anulación: ${item.motivoAnulacion}',
             lineBreak: true,
-            style: const EscPosStyle(
+            style: EscPosStyle(
               bold: true,
-              fontSize: '_1',
-              justification: 'Right',
-              fontSizeX: '_1',
-              fontSizeY: '_2',
+              fontSize: printer.fontsizeXItems ?? fontSize,
+              fontSizeX: printer.fontsizeXItems ?? '_1',
+              fontSizeY: printer.fontsizeYItems ?? '_2',
             ),
           ),
         ));
@@ -265,7 +278,12 @@ class CommandEscPosFormatter {
           text: EscPosOrderText(
             value: extras,
             lineBreak: true,
-            style: EscPosStyle(bold: true, fontSize: fontSize, fontSizeX: '_1', fontSizeY: '_2'),
+            style: EscPosStyle(
+              bold: true,
+              fontSize: printer.fontsizeXExtras ?? fontSize,
+              fontSizeX: printer.fontsizeXExtras ?? '_1',
+              fontSizeY: printer.fontsizeYExtras ?? '_2',
+            ),
           ),
         ));
       }

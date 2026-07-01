@@ -17,44 +17,39 @@ class Printer {
   final bool? letraGrandeComanda;
 
   final bool? ocultarNumeroOrden;
-  final String? fontsizeNumeroOrden;
   final String? fontsizeXNumeroOrden;
   final String? fontsizeYNumeroOrden;
 
   final bool? ocultarFecha;
-  final String? fontsizeOcultarFecha;
-  final String? fontsizeXOcultarFecha;
-  final String? fontsizeYOcultarFecha;
+  final String? fontsizeXFecha;
+  final String? fontsizeYFecha;
 
   final bool? ocultarCamarero;
-  final String? fontsizeOcultarCamarero;
-  final String? fontsizeXOcultarCamarero;
-  final String? fontsizeYOcultarCamarero;
+  final String? fontsizeXCamarero;
+  final String? fontsizeYCamarero;
 
   final bool? ocultarCliente;
-  final String? fontsizeOcultarCliente;
-  final String? fontsizeXOcultarCliente;
-  final String? fontsizeYOcultarCliente;
+  final String? fontsizeXCliente;
+  final String? fontsizeYCliente;
 
   final bool? ocultarMesa;
-  final String? fontsizeOcultarMesa;
-  final String? fontsizeXOcultarMesa;
-  final String? fontsizeYOcultarMesa;
+  final String? fontsizeXMesa;
+  final String? fontsizeYMesa;
 
   final bool? ocultarSalon;
-  final String? fontsizeOcultarSalon;
-  final String? fontsizeXOcultarSalon;
-  final String? fontsizeYOcultarSalon;
+  final String? fontsizeXSalon;
+  final String? fontsizeYSalon;
 
   final bool? ocultarArea;
-  final String? fontsizeOcultarArea;
-  final String? fontsizeXOcultarArea;
-  final String? fontsizeYOcultarArea;
+  final String? fontsizeXArea;
+  final String? fontsizeYArea;
 
   final bool? ocultarItems;
-  final String? fontsizeOcultarItems;
-  final String? fontsizeXOcultarItems;
-  final String? fontsizeYOcultarItems;
+  final String? fontsizeXItems;
+  final String? fontsizeYItems;
+
+  final String? fontsizeXExtras;
+  final String? fontsizeYExtras;
 
   final String? tipoImpresora;
   final String? tipoImpresion;
@@ -71,37 +66,31 @@ class Printer {
     this.abrirGaveta,
     this.letraGrandeComanda,
     this.ocultarNumeroOrden,
-    this.fontsizeNumeroOrden,
     this.fontsizeXNumeroOrden,
     this.fontsizeYNumeroOrden,
     this.ocultarFecha,
-    this.fontsizeOcultarFecha,
-    this.fontsizeXOcultarFecha,
-    this.fontsizeYOcultarFecha,
+    this.fontsizeXFecha,
+    this.fontsizeYFecha,
     this.ocultarCamarero,
-    this.fontsizeOcultarCamarero,
-    this.fontsizeXOcultarCamarero,
-    this.fontsizeYOcultarCamarero,
+    this.fontsizeXCamarero,
+    this.fontsizeYCamarero,
     this.ocultarCliente,
-    this.fontsizeOcultarCliente,
-    this.fontsizeXOcultarCliente,
-    this.fontsizeYOcultarCliente,
+    this.fontsizeXCliente,
+    this.fontsizeYCliente,
     this.ocultarMesa,
-    this.fontsizeOcultarMesa,
-    this.fontsizeXOcultarMesa,
-    this.fontsizeYOcultarMesa,
+    this.fontsizeXMesa,
+    this.fontsizeYMesa,
     this.ocultarSalon,
-    this.fontsizeOcultarSalon,
-    this.fontsizeXOcultarSalon,
-    this.fontsizeYOcultarSalon,
+    this.fontsizeXSalon,
+    this.fontsizeYSalon,
     this.ocultarArea,
-    this.fontsizeOcultarArea,
-    this.fontsizeXOcultarArea,
-    this.fontsizeYOcultarArea,
+    this.fontsizeXArea,
+    this.fontsizeYArea,
     this.ocultarItems,
-    this.fontsizeOcultarItems,
-    this.fontsizeXOcultarItems,
-    this.fontsizeYOcultarItems,
+    this.fontsizeXItems,
+    this.fontsizeYItems,
+    this.fontsizeXExtras,
+    this.fontsizeYExtras,
     this.tipoImpresora,
     this.tipoImpresion,
   });
@@ -119,37 +108,31 @@ class Printer {
         abrirGaveta: json['abrirGaveta'],
         letraGrandeComanda: json['letraGrandeComanda'],
         ocultarNumeroOrden: json['ocultarNumeroOrden'],
-        fontsizeNumeroOrden: json['fontsizeNumeroOrden'],
         fontsizeXNumeroOrden: json['fontsizeXNumeroOrden'],
         fontsizeYNumeroOrden: json['fontsizeYNumeroOrden'],
         ocultarFecha: json['ocultarFecha'],
-        fontsizeOcultarFecha: json['fontsizeOcultarFecha'],
-        fontsizeXOcultarFecha: json['fontsizeXOcultarFecha'],
-        fontsizeYOcultarFecha: json['fontsizeYOcultarFecha'],
+        fontsizeXFecha: json['fontsizeXFecha'],
+        fontsizeYFecha: json['fontsizeYFecha'],
         ocultarCamarero: json['ocultarCamarero'],
-        fontsizeOcultarCamarero: json['fontsizeOcultarCamarero'],
-        fontsizeXOcultarCamarero: json['fontsizeXOcultarCamarero'],
-        fontsizeYOcultarCamarero: json['fontsizeYOcultarCamarero'],
+        fontsizeXCamarero: json['fontsizeXCamarero'],
+        fontsizeYCamarero: json['fontsizeYCamarero'],
         ocultarCliente: json['ocultarCliente'],
-        fontsizeOcultarCliente: json['fontsizeOcultarCliente'],
-        fontsizeXOcultarCliente: json['fontsizeXOcultarCliente'],
-        fontsizeYOcultarCliente: json['fontsizeYOcultarCliente'],
+        fontsizeXCliente: json['fontsizeXCliente'],
+        fontsizeYCliente: json['fontsizeYCliente'],
         ocultarMesa: json['ocultarMesa'],
-        fontsizeOcultarMesa: json['fontsizeOcultarMesa'],
-        fontsizeXOcultarMesa: json['fontsizeXOcultarMesa'],
-        fontsizeYOcultarMesa: json['fontsizeYOcultarMesa'],
+        fontsizeXMesa: json['fontsizeXMesa'],
+        fontsizeYMesa: json['fontsizeYMesa'],
         ocultarSalon: json['ocultarSalon'],
-        fontsizeOcultarSalon: json['fontsizeOcultarSalon'],
-        fontsizeXOcultarSalon: json['fontsizeXOcultarSalon'],
-        fontsizeYOcultarSalon: json['fontsizeYOcultarSalon'],
+        fontsizeXSalon: json['fontsizeXSalon'],
+        fontsizeYSalon: json['fontsizeYSalon'],
         ocultarArea: json['ocultarArea'],
-        fontsizeOcultarArea: json['fontsizeOcultarArea'],
-        fontsizeXOcultarArea: json['fontsizeXOcultarArea'],
-        fontsizeYOcultarArea: json['fontsizeYOcultarArea'],
+        fontsizeXArea: json['fontsizeXArea'],
+        fontsizeYArea: json['fontsizeYArea'],
         ocultarItems: json['ocultarItems'],
-        fontsizeOcultarItems: json['fontsizeOcultarItems'],
-        fontsizeXOcultarItems: json['fontsizeXOcultarItems'],
-        fontsizeYOcultarItems: json['fontsizeYOcultarItems'],
+        fontsizeXItems: json['fontsizeXItems'],
+        fontsizeYItems: json['fontsizeYItems'],
+        fontsizeXExtras: json['fontsizeXExtras'],
+        fontsizeYExtras: json['fontsizeYExtras'],
         tipoImpresora: json['tipoImpresora'],
         tipoImpresion: json['tipoImpresion'],
       );
@@ -166,37 +149,31 @@ class Printer {
         'abrirGaveta': abrirGaveta,
         'letraGrandeComanda': letraGrandeComanda,
         'ocultarNumeroOrden': ocultarNumeroOrden,
-        'fontsizeNumeroOrden': fontsizeNumeroOrden,
         'fontsizeXNumeroOrden': fontsizeXNumeroOrden,
         'fontsizeYNumeroOrden': fontsizeYNumeroOrden,
         'ocultarFecha': ocultarFecha,
-        'fontsizeOcultarFecha': fontsizeOcultarFecha,
-        'fontsizeXOcultarFecha': fontsizeXOcultarFecha,
-        'fontsizeYOcultarFecha': fontsizeYOcultarFecha,
+        'fontsizeXFecha': fontsizeXFecha,
+        'fontsizeYFecha': fontsizeYFecha,
         'ocultarCamarero': ocultarCamarero,
-        'fontsizeOcultarCamarero': fontsizeOcultarCamarero,
-        'fontsizeXOcultarCamarero': fontsizeXOcultarCamarero,
-        'fontsizeYOcultarCamarero': fontsizeYOcultarCamarero,
+        'fontsizeXCamarero': fontsizeXCamarero,
+        'fontsizeYCamarero': fontsizeYCamarero,
         'ocultarCliente': ocultarCliente,
-        'fontsizeOcultarCliente': fontsizeOcultarCliente,
-        'fontsizeXOcultarCliente': fontsizeXOcultarCliente,
-        'fontsizeYOcultarCliente': fontsizeYOcultarCliente,
+        'fontsizeXCliente': fontsizeXCliente,
+        'fontsizeYCliente': fontsizeYCliente,
         'ocultarMesa': ocultarMesa,
-        'fontsizeOcultarMesa': fontsizeOcultarMesa,
-        'fontsizeXOcultarMesa': fontsizeXOcultarMesa,
-        'fontsizeYOcultarMesa': fontsizeYOcultarMesa,
+        'fontsizeXMesa': fontsizeXMesa,
+        'fontsizeYMesa': fontsizeYMesa,
         'ocultarSalon': ocultarSalon,
-        'fontsizeOcultarSalon': fontsizeOcultarSalon,
-        'fontsizeXOcultarSalon': fontsizeXOcultarSalon,
-        'fontsizeYOcultarSalon': fontsizeYOcultarSalon,
+        'fontsizeXSalon': fontsizeXSalon,
+        'fontsizeYSalon': fontsizeYSalon,
         'ocultarArea': ocultarArea,
-        'fontsizeOcultarArea': fontsizeOcultarArea,
-        'fontsizeXOcultarArea': fontsizeXOcultarArea,
-        'fontsizeYOcultarArea': fontsizeYOcultarArea,
+        'fontsizeXArea': fontsizeXArea,
+        'fontsizeYArea': fontsizeYArea,
         'ocultarItems': ocultarItems,
-        'fontsizeOcultarItems': fontsizeOcultarItems,
-        'fontsizeXOcultarItems': fontsizeXOcultarItems,
-        'fontsizeYOcultarItems': fontsizeYOcultarItems,
+        'fontsizeXItems': fontsizeXItems,
+        'fontsizeYItems': fontsizeYItems,
+        'fontsizeXExtras': fontsizeXExtras,
+        'fontsizeYExtras': fontsizeYExtras,
         'tipoImpresora': tipoImpresora,
         'tipoImpresion': tipoImpresion,
       };
