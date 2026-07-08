@@ -17,6 +17,11 @@ class ProductsRepositoryImpl extends ProductsRepository {
   }
 
   @override
+  Future<List<Product>> searchProducts(Map<String, dynamic> params) async {
+    return await productsDatasource.searchProducts(params);
+  }
+
+  @override
   Future<Product> getProductById(int id) async{
     return productsDatasource.getProductById(id);
   }
@@ -33,12 +38,6 @@ class ProductsRepositoryImpl extends ProductsRepository {
     throw UnimplementedError();
   }
 
-  @override
-  Future<List<Product>> searchProducts(String query) {
-    // TODO: implement searchProducts
-    throw UnimplementedError();
-  }
-  
   @override
   Future<List<Currency>> getCurrency() async {
     return await productsDatasource.getCurrency();

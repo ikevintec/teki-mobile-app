@@ -56,6 +56,27 @@ Map<String, dynamic> buildProductQueryParams(dynamic state) {
   return params;
 }
 
+/// Params para la búsqueda ligera de productos (endpoint `/products/search`).
+/// A diferencia de [buildProductQueryParams], este devuelve una lista plana
+/// (sin paginación) con la data mínima necesaria del producto. El detalle
+/// completo se obtiene aparte al seleccionar el producto (`/products/{id}`).
+Map<String, dynamic> buildProductSearchQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {
+    'paginacion': false,
+    'limit': 50,
+    'sortField': 'createdOn',
+    'sortOrder': -1,
+  };
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('filterGlobal', state.filterGlobal);
+
+  return params;
+}
+
 Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   final Map<String, dynamic> params = {};
 
