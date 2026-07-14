@@ -58,7 +58,7 @@ class WhatsappHelper {
 
     return DataSend(
       id: ticket.id,
-      nameMessage: '$serie-$numero-$currentTime',
+      nameMessage: '$serie-$numero-$currentTime.pdf',
       archivos: [],
       asunto: 'Comprobante electrónico $serie-$numero',
       emails: ticket.emailReceptor?.isNotEmpty == true 

@@ -20,6 +20,6 @@ class QuotationWhatsappHelper {
     final serie = quotation.serie ?? '';
     final numero = quotation.numero?.toString() ?? '';
     final currentTime = DateTime.now().millisecondsSinceEpoch;
-    return '$serie-$numero-$currentTime';
+    return '$serie-$numero-$currentTime.pdf';
   }
 }
