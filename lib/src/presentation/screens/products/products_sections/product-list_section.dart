@@ -168,10 +168,10 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                           borderRadius: BorderRadius.circular(10),
                           child: Padding(
                             padding: const EdgeInsets.all(6.0),
-                            child: product.imagenUrl != null &&
-                                    product.imagenUrl!.isNotEmpty
+                            child: (product.imagenPorDefecto?.imagen ?? '')
+                                    .isNotEmpty
                                 ? Image.network(
-                                    product.imagenUrl!,
+                                    product.imagenPorDefecto!.imagen!,
                                     fit: BoxFit.contain,
                                     loadingBuilder:
                                         (context, child, loadingProgress) {

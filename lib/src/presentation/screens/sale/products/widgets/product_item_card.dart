@@ -121,7 +121,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   }
 
   Widget _buildProductAvatar() {
-    final imageUrl = widget.productTicketDetail.producto?.imagenUrl;
+    final imageUrl = widget.productTicketDetail.producto?.imagenPorDefecto?.imagen;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return Container(
         width: 44,

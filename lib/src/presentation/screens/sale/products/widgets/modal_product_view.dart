@@ -31,11 +31,11 @@ class ModalProductView extends ConsumerWidget {
         const SizedBox(height: 10),
         // Image
         Center(
-          child: product.imagenUrl != null && product.imagenUrl!.isNotEmpty
+          child: (product.imagenPorDefecto?.imagen ?? '').isNotEmpty
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    product.imagenUrl!,
+                    product.imagenPorDefecto!.imagen!,
                     width: 100,
                     height: 100,
                     fit: BoxFit.contain,

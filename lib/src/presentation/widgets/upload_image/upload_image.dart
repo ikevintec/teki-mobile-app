@@ -31,17 +31,17 @@ class UploadImage extends ConsumerWidget {
               width: 180,
               height: 180,
               color: const Color.fromARGB(255, 245, 245, 245),
-              child: image.startsWith("assets/")
+              child: image.isEmpty
                   ? Image.asset(
-                      image,
+                      'assets/images/products/icon.png',
                       fit: BoxFit.contain,
                     )
-                  : image.startsWith("/data/") || image.startsWith("/storage/")
-                      ? Image.file(
-                          File(image),
+                  : image.startsWith("assets/")
+                      ? Image.asset(
+                          image,
                           fit: BoxFit.contain,
                         )
-                      : image.isNotEmpty
+                      : image.startsWith("http")
                           ? Image.network(
                               image,
                               fit: BoxFit.contain,
@@ -53,8 +53,11 @@ class UploadImage extends ConsumerWidget {
                                 );
                               },
                             )
-                          : Image.asset(
-                              'assets/images/products/icon.png',
+                          // Cualquier otra ruta no vacía es un archivo local
+                          // (galería/cámara). En iOS es /private/var/..., en
+                          // Android /data/ o /storage/.
+                          : Image.file(
+                              File(image),
                               fit: BoxFit.contain,
                             ),
             ),
