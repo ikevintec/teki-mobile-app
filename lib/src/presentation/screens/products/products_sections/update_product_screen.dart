@@ -45,7 +45,7 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
   void initState() {
     super.initState();
     _product = widget.product; // Copiamos el producto inicial
-    imagenUrl = _product.imagenUrl; // Asignamos la URL de la imagen
+    imagenUrl = _product.imagenPorDefecto?.imagen; // Asignamos la URL de la imagen
   }
 
   @override

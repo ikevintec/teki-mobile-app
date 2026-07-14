@@ -56,6 +56,27 @@ Map<String, dynamic> buildProductQueryParams(dynamic state) {
   return params;
 }
 
+/// Params para la búsqueda ligera de productos (endpoint `/products/search`).
+/// A diferencia de [buildProductQueryParams], este devuelve una lista plana
+/// (sin paginación) con la data mínima necesaria del producto. El detalle
+/// completo se obtiene aparte al seleccionar el producto (`/products/{id}`).
+Map<String, dynamic> buildProductSearchQueryParams(dynamic state) {
+  final Map<String, dynamic> params = {
+    'paginacion': false,
+    'limit': 50,
+    'sortField': 'createdOn',
+    'sortOrder': -1,
+  };
+
+  void safeAdd(String key, dynamic value) {
+    if (value != null) params[key] = value;
+  }
+
+  safeAdd('filterGlobal', state.filterGlobal);
+
+  return params;
+}
+
 Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   final Map<String, dynamic> params = {};
 
@@ -65,10 +86,12 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
 
   safeAdd('pageNumber', state.pageNumber);
   safeAdd('perPage', state.perPage);
-  safeAdd('page', state.page);
 
   try {
-    safeAdd('idVendedor', state.idVendedor);
+    // Solo se filtra por vendedor si hay uno seleccionado (0 = todos)
+    if (state.idVendedor != null && state.idVendedor > 0) {
+      safeAdd('idVendedor', state.idVendedor);
+    }
   } catch (_) {}
   try {
     safeAdd('filtroDesde', state.filtroDesde);
@@ -79,22 +102,11 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   } catch (_) {}
 
   try {
-    safeAdd('idVendedor', state.idVendedor);
-  } catch (_) {}
-  try {
     safeAdd('idPuntoVenta', state.idPuntoVenta);
   } catch (_) {}
   try {
     safeAdd('filtroRucEmisor', state.filtroRucEmisor);
   } catch (_) {}
-  try {
-    safeAdd('limit', state.limit);
-  } catch (_) {}
-  try {
-    safeAdd('paginacion', state.paginacion);
-  } catch (_) {
-    safeAdd('paginacion', true);
-  }
   try {
     safeAdd('filtroCanal', state.filtroCanal);
   } catch (_) {

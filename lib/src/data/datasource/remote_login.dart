@@ -14,4 +14,10 @@ class AuthRemoteDataSource extends AuthDatasource {
       });
       return LoginResponse.fromJson(response.data);
   }
+
+  @override
+  Future<List<String>> getRoles() async {
+    final response = await dio.get('/auth/account/roles');
+    return List<String>.from(response.data ?? []);
+  }
 }

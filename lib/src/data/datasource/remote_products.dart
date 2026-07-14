@@ -76,6 +76,31 @@ class RemoteProducts extends ProductsDatasource {
   }
 
   @override
+  Future<List<Product>> searchProducts(Map<String, dynamic> params) async {
+    try {
+      final response = await dio.get('/products/search', queryParameters: params);
+      return (response.data as List)
+          .map((product) => Product.fromJson(product))
+          .toList();
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      errorNotification(errorMessage);
+      return [];
+    } catch (e) {
+      errorNotification(e.toString());
+      return [];
+    }
+  }
+
+  @override
   Future<List<Product>> getProductsByBrand(String brand) {
     // TODO: implement getProductsByBrand
     throw UnimplementedError();
@@ -84,12 +109,6 @@ class RemoteProducts extends ProductsDatasource {
   @override
   Future<List<Product>> getProductsByCategory(String category) {
     // TODO: implement getProductsByCategory
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<List<Product>> searchProducts(String query) {
-    // TODO: implement searchProducts
     throw UnimplementedError();
   }
 

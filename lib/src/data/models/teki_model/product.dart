@@ -8,6 +8,7 @@ import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/productItemPackage.dart';
 import 'package:teki_app/src/data/models/teki_model/productPlanField.dart';
 import 'package:teki_app/src/data/models/teki_model/productPreparation.dart';
+import 'package:teki_app/src/data/models/teki_model/productImage.dart';
 import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
 import 'package:teki_app/src/data/models/teki_model/productPurchasePrice.dart';
 import 'package:teki_app/src/data/models/teki_model/productRelated.dart';
@@ -45,7 +46,7 @@ class Product {
   final List<Inventory>? inventarios;
   final bool? igv;
   final String? tipoAfectacion;
-  late final String? imagenUrl;
+  final List<ProductImage>? imagenes;
   final double? peso;
   final Company? empresa;
   final Brand? marca;
@@ -109,7 +110,7 @@ class Product {
     this.inventarioMaximo,
     this.igv,
     this.tipoAfectacion,
-    this.imagenUrl,
+    this.imagenes,
     this.peso,
     this.empresa,
     this.marca,
@@ -184,7 +185,9 @@ class Product {
         inventarioMaximo: (json['inventarioMaximo'] as num?)?.toDouble(),
         igv: json['igv'],
         tipoAfectacion: json['tipoAfectacion'],
-        imagenUrl: json['imagenUrl'],
+        imagenes: (json['imagenes'] as List?)
+            ?.map((e) => ProductImage.fromJson(e))
+            .toList(),
         peso: (json['peso'] as num?)?.toDouble(),
         empresa:
             json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
@@ -272,7 +275,7 @@ class Product {
         'inventarioMaximo': inventarioMaximo,
         'igv': igv,
         'tipoAfectacion': tipoAfectacion,
-        'imagenUrl': imagenUrl,
+        'imagenes': imagenes?.map((e) => e.toJson()).toList(),
         'peso': peso,
         'empresa': empresa?.toJson(),
         'marca': marca?.toJson(),
@@ -338,7 +341,7 @@ class Product {
     double? inventarioMaximo,
     bool? igv,
     String? tipoAfectacion,
-    String? imagenUrl,
+    List<ProductImage>? imagenes,
     double? peso,
     Company? empresa,
     Brand? marca,
@@ -404,7 +407,7 @@ class Product {
       inventarioMaximo: inventarioMaximo ?? this.inventarioMaximo,
       igv: igv ?? this.igv,
       tipoAfectacion: tipoAfectacion ?? this.tipoAfectacion,
-      imagenUrl: imagenUrl ?? this.imagenUrl,
+      imagenes: imagenes ?? this.imagenes,
       peso: peso ?? this.peso,
       empresa: empresa ?? this.empresa,
       marca: marca ?? this.marca,
@@ -439,5 +442,19 @@ class Product {
       validacionLote: validacionLote ?? this.validacionLote,
       precioCompraUnidad: precioCompraUnidad ?? this.precioCompraUnidad,
     );
+  }
+
+  /// Imagen a mostrar del producto: busca en `imagenes` la marcada como
+  /// `porDefecto` y no `eliminado`; si no hay, devuelve la primera no eliminada.
+  ProductImage? get imagenPorDefecto {
+    final imgs = imagenes;
+    if (imgs == null || imgs.isEmpty) return null;
+    ProductImage? primeraActiva;
+    for (final img in imgs) {
+      if (img.eliminado == true) continue;
+      primeraActiva ??= img;
+      if (img.porDefecto == true) return img;
+    }
+    return primeraActiva;
   }
 }

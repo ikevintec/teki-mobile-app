@@ -643,7 +643,7 @@ class _ItemRow extends StatelessWidget {
     final qty = (item.cantidad ?? 1).toInt();
     final price = (item.precioVenta ?? 0) * (item.cantidad ?? 1);
     final name = item.producto?.nombre ?? '-';
-    final imagenUrl = item.producto?.imagenUrl;
+    final imagenUrl = item.producto?.imagenPorDefecto?.imagen;
     final grupos = (item.grupoProductoOpciones ?? [])
         .where((o) => o.eliminado != true)
         .toList();

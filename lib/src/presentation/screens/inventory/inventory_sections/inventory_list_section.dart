@@ -178,7 +178,7 @@ class _InventoryCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 child: () {
-                  final url = inventory.producto?.imagenUrl;
+                  final url = inventory.producto?.imagenPorDefecto?.imagen;
                   if (url != null && url.isNotEmpty) {
                     return Image.network(
                       url,

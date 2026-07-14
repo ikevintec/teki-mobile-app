@@ -69,43 +69,55 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
          ),
        );
 
-  Future<List<Product>> getProducts(String? filter) async {
+  /// Búsqueda ligera para la barra de búsqueda (endpoint `/products/search`).
+  /// Devuelve solo la data mínima del producto para listar las coincidencias.
+  /// El detalle completo se trae al seleccionar con [selectProductForSale].
+  Future<List<Product>> searchProducts(String? filter) async {
     setFilterGlobal(filter);
     try {
-      final response = await productsRepository.getProducts(
-        buildProductQueryParams(state),
-      );
-      if (response.content != null || response.content!.isNotEmpty) {
-        return response.content!;
-      }
-      return [];
+      final params = buildProductSearchQueryParams(state);
+      final officeId = ref.read(sesionProvider).office?.id;
+      if (officeId != null) params['idPuntoVentaOrder'] = officeId;
+      return await productsRepository.searchProducts(params);
     } catch (e) {
       errorNotification(e.toString());
       return [];
     }
   }
 
+  /// Búsqueda ligera por código de barras. Usa el mismo endpoint
+  /// (`/products/search`) que la barra de búsqueda y devuelve la primera
+  /// coincidencia. El detalle completo se trae al seleccionar.
   Future<Product?> getProductByBarcode(String barcode) async {
     state = state.copyWith(isBarcodeSearching: true);
     try {
-      final params = <String, dynamic>{
-        'filterGlobal': barcode,
-        'perPage': 1,
-        'paginacion': true,
-        'pageNumber': 0,
-        'sortField': 'id',
-        'sortOrder': 1,
-      };
-      final response = await productsRepository.getProducts(params);
-      if (response.content != null && response.content!.isNotEmpty) {
-        return response.content!.first;
-      }
-      return null;
+      final params = buildProductSearchQueryParams(state);
+      params['filterGlobal'] = barcode;
+      params['limit'] = 1;
+      final officeId = ref.read(sesionProvider).office?.id;
+      if (officeId != null) params['idPuntoVentaOrder'] = officeId;
+      final results = await productsRepository.searchProducts(params);
+      return results.isNotEmpty ? results.first : null;
     } catch (e) {
       errorNotification(e.toString());
       return null;
     } finally {
       state = state.copyWith(isBarcodeSearching: false);
+    }
+  }
+
+  /// Trae el detalle completo del producto seleccionado (`/products/{id}`) y
+  /// lo agrega a la venta. Se usa tanto al tocar un resultado de la búsqueda
+  /// como al escanear un código de barras: la búsqueda solo trae data ligera,
+  /// así que recién aquí se obtiene la información completa del producto.
+  Future<void> selectProductForSale(Product lightProduct) async {
+    final id = lightProduct.id;
+    if (id == null) return;
+    try {
+      final fullProduct = await productsRepository.getProductById(id);
+      setProductsSales(fullProduct, null);
+    } catch (e) {
+      errorNotification(e.toString());
     }
   }
 

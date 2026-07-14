@@ -83,7 +83,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     _hasSearched.value = false;
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 800), () async {
-      final products = await ref.read(productSaleProvider.notifier).getProducts(query);
+      final products = await ref.read(productSaleProvider.notifier).searchProducts(query);
       if (mounted) {
         _results.value = products;
         _isSearching.value = false;
@@ -92,12 +92,14 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     });
   }
 
-  void _selectProduct(Product product) {
+  Future<void> _selectProduct(Product product) async {
     _controller.clear();
     _results.value = [];
     _hasSearched.value = false;
     _focusNode.unfocus();
-    ref.read(productSaleProvider.notifier).setProductsSales(product, null);
+    // El resultado de la búsqueda es ligero: al seleccionar se trae el detalle
+    // completo del producto antes de agregarlo a la venta.
+    await ref.read(productSaleProvider.notifier).selectProductForSale(product);
   }
 
   void _showOverlay() {
@@ -134,7 +136,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     final product = await ref.read(productSaleProvider.notifier).getProductByBarcode(code);
     if (!mounted) return;
     if (product != null) {
-      ref.read(productSaleProvider.notifier).setProductsSales(product, null);
+      await ref.read(productSaleProvider.notifier).selectProductForSale(product);
     } else {
       errorNotification("Producto no encontrado para el código de barras: $code");
     }

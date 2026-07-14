@@ -428,7 +428,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
   }
 
   Widget _buildProductImage() {
-    final url = widget.product.imagenUrl;
+    final url = widget.product.imagenPorDefecto?.imagen;
     if (url != null && url.isNotEmpty) {
       return Image.network(
         url,

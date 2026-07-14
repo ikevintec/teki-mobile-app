@@ -32,7 +32,7 @@ class ProductMenuCard extends StatelessWidget {
           children: [
             // Product image
             Expanded(
-              child: _ProductImage(url: product.imagenUrl),
+              child: _ProductImage(url: product.imagenPorDefecto?.imagen),
             ),
             // Product info
             Padding(

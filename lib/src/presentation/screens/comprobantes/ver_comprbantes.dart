@@ -9,6 +9,7 @@ import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/filter_actions.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/clean_filters_button.dart';
 
+import 'package:teki_app/src/providers/accounts_receivable/seller_provider.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 
@@ -27,6 +28,20 @@ class VerComprobanteScreen extends ConsumerStatefulWidget {
 }
 
 class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Carga la lista de vendedores una sola vez al entrar a la pantalla, solo
+    // si el usuario tiene permiso para ver todos los vendedores. loadOnce()
+    // ignora llamadas posteriores, por lo que no se repite al recargar la
+    // lista o cambiar de filtro.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(puedeVerTodosVendedoresProvider)) {
+        ref.read(sellersProvider.notifier).loadOnce();
+      }
+    });
+  }
+
   void _reloadWithCurrentDate() {
     final state = ref.read(comprobantesSaleProvider);
     final desde = state.filtroDesde;

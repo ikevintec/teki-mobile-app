@@ -147,7 +147,7 @@ class _ItemReadyBody extends StatelessWidget {
     final total = (item.precioVenta ?? 0) * (item.cantidad ?? 1);
     final mesaNumero = order?.mesa?.numero?.toString() ?? order?.mesa?.id?.toString();
     final clienteNombre = order?.cliente?.razonSocial;
-    final imagenUrl = item.producto?.imagenUrl;
+    final imagenUrl = item.producto?.imagenPorDefecto?.imagen;
 
     return Column(
       children: [
