@@ -69,6 +69,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       await keyvalueStorage.setKeyValue('login', jsonEncode(response.toJson()));
       await setConfigProvider(ref, response, saleStationRepository);
 
+      // Obtenemos los permisos/roles del usuario (una sola vez, al iniciar sesión)
+      final List<String> roles = await authRepository.getRoles();
+      ref.read(sesionProvider.notifier).setRoles(roles);
+      await keyvalueStorage.setKeyValue('roles', jsonEncode(roles));
+
       ConfigCompany configCompany = await setConfigCompanies(ref, configRepository);
       await keyvalueStorage.setKeyValue('configCompany', jsonEncode(configCompany.toJson()));
       
@@ -132,6 +137,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     final loginJson = await keyvalueStorage.getValue<String>('login');
     final configCompanyJson =
         await keyvalueStorage.getValue<String>('configCompany');
+    final rolesJson = await keyvalueStorage.getValue<String>('roles');
 
     if (token != null && loginJson != null && configCompanyJson != null) {
       final login = LoginResponse.fromJson(jsonDecode(loginJson));
@@ -147,6 +153,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         ConfigCompany configCompany =
             ConfigCompany.fromJson(jsonDecode(configCompanyJson));
         ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+
+        // Restauramos los roles persistidos sin repetir la petición
+        if (rolesJson != null) {
+          ref
+              .read(sesionProvider.notifier)
+              .setRoles(List<String>.from(jsonDecode(rolesJson)));
+        }
 
         final userId = login.user?.id;
         if (userId != null) {
@@ -171,6 +184,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     await keyvalueStorage.removeKey('access_token');
     await keyvalueStorage.removeKey('login');
     await keyvalueStorage.removeKey('configCompany');
+    await keyvalueStorage.removeKey('roles');
 
     state = state.copyWith(
       isLoggedIn: false,

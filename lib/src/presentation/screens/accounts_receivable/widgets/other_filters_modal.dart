@@ -242,7 +242,7 @@ class _OtherFiltersModalState extends ConsumerState<OtherFiltersModal> {
           const SizedBox(height: 16),
           MultiSelector(
             label: 'Tipo de comprobante',
-            hint: 'Selecciona tipos de documentos',
+            hint: 'Tipos de documentos',
             options: _tipoComprobanteOptions,
             selectedValues: _tipoComprobante,
             onChanged: (values) => setState(() => _tipoComprobante = values),

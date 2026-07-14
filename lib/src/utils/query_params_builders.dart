@@ -86,10 +86,12 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
 
   safeAdd('pageNumber', state.pageNumber);
   safeAdd('perPage', state.perPage);
-  safeAdd('page', state.page);
 
   try {
-    safeAdd('idVendedor', state.idVendedor);
+    // Solo se filtra por vendedor si hay uno seleccionado (0 = todos)
+    if (state.idVendedor != null && state.idVendedor > 0) {
+      safeAdd('idVendedor', state.idVendedor);
+    }
   } catch (_) {}
   try {
     safeAdd('filtroDesde', state.filtroDesde);
@@ -100,22 +102,11 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
   } catch (_) {}
 
   try {
-    safeAdd('idVendedor', state.idVendedor);
-  } catch (_) {}
-  try {
     safeAdd('idPuntoVenta', state.idPuntoVenta);
   } catch (_) {}
   try {
     safeAdd('filtroRucEmisor', state.filtroRucEmisor);
   } catch (_) {}
-  try {
-    safeAdd('limit', state.limit);
-  } catch (_) {}
-  try {
-    safeAdd('paginacion', state.paginacion);
-  } catch (_) {
-    safeAdd('paginacion', true);
-  }
   try {
     safeAdd('filtroCanal', state.filtroCanal);
   } catch (_) {

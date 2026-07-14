@@ -123,6 +123,11 @@ class SesionNotifier extends StateNotifier<SesionState> {
       config: configCompany,
     );
   }
+  void setRoles(List<String> roles) {
+    state = state.copyWith(
+      roles: roles,
+    );
+  }
   void set(User user) {
     state = state.copyWith(
       saleStation: SaleStation(),

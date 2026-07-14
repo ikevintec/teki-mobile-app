@@ -16,4 +16,9 @@ class AuthRepositoryImpl extends AuthRepository {
     return response;
   }
 
+  @override
+  Future<List<String>> getRoles() async {
+    return await authDatasource.getRoles();
+  }
+
 }

@@ -4,7 +4,6 @@ import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
-import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
@@ -13,6 +12,16 @@ final comprobantesSaleProvider =
     StateNotifierProvider<ComprobantesNotifier, ComprobantesState>((ref) {
   final repo = TicketSaleRepositoryImpl();
   return ComprobantesNotifier(repository: repo, ref: ref);
+});
+
+/// Rol que permite ver las ventas de todos los vendedores. Sin este rol, el
+/// usuario solo puede ver sus propias ventas (vendedor fijo de la sesión).
+const String kRoleVerTodosVendedores = 'VENTAS_VER_VENTAS_TODOS_VENDEDORES';
+
+/// Indica si el usuario en sesión puede filtrar por cualquier vendedor.
+final puedeVerTodosVendedoresProvider = Provider<bool>((ref) {
+  final roles = ref.watch(sesionProvider).roles ?? const <String>[];
+  return roles.contains(kRoleVerTodosVendedores);
 });
 
 class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
@@ -51,13 +60,21 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
     List<String>? tiposComprobante,
     List<String>? metodosPago,
     String? estado,
+    int? idVendedor,
   }) async {
+    // Si no tiene permiso para ver todos los vendedores, se fuerza siempre el
+    // vendedor de la sesión (comportamiento anterior). Con permiso: se respeta
+    // el filtro seleccionado (null conserva el actual, 0 = todos).
+    final int? resolvedVendedor = ref.read(puedeVerTodosVendedoresProvider)
+        ? idVendedor
+        : (ref.read(sesionProvider).login.user?.id ?? 0);
+
     state = state.copyWith(
       filtroDesde: desde,
       filtroHasta: hasta,
       filtroRucEmisor: ref.read(sesionProvider).companySelected?.ruc ?? '',
       idPuntoVenta: ref.read(sesionProvider).office?.id ?? 0,
-      idVendedor: ref.read(authStateProvider).user?.id ?? 0,
+      idVendedor: resolvedVendedor,
       tickets: [],
       hasMore: true,
       isLoading: true,
@@ -96,6 +113,7 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
     List<String>? tiposComprobante,
     List<String>? metodosPago,
     String? estado,
+    int? idVendedor,
   }) {
     state = state.copyWith(
       filtroSerie: serie, // Permitir strings vacíos
@@ -103,6 +121,8 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
       filtroTipoComprobante: tiposComprobante?.isNotEmpty == true ? tiposComprobante : null,
       idMetodoPago: metodosPago?.isNotEmpty == true ? metodosPago : null,
       filtroEstado: estado,
+      // 0 = todos los vendedores; null conserva la selección actual
+      idVendedor: idVendedor,
     );
   }
 
@@ -121,7 +141,7 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
       filtroHasta: state.filtroHasta,
       ruc: state.ruc,
       idPuntoVenta: state.idPuntoVenta,
-      idVendedor: state.idVendedor,
+      idVendedor: 0, // 0 = todos los vendedores
       filtroRucEmisor: state.filtroRucEmisor,
       totalesPorMoneda: [],
     );

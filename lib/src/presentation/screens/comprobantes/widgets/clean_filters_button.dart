@@ -5,15 +5,18 @@ import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 class CleanFiltersButton extends ConsumerWidget {
   const CleanFiltersButton({super.key});
 
-  int _getActiveFiltersCount(ComprobantesState state) {
+  int _getActiveFiltersCount(ComprobantesState state, bool canViewAllSellers) {
     int count = 0;
-    
+
     if (state.filtroSerie?.isNotEmpty == true) count++;
     if (state.filtroNumero?.isNotEmpty == true) count++;
     if (state.filtroTipoComprobante?.isNotEmpty == true) count++;
     if (state.idMetodoPago?.isNotEmpty == true) count++;
     if (state.filtroEstado != null && state.filtroEstado != 'Todos') count++;
-    
+    // El vendedor solo es un filtro activo/removible si puede verlos a todos;
+    // sin permiso está forzado al vendedor de la sesión.
+    if (canViewAllSellers && state.idVendedor > 0) count++;
+
     return count;
   }
 
@@ -24,7 +27,8 @@ class CleanFiltersButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(comprobantesSaleProvider);
-    final activeFiltersCount = _getActiveFiltersCount(state);
+    final canViewAllSellers = ref.watch(puedeVerTodosVendedoresProvider);
+    final activeFiltersCount = _getActiveFiltersCount(state, canViewAllSellers);
     
     if (activeFiltersCount > 0) {
       return Row(
