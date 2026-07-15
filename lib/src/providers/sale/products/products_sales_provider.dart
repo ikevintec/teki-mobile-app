@@ -7,8 +7,10 @@ import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
 import 'package:teki_app/src/data/repositories/currency_repository_impl.dart';
+import 'package:teki_app/src/data/repositories/inventory_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/currency_repository.dart';
+import 'package:teki_app/src/domain/repositories/inventory_repository.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -24,9 +26,11 @@ final productSaleProvider =
     StateNotifierProvider<ProductsSaleNotifier, ProductsSaleState>((ref) {
       final ProductsRepository productsRepository = ProductsRepositoryImpl();
       final CurrencyRepository currencyRepository = CurrencyRepositoryImpl();
+      final InventoryRepository inventoryRepository = InventoryRepositoryImpl();
       return ProductsSaleNotifier(
         productsRepository: productsRepository,
         currencyRepository: currencyRepository,
+        inventoryRepository: inventoryRepository,
         ref: ref,
       );
     });
@@ -37,10 +41,12 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   final Ref ref;
   final ProductsRepository productsRepository;
   final CurrencyRepository currencyRepository;
+  final InventoryRepository inventoryRepository;
   ProductsSaleNotifier({
     required this.ref,
     required this.productsRepository,
     required this.currencyRepository,
+    required this.inventoryRepository,
   }) : super(
          ProductsSaleState(
            tipoComprobante:
@@ -72,17 +78,48 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   /// Búsqueda ligera para la barra de búsqueda (endpoint `/products/search`).
   /// Devuelve solo la data mínima del producto para listar las coincidencias.
   /// El detalle completo se trae al seleccionar con [selectProductForSale].
+  ///
+  /// La búsqueda ligera no incluye inventario, así que se enriquece con
+  /// [_enrichWithInventory] antes de devolver los resultados. Como este método
+  /// se invoca desde la barra de búsqueda con debounce, la carga de inventario
+  /// solo ocurre cuando el usuario deja de escribir.
   Future<List<Product>> searchProducts(String? filter) async {
     setFilterGlobal(filter);
     try {
       final params = buildProductSearchQueryParams(state);
       final officeId = ref.read(sesionProvider).office?.id;
       if (officeId != null) params['idPuntoVentaOrder'] = officeId;
-      return await productsRepository.searchProducts(params);
+      final products = await productsRepository.searchProducts(params);
+      return await _enrichWithInventory(products, officeId);
     } catch (e) {
       errorNotification(e.toString());
       return [];
     }
+  }
+
+  /// Enriquece productos de la búsqueda ligera con su inventario en el punto de
+  /// venta actual (endpoint `/inventory/operations/by-product-ids`). Si falla o
+  /// no hay punto de venta, devuelve los productos sin modificar.
+  Future<List<Product>> _enrichWithInventory(
+    List<Product> products,
+    int? officeId,
+  ) async {
+    if (products.isEmpty || officeId == null) return products;
+    final ids = products.map((p) => p.id).whereType<int>().toList();
+    if (ids.isEmpty) return products;
+
+    final inventoryByProduct =
+        await inventoryRepository.getInventoryByProductIds(
+      ids,
+      idPuntoVenta: officeId,
+    );
+    if (inventoryByProduct.isEmpty) return products;
+
+    return products.map((p) {
+      final inventory = inventoryByProduct[p.id];
+      if (inventory == null) return p;
+      return p.copyWith(inventarios: [inventory]);
+    }).toList();
   }
 
   /// Búsqueda ligera por código de barras. Usa el mismo endpoint

@@ -35,6 +35,11 @@ final puedeAnularProvider = Provider<bool>((ref) {
 
 /// Determina si un comprobante puede anularse según su tipo y estado.
 bool canAnular(Ticket comprobante) {
+  // SI ESTA ANULADO YA NO MUESTRA LA OPCION
+  if(comprobante.anulado == true){
+    return false;
+  }
+
   // BOLETA Y FACTURA
   if (comprobante.estadoSunat == 'ANULA') {
     return false;
