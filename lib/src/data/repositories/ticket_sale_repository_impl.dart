@@ -63,4 +63,9 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
   Future<EstadoSunatResponse> consultarEstadoSunat(Ticket ticket) {
     return datasource.consultarEstadoSunat(ticket);
   }
+
+  @override
+  Future<void> anularComprobante(String identificadorDocumento, String motivo) {
+    return datasource.anularComprobante(identificadorDocumento, motivo);
+  }
 }

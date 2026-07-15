@@ -71,6 +71,7 @@ List<DismissibleActionData> createComprobanteActions({
   required VoidCallback? onEdit,
   required VoidCallback onRemision,
   required VoidCallback onGuia,
+  VoidCallback? onAnular,
 }) {
   return [
     if (onEdit != null)
@@ -80,6 +81,14 @@ List<DismissibleActionData> createComprobanteActions({
         icon: Icons.edit,
         backgroundColor: Colors.orange.shade600,
         onTap: onEdit,
+      ),
+    if (onAnular != null)
+      DismissibleActionData(
+        type: DismissibleActionType.anular,
+        label: 'Anular',
+        icon: Icons.block,
+        backgroundColor: Colors.red.shade600,
+        onTap: onAnular,
       ),
     // DismissibleActionData(
     //   type: DismissibleActionType.edit,

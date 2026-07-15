@@ -340,6 +340,38 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
     }
   }
 
+  /// Anula un comprobante por su identificador de documento
+  @override
+  Future<void> anularComprobante(
+    String identificadorDocumento,
+    String motivo,
+  ) async {
+    try {
+      await dio.post(
+        '/voided/$identificadorDocumento',
+        data: {'motivo': motivo},
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        errorNotification('Sin conexión a internet');
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error desconocido del servidor';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
   /// Actualizar un ticket existente
   @override
   Future<Ticket> updateTicket(Ticket ticket) async {

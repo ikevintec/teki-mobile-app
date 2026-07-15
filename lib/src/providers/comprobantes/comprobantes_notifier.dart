@@ -24,6 +24,64 @@ final puedeVerTodosVendedoresProvider = Provider<bool>((ref) {
   return roles.contains(kRoleVerTodosVendedores);
 });
 
+/// Rol que permite anular comprobantes.
+const String kRoleAnular = 'VENTAS_ANULAR';
+
+/// Indica si el usuario en sesión tiene permiso para anular comprobantes.
+final puedeAnularProvider = Provider<bool>((ref) {
+  final roles = ref.watch(sesionProvider).roles ?? const <String>[];
+  return roles.contains(kRoleAnular);
+});
+
+/// Determina si un comprobante puede anularse según su tipo y estado.
+bool canAnular(Ticket comprobante) {
+  // BOLETA Y FACTURA
+  if (comprobante.estadoSunat == 'ANULA') {
+    return false;
+  }
+
+  // FACTURA
+  if (comprobante.tipoComprobante == '01' &&
+      comprobante.estadoSunat != 'ACEPT') {
+    return false;
+  }
+  if (comprobante.tipoComprobante == '07' &&
+      comprobante.estadoSunat != 'ACEPT' &&
+      comprobante.tipoComprobanteAfectado == '01') {
+    return false;
+  }
+  if (comprobante.tipoComprobante == '08' &&
+      comprobante.estadoSunat != 'ACEPT' &&
+      comprobante.tipoComprobanteAfectado == '01') {
+    return false;
+  }
+
+  // BOLETA
+  if (comprobante.tipoComprobante == '03' &&
+      (comprobante.estado == '01' || comprobante.estado == '02')) {
+    return true;
+  }
+  if (comprobante.tipoComprobante == '07' &&
+      comprobante.tipoComprobanteAfectado == '03' &&
+      (comprobante.estado == '01' || comprobante.estado == '02')) {
+    return true;
+  }
+  if (comprobante.tipoComprobante == '08' &&
+      comprobante.tipoComprobanteAfectado == '03' &&
+      (comprobante.estado == '01' || comprobante.estado == '02')) {
+    return true;
+  }
+  if (comprobante.tipoComprobante == '03' &&
+      (comprobante.estado == '07' || comprobante.estado == '09')) {
+    return false;
+  }
+  if (comprobante.tipoComprobante == 'NV' && comprobante.estado == '08') {
+    return false;
+  }
+
+  return true;
+}
+
 class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
   final TicketsSaleRepository repository;
   final Ref ref;
