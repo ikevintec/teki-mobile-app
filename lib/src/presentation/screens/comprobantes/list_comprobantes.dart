@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen.dart/view_comprobante_screen.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/widgets/form_anular_comprobante.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
+import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
@@ -120,6 +122,19 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
     }
   }
 
+  void _handleAnular(Ticket ticket) {
+    showCustomModal(
+      context: context,
+      child: FormAnularComprobante(
+        ticket: ticket,
+        onSuccess: _onRefresh,
+      ),
+      tittle: 'Anular comprobante',
+      allowButtons: false,
+      showButtoms: false,
+    );
+  }
+
   Future<void> _onRefresh() async {
     final state = ref.read(comprobantesSaleProvider);
     await ref
@@ -138,6 +153,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
   @override
   Widget build(BuildContext context) {
     final provider = ref.watch(comprobantesSaleProvider);
+    final puedeAnular = ref.watch(puedeAnularProvider);
     final tickets = provider.tickets;
     final hasMore = provider.hasMore;
     final isLoading = provider.isLoading;
@@ -195,6 +211,9 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                 onEdit: ticket.anulado == true
                     ? null
                     : () => _handleEdit(ticket),
+                onAnular: (puedeAnular && canAnular(ticket))
+                    ? () => _handleAnular(ticket)
+                    : null,
                 onRemision: () {
                   // Acción de remisión
                   print('Crear remisión para: ${ticket.id}');

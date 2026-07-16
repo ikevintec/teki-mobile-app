@@ -38,6 +38,23 @@ class ComprobanteNotifier extends StateNotifier<ComprobanteState> {
     }
   }
 
+  Future<void> anularComprobante(Ticket ticket, String motivo) async {
+    final identificador = ticket.identificadorDocumento;
+    if (identificador == null || identificador.isEmpty) {
+      return Future.error('El comprobante no tiene un identificador válido');
+    }
+
+    try {
+      await repository.anularComprobante(identificador, motivo);
+      // Reflejar la anulación en el estado local si es el comprobante cargado
+      if (state.ticket.id == ticket.id) {
+        state = state.copyWith(ticket: state.ticket.copyWith(anulado: true));
+      }
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
   void clearState() {
     state = ComprobanteState.initial();
   }

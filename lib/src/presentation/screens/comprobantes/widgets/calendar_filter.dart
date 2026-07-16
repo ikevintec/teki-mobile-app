@@ -18,7 +18,7 @@ class CustomDatePicker extends StatefulWidget {
 }
 
 class _CustomDatePickerState extends State<CustomDatePicker> {
-  CalendarFilter _selectedFilter = CalendarFilter.day;
+  CalendarFilter _selectedFilter = CalendarFilter.month;
   DateTimeRange? _selectedRange;
 
   List<DateTimeRange> getCurrentList() {

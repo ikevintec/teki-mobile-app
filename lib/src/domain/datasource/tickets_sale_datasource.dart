@@ -23,4 +23,7 @@ abstract class TicketSaleDatasource {
   Future<Ticket> getTicketById(int id);
 
   Future<EstadoSunatResponse> consultarEstadoSunat(Ticket ticket);
+
+  /// Anula un comprobante por su identificador de documento, indicando el motivo
+  Future<void> anularComprobante(String identificadorDocumento, String motivo);
 }
