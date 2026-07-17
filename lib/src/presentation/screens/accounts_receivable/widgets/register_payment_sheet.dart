@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
 import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
 import 'package:teki_app/src/data/repositories/accounts_receivable_repository_impl.dart';
+import 'package:teki_app/src/presentation/screens/shared/payment/payment_method_picker.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -30,19 +31,6 @@ Future<bool> showRegisterPaymentSheet(
   ).then((v) => v ?? false);
 }
 
-// ─── Entry model ─────────────────────────────────────────────────────────────
-
-class _PaymentEntry {
-  final PaymentMethod method;
-  final TextEditingController amountController;
-
-  _PaymentEntry({required this.method, required double initialAmount})
-      : amountController = TextEditingController(
-            text: initialAmount > 0 ? initialAmount.toStringAsFixed(2) : '');
-
-  void dispose() => amountController.dispose();
-}
-
 // ─── Sheet widget ─────────────────────────────────────────────────────────────
 
 class _RegisterPaymentSheet extends ConsumerStatefulWidget {
@@ -64,7 +52,7 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
   final _montoController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _detalleController = TextEditingController();
-  final List<_PaymentEntry> _entries = [];
+  final List<PaymentEntry> _entries = [];
   bool _isLoading = false;
   bool _submitted = false;
   bool _validateMonto = false;
@@ -138,7 +126,7 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
     }
     if (_entries.any((e) => e.method.id == method.id)) return;
     setState(() {
-      _entries.add(_PaymentEntry(method: method, initialAmount: _porAsignar));
+      _entries.add(PaymentEntry(method: method, initialAmount: _porAsignar));
     });
   }
 
@@ -289,7 +277,7 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
                               ? AutovalidateMode.always
                               : AutovalidateMode.disabled,
                           style: GoogleFonts.poppins(fontSize: 14),
-                          decoration: _inputDecoration(
+                          decoration: paymentInputDecoration(
                             label: 'Monto *',
                             hint: '0.00',
                             prefix: simbolo,
@@ -311,7 +299,7 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
                         child: TextFormField(
                           controller: _descripcionController,
                           style: GoogleFonts.poppins(fontSize: 14),
-                          decoration: _inputDecoration(
+                          decoration: paymentInputDecoration(
                             label: 'Descripción *',
                             hint: 'Motivo del pago',
                           ),
@@ -332,7 +320,7 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
                   TextFormField(
                     controller: _detalleController,
                     style: GoogleFonts.poppins(fontSize: 14),
-                    decoration: _inputDecoration(
+                    decoration: paymentInputDecoration(
                       label: 'Detalle (opcional)',
                       hint: 'Información adicional',
                     ),
@@ -353,7 +341,7 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
                       ),
                       const Spacer(),
                       if (_monto > 0 && _entries.isNotEmpty)
-                        _AssignedBadge(
+                        AssignedBadge(
                           asignado: _totalAsignado,
                           total: _monto,
                           simbolo: simbolo,
@@ -378,7 +366,7 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
                         _entries.indexWhere((e) => e.method.id == method.id);
                     final entry =
                         entryIndex >= 0 ? _entries[entryIndex] : null;
-                    return _PaymentMethodRow(
+                    return PaymentMethodRow(
                       method: method,
                       entry: entry,
                       onTap: () => entry == null
@@ -437,36 +425,6 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
     );
   }
 
-  InputDecoration _inputDecoration({String? label, required String hint, String? prefix}) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: GoogleFonts.roboto(fontSize: 13, color: Colors.black54),
-      hintText: hint,
-      prefixText: prefix,
-      hintStyle: GoogleFonts.roboto(color: Colors.black26, fontSize: 14),
-      prefixStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: ColorSchema.primaryColor, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
-      ),
-      filled: true,
-      fillColor: Colors.grey[50],
-    );
-  }
 }
 
 // ─── Info card ────────────────────────────────────────────────────────────────
@@ -551,245 +509,3 @@ class _InfoCard extends StatelessWidget {
     );
   }
 }
-
-// ─── Assigned badge ───────────────────────────────────────────────────────────
-
-class _AssignedBadge extends StatelessWidget {
-  final double asignado;
-  final double total;
-  final String simbolo;
-  final double cambio;
-
-  const _AssignedBadge({
-    required this.asignado,
-    required this.total,
-    required this.simbolo,
-    this.cambio = 0,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (cambio > 0.005) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.check_circle_outline, size: 13, color: Colors.green[700]!),
-          const SizedBox(width: 4),
-          Text(
-            'Cambio: $simbolo${cambio.toStringAsFixed(2)}',
-            style: GoogleFonts.roboto(
-              fontSize: 12,
-              color: Colors.green[700]!,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      );
-    }
-
-    final exact = (asignado - total).abs() < 0.005;
-    final over = asignado > total + 0.005;
-    final color = exact
-        ? Colors.green[700]!
-        : over
-            ? Colors.red[700]!
-            : Colors.orange[700]!;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          exact ? Icons.check_circle_outline : Icons.info_outline,
-          size: 13,
-          color: color,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          '$simbolo${asignado.toStringAsFixed(2)} / $simbolo${total.toStringAsFixed(2)}',
-          style: GoogleFonts.roboto(
-            fontSize: 12,
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Payment method row ───────────────────────────────────────────────────────
-
-class _PaymentMethodRow extends StatelessWidget {
-  final PaymentMethod method;
-  final _PaymentEntry? entry;
-  final VoidCallback onTap;
-  final VoidCallback? onRemove;
-  final VoidCallback onAmountChanged;
-
-  const _PaymentMethodRow({
-    required this.method,
-    required this.entry,
-    required this.onTap,
-    required this.onAmountChanged,
-    this.onRemove,
-  });
-
-  bool get _isSelected => entry != null;
-  bool get _isCash => (method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
-  Color get _activeColor =>
-      _isCash ? Colors.green.shade600 : ColorSchema.primaryColor;
-
-  Widget _buildIcon() {
-    const double size = 26;
-    final url = method.imagenUrl;
-    if (url != null && url.isNotEmpty) {
-      return Image.network(
-        url,
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
-        errorBuilder: (_, e, s) => _fallbackIcon(size),
-      );
-    }
-    return _fallbackIcon(size);
-  }
-
-  Widget _fallbackIcon(double size) => Icon(
-        _isCash ? Icons.payments_rounded : Icons.credit_card_rounded,
-        color: _isSelected ? _activeColor : Colors.grey.shade400,
-        size: size,
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: _isSelected ? _activeColor.withValues(alpha: 0.04) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: _isSelected ? _activeColor : Colors.grey.shade200,
-            width: _isSelected ? 1.5 : 1,
-          ),
-          boxShadow: _isSelected
-              ? [
-                  BoxShadow(
-                    color: _activeColor.withValues(alpha: 0.08),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  )
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  SizedBox(width: 26, child: Center(child: _buildIcon())),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      method.nombre ?? '',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            _isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: _isSelected
-                            ? _activeColor
-                            : Colors.grey.shade800,
-                      ),
-                    ),
-                  ),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 160),
-                    child: _isSelected
-                        ? Container(
-                            key: const ValueKey('check'),
-                            width: 18,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              color: _activeColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.check_rounded,
-                                color: Colors.white, size: 11),
-                          )
-                        : const SizedBox(key: ValueKey('empty'), width: 18),
-                  ),
-                ],
-              ),
-            ),
-            if (_isSelected) ...[
-              Divider(
-                height: 1,
-                indent: 12,
-                endIndent: 12,
-                color: _activeColor.withValues(alpha: 0.2),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: entry!.amountController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d*\.?\d{0,2}')),
-                        ],
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _activeColor,
-                        ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 8),
-                          hintText: '0.00',
-                          hintStyle: const TextStyle(
-                              fontSize: 13, color: Colors.black26),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                                color: _activeColor.withValues(alpha: 0.3)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide:
-                                BorderSide(color: _activeColor, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: _activeColor.withValues(alpha: 0.03),
-                        ),
-                        onChanged: (_) => onAmountChanged(),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: onRemove,
-                      icon: const Icon(Icons.delete_outline_rounded,
-                          color: Colors.redAccent, size: 18),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-

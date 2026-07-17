@@ -7,11 +7,14 @@ import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_balance_screen.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_movimiento_screen.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/widgets/cash_movement_sheet.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
+import 'package:teki_app/src/providers/cash_register/currencies_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/contstants.dart';
 import 'package:teki_app/src/utils/formats.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 class CajaTab extends ConsumerStatefulWidget {
   final ValueNotifier<int> refreshNotifier;
@@ -33,6 +36,11 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     _scrollController = ScrollController()..addListener(_onScroll);
     widget.refreshNotifier.addListener(_onRefresh);
     // La carga inicial la dispara CustomDatePicker vía onDateSelected al montarse.
+    // Precarga (una sola vez, no bloqueante) las monedas para el registro de
+    // ingresos/egresos. Si falla, no afecta la vista de la caja.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(currenciesProvider.notifier).ensureLoaded();
+    });
   }
 
   @override
@@ -114,6 +122,31 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     ref.read(cashRegisterDetailProvider.notifier).changeMoneda(newMoneda);
   }
 
+  /// Abre el sheet para registrar un ingreso/egreso externo del tipo activo.
+  Future<void> _openMovementSheet(String tipo, String monedaActiva) async {
+    final cajaState = ref.read(cashRegisterProvider);
+    final idCaja =
+        cajaState.registers.isNotEmpty ? cajaState.registers.first.id : null;
+    if (idCaja == null) {
+      warningNotification(
+          'No hay una caja abierta para registrar movimientos');
+      return;
+    }
+
+    final ok = await showCashMovementSheet(
+      context,
+      tipo: tipo,
+      idCaja: idCaja,
+      turno: 1,
+      monedaSugerida: monedaActiva,
+    );
+
+    if (ok && mounted) {
+      setState(() => _selectedMoneda = null);
+      _fetchCashRegister();
+    }
+  }
+
   String _fmt(Map<String, double> map, String moneda) {
     final symbol = formatExchange(moneda: moneda);
     final v = map[moneda] ?? 0.0;
@@ -148,6 +181,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
           child: CustomDatePicker(
             onDateSelected: _onDateChanged,
             singleDayPicker: true,
+            initialFilter: CalendarFilter.day,
           ),
         ),
         SizedBox(height: 12),
@@ -397,6 +431,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
             isBlocked: detailState.isLoading || detailState.isLoadingMore,
             onChanged: (t) =>
                 ref.read(cashRegisterDetailProvider.notifier).changeTipo(t),
+            onAdd: () => _openMovementSheet(detailState.tipo, monedaActiva),
           ),
         ),
 
@@ -505,39 +540,67 @@ class _TipoSelector extends StatelessWidget {
   final String tipo;
   final bool isBlocked;
   final ValueChanged<String> onChanged;
+  final VoidCallback onAdd;
 
   const _TipoSelector({
     required this.tipo,
     required this.isBlocked,
     required this.onChanged,
+    required this.onAdd,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          _TipoBtn(
-            label: 'Ingresos',
-            isSelected: tipo == 'INGRESO',
-            isBlocked: isBlocked && tipo != 'INGRESO',
-            selectedColor: const Color(0xFF16A34A),
-            onTap: () => onChanged('INGRESO'),
+    final esIngreso = tipo == 'INGRESO';
+    final addColor =
+        esIngreso ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                _TipoBtn(
+                  label: 'Ingresos',
+                  isSelected: tipo == 'INGRESO',
+                  isBlocked: isBlocked && tipo != 'INGRESO',
+                  selectedColor: const Color(0xFF16A34A),
+                  onTap: () => onChanged('INGRESO'),
+                ),
+                _TipoBtn(
+                  label: 'Egresos',
+                  isSelected: tipo == 'EGRESO',
+                  isBlocked: isBlocked && tipo != 'EGRESO',
+                  selectedColor: const Color(0xFFDC2626),
+                  onTap: () => onChanged('EGRESO'),
+                ),
+              ],
+            ),
           ),
-          _TipoBtn(
-            label: 'Egresos',
-            isSelected: tipo == 'EGRESO',
-            isBlocked: isBlocked && tipo != 'EGRESO',
-            selectedColor: const Color(0xFFDC2626),
-            onTap: () => onChanged('EGRESO'),
+        ),
+        const SizedBox(width: 8),
+        // ── Botón + (registrar movimiento del tipo activo) ────────────────
+        GestureDetector(
+          onTap: onAdd,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 42,
+            width: 42,
+            decoration: BoxDecoration(
+              color: addColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: addColor.withValues(alpha: 0.3)),
+            ),
+            child: Icon(Icons.add_rounded, color: addColor, size: 22),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

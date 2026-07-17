@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/datasource/remote_cash_register.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
+import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
 import 'package:teki_app/src/domain/datasource/cash_register_datasource.dart';
 import 'package:teki_app/src/domain/repositories/cash_register_repository.dart';
 
@@ -52,6 +53,33 @@ class CashRegisterRepositoryImpl extends CashRegisterRepository {
   }) {
     return datasource.getTotalesMetodoPago(
       idCaja: idCaja,
+      cancelToken: cancelToken,
+    );
+  }
+
+  @override
+  Future<CashRegisterDetail> createCashMovement({
+    required int idCaja,
+    required String tipoMovimiento,
+    required String concepto,
+    required String moneda,
+    required double monto,
+    required String descripcion,
+    String? detalle,
+    required int turno,
+    required List<Map<String, dynamic>> pagos,
+    CancelToken? cancelToken,
+  }) {
+    return datasource.createCashMovement(
+      idCaja: idCaja,
+      tipoMovimiento: tipoMovimiento,
+      concepto: concepto,
+      moneda: moneda,
+      monto: monto,
+      descripcion: descripcion,
+      detalle: detalle,
+      turno: turno,
+      pagos: pagos,
       cancelToken: cancelToken,
     );
   }
