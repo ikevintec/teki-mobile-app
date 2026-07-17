@@ -8,10 +8,13 @@ import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/movimiento_item.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/tipo_selector.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_balance_screen.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/widgets/cash_movement_sheet.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
+import 'package:teki_app/src/providers/cash_register/currencies_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 class CajaTab extends ConsumerStatefulWidget {
   final ValueNotifier<int> refreshNotifier;
@@ -33,6 +36,11 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     _scrollController = ScrollController()..addListener(_onScroll);
     widget.refreshNotifier.addListener(_onRefresh);
     // La carga inicial la dispara CustomDatePicker vía onDateSelected al montarse.
+    // Precarga (una sola vez, no bloqueante) las monedas para el registro de
+    // ingresos/egresos. Si falla, no afecta la vista de la caja.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(currenciesProvider.notifier).ensureLoaded();
+    });
   }
 
   @override
@@ -86,6 +94,31 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     ref.read(cashRegisterDetailProvider.notifier).changeMoneda(newMoneda);
   }
 
+  /// Abre el sheet para registrar un ingreso/egreso externo del tipo activo.
+  Future<void> _openMovementSheet(String tipo, String monedaActiva) async {
+    final cajaState = ref.read(cashRegisterProvider);
+    final idCaja =
+        cajaState.registers.isNotEmpty ? cajaState.registers.first.id : null;
+    if (idCaja == null) {
+      warningNotification(
+          'No hay una caja abierta para registrar movimientos');
+      return;
+    }
+
+    final ok = await showCashMovementSheet(
+      context,
+      tipo: tipo,
+      idCaja: idCaja,
+      turno: 1,
+      monedaSugerida: monedaActiva,
+    );
+
+    if (ok && mounted) {
+      setState(() => _selectedMoneda = null);
+      _fetchCashRegister();
+    }
+  }
+
   String _fmt(Map<String, double> map, String moneda) {
     final symbol = formatExchange(moneda: moneda);
     final v = map[moneda] ?? 0.0;
@@ -113,6 +146,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
           child: CustomDatePicker(
             onDateSelected: _onDateChanged,
             singleDayPicker: true,
+            initialFilter: CalendarFilter.day,
           ),
         ),
         SizedBox(height: 12),
@@ -362,6 +396,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
             isBlocked: detailState.isLoading || detailState.isLoadingMore,
             onChanged: (t) =>
                 ref.read(cashRegisterDetailProvider.notifier).changeTipo(t),
+            onAdd: () => _openMovementSheet(detailState.tipo, monedaActiva),
           ),
         ),
 

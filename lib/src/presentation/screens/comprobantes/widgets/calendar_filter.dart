@@ -7,10 +7,16 @@ enum CalendarFilter { day, week, month, year, custom }
 class CustomDatePicker extends StatefulWidget {
   final Function(DateTimeRange) onDateSelected;
   final bool singleDayPicker;
+
+  /// Filtro con el que se inicializa el selector.
+  /// Si no se envía, por defecto arranca por mes.
+  final CalendarFilter initialFilter;
+
   const CustomDatePicker({
     super.key,
     required this.onDateSelected,
     this.singleDayPicker = false,
+    this.initialFilter = CalendarFilter.month,
   });
 
   @override
@@ -18,7 +24,7 @@ class CustomDatePicker extends StatefulWidget {
 }
 
 class _CustomDatePickerState extends State<CustomDatePicker> {
-  CalendarFilter _selectedFilter = CalendarFilter.month;
+  late CalendarFilter _selectedFilter = widget.initialFilter;
   DateTimeRange? _selectedRange;
 
   List<DateTimeRange> getCurrentList() {
