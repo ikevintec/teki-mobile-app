@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/esc_pos/command_print.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
@@ -32,7 +33,9 @@ class CommandPrintService {
     try {
       final response = await _dio.get('/commands/$commandId');
       command = Command.fromJson(response.data);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[CommandPrint] No se pudo obtener la comanda $commandId, se omite impresión: $e');
+      errorNotification('No se pudo imprimir la comanda');
       return;
     }
 

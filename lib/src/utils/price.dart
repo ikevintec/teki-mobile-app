@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/product_price.dart';
@@ -45,7 +46,7 @@ double getPriceProduct(Product product, Office puntoVenta, Map<String, dynamic>?
       if (ops.containsKey('porcentajeRecargoPorItem') && !(ops['absolute'] ?? false)) {
         final double porcentajeRecargo = (ops['porcentajeRecargoPorItem'] ?? 0).toDouble();
         defaultPrice = (defaultPrice / (1 + igv + (porcentajeRecargo / 100))) * (1 + igv);
-        print('Precio tiene recargo en el producto: $defaultPrice');
+        debugPrint('Precio tiene recargo en el producto: $defaultPrice');
       }
 
       return defaultPrice;

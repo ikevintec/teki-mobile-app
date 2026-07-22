@@ -341,7 +341,8 @@ class NotificationService {
   Map<String, dynamic> _decodePayload(String payload) {
     try {
       return jsonDecode(payload) as Map<String, dynamic>;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[FCM] Payload de notificación inválido: $e');
       return {};
     }
   }

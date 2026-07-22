@@ -71,7 +71,7 @@ class UploadImage extends ConsumerWidget {
                     if (file == null) return;
                     int fileSizeInBytes = await file.length();
                     double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
-                    print('File size camara: $fileSizeInMB MB');
+                    debugPrint('File size camara: $fileSizeInMB MB');
                     if (fileSizeInMB > sizeLimit) {
                       errorNotification(
                           "El tamaño del archivo es mayor a ${sizeLimit}MB");
@@ -96,12 +96,12 @@ class UploadImage extends ConsumerWidget {
                 bottom: 88,
                 child: GestureDetector(
                   onTap: () async {
-                    print('Seleccion de imagen de galeria');
+                    debugPrint('Seleccion de imagen de galeria');
                     XFile? file = await keyCameraAccess.getFromGallery();
                     if (file == null) return;
                     int fileSizeInBytes = await file.length();
                     double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
-                    print('File size galeria: $fileSizeInMB MB');
+                    debugPrint('File size galeria: $fileSizeInMB MB');
 
                     if (fileSizeInMB > sizeLimit) {
                       errorNotification(

@@ -10,9 +10,10 @@ Mapa priorizado de mejoras identificadas en el análisis del 2026-07-21. Cada í
 - [x] `lib/src/utils/api_client.constant.dart` — `LogInterceptor` ahora dentro de `if (kDebugMode)` y con `debugPrint`.
 - [x] `remote_whatsapp_datasource.dart` — usa los interceptores compartidos de `ApiClient` (ver ítem 4).
 
-### 2. Token de sesión en texto plano
-- [ ] `access_token`, `login`, `roles`, `configCompany` se guardan en `SharedPreferences` sin cifrar.
-- **Cierre**: migrar al menos `access_token` a `flutter_secure_storage`, encapsulado en `KeyValueStorageService`.
+### 2. Token de sesión en texto plano ✅ (2026-07-21)
+- [x] Nuevo `shared/services/token_storage.dart` (`TokenStorage`): guarda `access_token` en keychain/keystore vía `flutter_secure_storage` (^10.3.1), con caché en memoria y **migración automática** del token legado en SharedPreferences (los usuarios no pierden sesión al actualizar).
+- [x] `api_client`, `socket_service` y `providers/auth/login.dart` leen/escriben solo vía `TokenStorage`.
+- Pendiente menor: `login`, `roles` y `configCompany` siguen en SharedPreferences (datos de perfil/config, menos sensibles que el token).
 
 ### 3. Middleware no protege rutas privadas ✅ (2026-07-21)
 - [x] `auth_middleware.dart` — sin sesión y ruta fuera de `_publicRoutes` (`/splashScreen`, `/onboarding`, `/login`, `/register`, `/forgotPassword`) → redirect a `/login`. Prints eliminados.
@@ -32,10 +33,9 @@ Mapa priorizado de mejoras identificadas en el análisis del 2026-07-21. Cada í
 - [ ] `lib/src/shared/services/key_values_storage_impl.dart` — cualquier otro tipo cae al default como `String` y revienta con cast error en runtime.
 - **Cierre**: soporte de `bool`/`double` o error explícito en tiempo de desarrollo.
 
-### 7. Errores tragados silenciosamente
-- [ ] `command_print_service.dart` — `catch (_) { return; }` al obtener la comanda: los fallos de impresión desaparecen sin rastro.
-- [ ] `comprobante_print_service.dart` (`_fetchTicketPrint`) y `notification_service.dart` (`_getAndSaveToken`) — capturas silenciosas similares.
-- **Cierre**: log del error (aunque el flujo continúe) y, en impresión, feedback al usuario.
+### 7. Errores tragados silenciosamente ✅ (2026-07-21)
+- [x] `command_print_service.dart` — el fallo al obtener la comanda ahora loguea con `debugPrint` y muestra `errorNotification` al usuario.
+- [x] `comprobante_print_service.dart` (`_fetchTicketPrint`) y `notification_service.dart` (`_decodePayload`) — logs agregados. (`_getAndSaveToken` ya logueaba correctamente.)
 
 ### 8. `clientType` del socket hardcodeado como `'WEB'`
 - [ ] `lib/src/shared/services/socket_service.dart` — la app móvil se identifica como `WEB`. Verificar con backend antes de cambiar (puede haber lógica dependiente).
@@ -65,9 +65,9 @@ Mapa priorizado de mejoras identificadas en el análisis del 2026-07-21. Cada í
 - [ ] `cotizaciones` tiene dos pantallas de ver: `ver_quotations_screen.dart` y `view_quotation_screen.dart`.
 - **Cierre**: legacy identificado, marcado como deprecated y con plan de eliminación.
 
-### 13. `print()` de debug en producción
-- [ ] `remote_ticket_sale.dart` (líneas ~180–255, prints con emojis), `utils/price.dart:48`, `auth_middleware.dart`, `api_client.constant.dart:67`, `remote_whatsapp_datasource.dart:49`.
-- **Cierre**: `print` → `debugPrint` o eliminados; regla `avoid_print` activada en `analysis_options.yaml`.
+### 13. `print()` de debug en producción ✅ (2026-07-21)
+- [x] Los 24 `print` restantes en 8 archivos (remote_ticket_sale, whatsapp_provider, product_form, price, upload_image, comprobantes, products_sale_notifier_setters) → `debugPrint`; los del middleware y los interceptores se eliminaron en el PR de seguridad.
+- [x] `avoid_print` elevado a **error** en `analysis_options.yaml` — un `print` nuevo ahora rompe `flutter analyze`.
 
 ### 14. Sin tests (1 archivo para ~86k líneas)
 - [ ] Empezar por lógica pura sin UI: `invoice_esc_pos_formatter.dart` (516 líneas), `command_esc_pos_formatter.dart` (327), `utils/price.dart`, `utils/formats.dart`, `KeyValueStorageServiceImpl`.

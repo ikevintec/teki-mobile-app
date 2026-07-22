@@ -3,9 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/main.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
+import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/utils/constants.dart';
-import 'package:teki_app/src/utils/storage_keys.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   static bool _isLoggingOut = false;
@@ -19,8 +18,7 @@ class ApiClient {
   static List<Interceptor> defaultInterceptors() => [
         InterceptorsWrapper(
           onRequest: (options, handler) async {
-            final prefs = await SharedPreferences.getInstance();
-            final token = prefs.getString(StorageKeys.accessToken);
+            final token = await TokenStorage.getToken();
             // PlatformRequest siempre se envía (incluyendo login)
             options.headers['PlatformRequest'] = 'mobile';
             if (token != null) {

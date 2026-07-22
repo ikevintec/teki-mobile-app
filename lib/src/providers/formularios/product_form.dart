@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -432,7 +433,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
         changePrice();
       }
     } catch (e) {
-      print('Error loading product data: $e');
+      debugPrint('Error loading product data: $e');
     }
   }
 
@@ -637,7 +638,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
     try {
       await loadImagen();
       Product product = formTomodel();
-      print('🖼️ imagenes enviadas (update): '
+      debugPrint('🖼️ imagenes enviadas (update): '
           '${product.imagenes?.map((e) => 'id=${e.id} orden=${e.numeroOrden} '
               'def=${e.porDefecto} elim=${e.eliminado}').toList()}');
       await productsRepository.updateProduct(product);

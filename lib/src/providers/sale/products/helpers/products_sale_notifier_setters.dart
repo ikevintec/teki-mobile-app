@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/general/exchange.dart';
 import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
@@ -644,7 +645,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         productsSales: List.from(state.productsSales)
           ..[i] = ticketDetailToUpdate,
       );
-      print('Valort unitario: ${ticketDetailToUpdate.valorUnitario}, '
+      debugPrint('Valort unitario: ${ticketDetailToUpdate.valorUnitario}, '
           'Precio VentaUnitario Venta: ${ticketDetailToUpdate.precioVentaUnitario}, '
           'Precio Total: ${ticketDetailToUpdate.precioTotal}');
     }
@@ -771,7 +772,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     }
 
     ref.read(ticketProvider.notifier).updateTicket(ticket);
-    print('Total Venta: ${ticket.totalVenta}, '
+    debugPrint('Total Venta: ${ticket.totalVenta}, '
         'Total Igv: ${ticket.totalIgv}, '
         'Total ISC: ${ticket.totalIsc}, '
         'Total Retencion: ${ticket.montoRetencion}, '

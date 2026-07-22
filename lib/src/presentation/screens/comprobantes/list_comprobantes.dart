@@ -216,12 +216,12 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                     : null,
                 onRemision: () {
                   // Acción de remisión
-                  print('Crear remisión para: ${ticket.id}');
+                  debugPrint('Crear remisión para: ${ticket.id}');
                   // Aquí puedes agregar la lógica para crear una remisión
                 },
                 onGuia: () {
                   // Acción de guía
-                  print('Crear guía para: ${ticket.id}');
+                  debugPrint('Crear guía para: ${ticket.id}');
                   // Aquí puedes agregar la lógica para crear una guía
                 },
               ),

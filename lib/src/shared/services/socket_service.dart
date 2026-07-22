@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/utils/constants.dart';
-import 'package:teki_app/src/utils/storage_keys.dart';
 
 enum SocketEvent {
   commandRestaurant('commandRestaurant'),
@@ -33,8 +32,7 @@ class SocketService {
     _connectionCount++;
     if (isConnected) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(StorageKeys.accessToken) ?? '';
+    final token = await TokenStorage.getToken() ?? '';
 
     _socket?.dispose();
 

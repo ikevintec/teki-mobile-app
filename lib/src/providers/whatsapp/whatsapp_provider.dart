@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/repositories/whatsapp_repository_impl.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_response.dart';
@@ -144,13 +145,13 @@ class WhatsappNotifier extends StateNotifier<WhatsappState> {
           return response;
         } else {
           // Si falla Evolution, usar Cloud Message como fallback
-          print('Error al enviar mensaje por Evolution, usando fallback');
+          debugPrint('Error al enviar mensaje por Evolution, usando fallback');
           final fallbackResponse = await sendByCloudMessage();
           _updateStateFromResponse(fallbackResponse);
           return fallbackResponse;
         }
       } catch (e) {
-        print('Error en Evolution: $e, usando fallback');
+        debugPrint('Error en Evolution: $e, usando fallback');
         final fallbackResponse = await sendByCloudMessage();
         _updateStateFromResponse(fallbackResponse);
         return fallbackResponse;
@@ -172,14 +173,14 @@ class WhatsappNotifier extends StateNotifier<WhatsappState> {
           return response;
         } else {
           // Si falla Socket, cerrar sesión y usar fallback
-          print('Error al enviar mensaje por socket, cerrando sesión');
+          debugPrint('Error al enviar mensaje por socket, cerrando sesión');
           await repository.closeSessionWhatsapp(sesion.company?.id ?? 0);
           final fallbackResponse = await sendByCloudMessage();
           _updateStateFromResponse(fallbackResponse);
           return fallbackResponse;
         }
       } catch (e) {
-        print('Error en Socket: $e, usando fallback');
+        debugPrint('Error en Socket: $e, usando fallback');
         await repository.closeSessionWhatsapp(sesion.company?.id ?? 0);
         final fallbackResponse = await sendByCloudMessage();
         _updateStateFromResponse(fallbackResponse);

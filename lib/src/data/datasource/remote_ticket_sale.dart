@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
@@ -177,8 +178,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
 
               return Ticket.fromJson(fixedJson);
             } catch (e) {
-              print("❌ Error al convertir un ticket: $e");
-              print("🧾 Datos problemáticos: $json");
+              debugPrint("❌ Error al convertir un ticket: $e");
+              debugPrint("🧾 Datos problemáticos: $json");
               return null;
             }
           })
@@ -199,12 +200,12 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
               : null) ??
           e.message ??
           'Error de conexión';
-      print("Error al obtener comprobantes 1: $message");
+      debugPrint("Error al obtener comprobantes 1: $message");
       return Future.error(message);
     } catch (e, stack) {
-      print("❌ Excepción: $e");
-      print("📍 Stack: $stack");
-      print("Error al obtener comprobantes 2: $e");
+      debugPrint("❌ Excepción: $e");
+      debugPrint("📍 Stack: $stack");
+      debugPrint("Error al obtener comprobantes 2: $e");
       return Future.error(e.toString());
     }
   }
@@ -227,7 +228,7 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
               final fixedJson = Map<String, dynamic>.from(json);
               return TotalesPorMoneda.fromJson(fixedJson);
             } catch (e) {
-              print("❌ Error al convertir un total por moneda: $e");
+              debugPrint("❌ Error al convertir un total por moneda: $e");
               return null;
             }
           })
@@ -251,8 +252,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       errorNotification("Error al obtener totales por moneda 1: $message");
       return Future.error(message);
     } catch (e, stack) {
-      print("❌ Excepción: $e");
-      print("📍 Stack: $stack");
+      debugPrint("❌ Excepción: $e");
+      debugPrint("📍 Stack: $stack");
       errorNotification("Error al obtener totales por moneda 2: $e");
       return Future.error(e.toString());
     }

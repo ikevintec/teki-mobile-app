@@ -17,6 +17,7 @@ import 'package:teki_app/src/domain/repositories/config_repository.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/services/key_values_storage_impl.dart';
+import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/storage_keys.dart';
@@ -66,7 +67,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       );
 
       //Seteamos los valores que van aperdurar
-      await keyvalueStorage.setKeyValue(StorageKeys.accessToken, response.accessToken);
+      if (response.accessToken != null) {
+        await TokenStorage.setToken(response.accessToken!);
+      }
       await keyvalueStorage.setKeyValue('login', jsonEncode(response.toJson()));
       await setConfigProvider(ref, response, saleStationRepository);
 
@@ -134,7 +137,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> checkAuthStatus() async {
-    final token = await keyvalueStorage.getValue<String>(StorageKeys.accessToken);
+    final token = await TokenStorage.getToken();
     final loginJson = await keyvalueStorage.getValue<String>(StorageKeys.login);
     final configCompanyJson =
         await keyvalueStorage.getValue<String>(StorageKeys.configCompany);
@@ -182,7 +185,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   void logout() async {
     NotificationService.instance.dispose();
-    await keyvalueStorage.removeKey(StorageKeys.accessToken);
+    await TokenStorage.deleteToken();
     await keyvalueStorage.removeKey(StorageKeys.login);
     await keyvalueStorage.removeKey(StorageKeys.configCompany);
     await keyvalueStorage.removeKey(StorageKeys.roles);

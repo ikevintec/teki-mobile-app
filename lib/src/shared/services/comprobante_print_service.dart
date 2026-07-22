@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/esc_pos/ticket_print.dart';
 import 'package:teki_app/src/data/models/teki_model/config.dart';
@@ -95,7 +96,8 @@ class ComprobantePrintService {
     try {
       final response = await _dio.get('/ticket-esc-pos/invoice/$ticketId');
       return TicketPrint.fromJson(response.data as Map<String, dynamic>);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[ComprobantePrint] No se pudo obtener el ticket $ticketId para imprimir: $e');
       return null;
     }
   }

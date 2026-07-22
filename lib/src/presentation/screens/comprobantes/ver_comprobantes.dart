@@ -95,7 +95,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
             padding: const EdgeInsets.only( top: 8.0),
             child: CustomDatePicker(
               onDateSelected: (range) {
-                print("Selected range: ${range.start} - ${range.end}");
+                debugPrint("Selected range: ${range.start} - ${range.end}");
                 _handleDateRangeChanged(range);
               },
             ),
