@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 
 abstract class CashRegisterDatasource {
   Future<List<CashRegisterResponse>> getCashRegister({
@@ -21,6 +22,20 @@ abstract class CashRegisterDatasource {
 
   Future<List<CajaMetodoPagoBalance>> getTotalesMetodoPago({
     required int idCaja,
+    CancelToken? cancelToken,
+  });
+
+  /// Registra un movimiento externo de caja (ingreso o egreso).
+  Future<CashRegisterDetail> createCashMovement({
+    required int idCaja,
+    required String tipoMovimiento, // 'INGRESO' | 'EGRESO'
+    required String concepto, // 'OTROS_INGRESOS' | 'OTROS_EGRESOS'
+    required String moneda,
+    required double monto,
+    required String descripcion,
+    String? detalle,
+    required int turno,
+    required List<Map<String, dynamic>> pagos,
     CancelToken? cancelToken,
   });
 }
