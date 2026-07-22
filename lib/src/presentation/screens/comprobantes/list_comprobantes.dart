@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
-import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen.dart/view_comprobante_screen.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen/view_comprobante_screen.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/form_anular_comprobante.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 

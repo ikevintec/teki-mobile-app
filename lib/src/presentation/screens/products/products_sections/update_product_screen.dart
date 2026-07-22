@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/enums/products.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
-import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
+import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 import 'package:teki_app/src/presentation/widgets/button/custom_elevated_button.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';

@@ -4,7 +4,7 @@ import 'package:get/route_manager.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});

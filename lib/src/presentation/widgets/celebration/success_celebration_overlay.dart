@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 /// Overlay de celebración (checkmark + confetti) que se muestra al
 /// completar una venta o cotización. Encapsula su propia animación para

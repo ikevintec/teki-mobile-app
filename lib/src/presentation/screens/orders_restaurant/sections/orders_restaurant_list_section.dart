@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/order_restaurant_card.dart';
 import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class OrdersRestaurantListSection extends ConsumerStatefulWidget {
   final List<OrderRestaurant> orders;

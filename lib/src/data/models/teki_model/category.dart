@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/productionArea.dart';
+import 'package:teki_app/src/data/models/teki_model/production_area.dart';
 
 class Category {
   final int? id;

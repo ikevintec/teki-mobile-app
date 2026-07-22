@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/preparationOption.dart';
+import 'package:teki_app/src/data/models/teki_model/preparation_option.dart';
 
 class Preparation {
   int? id;

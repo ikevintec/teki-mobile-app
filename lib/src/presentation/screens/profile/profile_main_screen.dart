@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/presentation/screens/profile/profile_section/profile_info_row.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class ProfileMainScreen extends ConsumerStatefulWidget {
   const ProfileMainScreen({super.key});

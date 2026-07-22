@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class CustomSegmentedSelector extends StatelessWidget {
   final String label;

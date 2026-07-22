@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_balance_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class CajaBalanceScreen extends ConsumerStatefulWidget {

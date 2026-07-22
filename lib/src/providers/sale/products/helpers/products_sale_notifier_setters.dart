@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/general/exhange.dart';
-import 'package:teki_app/src/data/models/teki_model/batchProduct.dart';
-import 'package:teki_app/src/data/models/teki_model/batchProductSale.dart';
+import 'package:teki_app/src/data/models/general/exchange.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product_sale.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
-import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 import 'package:teki_app/src/data/static/lists.dart';
-import 'package:teki_app/src/providers/sale/products/helpers/tciket_detail_helper.dart';
+import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helper.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';

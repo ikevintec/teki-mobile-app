@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'package:teki_app/src/data/models/invoice_model/purchase_invoice_model.dart';
 import 'package:teki_app/src/presentation/screens/purchase_invoice/purchase_sections/purchase_invoice_list_section.dart';
-import 'package:teki_app/src/presentation/widgets/search_field/custom_search_Field.dart';
+import 'package:teki_app/src/presentation/widgets/search_field/custom_search_field.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 
 class PurchaseInvoiceMainScreen extends StatelessWidget {

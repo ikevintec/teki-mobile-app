@@ -7,7 +7,7 @@ import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/presentation/screens/inventory/widgets/inventory_movements_sheet.dart';
 import 'package:teki_app/src/providers/inventory/inventory_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class InventoryListSection extends ConsumerStatefulWidget {

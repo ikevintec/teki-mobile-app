@@ -1,5 +1,5 @@
-import 'package:teki_app/src/data/models/teki_model/cityCoverage.dart';
-import 'package:teki_app/src/data/models/teki_model/openingHour.dart';
+import 'package:teki_app/src/data/models/teki_model/city_coverage.dart';
+import 'package:teki_app/src/data/models/teki_model/opening_hour.dart';
 
 class Office {
   final int? id;

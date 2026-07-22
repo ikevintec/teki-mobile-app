@@ -4,16 +4,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:teki_app/src/data/models/teki_model/company.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
-import 'package:teki_app/src/data/models/teki_model/productImage.dart';
-import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
-import 'package:teki_app/src/data/models/teki_model/unitCode.dart';
+import 'package:teki_app/src/data/models/teki_model/product_image.dart';
+import 'package:teki_app/src/data/models/teki_model/product_price.dart';
+import 'package:teki_app/src/data/models/teki_model/unit_code.dart';
 import 'package:teki_app/src/data/repositories/image_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/image_repository.dart';
 import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/products/product.dart';
-import 'package:teki_app/src/providers/products/profucts.dart';
+import 'package:teki_app/src/providers/products/products.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 final productFormProvider =

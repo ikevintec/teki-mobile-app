@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teki_app/src/shared/services/cameraAccess/key_camera_access_impl.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class UploadImage extends ConsumerWidget {

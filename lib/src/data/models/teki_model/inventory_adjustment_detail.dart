@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/batchProduct.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 
 class InventoryAdjustmentDetail {

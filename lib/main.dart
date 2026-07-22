@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:teki_app/src/application.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 // Nota: firebase_options.dart se genera con `flutterfire configure`.
 // Cuando lo ejecutes, descomenta la línea de abajo y usa DefaultFirebaseOptions.currentPlatform.
 // import 'package:teki_app/firebase_options.dart';
@@ -27,7 +27,7 @@ void main() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  await Environment.intiEnvironment();
+  await Environment.initEnvironment();
   await initializeDateFormatting('es', null);
   runApp(
     UncontrolledProviderScope(

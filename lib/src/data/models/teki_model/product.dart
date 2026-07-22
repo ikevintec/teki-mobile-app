@@ -1,19 +1,19 @@
 import 'package:teki_app/src/data/models/teki_model/brand.dart';
 import 'package:teki_app/src/data/models/teki_model/category.dart';
 import 'package:teki_app/src/data/models/teki_model/company.dart';
-import 'package:teki_app/src/data/models/teki_model/contractPlan.dart';
+import 'package:teki_app/src/data/models/teki_model/contract_plan.dart';
 import 'package:teki_app/src/data/models/teki_model/group.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
-import 'package:teki_app/src/data/models/teki_model/productItemPackage.dart';
-import 'package:teki_app/src/data/models/teki_model/productPlanField.dart';
-import 'package:teki_app/src/data/models/teki_model/productPreparation.dart';
-import 'package:teki_app/src/data/models/teki_model/productImage.dart';
-import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
-import 'package:teki_app/src/data/models/teki_model/productPurchasePrice.dart';
-import 'package:teki_app/src/data/models/teki_model/productRelated.dart';
-import 'package:teki_app/src/data/models/teki_model/productSupply.dart';
-import 'package:teki_app/src/data/models/teki_model/unitCode.dart';
+import 'package:teki_app/src/data/models/teki_model/product_item_package.dart';
+import 'package:teki_app/src/data/models/teki_model/product_plan_field.dart';
+import 'package:teki_app/src/data/models/teki_model/product_preparation.dart';
+import 'package:teki_app/src/data/models/teki_model/product_image.dart';
+import 'package:teki_app/src/data/models/teki_model/product_price.dart';
+import 'package:teki_app/src/data/models/teki_model/product_purchase_price.dart';
+import 'package:teki_app/src/data/models/teki_model/product_related.dart';
+import 'package:teki_app/src/data/models/teki_model/product_supply.dart';
+import 'package:teki_app/src/data/models/teki_model/unit_code.dart';
 
 class Product {
   final int? id;

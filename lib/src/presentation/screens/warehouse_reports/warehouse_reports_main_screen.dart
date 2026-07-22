@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/presentation/screens/warehouse_reports/warehouse-reports_sections/horizontal_warehouse_report_table_section.dart';
+import 'package:teki_app/src/presentation/screens/warehouse_reports/warehouse_reports_sections/horizontal_warehouse_report_table_section.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/button/custom_elevated_button.dart';
 import 'package:teki_app/src/presentation/widgets/date_picker_section/start_end_date_picker_section.dart';

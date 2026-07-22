@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/inventoryRecord.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory_record.dart';
 import 'package:teki_app/src/data/repositories/inventory_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/inventory_repository.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';

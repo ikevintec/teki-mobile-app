@@ -10,7 +10,7 @@ import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.
 import 'package:teki_app/src/presentation/widgets/upload_image/pick_product_image.dart';
 import 'package:teki_app/src/presentation/widgets/upload_image/upload_image.dart';
 import 'package:teki_app/src/providers/formularios/product_form.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class ProductGeneralSection extends HookConsumerWidget {

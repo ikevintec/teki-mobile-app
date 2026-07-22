@@ -3,13 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/data/models/teki_model/aditionalField.dart';
-import 'package:teki_app/src/data/models/teki_model/guiaRelacionada.dart';
+import 'package:teki_app/src/data/models/teki_model/additional_field.dart';
+import 'package:teki_app/src/data/models/teki_model/guia_relacionada.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';  
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class OtrosDatosWidget extends ConsumerStatefulWidget {
   const OtrosDatosWidget({super.key});

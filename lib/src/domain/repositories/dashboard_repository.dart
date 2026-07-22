@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/totalCounter.dart';
+import 'package:teki_app/src/data/models/teki_model/total_counter.dart';
 
 abstract class DashboardRepository {
   Future<TotalCounter> getSalesCount(int idPuntoVenta);

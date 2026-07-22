@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options_sheet.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class OrderRestaurantCard extends ConsumerWidget {
   final OrderRestaurant order;

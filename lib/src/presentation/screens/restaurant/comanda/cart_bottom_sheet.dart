@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail_sheet.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class CartBottomSheet extends ConsumerWidget {
   /// Parent screen context — needed for re-opening the product detail sheet

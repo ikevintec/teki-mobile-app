@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/paymentDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/purchase.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class CajaMovimientoScreen extends StatelessWidget {

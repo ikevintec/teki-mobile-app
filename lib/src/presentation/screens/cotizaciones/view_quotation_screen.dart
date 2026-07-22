@@ -15,7 +15,7 @@ import 'package:teki_app/src/presentation/widgets/split_action_button/split_acti
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/quotation/quotation_view_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/quotation_whatsapp_helper.dart';
 import 'package:url_launcher/url_launcher.dart';

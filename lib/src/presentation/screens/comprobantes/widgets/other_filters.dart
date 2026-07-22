@@ -8,7 +8,7 @@ import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selecto
 import 'package:teki_app/src/providers/accounts_receivable/seller_provider.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class OtherFilters extends ConsumerStatefulWidget {
   final VoidCallback? onApplyFilters;

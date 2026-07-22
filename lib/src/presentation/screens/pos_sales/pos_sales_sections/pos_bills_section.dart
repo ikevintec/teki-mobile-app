@@ -6,14 +6,14 @@ import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_sections/p
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/button/custom_elevated_button.dart';
 import 'package:teki_app/src/presentation/widgets/date_picker_section/date_picker.dart';
-import 'package:teki_app/src/presentation/widgets/search_field/custom_search_Field.dart';
+import 'package:teki_app/src/presentation/widgets/search_field/custom_search_field.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_action_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_max_line_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/toast/success_toast.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class PosBillsSection extends StatefulWidget {
   final dynamic product;

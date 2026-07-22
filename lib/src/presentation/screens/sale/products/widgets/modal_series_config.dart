@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/batchProduct.dart';
-import 'package:teki_app/src/data/models/teki_model/batchProductSale.dart';
-import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product_sale.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 Future<void> showSeriesConfigSheet(
   BuildContext context, {

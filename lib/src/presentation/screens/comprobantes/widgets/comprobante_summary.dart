@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/quotation.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 /// Widget de totales, reutilizado por el flujo de ventas (Ticket) y el de

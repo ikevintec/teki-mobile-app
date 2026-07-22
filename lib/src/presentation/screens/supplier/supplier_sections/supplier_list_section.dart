@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/people_model/supplier_list_model.dart';
-import 'package:teki_app/src/presentation/screens/supplier/supplier_sections/updateSupplierSection.dart';
+import 'package:teki_app/src/presentation/screens/supplier/supplier_sections/update_supplier_section.dart';
 import 'package:teki_app/src/presentation/widgets/toast/delete_toast.dart';
 
 class SupplierListSection extends StatefulWidget {

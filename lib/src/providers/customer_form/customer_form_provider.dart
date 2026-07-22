@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
-import 'package:teki_app/src/data/repositories/customer_repository_imp.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
+import 'package:teki_app/src/data/repositories/customer_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/customer_repository.dart';
 import 'package:teki_app/src/providers/customers/customers.dart';
 import 'package:teki_app/src/utils/notifications.dart';

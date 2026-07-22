@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/response/accounts_receivable_total_response.dart';
-import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
+import 'package:teki_app/src/data/models/teki_model/account_receivable.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 import 'package:teki_app/src/data/repositories/accounts_receivable_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/currency_repository_impl.dart';

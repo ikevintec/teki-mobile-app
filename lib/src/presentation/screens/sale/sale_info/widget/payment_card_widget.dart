@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_method.dart';
 
 class PaymentCardWidget extends StatelessWidget {
   final PaymentMethod paymentMethod;

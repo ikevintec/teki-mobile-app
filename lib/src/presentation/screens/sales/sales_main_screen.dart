@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/presentation/screens/sales/salesSections/horizontal_sales_table_section.dart';
+import 'package:teki_app/src/presentation/screens/sales/sales_sections/horizontal_sales_table_section.dart';
 import 'package:teki_app/src/presentation/widgets/button/custom_elevated_button.dart';
 import 'package:teki_app/src/presentation/widgets/date_picker_section/start_end_date_picker_section.dart';
 import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
 import 'package:teki_app/src/presentation/widgets/toast/success_toast.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:sidebarx/sidebarx.dart';
 
 class SalesMainScreen extends StatefulWidget {

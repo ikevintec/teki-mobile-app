@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/groupOption.dart';
+import 'package:teki_app/src/data/models/teki_model/group_option.dart';
 
 class Group {
   int? id;

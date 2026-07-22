@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailGroupOption.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailPreparationOption.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_preparation_option.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/data/models/teki_model/config.dart';

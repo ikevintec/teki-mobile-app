@@ -1,5 +1,5 @@
 import 'package:teki_app/src/data/models/teki_model/company.dart';
-import 'package:teki_app/src/data/models/teki_model/deliveryDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/delivery_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/utils/formats.dart';

@@ -14,7 +14,7 @@ import 'package:teki_app/src/providers/restaurant/cobrador_provider.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class ComandaScreen extends ConsumerStatefulWidget {

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
-import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
+import 'package:teki_app/src/data/models/teki_model/account_receivable.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_method.dart';
 import 'package:teki_app/src/data/repositories/accounts_receivable_repository_impl.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 

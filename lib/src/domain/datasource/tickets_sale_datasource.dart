@@ -1,6 +1,6 @@
 import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
-import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
+import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
 
 abstract class TicketSaleDatasource {
   /// Obtiene el siguiente número de comprobante según tipoDocumento y serie

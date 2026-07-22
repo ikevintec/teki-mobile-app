@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 
 class OrderRestaurantResponse {
   final List<OrderRestaurant>? content;

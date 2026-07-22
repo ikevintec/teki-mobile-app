@@ -1,7 +1,7 @@
 // tickets_sale_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
-import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
+import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';

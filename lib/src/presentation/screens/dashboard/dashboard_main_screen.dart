@@ -11,7 +11,7 @@ import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/inici
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/inventario_tab.dart';
 import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class DashboardMainScreen extends ConsumerStatefulWidget {
   const DashboardMainScreen({super.key});

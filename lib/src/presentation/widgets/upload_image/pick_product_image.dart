@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teki_app/src/shared/services/cameraAccess/key_camera_access_impl.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 /// Muestra un menú (cámara / galería), valida el tamaño (máx. [sizeLimitMB] MB)

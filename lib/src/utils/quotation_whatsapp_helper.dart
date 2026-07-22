@@ -1,5 +1,5 @@
 import 'package:teki_app/src/data/models/teki_model/quotation.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 /// Helper de WhatsApp exclusivo para cotizaciones. Se mantiene separado de
 /// WhatsappHelper (tickets) porque la URL del PDF y los campos disponibles

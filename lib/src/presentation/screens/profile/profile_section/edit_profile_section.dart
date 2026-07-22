@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/toast/success_toast.dart';
 import 'package:teki_app/src/presentation/widgets/upload_image/upload_image.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class EditProfileSection extends StatefulWidget {
   const EditProfileSection({super.key});

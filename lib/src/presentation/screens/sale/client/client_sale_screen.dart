@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/sale_info_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
@@ -10,7 +10,7 @@ import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class ClientSaleScreen extends ConsumerStatefulWidget {

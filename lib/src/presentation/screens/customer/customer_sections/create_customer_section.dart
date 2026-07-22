@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/button/custom_elevated_button.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
@@ -9,7 +9,7 @@ import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.
 import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
 import 'package:teki_app/src/providers/customer_form/customer_form_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class AddCustomerSection extends ConsumerStatefulWidget {
   final int? customerId;

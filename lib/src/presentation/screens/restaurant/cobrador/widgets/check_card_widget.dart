@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class CheckCardWidget extends StatelessWidget {

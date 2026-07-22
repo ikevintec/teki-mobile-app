@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
-import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
+import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
-import 'package:teki_app/src/data/models/teki_model/ticketDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 import 'package:teki_app/src/data/repositories/currency_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/inventory_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/products_repository_impl.dart';

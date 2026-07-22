@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class ProductMenuCard extends StatelessWidget {
   final Product product;

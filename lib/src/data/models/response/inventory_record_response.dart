@@ -1,6 +1,6 @@
 import 'package:teki_app/src/data/models/page/pageable.dart';
 import 'package:teki_app/src/data/models/page/sort.dart';
-import 'package:teki_app/src/data/models/teki_model/inventoryRecord.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory_record.dart';
 
 class InventoryRecordResponse {
   final List<InventoryRecord>? content;

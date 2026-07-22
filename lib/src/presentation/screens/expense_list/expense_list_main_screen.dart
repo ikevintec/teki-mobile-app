@@ -3,8 +3,8 @@ import 'package:teki_app/src/data/models/expense_model/expense_list_model.dart';
 import 'package:teki_app/src/presentation/screens/expense_list/expense_list_sections/expense_card_section.dart';
 import 'package:teki_app/src/presentation/screens/expense_list/expense_list_sections/expense_list_section.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
-import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_floating_action_button.dart';
-import 'package:teki_app/src/presentation/widgets/search_field/custom_search_Field.dart';
+import 'package:teki_app/src/presentation/widgets/floating_action_button/custom_floating_action_button.dart';
+import 'package:teki_app/src/presentation/widgets/search_field/custom_search_field.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 
 class ExpenseListMainScreen extends StatelessWidget {

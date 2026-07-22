@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/repositories/orders_restaurant_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/orders_restaurant_repository.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';

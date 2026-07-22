@@ -7,7 +7,7 @@ import 'package:teki_app/src/data/models/whatsapp/whatsapp_evolution_media_reque
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_socket_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_response.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

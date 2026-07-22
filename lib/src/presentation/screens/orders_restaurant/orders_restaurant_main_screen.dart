@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/main.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/sections/orders_restaurant_list_section.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/more_filters_bottom_sheet.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/orders_filter_bar.dart';
@@ -15,7 +15,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/services/socket_service.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class OrdersRestaurantMainScreen extends ConsumerStatefulWidget {

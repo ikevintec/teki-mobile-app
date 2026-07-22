@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/presentation/screens/invoice/invoice_sections/sale_invoice_list_section.dart';
 import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
-import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_floating_action_button.dart';
-import 'package:teki_app/src/presentation/widgets/search_field/custom_search_Field.dart';
+import 'package:teki_app/src/presentation/widgets/floating_action_button/custom_floating_action_button.dart';
+import 'package:teki_app/src/presentation/widgets/search_field/custom_search_field.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
 

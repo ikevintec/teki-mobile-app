@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/totalCounter.dart';
+import 'package:teki_app/src/data/models/teki_model/total_counter.dart';
 import 'package:teki_app/src/domain/datasource/dashboard_datasource.dart';
 import 'package:teki_app/src/domain/repositories/dashboard_repository.dart';
 import 'package:teki_app/src/data/datasource/remote_dashboard.dart';

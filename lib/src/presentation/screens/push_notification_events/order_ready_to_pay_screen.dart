@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailGroupOption.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailPreparationOption.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_preparation_option.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 /// Screen shown automatically when the order_ready notification filter returns

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
-import 'package:teki_app/src/data/models/teki_model/accountReceivableDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/account_receivable.dart';
+import 'package:teki_app/src/data/models/teki_model/account_receivable_detail.dart';
 import 'package:teki_app/src/data/repositories/accounts_receivable_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/accounts_receivable/widgets/amortize_sheet.dart';
 import 'package:teki_app/src/providers/accounts_receivable/accounts_receivable_notifier.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 void showAccountActionsSheet(

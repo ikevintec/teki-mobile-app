@@ -1,6 +1,6 @@
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/whatsapp/data_send.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class WhatsappHelper {
   /// Genera la URL del PDF 

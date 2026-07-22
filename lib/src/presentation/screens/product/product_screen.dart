@@ -7,11 +7,11 @@ import 'package:teki_app/src/presentation/screens/product/sections/general_secti
 import 'package:teki_app/src/presentation/screens/product/sections/precios_section.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/product_not_found_screen.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
-import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_floating_action_button.dart';
+import 'package:teki_app/src/presentation/widgets/floating_action_button/custom_floating_action_button.dart';
 import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
 import 'package:teki_app/src/providers/formularios/product_form.dart';
 import 'package:teki_app/src/providers/products/product.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class ProductScreen extends HookConsumerWidget {

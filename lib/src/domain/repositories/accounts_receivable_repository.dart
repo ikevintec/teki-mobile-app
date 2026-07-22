@@ -1,6 +1,6 @@
 import 'package:teki_app/src/data/models/response/accounts_receivable_total_response.dart';
-import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
-import 'package:teki_app/src/data/models/teki_model/accountReceivableDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/account_receivable.dart';
+import 'package:teki_app/src/data/models/teki_model/account_receivable_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 
 abstract class AccountsReceivableRepository {

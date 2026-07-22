@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/providers/accounts_receivable/accounts_receivable_notifier.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class DateFiltersModal extends ConsumerStatefulWidget {
   final String tipoCuenta;

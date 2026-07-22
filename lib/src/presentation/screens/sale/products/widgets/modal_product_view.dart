@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
-import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
+import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class ModalProductView extends ConsumerWidget {
   final Product product;

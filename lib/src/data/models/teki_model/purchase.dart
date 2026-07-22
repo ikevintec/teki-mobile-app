@@ -1,8 +1,8 @@
-import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/company.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
-import 'package:teki_app/src/data/models/teki_model/purchaseDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
+import 'package:teki_app/src/data/models/teki_model/purchase_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/sale_station.dart';
 import 'package:teki_app/src/data/models/teki_model/supplier.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/utils/formats.dart';

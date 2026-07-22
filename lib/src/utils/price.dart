@@ -1,6 +1,6 @@
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
-import 'package:teki_app/src/data/models/teki_model/productPrice.dart';
+import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 
 double getPriceProduct(Product product, Office puntoVenta, Map<String, dynamic>? ops) {
     ops ??= {};

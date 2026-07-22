@@ -1,8 +1,8 @@
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/lounge.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurantChangeStatusItems.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant_change_status_items.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 
 abstract class RestaurantDatasource {

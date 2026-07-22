@@ -1,9 +1,9 @@
-import 'package:teki_app/src/data/models/teki_model/attachedCompany.dart';
-import 'package:teki_app/src/data/models/teki_model/bankAccount.dart';
+import 'package:teki_app/src/data/models/teki_model/attached_company.dart';
+import 'package:teki_app/src/data/models/teki_model/bank_account.dart';
 import 'package:teki_app/src/data/models/teki_model/certificate.dart';
-import 'package:teki_app/src/data/models/teki_model/moduleAccess.dart';
-import 'package:teki_app/src/data/models/teki_model/ticketDesign.dart';
-import 'package:teki_app/src/data/models/teki_model/unitCode.dart';
+import 'package:teki_app/src/data/models/teki_model/module_access.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_design.dart';
+import 'package:teki_app/src/data/models/teki_model/unit_code.dart';
 
 class Company {
   final int? id;

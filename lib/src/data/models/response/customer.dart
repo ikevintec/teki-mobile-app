@@ -1,6 +1,6 @@
 import 'package:teki_app/src/data/models/page/pageable.dart';
 import 'package:teki_app/src/data/models/page/sort.dart';
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
 
 class CustomerResponse {
   final List<Customer> content;

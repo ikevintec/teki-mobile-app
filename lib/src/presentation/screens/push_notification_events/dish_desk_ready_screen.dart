@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailGroupOption.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailPreparationOption.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_preparation_option.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 /// Screen shown exclusively from a [dish_desk_ready] push notification.

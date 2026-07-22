@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailGroupOption.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/item_action_bottom_sheet.dart';
 
 // ─── Status constants ────────────────────────────────────────────────────────

@@ -3,14 +3,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_balance_screen.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_movimiento_screen.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class CajaTab extends ConsumerStatefulWidget {

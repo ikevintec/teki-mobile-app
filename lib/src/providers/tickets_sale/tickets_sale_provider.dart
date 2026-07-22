@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/aditionalField.dart';
-import 'package:teki_app/src/data/models/teki_model/guiaRelacionada.dart';
+import 'package:teki_app/src/data/models/teki_model/additional_field.dart';
+import 'package:teki_app/src/data/models/teki_model/guia_relacionada.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 
 // REPOSITORIO

@@ -5,7 +5,7 @@ import 'package:teki_app/src/presentation/screens/inventory/inventory_sections/i
 import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/inventory/inventory_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class InventarioTab extends ConsumerStatefulWidget {
   final ValueNotifier<int> refreshNotifier;

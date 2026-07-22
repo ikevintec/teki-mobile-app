@@ -1,6 +1,6 @@
-import 'package:teki_app/src/data/models/teki_model/companySummary.dart';
+import 'package:teki_app/src/data/models/teki_model/company_summary.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
-import 'package:teki_app/src/data/models/teki_model/saleStation.dart';
+import 'package:teki_app/src/data/models/teki_model/sale_station.dart';
 
 class User {
   final int? id;

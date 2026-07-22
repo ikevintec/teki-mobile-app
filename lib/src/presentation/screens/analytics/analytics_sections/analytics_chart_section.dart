@@ -1,10 +1,10 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/data/models/teki_model/monthlyMovement.dart';
-import 'package:teki_app/src/domain/repositories/monthlyMovement_repository.dart';
-import 'package:teki_app/src/data/repositories/monthlyMovement_impl.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/data/models/teki_model/monthly_movement.dart';
+import 'package:teki_app/src/domain/repositories/monthly_movement_repository.dart';
+import 'package:teki_app/src/data/repositories/monthly_movement_impl.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class AnalyticsChartSection extends StatefulWidget {
   final int id;

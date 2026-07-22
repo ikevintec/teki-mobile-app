@@ -7,7 +7,7 @@ import 'package:teki_app/src/presentation/screens/accounts_receivable/widgets/ot
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/accounts_receivable/accounts_receivable_notifier.dart';
 import 'package:teki_app/src/providers/accounts_receivable/seller_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class _FilterButton extends StatelessWidget {

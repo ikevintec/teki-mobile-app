@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 import 'package:teki_app/src/data/repositories/cash_register_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/cash_register_repository.dart';
 

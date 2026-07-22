@@ -6,7 +6,7 @@ import 'package:teki_app/src/presentation/screens/cotizaciones/view_quotation_sc
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/quotation/quotation_list_provider.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 

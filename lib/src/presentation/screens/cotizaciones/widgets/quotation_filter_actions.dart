@@ -3,7 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/presentation/screens/cotizaciones/widgets/quotation_other_filters.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/quotation/quotation_list_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class QuotationFilterActions extends ConsumerWidget {
   const QuotationFilterActions({super.key});

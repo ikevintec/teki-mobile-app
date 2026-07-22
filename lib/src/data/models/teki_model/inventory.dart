@@ -1,6 +1,6 @@
-import 'package:teki_app/src/data/models/teki_model/batchProduct.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
 import 'package:teki_app/src/data/models/teki_model/company.dart';
-import 'package:teki_app/src/data/models/teki_model/inventoryRecord.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory_record.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';

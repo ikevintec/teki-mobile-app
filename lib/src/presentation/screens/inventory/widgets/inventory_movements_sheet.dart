@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:teki_app/src/data/models/teki_model/batchProduct.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
-import 'package:teki_app/src/data/models/teki_model/inventoryRecord.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory_record.dart';
 import 'package:teki_app/src/providers/inventory/inventory_logs_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class InventoryMovementsSheet extends ConsumerStatefulWidget {

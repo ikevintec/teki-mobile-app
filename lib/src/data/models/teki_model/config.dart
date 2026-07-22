@@ -1,6 +1,6 @@
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
-import 'package:teki_app/src/data/models/teki_model/paymentMethod.dart';
-import 'package:teki_app/src/data/models/teki_model/unitCode.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_method.dart';
+import 'package:teki_app/src/data/models/teki_model/unit_code.dart';
 
 class ConfigCompany {
   bool? envioAutomaticoSunat;

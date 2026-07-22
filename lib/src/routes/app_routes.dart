@@ -15,7 +15,7 @@ import 'package:teki_app/src/presentation/screens/customer_reports/customer_repo
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/discount_reports/discount_report_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/expense/expense_main_screen.dart';
-import 'package:teki_app/src/presentation/screens/expense_category/expense_category_main_Screen.dart';
+import 'package:teki_app/src/presentation/screens/expense_category/expense_category_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/expense_invoice/expense_invoice_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/expense_invoice/expense_invoice_sections/add_expense_invoice_section.dart';
 import 'package:teki_app/src/presentation/screens/expense_list/expense_list_main_screen.dart';
@@ -31,7 +31,7 @@ import 'package:teki_app/src/presentation/screens/payment_reports/payment_report
 import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/product/product_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
-import 'package:teki_app/src/presentation/screens/sales/salesSections/sales_return_section.dart';
+import 'package:teki_app/src/presentation/screens/sales/sales_sections/sales_return_section.dart';
 import 'package:teki_app/src/presentation/screens/products/products_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/products_reports/products_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/profile/profile_main_screen.dart';
@@ -54,11 +54,11 @@ import 'package:teki_app/src/presentation/screens/unit/unit_management_main_scre
 import 'package:teki_app/src/presentation/screens/user_reports/user_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/user_role/user_role_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/accounts_receivable/accounts_receivable_main_screen.dart';
-import 'package:teki_app/src/presentation/screens/comprobantes/ver_comprbantes.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/ver_comprobantes.dart';
 import 'package:teki_app/src/presentation/screens/cotizaciones/ver_quotations_screen.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/orders_restaurant_main_screen.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/inventory/inventory_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/inventory_adjustment/inventory_adjustment_screen.dart';

@@ -10,7 +10,7 @@ import 'package:teki_app/src/presentation/screens/cotizaciones/widgets/quotation
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/quotation/quotation_list_provider.dart';
 
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class VerQuotationsScreen extends ConsumerStatefulWidget {
   const VerQuotationsScreen({super.key});

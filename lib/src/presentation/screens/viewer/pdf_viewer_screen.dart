@@ -8,7 +8,7 @@ import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PdfViewerScreen extends ConsumerStatefulWidget {

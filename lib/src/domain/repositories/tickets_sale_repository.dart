@@ -1,5 +1,5 @@
 import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
-import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
+import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 
 abstract class TicketsSaleRepository {

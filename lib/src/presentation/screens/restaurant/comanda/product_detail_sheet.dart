@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailGroupOption.dart';
-import 'package:teki_app/src/data/models/teki_model/commandDetailPreparationOption.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_preparation_option.dart';
 import 'package:teki_app/src/data/models/teki_model/group.dart';
-import 'package:teki_app/src/data/models/teki_model/groupOption.dart';
-import 'package:teki_app/src/data/models/teki_model/preparationOption.dart';
+import 'package:teki_app/src/data/models/teki_model/group_option.dart';
+import 'package:teki_app/src/data/models/teki_model/preparation_option.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 // ---------------------------------------------------------------------------

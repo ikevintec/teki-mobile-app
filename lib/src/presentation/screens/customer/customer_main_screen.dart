@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
-import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_floating_action_button.dart';
+import 'package:teki_app/src/presentation/widgets/floating_action_button/custom_floating_action_button.dart';
 import 'package:teki_app/src/presentation/screens/customer/widgets/customer_filters_modal.dart';
 import 'package:teki_app/src/presentation/screens/customer/customer_sections/customer_details_screen.dart';
 import 'package:teki_app/src/presentation/screens/customer/customer_sections/create_customer_section.dart';
@@ -12,7 +12,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/customers/customers.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class CustomerMainScreen extends ConsumerStatefulWidget {

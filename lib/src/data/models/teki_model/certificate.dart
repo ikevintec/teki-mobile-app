@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/fileStorage.dart';
+import 'package:teki_app/src/data/models/teki_model/file_storage.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class Certificate {

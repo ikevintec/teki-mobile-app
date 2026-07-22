@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/presentation/screens/inventory_adjustment/widgets/batch_lotes_section.dart';
 import 'package:teki_app/src/presentation/screens/inventory_adjustment/widgets/serie_lotes_section.dart';
 import 'package:teki_app/src/providers/inventory_adjustment/inventory_adjustment_provider.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 /// Chip resumen que se muestra en la pantalla principal.
 /// Al tocarlo abre el bottom sheet de gestión de lotes/series.

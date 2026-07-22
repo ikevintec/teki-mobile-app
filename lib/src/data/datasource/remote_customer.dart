@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/data/models/response/customer.dart';
 import 'package:teki_app/src/domain/datasource/customer_datasource.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';

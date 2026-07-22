@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/lounge.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
-import 'package:teki_app/src/data/models/teki_model/orderRestaurantChangeStatusItems.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant_change_status_items.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/restaurant_repository.dart';

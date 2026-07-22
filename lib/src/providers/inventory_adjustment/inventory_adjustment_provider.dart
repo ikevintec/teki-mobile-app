@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
-import 'package:teki_app/src/data/models/teki_model/batchProduct.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory_adjustment.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory_adjustment_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';

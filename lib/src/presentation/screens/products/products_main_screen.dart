@@ -5,15 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:get/get.dart';
 // import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
-import 'package:teki_app/src/presentation/screens/products/products_sections/product-list_section.dart';
+import 'package:teki_app/src/presentation/screens/products/products_sections/product_list_section.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/search_field.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 // import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
-import 'package:teki_app/src/presentation/widgets/floating_aciton_button/custom_floating_action_button.dart';
-import 'package:teki_app/src/providers/products/profucts.dart';
+import 'package:teki_app/src/presentation/widgets/floating_action_button/custom_floating_action_button.dart';
+import 'package:teki_app/src/providers/products/products.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class ProductsMainScreen extends ConsumerStatefulWidget {
   const ProductsMainScreen({super.key});

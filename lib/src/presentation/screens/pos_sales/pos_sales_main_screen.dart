@@ -5,7 +5,7 @@ import 'package:teki_app/src/data/models/products_model/product_brand_model.dart
 import 'package:teki_app/src/data/models/products_model/product_list_model.dart';
 import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_sections/pos_bills_section.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class POSSalesMainScreen extends StatefulWidget {
   const POSSalesMainScreen({super.key});

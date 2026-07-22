@@ -1,5 +1,5 @@
 import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
-import 'package:teki_app/src/data/models/teki_model/totalesComprobantes.dart';
+import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
 
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
 import 'package:teki_app/src/data/datasource/remote_ticket_sale.dart';

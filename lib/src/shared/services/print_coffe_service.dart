@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class PrintCoffeException implements Exception {
   final String message;

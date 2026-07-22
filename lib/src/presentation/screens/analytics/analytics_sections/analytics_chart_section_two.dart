@@ -2,10 +2,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:teki_app/src/data/models/teki_model/monthlySales.dart';
-import 'package:teki_app/src/domain/repositories/monthlySales_repository.dart';
+import 'package:teki_app/src/data/models/teki_model/monthly_sales.dart';
+import 'package:teki_app/src/domain/repositories/monthly_sales_repository.dart';
 import 'package:teki_app/src/data/repositories/monthlysales_impl.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 class AnalyticsChartSectionTwo extends StatefulWidget {
   final int id;

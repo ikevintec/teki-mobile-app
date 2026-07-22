@@ -9,7 +9,7 @@ import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.
 import 'package:teki_app/src/providers/accounts_receivable/accounts_receivable_notifier.dart';
 import 'package:teki_app/src/providers/accounts_receivable/seller_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 const List<Map<String, String>> _tipoComprobanteOptions = [
   {'label': 'Factura', 'value': '01'},

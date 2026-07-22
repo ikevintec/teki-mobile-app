@@ -4,144 +4,108 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Teki is a Flutter-based mobile application for business management, including sales, inventory, customers, suppliers, and financial reporting. The app follows Clean Architecture principles with a clear separation of data, domain, and presentation layers.
+Teki mobile app (`teki_app`) is the Flutter client of the Teki ecosystem — a business management app for the Peruvian market: POS/sales, electronic invoicing (comprobantes), restaurant management, inventory, purchases, expenses, accounts receivable/payable, and reporting. It consumes the `cbetfactback` Spring Boot API.
+
+- ~527 Dart files: presentation (231), data (197), domain (42), providers (33), shared (12), utils (9)
+- Primary locale: Spanish (`es`); English supported as secondary
 
 ## Development Commands
 
-### Setup
 ```bash
-# Install dependencies
-flutter pub get
-
-# Generate launcher icons
-flutter pub run flutter_launcher_icons:main
-
-# Run the application
-flutter run
-
-# Build for production
-flutter build apk
-flutter build ios
-```
-
-### Code Quality
-```bash
-# Analyze code for issues
-flutter analyze
-
-# Format code
-flutter format .
-```
-
-### Testing
-```bash
-# Run tests
-flutter test
+flutter pub get                              # Install dependencies
+flutter run                                  # Run the application
+flutter build apk                            # Android production build
+flutter build ios                            # iOS production build
+flutter analyze                              # Static analysis
+dart format .                                # Format code
+flutter test                                 # Run tests (currently only 1 test file exists)
+flutter pub run flutter_launcher_icons:main  # Regenerate launcher icons
 ```
 
 ## Architecture
 
-### Clean Architecture Structure
-The project follows Clean Architecture with three main layers:
+Clean Architecture with three layers plus providers:
 
-- **Data Layer** (`lib/src/data/`): External data sources, repositories implementations, and models
-- **Domain Layer** (`lib/src/domain/`): Business logic, abstract repositories, and use cases
-- **Presentation Layer** (`lib/src/presentation/`): UI screens, widgets, and state management
+- `lib/src/data/` — remote datasources (`datasource/remote_*.dart`), repository implementations, models
+- `lib/src/domain/` — abstract datasources and repositories (interfaces)
+- `lib/src/presentation/` — screens, sections, widgets
+- `lib/src/providers/` — Riverpod state, grouped by feature (19 folders)
+- `lib/src/shared/services/` — cross-cutting services (socket, notifications, printing, storage)
+- `lib/src/routes/` — GetX routes and middleware
+- `lib/src/utils/` — API client, constants, formatters, helpers
 
-### Key Architectural Components
+Datasources and repositories are symmetric: each `data/datasource/remote_X.dart` implements a `domain/datasource/X_datasource.dart` interface, wrapped by `data/repositories/X_repository_impl.dart`.
 
-#### State Management
-- **Riverpod**: Primary state management solution using `flutter_riverpod` and `hooks_riverpod`
-- **GetX**: Used for navigation and route management
-- Provider containers are configured in `main.dart` with a global container
+### State Management
+- **Riverpod** (`flutter_riverpod` + `hooks_riverpod`) is the state solution.
+- A global `ProviderContainer` (`globalContainer` in `main.dart`) is used outside the widget tree (API client 401 handler, notification service, auth middleware).
+- Mature pattern to follow for new features: Notifier + separate `_state.dart` file (see `providers/sale/customer/` and `providers/tickets_sale/`).
 
-#### Navigation
-- **GetX Navigation**: Configured in `lib/src/routes/app_routes.dart`
-- **Middleware**: Authentication middleware applied to all routes
-- Route observer for tracking navigation events
+### Navigation
+- **GetX** is used for navigation only (`Get.toNamed`), NOT for state.
+- All routes are defined in `lib/src/routes/app_routes.dart`; every page gets `AuthMiddleware` applied.
+- NOTE: `AuthMiddleware` only redirects logged-in users away from `/login`, `/splashScreen`, `/onboarding`. It does NOT block unauthenticated access to private routes — session enforcement relies on the API returning 401.
+- Initial route is `/splashScreen`, which restores the session via `checkAuthStatus()`.
 
-#### API Integration
-- **Dio**: HTTP client configured in `lib/src/utils/api_client.constant.dart`
-- Automatic token injection via interceptors
-- Automatic logout on 401 responses
-- Base URL configured via environment variables
+### API Client (`lib/src/utils/api_client.constant.dart`)
+- Static Dio singleton `ApiClient.dio`, base URL from `Environment.apiUrl`, 30s timeouts.
+- Request interceptor injects `Authorization: Bearer <token>` (read from SharedPreferences key `access_token`) and header `PlatformRequest: mobile`.
+- On 401: global logout via `authStateProvider` with an anti-reentry flag; call `ApiClient.resetLogoutFlag()` after successful login (already done in `providers/auth/login.dart`).
+- CAUTION: the WhatsApp datasource (`remote_whatsapp_datasource.dart`) builds its own Dio clients that do NOT share this 401 handling.
 
-### Directory Structure
+### Auth Flow
+- `POST /auth/login` → `LoginResponse`; roles from `GET /auth/account/roles`.
+- Session persisted in SharedPreferences under keys: `access_token`, `login`, `roles`, `configCompany` (plain text — see MEJORAS.md).
+- `logout()` clears those keys, disposes notifications, and navigates to `/login`.
+- Storage goes through `KeyValueStorageService` (`shared/services/`). Its impl only supports `int` and `String` — do not store other types.
 
-#### Core Directories
-- `lib/src/data/`: Data layer with datasources, models, and repository implementations
-- `lib/src/domain/`: Domain layer with abstract repositories and business logic
-- `lib/src/presentation/`: UI layer with screens, widgets, and sections
-- `lib/src/providers/`: Riverpod providers for state management
-- `lib/src/routes/`: Navigation routes and middleware
-- `lib/src/shared/`: Shared services and utilities
-- `lib/src/utils/`: Utility functions and constants
+### Realtime (Socket.IO)
+- `shared/services/socket_service.dart` — singleton, connects to `Environment.wsUrl` + `Environment.wsPath`.
+- Listened events: `commandRestaurant`, `orderRestaurant` (restaurant realtime flows). Connection is refcounted; `disconnect()` only closes at count 0.
 
-#### Screen Organization
-Each major feature has its own directory under `presentation/screens/` with:
-- Main screen file
-- Sections subdirectory for screen components
-- Widgets subdirectory for reusable components
+### Push Notifications
+- Firebase Messaging + `flutter_local_notifications` in `shared/services/notification_service.dart`.
+- Token registered at `POST /notifications/register-token`. Tap navigation is dispatched by `data['type']`: `dish_desk_ready`, `order_ready`, `sale_update`.
+- `firebase_options.dart` is not generated; Firebase init relies on native config files.
 
-## Key Technologies
-
-### Core Dependencies
-- **Flutter**: Mobile framework
-- **flutter_riverpod** & **hooks_riverpod**: State management
-- **get**: Navigation and route management
-- **dio**: HTTP client for API communication
-- **flutter_dotenv**: Environment variable management
-
-### UI/UX Libraries
-- **google_fonts**: Typography
-- **flutter_svg**: SVG support
-- **fl_chart**: Data visualization
-- **convex_bottom_bar**: Custom navigation bars
-- **cherry_toast**: Toast notifications
-
-### Utility Libraries
-- **shared_preferences**: Local storage
-- **image_picker**: Image selection
-- **pdf** & **printing**: PDF generation and printing
-- **syncfusion_flutter_pdfviewer**: PDF viewing
+### Printing
+- No direct Bluetooth printing. All physical printing is delegated over HTTP to an external print agent called **"Coffe"** (`Environment.printUrl`, `shared/services/print_coffe_service.dart`).
+- Commands (restaurant) and comprobantes (invoices/boletas) are formatted as ESC/POS (`command_esc_pos_formatter.dart`, `invoice_esc_pos_formatter.dart`) or rendered as backend PDFs, depending on printer config per sale station.
+- Auto-print behavior is controlled by `ConfigCompany` (`impresionAutomatica`, `clienteImpresion == 'COFFE'`, `imprimirBoletaLite`).
 
 ## Environment Configuration
 
-### Environment Variables
-Create a `.env` file in the root directory with:
-```
-API_URL=your_api_base_url
-```
+- `flutter_dotenv`; `Environment.initEnvironment()` in `lib/src/utils/constants.dart` **always loads `.env`**.
+- `.env.production` exists but is never loaded, and currently both files point to production (`https://api.teki.pe/api`). There is no dev/staging environment — be careful: local runs hit production.
+- Variables: `API_URL`, `WS_URL`, `WS_PATH`, `PRINT_URL`.
 
-The environment is loaded in `main.dart` via `Environment.intiEnvironment()`.
+## Feature Map (presentation/screens/)
 
-## Development Guidelines
+- **Auth/boot**: splash_screen, onboarding, authentication (login/register/forgot)
+- **Core**: dashboard (tabs: inicio, caja, balance, movimientos), management, analytics, settings, profile, notification, support, viewer (PDF)
+- **Sales**: `sale` (current modular sale flow), `sales`, `pos_sales` (older flows — check MEJORAS.md before touching), invoice, comprobantes, cotizaciones, accounts_receivable (single screen parameterized `tipoCuenta: 'CC' | 'CP'`)
+- **Products**: product/products/add_product, category, brand, unit
+- **Restaurant**: restaurant (mesas, comanda, dividir, cobrador), orders_restaurant, push_notification_events
+- **Purchases**: purchase, purchase_invoice, supplier, biller
+- **Inventory**: inventory, inventory_adjustment, warehouse
+- **Customers/users**: customer, add_user, user_role
+- **Expenses**: expense, expense_list, expense_category, expense_payment, expense_invoice
+- **Reports**: reports hub + ~11 domain-specific report screens
 
-### Model Organization
-- **Teki Models**: Core business entities in `data/models/teki_model/`
-- **Feature Models**: Organized by feature (products, sales, customers, etc.)
-- **Response Models**: API response wrappers in `data/models/response/`
+## Coding Conventions
 
-### Provider Pattern
-- Providers are organized by feature in `lib/src/providers/`
-- Use Riverpod for state management
-- Authentication state is managed globally
+- New screens: `feature_name/feature_name_main_screen.dart` with `feature_name_sections/` and `widgets/` subfolders, snake_case everywhere.
+- New state: Riverpod Notifier + separate `_state.dart` file.
+- All HTTP through `ApiClient.dio` (never create ad-hoc Dio instances).
+- Use `debugPrint` (never `print`) and gate verbose logging behind `kDebugMode`.
+- Spanish for user-facing strings; follow existing es-PE currency/date formats (`utils/formats.dart`, `utils/price_formatter.dart`).
 
-### API Integration
-- All API calls use the configured Dio client
-- Automatic token management via interceptors
-- Environment-based URL configuration
+## Known Gotchas
 
-### Localization
-- Spanish is the primary locale (`es`)
-- English is supported as secondary locale
-- Date formatting is configured for Spanish locale
+- File/directory names were normalized to snake_case in the 2026-07 naming batch (see MEJORAS.md P3). Class names inside those files were NOT renamed and may still carry typos (e.g. class in `teki_model/customer.dart` files).
+- `lib/src/utils/constants.dart` holds two responsibilities: `ColorSchema` and `Environment` (split pending).
+- Subfolder conventions are still mixed (`sections/` vs `*_sections/`, `widget/` vs `widgets/`) and feature names mix Spanish/English — policy pending in MEJORAS.md.
 
-## Current Development Branch
-- Main development branch: `develop`
-- Current working branch: `version-final-venta`
+## Improvement Backlog
 
-## Modified Files
-The git status shows modifications in:
-- `lib/src/presentation/screens/comprobantes/comprobante_screen.dart/view_comprobante_screen.dart`
-- `lib/src/presentation/screens/comprobantes/comprobante_screen.dart/product_list.dart` (untracked)
+Known issues (security, env separation, god widgets, missing tests, naming cleanup) are mapped with priorities in [MEJORAS.md](MEJORAS.md). Check it before starting refactors to avoid duplicating planned work.

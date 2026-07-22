@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:teki_app/src/data/models/teki_model/accountReceivable.dart';
-import 'package:teki_app/src/data/models/teki_model/accountReceivableDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/paymentDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/account_receivable.dart';
+import 'package:teki_app/src/data/models/teki_model/account_receivable_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
 import 'package:teki_app/src/data/repositories/accounts_receivable_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/accounts_receivable/widgets/register_payment_sheet.dart';
-import 'package:teki_app/src/utils/contstants.dart';
+import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 void showAmortizeSheet(

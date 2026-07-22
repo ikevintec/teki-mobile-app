@@ -1,9 +1,9 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:teki_app/src/data/models/teki_model/cashRegisterDetail.dart';
-import 'package:teki_app/src/data/models/teki_model/paymentDetail.dart';
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
-import 'package:teki_app/src/data/models/teki_model/ticketFee.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_fee.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/repositories/quotation_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';

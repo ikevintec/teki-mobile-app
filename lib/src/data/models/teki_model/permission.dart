@@ -1,4 +1,4 @@
-import 'package:teki_app/src/data/models/teki_model/moduleAccess.dart';
+import 'package:teki_app/src/data/models/teki_model/module_access.dart';
 
 class Permission {
   final int? id;
