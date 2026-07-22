@@ -61,6 +61,95 @@ void main() {
     });
   });
 
+  group('CashRegisterState.openRegisterEsOtraFecha', () {
+    final hoy = DateTime(2026, 7, 22);
+
+    test('sin caja abierta no hay aviso', () {
+      expect(const CashRegisterState().openRegisterEsOtraFecha(hoy), isFalse);
+    });
+
+    test('caja abierta del mismo día no genera aviso', () {
+      final state = CashRegisterState(
+        openRegister: CashRegisterResponse(
+          id: 1,
+          estadoCaja: 'APERTURADA',
+          fecha: DateTime(2026, 7, 22, 18, 30),
+          montosTotalesIngresos: const [],
+          montosTotalesEgresos: const [],
+          montosIngresosEfectivo: const [],
+        ),
+      );
+      expect(state.openRegisterEsOtraFecha(hoy), isFalse);
+    });
+
+    test('caja abierta de otro día genera aviso', () {
+      final state = CashRegisterState(
+        openRegister: CashRegisterResponse(
+          id: 1,
+          estadoCaja: 'APERTURADA',
+          fecha: DateTime(2026, 7, 19),
+          montosTotalesIngresos: const [],
+          montosTotalesEgresos: const [],
+          montosIngresosEfectivo: const [],
+        ),
+      );
+      expect(state.openRegisterEsOtraFecha(hoy), isTrue);
+    });
+
+    test('caja abierta sin fecha no genera aviso', () {
+      final state = CashRegisterState(
+        openRegister: CashRegisterResponse(
+          id: 1,
+          montosTotalesIngresos: const [],
+          montosTotalesEgresos: const [],
+          montosIngresosEfectivo: const [],
+        ),
+      );
+      expect(state.openRegisterEsOtraFecha(hoy), isFalse);
+    });
+  });
+
+  group('CashRegisterState.copyWith y openRegister', () {
+    final caja = CashRegisterResponse(
+      id: 9,
+      montosTotalesIngresos: const [],
+      montosTotalesEgresos: const [],
+      montosIngresosEfectivo: const [],
+    );
+
+    test('copyWith sin openRegister lo conserva', () {
+      final state = CashRegisterState(openRegister: caja);
+      expect(state.copyWith(isLoading: true).openRegister, same(caja));
+    });
+
+    test('copyWith puede limpiar openRegister con null explícito', () {
+      final state = CashRegisterState(openRegister: caja);
+      expect(state.copyWith(openRegister: null).openRegister, isNull);
+    });
+  });
+
+  group('CashRegisterResponse', () {
+    test('isAperturada según estadoCaja', () {
+      expect(register().isAperturada, isFalse);
+      final abierta = CashRegisterResponse(
+        estadoCaja: 'APERTURADA',
+        montosTotalesIngresos: const [],
+        montosTotalesEgresos: const [],
+        montosIngresosEfectivo: const [],
+      );
+      expect(abierta.isAperturada, isTrue);
+    });
+
+    test('fromJson parsea la fecha en formatos flexibles', () {
+      final r = CashRegisterResponse.fromJson({
+        'id': 1,
+        'estadoCaja': 'APERTURADA',
+        'fecha': '2026-07-19T00:00:00',
+      });
+      expect(r.fecha, DateTime(2026, 7, 19));
+    });
+  });
+
   group('CashRegisterState.balancePorMoneda', () {
     test('ingresos menos egresos por moneda', () {
       final state = CashRegisterState(registers: [

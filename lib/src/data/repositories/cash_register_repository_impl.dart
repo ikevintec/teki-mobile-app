@@ -28,6 +28,17 @@ class CashRegisterRepositoryImpl extends CashRegisterRepository {
   }
 
   @override
+  Future<List<CashRegisterResponse>> getOpenCashRegisters({
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  }) {
+    return datasource.getOpenCashRegisters(
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
+    );
+  }
+
+  @override
   Future<CashRegisterDetailPage> getCashRegisterDetail({
     required int idCaja,
     required String tipo,

@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/currency_selector.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/empty_caja_card.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/historial_item.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/open_register_banner.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/imprimir_caja_modal.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/movimiento_item.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/tipo_selector.dart';
@@ -94,6 +96,15 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     ref.read(cashRegisterDetailProvider.notifier).changeMoneda(newMoneda);
   }
 
+  /// Salta a la fecha de la caja aperturada detectada y recarga.
+  void _goToOpenRegister(DateTime fecha) {
+    setState(() {
+      _selectedDate = DateTime(fecha.year, fecha.month, fecha.day);
+      _selectedMoneda = null;
+    });
+    _fetchCashRegister();
+  }
+
   /// Abre el sheet para registrar un ingreso/egreso externo del tipo activo.
   Future<void> _openMovementSheet(String tipo, String monedaActiva) async {
     final cajaState = ref.read(cashRegisterProvider);
@@ -147,9 +158,22 @@ class _CajaTabState extends ConsumerState<CajaTab> {
             onDateSelected: _onDateChanged,
             singleDayPicker: true,
             initialFilter: CalendarFilter.day,
+            selectedRange: DateTimeRange(
+              start: DateTime(
+                  _selectedDate.year, _selectedDate.month, _selectedDate.day),
+              end: DateTime(
+                  _selectedDate.year, _selectedDate.month, _selectedDate.day),
+            ),
           ),
         ),
         SizedBox(height: 12),
+        // ── Aviso de caja abierta en otra fecha ────────────────────────────
+        if (!cajaState.isLoading &&
+            cajaState.openRegisterEsOtraFecha(_selectedDate))
+          OpenRegisterBanner(
+            fecha: cajaState.openRegister!.fecha!,
+            onTap: () => _goToOpenRegister(cajaState.openRegister!.fecha!),
+          ),
         // ── Tarjeta de balance ─────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -204,6 +228,8 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                           ],
                         ),
                       )
+                    : cajaState.registers.isEmpty
+                    ? EmptyCajaCard(fecha: _selectedDate)
                     : Padding(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                         child: Column(
@@ -234,6 +260,34 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                                     color: Colors.grey.shade700,
                                   ),
                                 ),
+                                if (cajaState.registers.isNotEmpty &&
+                                    cajaState.registers.first.estadoCaja !=
+                                        null) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: cajaState.registers.first
+                                              .isAperturada
+                                          ? const Color(0xFF16A34A)
+                                              .withValues(alpha: 0.1)
+                                          : Colors.grey.shade200,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      cajaState.registers.first.estadoCaja!,
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: cajaState
+                                                .registers.first.isAperturada
+                                            ? const Color(0xFF16A34A)
+                                            : Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                                 const Spacer(),
                                 if (monedas.length > 1) ...[
                                   CurrencySelector(
@@ -388,19 +442,20 @@ class _CajaTabState extends ConsumerState<CajaTab> {
 
         const SizedBox(height: 12),
 
-        // ── Selector Ingresos / Egresos ────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: TipoSelector(
-            tipo: detailState.tipo,
-            isBlocked: detailState.isLoading || detailState.isLoadingMore,
-            onChanged: (t) =>
-                ref.read(cashRegisterDetailProvider.notifier).changeTipo(t),
-            onAdd: () => _openMovementSheet(detailState.tipo, monedaActiva),
+        // ── Selector Ingresos / Egresos (solo con caja existente) ─────────
+        if (!cajaState.isLoading && cajaState.registers.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TipoSelector(
+              tipo: detailState.tipo,
+              isBlocked: detailState.isLoading || detailState.isLoadingMore,
+              onChanged: (t) =>
+                  ref.read(cashRegisterDetailProvider.notifier).changeTipo(t),
+              onAdd: () => _openMovementSheet(detailState.tipo, monedaActiva),
+            ),
           ),
-        ),
-
-        const SizedBox(height: 10),
+          const SizedBox(height: 10),
+        ],
 
         // ── Historial (solo esta parte scrollea) ───────────────────────────
         Expanded(

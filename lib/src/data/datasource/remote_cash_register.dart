@@ -47,6 +47,32 @@ class RemoteCashRegister extends CashRegisterDatasource {
   }
 
   @override
+  Future<List<CashRegisterResponse>> getOpenCashRegisters({
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  }) async {
+    try {
+      final response = await dio.get(
+        '/cash-register',
+        queryParameters: {
+          'paginacion': false,
+          'estadoCaja': 'APERTURADA',
+          'idPuntoVenta': idPuntoVenta,
+          'idEstacionVenta': idEstacionVenta,
+        },
+      );
+      final data = response.data as List;
+      return data
+          .map((e) => CashRegisterResponse.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      // Consulta auxiliar (banner de caja abierta): un fallo aquí no debe
+      // interrumpir la carga principal de la caja.
+      return [];
+    }
+  }
+
+  @override
   Future<CashRegisterDetailPage> getCashRegisterDetail({
     required int idCaja,
     required String tipo,

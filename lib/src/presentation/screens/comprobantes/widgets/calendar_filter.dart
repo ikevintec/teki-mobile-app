@@ -12,11 +12,17 @@ class CustomDatePicker extends StatefulWidget {
   /// Si no se envía, por defecto arranca por mes.
   final CalendarFilter initialFilter;
 
+  /// Selección controlada externamente (opcional). Cuando el padre cambia
+  /// este rango (p. ej. al saltar a la fecha de una caja abierta), el picker
+  /// sincroniza su selección visual sin volver a notificar [onDateSelected].
+  final DateTimeRange? selectedRange;
+
   const CustomDatePicker({
     super.key,
     required this.onDateSelected,
     this.singleDayPicker = false,
     this.initialFilter = CalendarFilter.month,
+    this.selectedRange,
   });
 
   @override
@@ -26,6 +32,26 @@ class CustomDatePicker extends StatefulWidget {
 class _CustomDatePickerState extends State<CustomDatePicker> {
   late CalendarFilter _selectedFilter = widget.initialFilter;
   DateTimeRange? _selectedRange;
+
+  @override
+  void didUpdateWidget(covariant CustomDatePicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final ext = widget.selectedRange;
+    if (ext == null || ext == oldWidget.selectedRange || ext == _selectedRange) {
+      return;
+    }
+    setState(() {
+      // Si el rango existe entre los chips del filtro actual lo selecciona;
+      // si no, lo muestra como rango personalizado.
+      final match = getCurrentList().where((r) => r == ext).toList();
+      if (match.isNotEmpty) {
+        _selectedRange = match.first;
+      } else {
+        _selectedFilter = CalendarFilter.custom;
+        _selectedRange = ext;
+      }
+    });
+  }
 
   List<DateTimeRange> getCurrentList() {
     final now = DateTime.now();

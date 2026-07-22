@@ -11,6 +11,13 @@ abstract class CashRegisterRepository {
     CancelToken? cancelToken,
   });
 
+  /// Cajas en estado APERTURADA del punto de venta/estación, sin filtrar
+  /// por fecha (para detectar cajas abiertas de días anteriores).
+  Future<List<CashRegisterResponse>> getOpenCashRegisters({
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  });
+
   Future<CashRegisterDetailPage> getCashRegisterDetail({
     required int idCaja,
     required String tipo,

@@ -25,15 +25,25 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
 
   /// Carga la caja del punto de venta/estación de la sesión para [fecha]
   /// (null = hoy) y luego el historial de la moneda activa; si no hay
-  /// registros, limpia el historial.
+  /// registros, limpia el historial. En paralelo refresca la detección de
+  /// caja abierta (sin filtro de fecha) para el aviso de caja pendiente.
   Future<void> fetchAndLoadDetail({
     String? selectedMoneda,
     DateTime? fecha,
   }) async {
     final sesion = ref.read(sesionProvider);
+    final idPV = sesion.office?.id ?? 0;
+    final idEV = sesion.saleStation?.id ?? 0;
+
+    // No bloquea la carga principal; el datasource devuelve [] ante errores.
+    final openFuture = repository.getOpenCashRegisters(
+      idPuntoVenta: idPV,
+      idEstacionVenta: idEV,
+    );
+
     await fetch(
-      idPuntoVenta: sesion.office?.id ?? 0,
-      idEstacionVenta: sesion.saleStation?.id ?? 0,
+      idPuntoVenta: idPV,
+      idEstacionVenta: idEV,
       fecha: fecha != null ? DateFormat('dd-MM-yyyy').format(fecha) : null,
     );
     if (!mounted) return;
@@ -42,6 +52,23 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
     } else {
       loadDetail(selectedMoneda: selectedMoneda);
     }
+
+    final abiertas = await openFuture;
+    if (!mounted) return;
+    state = state.copyWith(openRegister: _masReciente(abiertas));
+  }
+
+  /// La caja abierta con fecha más reciente (o la primera sin fecha).
+  CashRegisterResponse? _masReciente(List<CashRegisterResponse> abiertas) {
+    if (abiertas.isEmpty) return null;
+    final ordenadas = [...abiertas]..sort((a, b) {
+        final fa = a.fecha, fb = b.fecha;
+        if (fa == null && fb == null) return 0;
+        if (fa == null) return 1;
+        if (fb == null) return -1;
+        return fb.compareTo(fa);
+      });
+    return ordenadas.first;
   }
 
   /// Dispara la carga del historial usando el primer registro disponible y
@@ -98,15 +125,30 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
 }
 
 class CashRegisterState {
+  static const _unset = Object();
+
   final bool isLoading;
   final List<CashRegisterResponse> registers;
   final String? error;
+
+  /// Caja en estado APERTURADA más reciente del punto de venta/estación,
+  /// sin filtro de fecha. Null cuando no hay ninguna abierta.
+  final CashRegisterResponse? openRegister;
 
   const CashRegisterState({
     this.isLoading = false,
     this.registers = const [],
     this.error,
+    this.openRegister,
   });
+
+  /// True si hay una caja abierta cuya fecha operativa NO es [fecha]
+  /// (candidata al aviso de "tienes una caja abierta de otro día").
+  bool openRegisterEsOtraFecha(DateTime fecha) {
+    final f = openRegister?.fecha;
+    if (f == null) return false;
+    return f.year != fecha.year || f.month != fecha.month || f.day != fecha.day;
+  }
 
   /// Suma de ingresos agrupados por moneda (considerando todos los registros del día)
   Map<String, double> get totalIngresosPorMoneda {
@@ -171,11 +213,15 @@ class CashRegisterState {
     bool? isLoading,
     List<CashRegisterResponse>? registers,
     String? error,
+    Object? openRegister = _unset,
   }) {
     return CashRegisterState(
       isLoading: isLoading ?? this.isLoading,
       registers: registers ?? this.registers,
       error: error,
+      openRegister: identical(openRegister, _unset)
+          ? this.openRegister
+          : openRegister as CashRegisterResponse?,
     );
   }
 }
