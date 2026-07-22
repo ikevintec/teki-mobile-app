@@ -19,6 +19,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/services/key_values_storage_impl.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
+import 'package:teki_app/src/utils/storage_keys.dart';
 
 // Creación del Provider que gestionará los cambios de estado
 final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
@@ -65,17 +66,17 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       );
 
       //Seteamos los valores que van aperdurar
-      await keyvalueStorage.setKeyValue('access_token', response.accessToken);
+      await keyvalueStorage.setKeyValue(StorageKeys.accessToken, response.accessToken);
       await keyvalueStorage.setKeyValue('login', jsonEncode(response.toJson()));
       await setConfigProvider(ref, response, saleStationRepository);
 
       // Obtenemos los permisos/roles del usuario (una sola vez, al iniciar sesión)
       final List<String> roles = await authRepository.getRoles();
       ref.read(sesionProvider.notifier).setRoles(roles);
-      await keyvalueStorage.setKeyValue('roles', jsonEncode(roles));
+      await keyvalueStorage.setKeyValue(StorageKeys.roles, jsonEncode(roles));
 
       ConfigCompany configCompany = await setConfigCompanies(ref, configRepository);
-      await keyvalueStorage.setKeyValue('configCompany', jsonEncode(configCompany.toJson()));
+      await keyvalueStorage.setKeyValue(StorageKeys.configCompany, jsonEncode(configCompany.toJson()));
       
       // Resetear el flag de logout para permitir nuevas sesiones
       ApiClient.resetLogoutFlag();
@@ -133,11 +134,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> checkAuthStatus() async {
-    final token = await keyvalueStorage.getValue<String>('access_token');
-    final loginJson = await keyvalueStorage.getValue<String>('login');
+    final token = await keyvalueStorage.getValue<String>(StorageKeys.accessToken);
+    final loginJson = await keyvalueStorage.getValue<String>(StorageKeys.login);
     final configCompanyJson =
-        await keyvalueStorage.getValue<String>('configCompany');
-    final rolesJson = await keyvalueStorage.getValue<String>('roles');
+        await keyvalueStorage.getValue<String>(StorageKeys.configCompany);
+    final rolesJson = await keyvalueStorage.getValue<String>(StorageKeys.roles);
 
     if (token != null && loginJson != null && configCompanyJson != null) {
       final login = LoginResponse.fromJson(jsonDecode(loginJson));
@@ -181,10 +182,10 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   void logout() async {
     NotificationService.instance.dispose();
-    await keyvalueStorage.removeKey('access_token');
-    await keyvalueStorage.removeKey('login');
-    await keyvalueStorage.removeKey('configCompany');
-    await keyvalueStorage.removeKey('roles');
+    await keyvalueStorage.removeKey(StorageKeys.accessToken);
+    await keyvalueStorage.removeKey(StorageKeys.login);
+    await keyvalueStorage.removeKey(StorageKeys.configCompany);
+    await keyvalueStorage.removeKey(StorageKeys.roles);
 
     state = state.copyWith(
       isLoggedIn: false,

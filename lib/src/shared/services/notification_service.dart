@@ -16,6 +16,7 @@ import 'package:teki_app/src/presentation/screens/push_notification_events/order
 import 'package:teki_app/main.dart' show globalContainer;
 
 import 'package:teki_app/src/utils/api_client.constant.dart';
+import 'package:teki_app/src/utils/storage_keys.dart';
 
 class NotificationService {
   NotificationService._();
@@ -25,7 +26,7 @@ class NotificationService {
   final _messaging = FirebaseMessaging.instance;
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
-  static const _tokenKey = 'fcm_token';
+  static const _tokenKey = StorageKeys.fcmToken;
   static const _channelId = 'teki_high_importance';
   static const _channelName = 'Teki Notificaciones';
 

@@ -6,22 +6,19 @@ Mapa priorizado de mejoras identificadas en el análisis del 2026-07-21. Cada í
 
 ## P0 — Seguridad (atender primero)
 
-### 1. Logs filtran token y credenciales en producción
-- [ ] `lib/src/utils/api_client.constant.dart` — `LogInterceptor` con `requestHeader`, `requestBody` y `responseBody` activos, sin condicionar a `kDebugMode`. Imprime el Bearer token y el body del login.
-- [ ] `lib/src/data/datasource/remote_whatsapp_datasource.dart` — mismo problema en sus clientes Dio propios.
-- **Cierre**: interceptores de log envueltos en `if (kDebugMode)`; ningún `print` crudo de requests.
+### 1. Logs filtran token y credenciales en producción ✅ (2026-07-21)
+- [x] `lib/src/utils/api_client.constant.dart` — `LogInterceptor` ahora dentro de `if (kDebugMode)` y con `debugPrint`.
+- [x] `remote_whatsapp_datasource.dart` — usa los interceptores compartidos de `ApiClient` (ver ítem 4).
 
 ### 2. Token de sesión en texto plano
 - [ ] `access_token`, `login`, `roles`, `configCompany` se guardan en `SharedPreferences` sin cifrar.
 - **Cierre**: migrar al menos `access_token` a `flutter_secure_storage`, encapsulado en `KeyValueStorageService`.
 
-### 3. Middleware no protege rutas privadas
-- [ ] `lib/src/routes/middleware/auth_middleware.dart` — solo redirige usuarios logueados fuera de login/splash/onboarding; un usuario sin sesión puede navegar a rutas internas (la protección real depende del 401 del backend). Además tiene `print()` de debug.
-- **Cierre**: sin sesión y ruta privada → redirect a `/login`; prints eliminados.
+### 3. Middleware no protege rutas privadas ✅ (2026-07-21)
+- [x] `auth_middleware.dart` — sin sesión y ruta fuera de `_publicRoutes` (`/splashScreen`, `/onboarding`, `/login`, `/register`, `/forgotPassword`) → redirect a `/login`. Prints eliminados.
 
-### 4. Clientes Dio paralelos sin manejo de 401
-- [ ] `remote_whatsapp_datasource.dart` crea `_whatsappClient` y `_wsClient` propios que no comparten el logout automático en 401 del `ApiClient`.
-- **Cierre**: reutilizar `ApiClient.dio` o extraer los interceptores compartidos a una factory común.
+### 4. Clientes Dio paralelos sin manejo de 401 ✅ (2026-07-21)
+- [x] Nueva factory `ApiClient.defaultInterceptors()` (auth + logout en 401 + logs solo en debug); `_whatsappClient` y `_wsClient` la usan en lugar de sus interceptores duplicados.
 
 ---
 
@@ -44,9 +41,8 @@ Mapa priorizado de mejoras identificadas en el análisis del 2026-07-21. Cada í
 - [ ] `lib/src/shared/services/socket_service.dart` — la app móvil se identifica como `WEB`. Verificar con backend antes de cambiar (puede haber lógica dependiente).
 - **Cierre**: identifica `MOBILE` (o el valor acordado con backend).
 
-### 9. Duplicación de la clave `'access_token'`
-- [ ] Literal repetido en `api_client.constant.dart`, `socket_service.dart`, `notification_service.dart` y `remote_whatsapp_datasource.dart`.
-- **Cierre**: constante única compartida (p. ej. `StorageKeys.accessToken`).
+### 9. Duplicación de la clave `'access_token'` ✅ (2026-07-21)
+- [x] Nuevo `lib/src/utils/storage_keys.dart` con `StorageKeys` (`accessToken`, `login`, `roles`, `configCompany`, `fcmToken`); reemplazados todos los literales en `api_client.constant.dart`, `socket_service.dart`, `notification_service.dart` y `providers/auth/login.dart`.
 
 ### 10. `checkAuthStatus` demasiado agresivo
 - [ ] `lib/src/providers/auth/login.dart` — si hay token pero falta `roles` o `configCompany` en storage, hace logout completo en vez de recuperar los datos del backend.

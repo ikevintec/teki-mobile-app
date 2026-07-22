@@ -1,15 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:teki_app/main.dart';
 import 'package:teki_app/src/domain/datasource/whatsapp_datasource.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_message_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_document_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_evolution_media_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_socket_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_response.dart';
-import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class WhatsappDataSourceImpl implements WhatsappDataSource {
   final Dio dio;
@@ -31,43 +28,9 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
       baseUrl: Environment.apiUrl.replaceAll('/api', '/ws'),
     ));
 
-    // Agregar interceptores para autenticación en ambos clientes
-    _addAuthInterceptors(_whatsappClient);
-    _addAuthInterceptors(_wsClient);
-  }
-
-  void _addAuthInterceptors(Dio client) {
-    client.interceptors.addAll([
-      LogInterceptor(
-        request: true,
-        requestHeader: true,
-        responseHeader: true,
-        error: true,
-        requestBody: true,
-        responseBody: true,
-        logPrint: (obj) {
-          print('--->: $obj');
-        },
-      ),
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final prefs = await SharedPreferences.getInstance();
-          final token = prefs.getString('access_token');
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          return handler.next(options);
-        },
-        onError: (DioException e, handler) async {
-          bool isLoggingOut = false;
-          if (e.response?.statusCode == 401 && !isLoggingOut) {
-            isLoggingOut = true;
-            globalContainer.read(authStateProvider.notifier).logout();
-          }
-          return handler.next(e);
-        },
-      )
-    ]);
+    // Mismos interceptores que ApiClient.dio: auth, logout en 401 y logs solo en debug
+    _whatsappClient.interceptors.addAll(ApiClient.defaultInterceptors());
+    _wsClient.interceptors.addAll(ApiClient.defaultInterceptors());
   }
 
   Map<String, String> get _headersWithHideLoader => {
