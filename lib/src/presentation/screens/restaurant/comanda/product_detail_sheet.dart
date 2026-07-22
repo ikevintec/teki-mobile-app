@@ -5,6 +5,10 @@ import 'package:teki_app/src/data/models/teki_model/group.dart';
 import 'package:teki_app/src/data/models/teki_model/group_option.dart';
 import 'package:teki_app/src/data/models/teki_model/preparation_option.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/detail_sheet_components.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/grupos_section.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/preparaciones_section.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/price_picker_sheet.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -347,11 +351,21 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
                     _buildParaLlevarYObservacion(),
                     const SizedBox(height: 12),
                     if ((widget.product.preparaciones ?? []).isNotEmpty) ...[
-                      ..._buildPreparaciones(),
+                      PreparacionesSection(
+                        product: widget.product,
+                        prepSelections: _prepSelections,
+                        onSelected: (prepId, v) =>
+                            setState(() => _prepSelections[prepId] = v),
+                      ),
                       const SizedBox(height: 4),
                     ],
                     if ((widget.product.grupos ?? []).isNotEmpty) ...[
-                      ..._buildGrupos(),
+                      GruposSection(
+                        product: widget.product,
+                        groupSelections: _groupSelections,
+                        groupQuantities: _groupQuantities,
+                        onChanged: () => setState(() {}),
+                      ),
                       const SizedBox(height: 4),
                     ],
                     const SizedBox(height: 80),
@@ -505,7 +519,15 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
             if ((widget.product.preciosVenta ?? []).isNotEmpty) ...[
               const SizedBox(width: 6),
               GestureDetector(
-                onTap: _showPricePicker,
+                onTap: () => showProductPricePicker(
+                  context,
+                  product: widget.product,
+                  currentPrice: _price,
+                  onSelected: (v) {
+                    setState(() => _price = v);
+                    _priceController.text = v.toStringAsFixed(2);
+                  },
+                ),
                 child: Container(
                   padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
@@ -526,7 +548,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _CompactStepButton(
+            CompactStepButton(
               icon: Icons.remove_rounded,
               enabled: _quantity > 1,
               onTap: () => _onQuantityChanged(_quantity - 1),
@@ -541,7 +563,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
                 ),
               ),
             ),
-            _CompactStepButton(
+            CompactStepButton(
               icon: Icons.add_rounded,
               enabled: true,
               onTap: () => _onQuantityChanged(_quantity + 1),
@@ -552,355 +574,8 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
     );
   }
 
-  void _showPricePicker() {
-    final allPrices = widget.product.preciosVenta ?? [];
-    if (allPrices.isEmpty) return;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Precios disponibles',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Los precios de mayoreo se aplican automáticamente según la cantidad',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-            ),
-            const SizedBox(height: 12),
-            ...allPrices.map((pp) {
-              final isMayoreo = pp.tipoPrecio == 'MAYOREO';
-              final isSelected = !isMayoreo && _price == pp.precio;
-
-              String label;
-              String? sublabel;
-              if (pp.tipoPrecio == 'POR_DEFECTO') {
-                label = 'Precio regular';
-              } else if (isMayoreo) {
-                label = 'Mayoreo';
-                final qty = (pp.unidadesMayoreo ?? 0).toStringAsFixed(0);
-                sublabel = 'Desde $qty unidades · automático';
-              } else {
-                label = pp.nombre?.isNotEmpty == true
-                    ? pp.nombre!
-                    : 'Precio especial';
-                sublabel = 'Especial';
-              }
-
-              return GestureDetector(
-                onTap: isMayoreo
-                    ? null
-                    : () {
-                        final v = pp.precio ?? 0;
-                        setState(() => _price = v);
-                        _priceController.text = v.toStringAsFixed(2);
-                        Navigator.pop(context);
-                      },
-                child: Opacity(
-                  opacity: isMayoreo ? 0.45 : 1.0,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? ColorSchema.primaryColor.withValues(alpha: 0.08)
-                          : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected
-                            ? ColorSchema.primaryColor
-                            : Colors.grey.shade200,
-                        width: isSelected ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    label,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                      color: isSelected
-                                          ? ColorSchema.primaryColor
-                                          : Colors.black87,
-                                    ),
-                                  ),
-                                  if (isMayoreo) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.amber.shade50,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        'Auto',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.amber.shade800,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              if (sublabel != null)
-                                Text(
-                                  sublabel,
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade500),
-                                ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '${formatExchange(moneda: widget.product.moneda ?? 'PEN')}${(pp.precio ?? 0).toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: isSelected
-                                ? ColorSchema.primaryColor
-                                : Colors.black87,
-                          ),
-                        ),
-                        if (isSelected) ...[
-                          const SizedBox(width: 8),
-                          const Icon(Icons.check_circle_rounded,
-                              color: ColorSchema.primaryColor, size: 18),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildPreparaciones() {
-    final preps = widget.product.preparaciones ?? [];
-    return [
-      _SectionTitle(title: 'Preparaciones'),
-      ...preps.map((pp) {
-        final opciones = pp.preparacion?.opciones ?? [];
-        return _SectionCard(
-          title: pp.preparacion?.nombre ?? '',
-          isRequired: pp.requerido == true,
-          child: Column(
-            children: opciones.map((op) {
-              return RadioListTile<int>(
-                dense: true,
-                activeColor: ColorSchema.primaryColor,
-                value: op.id ?? -1,
-                groupValue: _prepSelections[pp.preparacion?.id],
-                title: Text(
-                  op.opcion ?? '',
-                  style: const TextStyle(fontSize: 13),
-                ),
-                onChanged: (v) {
-                  setState(() {
-                    _prepSelections[pp.preparacion!.id!] = v;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-        );
-      }),
-    ];
-  }
-
-  List<Widget> _buildGrupos() {
-    final grupos = widget.product.grupos ?? [];
-    return [
-      _SectionTitle(title: 'Adicionales'),
-      ...grupos.map((g) {
-        final opciones = g.opciones ?? [];
-        final selected = _groupSelections[g.id] ?? {};
-        final allowQty = g.permitirCantidad == true;
-        final maxSelect = g.forzarMaximo;
-
-        return _SectionCard(
-          title: g.etiqueta ?? g.nombre ?? '',
-          isRequired: g.requerido == true,
-          subtitle: _grupoSubtitle(g),
-          child: Column(
-            children: opciones.map((op) {
-              final isChecked = selected.contains(op.id);
-              final qty =
-                  allowQty ? (_groupQuantities[g.id]?[op.id] ?? 0) : 0;
-              final priceLabel = (op.precio ?? 0) > 0
-                  ? '+${formatExchange(moneda: widget.product.moneda ?? 'PEN')}${(op.precio ?? 0).toStringAsFixed(2)}'
-                  : null;
-
-              if (allowQty) {
-                // Stepper row for permitirCantidad groups
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(op.nombre ?? '',
-                                style: const TextStyle(fontSize: 13)),
-                            if (priceLabel != null)
-                              Text(
-                                priceLabel,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: ColorSchema.primaryColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      // Stepper
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _CompactStepButton(
-                            icon: Icons.remove_rounded,
-                            enabled: qty > 0,
-                            onTap: () {
-                              setState(() {
-                                if (qty <= 1) {
-                                  _groupSelections[g.id!]!.remove(op.id!);
-                                  _groupQuantities[g.id]?.remove(op.id);
-                                } else {
-                                  _groupQuantities[g.id!]![op.id!] = qty - 1;
-                                }
-                              });
-                            },
-                          ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              '$qty',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                          ),
-                          _CompactStepButton(
-                            icon: Icons.add_rounded,
-                            enabled: true,
-                            onTap: () {
-                              setState(() {
-                                _groupSelections[g.id!]!.add(op.id!);
-                                _groupQuantities.putIfAbsent(
-                                    g.id!, () => {})[op.id!] = qty + 1;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                // Checkbox for regular groups, with forzarMaximo enforcement
-                final atMax = maxSelect != null &&
-                    selected.length >= maxSelect &&
-                    !isChecked;
-                // forzarMaximo == 1 behaves like radio (auto-deselect previous)
-                final isRadioStyle = maxSelect == 1;
-
-                return CheckboxListTile(
-                  dense: true,
-                  activeColor: ColorSchema.primaryColor,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  value: isChecked,
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          op.nombre ?? '',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: atMax
-                                ? Colors.grey.shade400
-                                : Colors.black87,
-                          ),
-                        ),
-                      ),
-                      if (priceLabel != null)
-                        Text(
-                          priceLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: atMax
-                                ? Colors.grey.shade400
-                                : ColorSchema.primaryColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                    ],
-                  ),
-                  onChanged: atMax
-                      ? null
-                      : (v) {
-                          setState(() {
-                            if (v == true) {
-                              if (isRadioStyle) {
-                                _groupSelections[g.id!]!.clear();
-                              }
-                              _groupSelections[g.id!]!.add(op.id!);
-                            } else {
-                              _groupSelections[g.id!]!.remove(op.id!);
-                            }
-                          });
-                        },
-                );
-              }
-            }).toList(),
-          ),
-        );
-      }),
-    ];
-  }
-
-  String? _grupoSubtitle(Group g) {
-    final min = g.forzarMinimo;
-    final max = g.forzarMaximo;
-    if (min != null && max != null && min == max) {
-      return 'Elige $min';
-    } else if (min != null && max != null) {
-      return 'Elige entre $min y $max';
-    } else if (max != null) {
-      return 'Máximo $max';
-    }
-    return null;
-  }
-
   Widget _buildParaLlevarYObservacion() {
-    return _InfoBox(
+    return InfoBox(
       child: Column(
         children: [
           // Para llevar
@@ -1043,166 +718,3 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Reusable sub-widgets
-// ---------------------------------------------------------------------------
-
-class _InfoBox extends StatelessWidget {
-  final Widget child;
-
-  const _InfoBox({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-
-  const _SectionTitle({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-          color: Colors.black87,
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final bool isRequired;
-  final String? subtitle;
-  final Widget child;
-
-  const _SectionCard({
-    required this.title,
-    required this.isRequired,
-    this.subtitle,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                          if (isRequired) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Obligatorio',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.red.shade600,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      if (subtitle != null)
-                        Text(
-                          subtitle!,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.red.shade400,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _CompactStepButton extends StatelessWidget {
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  const _CompactStepButton({
-    required this.icon,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: 26,
-        height: 26,
-        decoration: BoxDecoration(
-          color: enabled ? ColorSchema.primaryColor : Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Icon(
-          icon,
-          size: 15,
-          color: enabled ? Colors.white : Colors.grey.shade400,
-        ),
-      ),
-    );
-  }
-}
-

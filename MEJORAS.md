@@ -53,9 +53,14 @@ Mapa priorizado de mejoras identificadas en el análisis del 2026-07-21. Cada í
 ## P2 — Mantenibilidad
 
 ### 11. God widgets (descomponer)
-- [ ] `screens/restaurant/widgets/order_options_sheet.dart` — **2,228 líneas**
-- [ ] `screens/restaurant/comanda/product_detail_sheet.dart` — 1,208
-- [ ] `screens/dashboard/dashboard_tabs/caja_tab.dart` — 1,134
+
+Estrategia por archivo, en dos fases separadas (un PR cada una):
+- **Fase A** (mecánica): mover cada clase privada a su archivo bajo una subcarpeta, sin tocar lógica.
+- **Fase B** (riesgo medio): extraer lógica de negocio del widget al provider correspondiente.
+
+- [x] `caja_tab.dart` — **Fase A hecha (2026-07-21)**: 1,134 → 500 líneas; `TipoSelector`, `HistorialItem`, `ImprimirCajaModal`, `MovimientoItem` y `CurrencySelector` extraídos a `dashboard_tabs/caja/`. Fase B pendiente: mover `_fetchCashRegister`/`_loadDetail` a los providers de caja.
+- [ ] `screens/restaurant/widgets/order_options_sheet.dart` — **2,228 líneas, 17 clases**. Fase A: split de clases. Fase B: `_finalizarCuenta` (~115 líneas), `_eliminarPrecuentas` (~115) y `_anularOrden` al provider de restaurante/cobrador.
+- [x] `screens/restaurant/comanda/product_detail_sheet.dart` — **Fase A hecha (2026-07-21)**: 1,208 → 720 líneas; `showProductPricePicker`, `PreparacionesSection`, `GruposSection` y los sub-widgets (`InfoBox`, `SectionTitle`, `SectionCard`, `CompactStepButton`) extraídos a `comanda/product_detail/`. Las ~720 restantes son estado + validación + submit → bajarán con la Fase B (extraer a un controller/provider).
 - [ ] `screens/sale/sale_info/widget/payment_widget.dart` — 963
 - [ ] `providers/formularios/product_form.dart` — 842
 - **Cierre**: ningún archivo de presentación > ~500 líneas; secciones extraídas a widgets.
