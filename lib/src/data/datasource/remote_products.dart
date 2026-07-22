@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
@@ -97,6 +99,43 @@ class RemoteProducts extends ProductsDatasource {
     } catch (e) {
       errorNotification(e.toString());
       return [];
+    }
+  }
+
+  /// Todos los productos sin paginación, para la búsqueda local. Devuelve el
+  /// JSON crudo: son 4-5MB que se guardan tal cual en disco y se parsean después
+  /// en un isolate, sin tocar el hilo principal.
+  @override
+  Future<String> getFlatProductsRaw() async {
+    try {
+      final response = await dio.get<String>(
+        '/products/flat',
+        queryParameters: {'paginacion': false},
+        options: Options(responseType: ResponseType.plain),
+      );
+      return response.data ?? '[]';
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
+      // Con ResponseType.plain el cuerpo del error también llega como String.
+      final resData = _decodeIfJson(e.response?.data);
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error(errorMessage);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  dynamic _decodeIfJson(dynamic data) {
+    if (data is! String) return data;
+    try {
+      return jsonDecode(data);
+    } catch (_) {
+      return data;
     }
   }
 

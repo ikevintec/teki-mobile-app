@@ -22,6 +22,11 @@ class ProductsRepositoryImpl extends ProductsRepository {
   }
 
   @override
+  Future<String> getFlatProductsRaw() async {
+    return await productsDatasource.getFlatProductsRaw();
+  }
+
+  @override
   Future<Product> getProductById(int id) async{
     return productsDatasource.getProductById(id);
   }
