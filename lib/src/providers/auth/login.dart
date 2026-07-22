@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -16,6 +17,7 @@ import 'package:teki_app/src/domain/repositories/auth_repository.dart';
 import 'package:teki_app/src/domain/repositories/config_repository.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repositoy.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/shared/services/key_values_storage_impl.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -76,7 +78,12 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
       ConfigCompany configCompany = await setConfigCompanies(ref, configRepository);
       await keyvalueStorage.setKeyValue('configCompany', jsonEncode(configCompany.toJson()));
-      
+
+      // Ya con la sesión y el config seteados, inicializar el timestamp local
+      // si el flag está activo (asíncrono, no bloquea el login).
+      // Luego dispara la descarga/refresco del JSON local y su timer de sync.
+      _prefetchLocalProducts(configCompany);
+
       // Resetear el flag de logout para permitir nuevas sesiones
       ApiClient.resetLogoutFlag();
 
@@ -154,6 +161,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
             ConfigCompany.fromJson(jsonDecode(configCompanyJson));
         ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
 
+        // Sesión restaurada: inicializar el timestamp local si el flag está
+        // activo (asíncrono, no bloquea el arranque de la app).
+        // Luego dispara la descarga/refresco del JSON local y su timer de sync.
+        _prefetchLocalProducts(configCompany);
+
         // Restauramos los roles persistidos sin repetir la petición
         if (rolesJson != null) {
           ref
@@ -181,6 +193,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   void logout() async {
     NotificationService.instance.dispose();
+    await ref.read(localProductsProvider.notifier).clearCache();
     await keyvalueStorage.removeKey('access_token');
     await keyvalueStorage.removeKey('login');
     await keyvalueStorage.removeKey('configCompany');
@@ -204,6 +217,16 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   void setError(String errorMessage) {
     state = state.copyWith(errorMessage: errorMessage);
+  }
+
+  /// Inicializa el timestamp local de productos, solo si el flag
+  /// `busquedaProductosLocalmente` está activo.
+  /// Luego descarga/refresca el JSON local y activa el timer de sincronizacion.
+  void _prefetchLocalProducts(ConfigCompany config) {
+    if (config.busquedaProductosLocalmente != true) return;
+    unawaited(
+      ref.read(localProductsProvider.notifier).prepareCacheForLocalSearch(),
+    );
   }
 }
 

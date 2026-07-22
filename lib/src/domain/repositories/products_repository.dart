@@ -5,6 +5,7 @@ import 'package:teki_app/src/data/models/response/products.dart';
 abstract class ProductsRepository {
   Future<ProductResponse> getProducts(Map<String, dynamic> params);
   Future<List<Product>> searchProducts(Map<String, dynamic> params);
+  Future<String> getFlatProductsRaw();
   Future<Product> getProductById(int id);
   Future<List<Currency>> getCurrency();
   Future<Product> createProduct(Product product);

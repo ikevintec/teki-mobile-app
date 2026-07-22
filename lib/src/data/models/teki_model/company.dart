@@ -89,6 +89,7 @@ class Company {
   final double? igv;
   final String? tokenEvolution;
   final String? tipoClienteWhatsapp;
+  final String? lastUpdateLocalProducts;
   final bool? adicionarRetencionEnCotizacion;
   final Certificate? certificado;
   final UnitCode? unidad;
@@ -199,6 +200,7 @@ class Company {
     this.igv,
     this.tokenEvolution,
     this.tipoClienteWhatsapp,
+    this.lastUpdateLocalProducts,
     this.adicionarRetencionEnCotizacion,
     this.certificado,
     this.unidad,
@@ -309,6 +311,7 @@ class Company {
     igv: (json['igv'] as num?)?.toDouble(),
     tokenEvolution: json['tokenEvolution'],
     tipoClienteWhatsapp: json['tipoClienteWhatsapp'],
+    lastUpdateLocalProducts: json['lastUpdateLocalProducts'],
     adicionarRetencionEnCotizacion: json['adicionarRetencionEnCotizacion'],
     certificado: json['certificado'] != null ? Certificate.fromJson(json['certificado']) : null,
     unidad: json['unidad'] != null ? UnitCode.fromJson(json['unidad']) : null,
@@ -420,6 +423,7 @@ class Company {
     'igv': igv,
     'tokenEvolution': tokenEvolution,
     'tipoClienteWhatsapp': tipoClienteWhatsapp,
+    'lastUpdateLocalProducts': lastUpdateLocalProducts,
     'adicionarRetencionEnCotizacion': adicionarRetencionEnCotizacion,
     'certificado': certificado?.toJson(),
     'unidad': unidad?.toJson(),

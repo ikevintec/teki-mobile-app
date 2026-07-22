@@ -39,6 +39,7 @@ class ConfigCompany {
   bool? controlDespacho;
   bool? buscarPorPuntoVenta;
   bool? excluirMonitoreo;
+  bool? busquedaProductosLocalmente;
 
   Customer? clientePorDefectoData;
   List<UnitCode>? unidades;
@@ -87,6 +88,7 @@ class ConfigCompany {
     this.controlDespacho,
     this.buscarPorPuntoVenta,
     this.excluirMonitoreo,
+    this.busquedaProductosLocalmente,
     this.clientePorDefectoData,
     this.unidades,
     this.formasPago,
@@ -136,6 +138,7 @@ class ConfigCompany {
       controlDespacho: json['controlDespacho'],
       buscarPorPuntoVenta: json['buscarPorPuntoVenta'],
       excluirMonitoreo: json['excluirMonitoreo'],
+      busquedaProductosLocalmente: json['busquedaProductosLocalmente'],
       clientePorDefectoData: json['clientePorDefectoData'] != null
           ? Customer.fromJson(json['clientePorDefectoData'])
           : null,
@@ -192,6 +195,7 @@ class ConfigCompany {
       'controlDespacho': controlDespacho,
       'buscarPorPuntoVenta': buscarPorPuntoVenta,
       'excluirMonitoreo': excluirMonitoreo,
+      'busquedaProductosLocalmente': busquedaProductosLocalmente,
       'clientePorDefectoData': clientePorDefectoData?.toJson(),
       'unidades': unidades?.map((e) => e.toJson()).toList(),
       'formasPago': formasPago?.map((e) => e.toJson()).toList(),

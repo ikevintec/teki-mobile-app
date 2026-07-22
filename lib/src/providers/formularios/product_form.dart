@@ -14,6 +14,7 @@ import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/products/product.dart';
 import 'package:teki_app/src/providers/products/profucts.dart';
+import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 final productFormProvider =
@@ -621,7 +622,10 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
     try {
       await loadImagen();
       Product product = formTomodel();
-      await productsRepository.createProduct(product);
+      final savedProduct = await productsRepository.createProduct(product);
+      await ref
+          .read(localProductsProvider.notifier)
+          .upsertProductInCache(savedProduct);
       ref.read(productProvider.notifier).setLoading(false);
       Get.back();
       ref.read(productsProvider.notifier).resetProducts();
@@ -640,7 +644,10 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
       print('🖼️ imagenes enviadas (update): '
           '${product.imagenes?.map((e) => 'id=${e.id} orden=${e.numeroOrden} '
               'def=${e.porDefecto} elim=${e.eliminado}').toList()}');
-      await productsRepository.updateProduct(product);
+      final savedProduct = await productsRepository.updateProduct(product);
+      await ref
+          .read(localProductsProvider.notifier)
+          .upsertProductInCache(savedProduct);
       ref.read(productProvider.notifier).setLoading(false);
       Get.back();
       ref.read(productsProvider.notifier).resetProducts();

@@ -12,4 +12,14 @@ class CompanyRepositoryImpl extends CompanyRepository {
   Future<Company> getCompanyById(int id) {
     return companyDatasource.getCompanyById(id);
   }
+
+  @override
+  Future<Company> getCurrentCompanyLocalProducts() {
+    return companyDatasource.getCurrentCompanyLocalProducts();
+  }
+
+  @override
+  Future<void> updateLocalTimestamp(String timestamp) {
+    return companyDatasource.updateLocalTimestamp(timestamp);
+  }
 }
