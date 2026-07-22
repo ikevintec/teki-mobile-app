@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
-import 'package:teki_app/src/data/models/teki_model/command_detail_preparation_option.dart';
 import 'package:teki_app/src/data/models/teki_model/group.dart';
-import 'package:teki_app/src/data/models/teki_model/group_option.dart';
-import 'package:teki_app/src/data/models/teki_model/preparation_option.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/detail_sheet_components.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/grupos_section.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/preparaciones_section.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/price_picker_sheet.dart';
+import 'package:teki_app/src/providers/restaurant/comanda_item_form.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -159,26 +156,11 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
   // Extras total
   // -------------------------------------------------------------------------
 
-  double get _extrasPrice {
-    double extras = 0;
-    for (final entry in _groupSelections.entries) {
-      final grupo = (widget.product.grupos ?? []).firstWhere(
-        (g) => g.id == entry.key,
-        orElse: () => Group(),
+  double get _extrasPrice => ComandaItemForm.extrasPrice(
+        product: widget.product,
+        groupSelections: _groupSelections,
+        groupQuantities: _groupQuantities,
       );
-      for (final opId in entry.value) {
-        final op = (grupo.opciones ?? []).firstWhere(
-          (o) => o.id == opId,
-          orElse: () => GroupOption(),
-        );
-        final qty = grupo.permitirCantidad == true
-            ? (_groupQuantities[entry.key]?[opId] ?? 1)
-            : 1;
-        extras += (op.precio ?? 0) * qty;
-      }
-    }
-    return extras;
-  }
 
   double get _totalPrice => _price * _quantity + _extrasPrice;
 
@@ -187,43 +169,15 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
   // -------------------------------------------------------------------------
 
   bool _validate() {
-    for (final pp in widget.product.preparaciones ?? []) {
-      if (pp.requerido == true) {
-        final selected = _prepSelections[pp.preparacion?.id];
-        if (selected == null) {
-          _showError(
-              '"${pp.preparacion?.nombre ?? 'Preparación'}" es obligatoria');
-          return false;
-        }
-      }
-    }
-    for (final g in widget.product.grupos ?? []) {
-      final label = g.etiqueta ?? g.nombre ?? 'Adicional';
-      final min = g.forzarMinimo;
-      final max = g.forzarMaximo;
-
-      if (g.requerido != true) continue;
-
-      if (g.permitirCantidad == true) {
-        final totalQty = (_groupQuantities[g.id] ?? {})
-            .values
-            .fold<int>(0, (sum, q) => sum + q);
-        if (min != null && totalQty < min) {
-          _showError('"$label" requiere al menos $min unidad(es) en total');
-          return false;
-        }
-        if (max != null && totalQty > max) {
-          _showError('"$label" no puede superar $max unidad(es) en total');
-          return false;
-        }
-      } else {
-        final selected = _groupSelections[g.id] ?? {};
-        final minCount = min ?? 1;
-        if (selected.length < minCount) {
-          _showError('"$label" requiere al menos $minCount selección(es)');
-          return false;
-        }
-      }
+    final error = ComandaItemForm.validate(
+      product: widget.product,
+      prepSelections: _prepSelections,
+      groupSelections: _groupSelections,
+      groupQuantities: _groupQuantities,
+    );
+    if (error != null) {
+      _showError(error);
+      return false;
     }
     return true;
   }
@@ -242,47 +196,16 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
   void _submit() {
     if (!_validate()) return;
 
-    final preparacionOpciones = <CommandDetailPreparationOption>[];
-    for (final pp in widget.product.preparaciones ?? []) {
-      final prepId = pp.preparacion?.id;
-      final opcionId = _prepSelections[prepId];
-      if (prepId != null && opcionId != null) {
-        final opcion = (pp.preparacion?.opciones ?? []).firstWhere(
-          (o) => o.id == opcionId,
-          orElse: () => PreparationOption(),
-        );
-        preparacionOpciones.add(CommandDetailPreparationOption(
-          idPreparacion: prepId,
-          nombrePreparacion: pp.preparacion?.nombre,
-          idOpcion: opcionId,
-          nombreOpcion: opcion.opcion,
-        ));
-      }
-    }
+    final preparacionOpciones = ComandaItemForm.buildPreparacionOpciones(
+      product: widget.product,
+      prepSelections: _prepSelections,
+    );
 
-    final grupoOpciones = <CommandDetailGroupOption>[];
-    for (final g in widget.product.grupos ?? []) {
-      final selectedIds = _groupSelections[g.id] ?? {};
-      for (final opcionId in selectedIds) {
-        final opcion = (g.opciones ?? []).firstWhere(
-          (o) => o.id == opcionId,
-          orElse: () => GroupOption(),
-        );
-        final qty = g.permitirCantidad == true
-            ? (_groupQuantities[g.id]?[opcionId] ?? 1)
-            : 1;
-        grupoOpciones.add(CommandDetailGroupOption(
-          idGrupo: g.id,
-          nombreGrupo: g.nombre,
-          idOpcion: opcionId,
-          nombreOpcion: opcion.nombre,
-          porcion: opcion.porcion ?? 1,
-          precio: opcion.precio ?? 0,
-          cantidad: qty.toDouble(),
-          producto: opcion.producto,
-        ));
-      }
-    }
+    final grupoOpciones = ComandaItemForm.buildGrupoOpciones(
+      product: widget.product,
+      groupSelections: _groupSelections,
+      groupQuantities: _groupQuantities,
+    );
 
     final nota = _notaController.text.trim();
     final item = widget.existingItem != null

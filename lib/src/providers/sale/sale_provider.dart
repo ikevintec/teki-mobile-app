@@ -1,11 +1,14 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/check.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket_fee.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/repositories/quotation_repository_impl.dart';
+import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/quotation_repository.dart';
 import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
@@ -376,6 +379,62 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       despachoPosterior: state.ticket.despachoPosterior,
       isRetencion: state.ticket.isRetencion,
       placaVehiculo: state.ticket.placaVehiculo,
+    );
+  }
+
+  /// Paga una cuenta de restaurante: arma el Check con el cliente, los items
+  /// originales de la comanda y el comprobante a emitir, y lo actualiza en el
+  /// backend. Devuelve el comprobante emitido (null si la cuenta quedó
+  /// registrada sin comprobante). Lanza excepción si el pago falla.
+  Future<Ticket?> pagarCuentaRestaurante(int checkId) async {
+    final ticketPayload = getTicketPayload();
+    final customer = ref.read(customerSaleProvider).customer;
+    final originalItems = ref
+        .read(productSaleProvider)
+        .productsSales
+        .map((td) => td.comandaDetalle)
+        .whereType<CommandDetail>()
+        .toList();
+    final checkPayload = Check(
+      cliente: (customer.razonSocial?.isNotEmpty ?? false) ? customer : null,
+      pagado: true,
+      items: originalItems,
+      comprobante: ticketPayload,
+    );
+    final checkResult =
+        await RestaurantRepositoryImpl().updateCheck(checkId, checkPayload);
+    return checkResult.comprobante;
+  }
+
+  /// Combina el ticket local con la respuesta del backend (identificadores,
+  /// correlativo, estado SUNAT y totales) para mostrar el comprobante emitido.
+  Ticket mergeTicketResponse(Ticket response) {
+    final stateTicket = state.ticket;
+    return stateTicket.copyWith(
+      id: response.id ?? stateTicket.id,
+      uuid: response.uuid ?? stateTicket.uuid,
+      identificadorDocumento:
+          response.identificadorDocumento ?? stateTicket.identificadorDocumento,
+      serie: response.serie ?? stateTicket.serie,
+      numero: response.numero ?? stateTicket.numero,
+      tipoComprobante: response.tipoComprobante ?? stateTicket.tipoComprobante,
+      estadoSunat: response.estadoSunat ?? stateTicket.estadoSunat,
+      totalVenta: response.totalVenta ?? stateTicket.totalVenta,
+      totalValorVenta: response.totalValorVenta ?? stateTicket.totalValorVenta,
+      totalValorVentaGravada:
+          response.totalValorVentaGravada ?? stateTicket.totalValorVentaGravada,
+      totalValorVentaInafecta: response.totalValorVentaInafecta ??
+          stateTicket.totalValorVentaInafecta,
+      totalValorVentaExonerada: response.totalValorVentaExonerada ??
+          stateTicket.totalValorVentaExonerada,
+      totalValorVentaExportacion: response.totalValorVentaExportacion ??
+          stateTicket.totalValorVentaExportacion,
+      totalIgv: response.totalIgv ?? stateTicket.totalIgv,
+      totalIsc: response.totalIsc ?? stateTicket.totalIsc,
+      totalTributosBolsas:
+          response.totalTributosBolsas ?? stateTicket.totalTributosBolsas,
+      totalDescuento: response.totalDescuento ?? stateTicket.totalDescuento,
+      otrosCargos: response.otrosCargos ?? stateTicket.otrosCargos,
     );
   }
 
