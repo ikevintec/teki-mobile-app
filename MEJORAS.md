@@ -64,10 +64,16 @@ Estrategia por archivo, en dos fases separadas (un PR cada una):
 - [x] `providers/formularios/product_form.dart` — **Fase A hecha (2026-07-21)**: 842 → ~460 líneas siguiendo el patrón del repo (Notifier + state separado): `product_form_state.dart` (`ProductFormState` + `ProductImageDraft`, re-exportado desde `product_form.dart`) y `product_form_images.dart` (mixin `ProductFormImages` con todo el manejo de imágenes, como `part` para conservar acceso a `state`). También se eliminó un `toString()` muerto con TODO.
 - **Cierre**: ningún archivo de presentación > ~500 líneas; secciones extraídas a widgets.
 
-### 12. Features duplicados / migraciones a medias
-- [ ] Determinar cuál es legacy entre `sale` vs `sales` vs `pos_sales`, y entre `product` vs `products`.
-- [ ] `cotizaciones` tiene dos pantallas de ver: `ver_quotations_screen.dart` y `view_quotation_screen.dart`.
-- **Cierre**: legacy identificado, marcado como deprecated y con plan de eliminación.
+### 12. Features duplicados / código muerto de plantilla ✅ (2026-07-22)
+
+Contexto: la app se construyó sobre la plantilla Flutter "inventual"; quedaban restos inalcanzables.
+
+- [x] **Eliminados 31 archivos / 5,345 líneas de plantilla muerta** (verificado: rutas jamás navegadas + cero importadores + fecha de alta en el commit inicial):
+  - Pantallas completas: `pos_sales/`, `management/`, `warehouse/`, `notification/`, `support/` (con sus rutas `posSales`, `management`, `warehouse`, `addWarehouse`, `notification`, `notificationContent`, `support` quitadas de `app_routes.dart`)
+  - Huérfanos en cascada: `support_discussion_model`, `notification_model`, `product_list_model`, `warehouse_model`, `user_list_model`, `customer_list_model`, `customer_list_section`, `update_customer_section`, `carousel_section`, `edit_profile_section`, `dropdown/drop_down`, `dropdown/expanden_list_animation`, `dropdown/scrolbar`
+  - Bloques comentados del menú que referenciaban rutas eliminadas
+- [x] Falsas alarmas (pares complementarios, ambos en uso): `sale/` (flujo de venta) vs `sales/` (historial/devoluciones); `product/` (form crear/editar) vs `products/` (listado); `ver_quotations_screen` (listado) vs `view_quotation_screen` (detalle).
+- [ ] **Código Teki muerto** (no plantilla — sin referencias, decidir con el equipo si se elimina o es trabajo en progreso): `enums/client_whatsapp_type.dart`, `providers/files/image.dart`, `response/ticket_sale_serie_numero.dart`, `general/optional.dart`, `teki_model/totales_forma_pagos.dart`, `product/widget/expandable_price_card.dart`, `sale/products/widgets/quantity_selector.dart`, `widgets/text_field/quantity_field_selection.dart`, `sale_info/widget/payment_card_widget.dart`, `comprobantes/comprobante_screen/product_list.dart`.
 
 ### 13. `print()` de debug en producción ✅ (2026-07-21)
 - [x] Los 24 `print` restantes en 8 archivos (remote_ticket_sale, whatsapp_provider, product_form, price, upload_image, comprobantes, products_sale_notifier_setters) → `debugPrint`; los del middleware y los interceptores se eliminaron en el PR de seguridad.

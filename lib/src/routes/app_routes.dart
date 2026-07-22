@@ -23,12 +23,8 @@ import 'package:teki_app/src/presentation/screens/expense_payment/expense_paymen
 import 'package:teki_app/src/presentation/screens/expense_reports/expense_reports_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/invoice/invoice_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/invoice/invoice_sections/add_sale_invoice_section.dart';
-import 'package:teki_app/src/presentation/screens/management/management_main_screen.dart';
-import 'package:teki_app/src/presentation/screens/notification/notification_main_screen.dart';
-import 'package:teki_app/src/presentation/screens/notification/notification_sections/notification_content_section.dart';
 import 'package:teki_app/src/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:teki_app/src/presentation/screens/payment_reports/payment_reports_main_screen.dart';
-import 'package:teki_app/src/presentation/screens/pos_sales/pos_sales_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/product/product_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/presentation/screens/sales/sales_sections/sales_return_section.dart';
@@ -48,7 +44,6 @@ import 'package:teki_app/src/presentation/screens/stock_reports/stock_reports_ma
 import 'package:teki_app/src/presentation/screens/supplier/supplier_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/supplier/supplier_sections/create_supplier_section.dart';
 import 'package:teki_app/src/presentation/screens/supplier_reports/supplier_reports_main_screen.dart';
-import 'package:teki_app/src/presentation/screens/support/support_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/tax_report/tax_report_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/unit/unit_management_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/user_reports/user_reports_main_screen.dart';
@@ -67,8 +62,6 @@ import 'package:teki_app/src/presentation/screens/restaurant/comanda/comanda_scr
 import 'package:teki_app/src/presentation/screens/restaurant/dividir/dividir_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/restaurant_mesas_screen.dart';
 import 'package:teki_app/src/presentation/screens/push_notification_events/dish_desk_ready_screen.dart';
-import 'package:teki_app/src/presentation/screens/warehouse/warehouse_main_screen.dart';
-import 'package:teki_app/src/presentation/screens/warehouse/warehouse_sections/add_warehouse_section.dart';
 import 'package:teki_app/src/presentation/screens/warehouse_reports/warehouse_reports_main_screen.dart';
 import 'package:teki_app/src/routes/middleware/auth_middleware.dart';
 
@@ -82,16 +75,11 @@ class AppRoutes {
   static const String dashboard = "/dashboard";
   static const String analytics = "/analytics";
   static const String sales = "/sales";
-  static const String posSales = "/posSales";
   static const String purchase = "/purchase";
   static const String products = "/products";
   static const String expense = "/expense";
   static const String customer = "/customer";
   static const String report = "/report";
-  static const String management = "/management";
-  static const String warehouse = "/warehouse";
-  static const String notification = "/notification";
-  static const String support = "/support";
   static const String addProduct = "/productList";
   static const String category = "/category";
   static const String brand = "/brand";
@@ -108,11 +96,9 @@ class AppRoutes {
   static const String discountReport = "/discountReport";
   static const String taxReport = "/taxReport";
   static const String profile = "/profile";
-  static const String notificationContent = "/notificationContent";
   static const String expenseList = "/expenseList";
   static const String expenseCategory = "/expenseCategory";
   static const String expensePayment = "/expensePayment";
-  static const String addWarehouse = "/addWarehouse";
   static const String userRole = "/userRole";
   static const String addUser = "/addUser";
   static const String supplier = "/supplier";
@@ -161,16 +147,11 @@ class AppRoutes {
     GetPage(name: comprobantesVer, page: () => const VerComprobanteScreen()),
     GetPage(name: quotationsVer, page: () => const VerQuotationsScreen()),
     GetPage(name: sales, page: () => const SalesMainScreen()),
-    GetPage(name: posSales, page: () => const POSSalesMainScreen()),
     GetPage(name: purchase, page: () => const PurchaseMainScreen()),
     GetPage(name: products, page: () => const ProductsMainScreen()),
     GetPage(name: expense, page: () => const ExpenseMainScreen()),
     GetPage(name: customer, page: () => const CustomerMainScreen()),
     GetPage(name: report, page: () => const ReportMainScreen()),
-    GetPage(name: management, page: () => const ManagementMainScreen()),
-    GetPage(name: warehouse, page: () => const WarehouseMainScreen()),
-    GetPage(name: notification, page: () => const NotificationMainScreen()),
-    GetPage(name: support, page: () => const SupportMainScreen()),
     GetPage(name: addProduct, page: () => const AddProductMainScreen()),
     GetPage(name: category, page: () => const CategoryMainScreen()),
     GetPage(name: brand, page: () => const BrandMainScreen()),
@@ -192,14 +173,10 @@ class AppRoutes {
     GetPage(name: discountReport, page: () => const DiscountReportMainScreen()),
     GetPage(name: taxReport, page: () => const TaxReportMainScreen()),
     GetPage(name: profile, page: () => const ProfileMainScreen()),
-    GetPage(
-        name: notificationContent,
-        page: () => const NotificationContentScreen()),
     GetPage(name: expenseList, page: () => const ExpenseListMainScreen()),
     GetPage(
         name: expenseCategory, page: () => const ExpenseCategoryMainScreen()),
     GetPage(name: expensePayment, page: () => const ExpensePaymentMainScreen()),
-    GetPage(name: addWarehouse, page: () => const AddWarehouseSection()),
     GetPage(name: userRole, page: () => const UserRoleMainScreen()),
     GetPage(name: addUser, page: () => const AddUserMainScreen()),
     GetPage(name: supplier, page: () => const SupplierMainScreen()),
