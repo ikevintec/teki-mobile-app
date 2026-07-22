@@ -49,6 +49,7 @@ dependencies:
   socket_io_client: ^2.0.3+1
   uuid: ^4.5.1
   confetti: ^0.7.0
+  fuzzy: ^0.5.1
   flutter_localizations:
     sdk: flutter
 

@@ -100,6 +100,35 @@ class RemoteProducts extends ProductsDatasource {
     }
   }
 
+  /// Trae TODOS los productos en formato plano (endpoint `/products/flat`) sin
+  /// paginación. Se usa para la búsqueda local: la respuesta se cachea en disco
+  /// y las búsquedas se resuelven en memoria con fuzzy en lugar de consultar la
+  /// base de datos en cada tecleo.
+  @override
+  Future<List<Product>> getFlatProducts() async {
+    try {
+      final response = await dio.get(
+        '/products/flat',
+        queryParameters: {'paginacion': false},
+      );
+      return (response.data as List)
+          .map((product) => Product.fromJson(product))
+          .toList();
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error(errorMessage);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
   @override
   Future<List<Product>> getProductsByBrand(String brand) {
     // TODO: implement getProductsByBrand
