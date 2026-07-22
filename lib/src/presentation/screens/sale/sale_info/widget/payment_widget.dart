@@ -12,9 +12,11 @@ import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket_fee.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen/view_comprobante_screen.dart';
+import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/credito_tab.dart';
+import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/payment_entry.dart';
+import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/payment_method_row.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
-import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
@@ -24,31 +26,6 @@ import 'package:intl/intl.dart';
 import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
 import 'package:teki_app/src/utils/notifications.dart';
-
-// ─── Entrada de pago individual ──────────────────────────────────────────────
-
-class _PaymentEntry {
-  final PaymentMethod method;
-  final TextEditingController amountController;
-  final TextEditingController operationController;
-
-  _PaymentEntry({required this.method, required double initialAmount})
-      : amountController =
-            TextEditingController(text: initialAmount.toStringAsFixed(2)),
-        operationController = TextEditingController();
-
-  _PaymentEntry.fromExisting({
-    required this.method,
-    required String amount,
-    required String operation,
-  })  : amountController = TextEditingController(text: amount),
-        operationController = TextEditingController(text: operation);
-
-  void dispose() {
-    amountController.dispose();
-    operationController.dispose();
-  }
-}
 
 // ─── Widget principal ─────────────────────────────────────────────────────────
 
@@ -100,7 +77,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
 
   late TabController _tabController;
   List<PaymentMethod> paymentMethods = [];
-  final List<_PaymentEntry> _paymentEntries = [];
+  final List<PaymentEntry> _paymentEntries = [];
 
   TextEditingController diasCredito = TextEditingController();
   List<TextEditingController> fechaCredito = [];
@@ -227,7 +204,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
           orElse: () => pago.metodoPago ?? PaymentMethod(),
         );
         if (method.id == null) continue;
-        _paymentEntries.add(_PaymentEntry.fromExisting(
+        _paymentEntries.add(PaymentEntry.fromExisting(
           method: method,
           amount: (pago.montoPagado ?? pago.monto ?? 0).toStringAsFixed(2),
           operation: pago.numeroOperacion ?? '',
@@ -280,7 +257,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     if (_paymentEntries.any((e) => e.method.id == method.id)) return;
     setState(() {
       _paymentEntries
-          .add(_PaymentEntry(method: method, initialAmount: _remaining));
+          .add(PaymentEntry(method: method, initialAmount: _remaining));
     });
   }
 
@@ -478,7 +455,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                           .indexWhere((e) => e.method.id == payment.id);
                       final entry =
                           entryIndex >= 0 ? _paymentEntries[entryIndex] : null;
-                      return _PaymentMethodRow(
+                      return PaymentMethodRow(
                         method: payment,
                         entry: entry,
                         onTap: () => entry == null
@@ -492,116 +469,14 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                     },
                   ),
                   // ── Tab Crédito ──────────────────────────────────────────
-                  Form(
-                    key: formKeyCredito,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 15),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: TextFieldSection(
-                                    label: 'Días de crédito (*)',
-                                    hint: 'Ingrese días',
-                                    inputType: TextInputType.text,
-                                    controller: diasCredito,
-                                    onChanged: (_) {},
-                                    validator: (p0) => (p0 == null || p0.isEmpty)
-                                        ? 'Ingrese un número válido'
-                                        : (int.tryParse(p0) == null ||
-                                                int.parse(p0) <= 0)
-                                            ? 'Debe ser mayor a cero'
-                                            : null,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: addCuota,
-                                  icon: const Icon(Icons.add_circle,
-                                      color: ColorSchema.primaryColor),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            child: Row(
-                              children: [
-                                Expanded(child: Divider(color: Colors.grey.shade300)),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  child: Text(
-                                    'Cuotas',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade500,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(child: Divider(color: Colors.grey.shade300)),
-                              ],
-                            ),
-                          ),
-                          ...List.generate(fechaCredito.length, (index) {
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: GestureDetector(
-                                      onTap: () => _selectDate(index),
-                                      child: AbsorbPointer(
-                                        child: TextFieldSection(
-                                          label: 'Fecha',
-                                          hint: 'Seleccione fecha',
-                                          inputType: TextInputType.text,
-                                          controller: fechaCredito[index],
-                                          isReadOnly: true,
-                                          onChanged: (_) {},
-                                          validator: (p0) =>
-                                              (p0 == null || p0.isEmpty)
-                                                  ? 'Seleccione una fecha'
-                                                  : null,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    flex: 2,
-                                    child: TextFieldSection(
-                                      label: 'Monto cuota',
-                                      hint: 'Monto',
-                                      controller: montoCredito[index],
-                                      inputType: TextInputType.number,
-                                      validator: (p0) =>
-                                          (p0 == null || p0.isEmpty)
-                                              ? 'Monto requerido'
-                                              : (double.tryParse(p0) == null ||
-                                                      double.parse(p0) <= 0)
-                                                  ? 'Monto invalido'
-                                                  : null,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.remove_circle,
-                                        color: Colors.red),
-                                    onPressed: () => eliminarCuota(index),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
+                  CreditoTab(
+                    formKey: formKeyCredito,
+                    diasCredito: diasCredito,
+                    fechaCredito: fechaCredito,
+                    montoCredito: montoCredito,
+                    onAddCuota: addCuota,
+                    onRemoveCuota: eliminarCuota,
+                    onSelectDate: _selectDate,
                   ),
                 ],
               ),
@@ -791,170 +666,6 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Fila de método de pago con inputs expandibles ───────────────────────────
-
-class _PaymentMethodRow extends StatelessWidget {
-  final PaymentMethod method;
-  final _PaymentEntry? entry;
-  final VoidCallback onTap;
-  final VoidCallback? onRemove;
-  final VoidCallback onAmountChanged;
-
-  const _PaymentMethodRow({
-    required this.method,
-    required this.entry,
-    required this.onTap,
-    required this.onAmountChanged,
-    this.onRemove,
-  });
-
-  bool get _isSelected => entry != null;
-  bool get _isCash => (method.formaPago ?? '').toUpperCase() == 'EFECTIVO';
-  Color get _activeColor => _isCash ? Colors.green.shade600 : ColorSchema.primaryColor;
-
-  Widget _buildIcon() {
-    const double size = 28;
-    final url = method.imagenUrl;
-    if (url != null && url.isNotEmpty) {
-      return Image.network(
-        url,
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
-        errorBuilder: (context, e, stack) => _fallbackIcon(size),
-      );
-    }
-    return _fallbackIcon(size);
-  }
-
-  Widget _fallbackIcon(double size) => Icon(
-        _isCash ? Icons.payments_rounded : Icons.credit_card_rounded,
-        color: _isSelected ? _activeColor : Colors.grey.shade500,
-        size: size,
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: _isSelected
-              ? _activeColor.withValues(alpha: 0.04)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: _isSelected ? _activeColor : Colors.grey.shade200,
-            width: _isSelected ? 1.5 : 1,
-          ),
-          boxShadow: _isSelected
-              ? [
-                  BoxShadow(
-                    color: _activeColor.withValues(alpha: 0.08),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── Cabecera del método ────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  SizedBox(width: 26, child: Center(child: _buildIcon())),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      method.nombre ?? '',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: _isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: _isSelected ? _activeColor : Colors.grey.shade800,
-                      ),
-                    ),
-                  ),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child: _isSelected
-                        ? Container(
-                            key: const ValueKey('check'),
-                            width: 18,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              color: _activeColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.check_rounded,
-                                color: Colors.white, size: 11),
-                          )
-                        : const SizedBox(
-                            key: ValueKey('empty'), width: 18),
-                  ),
-                ],
-              ),
-            ),
-            // ── Inputs expandibles ────────────────────────────────────
-            if (_isSelected) ...[
-              Divider(
-                  height: 1,
-                  indent: 12,
-                  endIndent: 12,
-                  color: _activeColor.withValues(alpha: 0.2)),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: TextFieldSection(
-                        label: 'Monto',
-                        hint: '0.00',
-                        inputType: TextInputType.number,
-                        controller: entry!.amountController,
-                        onChanged: (_) => onAmountChanged(),
-                        showDoneButton: true,
-                      ),
-                    ),
-                    if (!_isCash) ...[
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
-                        child: TextFieldSection(
-                          label: '# Operación',
-                          hint: 'Número',
-                          inputType: TextInputType.number,
-                          controller: entry!.operationController,
-                          showDoneButton: true,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(width: 4),
-                    IconButton(
-                      onPressed: onRemove,
-                      icon: const Icon(Icons.delete_outline_rounded,
-                          color: Colors.redAccent, size: 18),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
       ),
