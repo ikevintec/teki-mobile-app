@@ -14,6 +14,7 @@ import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/widge
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
 import 'package:teki_app/src/providers/cash_register/currencies_provider.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -106,13 +107,25 @@ class _CajaTabState extends ConsumerState<CajaTab> {
   }
 
   /// Abre el sheet para registrar un ingreso/egreso externo del tipo activo.
+  /// Requiere caja APERTURADA y permiso CAJA_INGRESO_EGRESO_CREAR (mismas
+  /// reglas que la web; el botón ya se oculta, esto es la segunda defensa).
   Future<void> _openMovementSheet(String tipo, String monedaActiva) async {
+    if (!ref.read(sesionProvider).hasPermission('CAJA_INGRESO_EGRESO_CREAR')) {
+      warningNotification('No tienes permiso para registrar movimientos');
+      return;
+    }
     final cajaState = ref.read(cashRegisterProvider);
-    final idCaja =
-        cajaState.registers.isNotEmpty ? cajaState.registers.first.id : null;
-    if (idCaja == null) {
+    final caja =
+        cajaState.registers.isNotEmpty ? cajaState.registers.first : null;
+    final idCaja = caja?.id;
+    if (caja == null || idCaja == null) {
       warningNotification(
           'No hay una caja abierta para registrar movimientos');
+      return;
+    }
+    if (!caja.isAperturada) {
+      warningNotification(
+          'La caja está cerrada: no se pueden registrar movimientos');
       return;
     }
 
@@ -138,8 +151,34 @@ class _CajaTabState extends ConsumerState<CajaTab> {
 
   @override
   Widget build(BuildContext context) {
+    final sesion = ref.watch(sesionProvider);
+    if (!sesion.hasPermission('CAJA_VER')) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline_rounded,
+                  color: Colors.grey.shade400, size: 44),
+              const SizedBox(height: 12),
+              Text(
+                'No tienes permisos para ver la caja',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.roboto(
+                    fontSize: 14, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final cajaState = ref.watch(cashRegisterProvider);
     final detailState = ref.watch(cashRegisterDetailProvider);
+    final puedeRegistrarMovimiento = cajaState.registers.isNotEmpty &&
+        cajaState.registers.first.isAperturada &&
+        sesion.hasPermission('CAJA_INGRESO_EGRESO_CREAR');
 
     final balance = cajaState.balancePorMoneda;
     final ingresos = cajaState.totalIngresosPorMoneda;
@@ -451,7 +490,9 @@ class _CajaTabState extends ConsumerState<CajaTab> {
               isBlocked: detailState.isLoading || detailState.isLoadingMore,
               onChanged: (t) =>
                   ref.read(cashRegisterDetailProvider.notifier).changeTipo(t),
-              onAdd: () => _openMovementSheet(detailState.tipo, monedaActiva),
+              onAdd: puedeRegistrarMovimiento
+                  ? () => _openMovementSheet(detailState.tipo, monedaActiva)
+                  : null,
             ),
           ),
           const SizedBox(height: 10),

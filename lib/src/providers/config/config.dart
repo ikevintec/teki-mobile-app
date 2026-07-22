@@ -154,6 +154,12 @@ class SesionState {
   final LoginResponse login;
   final ConfigCompany? config;
 
+  /// True si el usuario tiene el permiso/rol indicado (p. ej. 'CAJA_VER',
+  /// 'CAJA_INGRESO_EGRESO_CREAR'). Mismos códigos que los @PreAuthorize
+  /// del backend y el hasPermission de la web.
+  bool hasPermission(String permission) =>
+      roles?.contains(permission) ?? false;
+
   SesionState({
     required this.login,
     this.company,
