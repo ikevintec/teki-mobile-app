@@ -15,14 +15,20 @@ class KeyValueStorageServiceImpl extends KeyValueStorageService {
     final prefs = await getSharedPrefs();
 
     switch(T) {
-      case int:
+      case const (int):
         return prefs.getInt( key ) as T?;
-        
 
-      case String:
+      case const (String):
         return prefs.getString(key) as T?;
 
+      case const (bool):
+        return prefs.getBool(key) as T?;
+
+      case const (double):
+        return prefs.getDouble(key) as T?;
+
       default:
+        // Compatibilidad: llamadas sin tipo (T = dynamic) leen como String.
         return prefs.getString(key) as T?;
     }
   }
@@ -38,18 +44,27 @@ class KeyValueStorageServiceImpl extends KeyValueStorageService {
     final prefs = await getSharedPrefs();
 
     switch(T) {
-      case int:
+      case const (int):
         prefs.setInt( key, value as int );
         break;
 
-      case String:
+      case const (String):
         prefs.setString(key, value as String);
         break;
 
+      case const (bool):
+        prefs.setBool(key, value as bool);
+        break;
+
+      case const (double):
+        prefs.setDouble(key, value as double);
+        break;
+
       default:
+        // Compatibilidad: llamadas sin tipo (T = dynamic) escriben como String.
         prefs.setString(key, value as String);
     }
-    
+
   }
 
 }

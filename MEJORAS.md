@@ -29,9 +29,8 @@ Mapa priorizado de mejoras identificadas en el análisis del 2026-07-21. Cada í
 - [ ] `Environment.intiEnvironment()` (en `lib/src/utils/contstants.dart`) siempre carga `.env`; `.env.production` nunca se usa y ambos apuntan a producción. Correr localmente pega contra producción.
 - **Cierre**: `.env` apunta a dev/staging, release carga producción (por `kReleaseMode` o `--dart-define`), documentado en README.
 
-### 6. `KeyValueStorageServiceImpl` solo soporta `int` y `String`
-- [ ] `lib/src/shared/services/key_values_storage_impl.dart` — cualquier otro tipo cae al default como `String` y revienta con cast error en runtime.
-- **Cierre**: soporte de `bool`/`double` o error explícito en tiempo de desarrollo.
+### 6. `KeyValueStorageServiceImpl` solo soporta `int` y `String` ✅ (2026-07-21)
+- [x] Agregados los casos `bool` y `double`; el default (llamadas sin tipo, `T = dynamic`) se mantiene como `String` por compatibilidad y quedó documentado. Cubierto con tests en `test/shared/key_value_storage_test.dart`.
 
 ### 7. Errores tragados silenciosamente ✅ (2026-07-21)
 - [x] `command_print_service.dart` — el fallo al obtener la comanda ahora loguea con `debugPrint` y muestra `errorNotification` al usuario.
@@ -75,9 +74,13 @@ Estrategia por archivo, en dos fases separadas (un PR cada una):
 - [x] `avoid_print` elevado a **error** en `analysis_options.yaml` — un `print` nuevo ahora rompe `flutter analyze`.
 
 ### 14. Sin tests (1 archivo para ~86k líneas)
-- [ ] Empezar por lógica pura sin UI: `invoice_esc_pos_formatter.dart` (516 líneas), `command_esc_pos_formatter.dart` (327), `utils/price.dart`, `utils/formats.dart`, `KeyValueStorageServiceImpl`.
-- [ ] Luego: notifiers del flujo de venta (`sale_provider.dart`, `products_sale_notifier_setters.dart`).
-- **Cierre (fase 1)**: formatters ESC/POS y utils de precio con cobertura de casos principales.
+- [x] **Fase 1 hecha (2026-07-21)** — 52 tests en 6 archivos, todos en verde:
+  - `test/shared/invoice_esc_pos_formatter_test.dart` — boleta completa, NV sin QR/IGV, modo lite, totales condicionales, columnas 58/80mm, apertura de gaveta
+  - `test/shared/command_esc_pos_formatter_test.dart` — comanda completa, flags `ocultar*`, anulación con motivo, propina, logo, separadores por ancho
+  - `test/utils/price_test.dart` — `getPriceProduct`: por defecto, IGV, tramos de mayoreo, precios por punto de venta, recargo por item
+  - `test/utils/formats_test.dart`, `test/utils/price_formatter_test.dart`, `test/shared/key_value_storage_test.dart`
+  - Se eliminó `test/widget_test.dart` (boilerplate del contador de Flutter, siempre fallaba)
+- [ ] Fase 2: notifiers del flujo de venta (`sale_provider.dart`, `products_sale_notifier_setters.dart`).
 
 ### 15. Doble scope de providers en el arranque
 - [ ] `main.dart` — `UncontrolledProviderScope(globalContainer)` + `ProviderScope` anidado puede crear dos instancias del mismo provider según desde dónde se lea.
