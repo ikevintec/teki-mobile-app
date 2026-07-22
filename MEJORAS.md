@@ -131,6 +131,11 @@ Contexto: la app se construyó sobre la plantilla Flutter "inventual"; quedaban 
 
 ---
 
+## Pendiente en backend (cbetfactback) — acordado atacar al final
+
+- [ ] **Validar caja CERRADA en `saveCashRegisterDetailAsDto`** (crear y editar movimientos): hoy solo la UI lo impide; cualquier cliente puede inyectar movimientos en cajas arqueadas. Contemplar la excepción `CAJA_EDITAR_CIERRE` que la web usa para editar tras el cierre.
+- [ ] **Reponer el `@PreAuthorize('CAJA_INGRESO_EGRESO_EDITAR')` comentado** en el PUT de `/cash-register-detail` (CashRegisterDetailApi.java:204): cualquier usuario autenticado puede editar movimientos.
+
 ## Orden sugerido de ataque
 
 1. **P0 completo** (items 1–4): bajo riesgo, alto impacto, cambios pequeños.
