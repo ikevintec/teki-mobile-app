@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/currency_selector.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/historial_item.dart';
@@ -11,7 +10,6 @@ import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_balance_screen.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
-import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -71,44 +69,16 @@ class _CajaTabState extends ConsumerState<CajaTab> {
 
   Future<void> _fetchCashRegister() async {
     if (!mounted) return;
-    final sesion = ref.read(sesionProvider);
-    final idPV = sesion.office?.id ?? 0;
-    final idEV = sesion.saleStation?.id ?? 0;
-    final fechaStr = DateFormat('dd-MM-yyyy').format(_selectedDate);
-    await ref.read(cashRegisterProvider.notifier).fetch(
-          idPuntoVenta: idPV,
-          idEstacionVenta: idEV,
-          fecha: fechaStr,
+    await ref.read(cashRegisterProvider.notifier).fetchAndLoadDetail(
+          selectedMoneda: _selectedMoneda,
+          fecha: _selectedDate,
         );
-    if (!mounted) return;
-    // justo después
-    final cajaState = ref.read(cashRegisterProvider);
-    if (cajaState.registers.isEmpty) {
-      ref.read(cashRegisterDetailProvider.notifier).clear();
-    } else {
-      _loadDetail();
-    }
   }
-  /// Calcula la moneda activa con la misma lógica que el build y dispara
-  /// la carga del historial usando el primer registro disponible.
+
   void _loadDetail() {
-    final cajaState = ref.read(cashRegisterProvider);
-    if (cajaState.registers.isEmpty) return;
-    final idCaja = cajaState.registers.first.id;
-    if (idCaja == null) return;
-
-    final monedas = {...cajaState.balancePorMoneda.keys}.toList()
-      ..sort((a, b) => a == 'PEN' ? -1 : 1);
-    final moneda = (_selectedMoneda != null && monedas.contains(_selectedMoneda))
-        ? _selectedMoneda!
-        : (monedas.contains('PEN')
-            ? 'PEN'
-            : (monedas.isNotEmpty ? monedas.first : 'PEN'));
-
-    ref.read(cashRegisterDetailProvider.notifier).load(
-          idCaja: idCaja,
-          moneda: moneda,
-        );
+    ref
+        .read(cashRegisterProvider.notifier)
+        .loadDetail(selectedMoneda: _selectedMoneda);
   }
 
   void _onMonedaChanged(String newMoneda) {
@@ -131,15 +101,8 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     final ingresos = cajaState.totalIngresosPorMoneda;
     final egresos = cajaState.totalEgresosPorMoneda;
 
-    final monedas = {...balance.keys}.toList()
-      ..sort((a, b) => a == 'PEN' ? -1 : 1);
-
-    final monedaActiva =
-        (_selectedMoneda != null && monedas.contains(_selectedMoneda))
-            ? _selectedMoneda!
-            : (monedas.contains('PEN')
-                ? 'PEN'
-                : (monedas.isNotEmpty ? monedas.first : 'PEN'));
+    final monedas = cajaState.monedas;
+    final monedaActiva = cajaState.monedaActiva(_selectedMoneda);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

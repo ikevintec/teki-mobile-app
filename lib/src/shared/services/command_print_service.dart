@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/esc_pos/command_print.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
+import 'package:teki_app/src/data/models/teki_model/order_restaurant_change_status_items.dart';
 import 'package:teki_app/src/data/models/teki_model/printer.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/production_area.dart';
@@ -16,6 +17,32 @@ class CommandPrintService {
   final Dio _dio = ApiClient.dio;
   final PrintCoffeService _printCoffeService = PrintCoffeService();
   final CommandEscPosFormatter _escPosFormatter = CommandEscPosFormatter();
+
+  /// Imprime las comandas de anulación de todos los items afectados por un
+  /// cambio de estado de orden (p. ej. anular la orden completa).
+  Future<void> printCancellation({
+    required List<OrderRestaurantChangeStatusItems> changeItems,
+    required Office puntoVenta,
+    required bool escPos,
+    required String? clientPrinter,
+    required int? idCompany,
+  }) async {
+    for (final ci in changeItems) {
+      final commandId = ci.comanda?.id;
+      if (commandId == null) continue;
+      final itemIds =
+          (ci.items ?? []).map((item) => item.id).whereType<int>().toList();
+      await processCommand(
+        commandId: commandId,
+        puntoVenta: puntoVenta,
+        escPos: escPos,
+        clientPrinter: clientPrinter,
+        idCompany: idCompany,
+        anulacion: true,
+        itemAfectado: itemIds,
+      );
+    }
+  }
 
   /// Procesa una comanda guardada: detecta áreas de producción y dispara impresión.
   Future<void> processCommand({

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
-import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
-import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/comanda_detail_item_tile.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options/action_tile.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options/anular_orden_dialog.dart';
@@ -14,7 +12,6 @@ import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/services/command_print_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
-import 'package:teki_app/src/utils/notifications.dart';
 
 // Re-exports para consumidores existentes (restaurant_mesas_screen, order_restaurant_card)
 export 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options/anular_orden_dialog.dart' show AnularOrdenDialog;
@@ -371,15 +368,11 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
     final pvId = ref.read(sesionProvider).office?.id;
     final notifier = ref.read(restaurantProvider.notifier);
     setState(() => _isLoading = true);
-    try {
-      final repo = RestaurantRepositoryImpl();
-      await repo.saveChecks(order.id!, [Check(items: [])]);
+    final ok = await notifier.finalizarCuenta(order.id!, pvId);
+    if (ok) {
       Get.back();
-      successNotification('Cuenta finalizada');
-      if (pvId != null) notifier.reload(pvId);
-    } catch (e) {
+    } else if (mounted) {
       setState(() => _isLoading = false);
-      errorNotification(e.toString());
     }
   }
 
@@ -519,23 +512,13 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
 
       final office = sesion.office;
       if (office?.id != null && changeItems.isNotEmpty) {
-        for (final ci in changeItems) {
-          final commandId = ci.comanda?.id;
-          if (commandId == null) continue;
-          final itemIds = (ci.items ?? [])
-              .map((item) => item.id)
-              .whereType<int>()
-              .toList();
-          CommandPrintService().processCommand(
-            commandId: commandId,
-            puntoVenta: office!,
-            escPos: sesion.config?.imprimeTicketsEscPos ?? false,
-            clientPrinter: sesion.config?.clienteImpresion,
-            idCompany: sesion.company?.id,
-            anulacion: true,
-            itemAfectado: itemIds,
-          );
-        }
+        CommandPrintService().printCancellation(
+          changeItems: changeItems,
+          puntoVenta: office!,
+          escPos: sesion.config?.imprimeTicketsEscPos ?? false,
+          clientPrinter: sesion.config?.clienteImpresion,
+          idCompany: sesion.company?.id,
+        );
       }
     }
   }

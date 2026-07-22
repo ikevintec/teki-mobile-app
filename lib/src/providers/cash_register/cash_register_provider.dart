@@ -4,20 +4,58 @@ import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
 import 'package:teki_app/src/data/repositories/cash_register_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/cash_register_repository.dart';
+import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 
 final cashRegisterProvider =
     StateNotifierProvider<CashRegisterNotifier, CashRegisterState>((ref) {
   return CashRegisterNotifier(
+    ref: ref,
     repository: CashRegisterRepositoryImpl(),
   );
 });
 
 class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
+  final Ref ref;
   final CashRegisterRepository repository;
   CancelToken? _cancelToken;
 
-  CashRegisterNotifier({required this.repository})
+  CashRegisterNotifier({required this.ref, required this.repository})
       : super(const CashRegisterState());
+
+  /// Carga la caja del punto de venta/estación de la sesión para [fecha]
+  /// (null = hoy) y luego el historial de la moneda activa; si no hay
+  /// registros, limpia el historial.
+  Future<void> fetchAndLoadDetail({
+    String? selectedMoneda,
+    DateTime? fecha,
+  }) async {
+    final sesion = ref.read(sesionProvider);
+    await fetch(
+      idPuntoVenta: sesion.office?.id ?? 0,
+      idEstacionVenta: sesion.saleStation?.id ?? 0,
+      fecha: fecha != null ? DateFormat('dd-MM-yyyy').format(fecha) : null,
+    );
+    if (!mounted) return;
+    if (state.registers.isEmpty) {
+      ref.read(cashRegisterDetailProvider.notifier).clear();
+    } else {
+      loadDetail(selectedMoneda: selectedMoneda);
+    }
+  }
+
+  /// Dispara la carga del historial usando el primer registro disponible y
+  /// la moneda activa según [selectedMoneda].
+  void loadDetail({String? selectedMoneda}) {
+    if (state.registers.isEmpty) return;
+    final idCaja = state.registers.first.id;
+    if (idCaja == null) return;
+
+    ref.read(cashRegisterDetailProvider.notifier).load(
+          idCaja: idCaja,
+          moneda: state.monedaActiva(selectedMoneda),
+        );
+  }
 
   Future<void> fetch({
     required int idPuntoVenta,
@@ -101,6 +139,21 @@ class CashRegisterState {
       }
     }
     return totals;
+  }
+
+  /// Monedas con movimientos, con PEN siempre primero.
+  List<String> get monedas =>
+      {...balancePorMoneda.keys}.toList()..sort((a, b) => a == 'PEN' ? -1 : 1);
+
+  /// Moneda a mostrar: la seleccionada si sigue disponible; si no, PEN;
+  /// si tampoco hay PEN, la primera disponible (o PEN por defecto).
+  String monedaActiva(String? seleccionada) {
+    final disponibles = monedas;
+    if (seleccionada != null && disponibles.contains(seleccionada)) {
+      return seleccionada;
+    }
+    if (disponibles.contains('PEN')) return 'PEN';
+    return disponibles.isNotEmpty ? disponibles.first : 'PEN';
   }
 
   /// Balance neto por moneda

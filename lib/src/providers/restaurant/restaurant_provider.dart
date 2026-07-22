@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/lounge.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant_change_status_items.dart';
@@ -115,6 +116,20 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
       await selectAll();
     } else {
       await selectLounge(state.selectedLoungeId);
+    }
+  }
+
+  /// Genera una cuenta única para la orden y recarga las mesas.
+  /// Devuelve true si la operación fue exitosa.
+  Future<bool> finalizarCuenta(int orderId, int? pvId) async {
+    try {
+      await repository.saveChecks(orderId, [Check(items: [])]);
+      successNotification('Cuenta finalizada');
+      if (pvId != null) await reload(pvId);
+      return true;
+    } catch (e) {
+      errorNotification(e.toString());
+      return false;
     }
   }
 
