@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -9,8 +10,11 @@ class ColorSchema {
 }
 
 class Environment {
+  /// Debug y profile cargan `.env` (entorno local del desarrollador).
+  /// Los builds RELEASE cargan siempre `.env.production`: así un `.env`
+  /// apuntando a localhost nunca puede colarse en un build de tienda.
   static initEnvironment() async {
-    await dotenv.load(fileName: ".env");
+    await dotenv.load(fileName: kReleaseMode ? '.env.production' : '.env');
   }
 
   static String apiUrl = dotenv.env['API_URL'] ?? 'no url defined';
