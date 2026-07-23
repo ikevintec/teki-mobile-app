@@ -66,4 +66,19 @@ abstract class CashRegisterDatasource {
     required int perPage,
     CancelToken? cancelToken,
   });
+
+  /// Apertura una caja para la fecha con los montos iniciales por moneda.
+  /// [montosIniciales]: moneda -> monto de apertura (efectivo).
+  Future<CashRegisterResponse> aperturarCaja({
+    required DateTime fecha,
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+    required Map<String, double> montosIniciales,
+  });
+
+  /// Cierra la caja con el arqueo de montos reales contados por moneda.
+  Future<void> cerrarCaja({
+    required int idCaja,
+    required Map<String, double> montosReales,
+  });
 }

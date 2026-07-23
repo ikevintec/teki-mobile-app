@@ -133,4 +133,27 @@ class CashRegisterRepositoryImpl extends CashRegisterRepository {
       cancelToken: cancelToken,
     );
   }
+
+  @override
+  Future<CashRegisterResponse> aperturarCaja({
+    required DateTime fecha,
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+    required Map<String, double> montosIniciales,
+  }) {
+    return datasource.aperturarCaja(
+      fecha: fecha,
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
+      montosIniciales: montosIniciales,
+    );
+  }
+
+  @override
+  Future<void> cerrarCaja({
+    required int idCaja,
+    required Map<String, double> montosReales,
+  }) {
+    return datasource.cerrarCaja(idCaja: idCaja, montosReales: montosReales);
+  }
 }

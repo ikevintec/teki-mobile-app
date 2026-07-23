@@ -257,4 +257,80 @@ class RemoteCashRegister extends CashRegisterDatasource {
       return Future.error(e.toString());
     }
   }
+
+  @override
+  Future<CashRegisterResponse> aperturarCaja({
+    required DateTime fecha,
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+    required Map<String, double> montosIniciales,
+  }) async {
+    try {
+      // Mismo payload que la web: un detalle APERTURA_CAJA por moneda con
+      // su pago en efectivo. Solo se envían monedas con monto (o PEN).
+      final details = montosIniciales.entries
+          .where((e) => e.value > 0 || e.key == 'PEN')
+          .map((e) => {
+                'tipoMovimientoCaja': 'INGRESO',
+                'conceptoMovimientoCaja': 'APERTURA_CAJA',
+                'monedaMovimientoCaja': e.key,
+                'descripcion': 'Apertura de caja',
+                'monto': e.value,
+                'pagos': [
+                  {
+                    'formaPago': 'EFECTIVO',
+                    'nombre': 'Efectivo',
+                    'monto': e.value,
+                  }
+                ],
+              })
+          .toList();
+      final response = await dio.post(
+        '/cash-register',
+        data: {
+          'fecha': fecha.millisecondsSinceEpoch,
+          'puntoVenta': {'id': idPuntoVenta},
+          'estacionVenta': {'id': idEstacionVenta},
+          'cashRegisterDetails': details,
+        },
+      );
+      return CashRegisterResponse.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error(msg);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<void> cerrarCaja({
+    required int idCaja,
+    required Map<String, double> montosReales,
+  }) async {
+    try {
+      await dio.patch(
+        '/cash-register/operations/close',
+        queryParameters: {'id': idCaja},
+        data: montosReales.entries
+            .map((e) => {'moneda': e.key, 'monto': e.value})
+            .toList(),
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error(msg);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
 }

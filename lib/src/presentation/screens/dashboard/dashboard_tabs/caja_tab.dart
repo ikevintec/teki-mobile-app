@@ -5,6 +5,8 @@ import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/currency_selector.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/empty_caja_card.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/historial_item.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/aperturar_caja_sheet.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/cerrar_caja_sheet.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/open_register_banner.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/rango_movimientos_sheet.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/resumen_view.dart';
@@ -298,7 +300,13 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                         ),
                       )
                     : cajaState.registers.isEmpty
-                    ? EmptyCajaCard(fecha: _selectedDate)
+                    ? EmptyCajaCard(
+                        fecha: _selectedDate,
+                        onAperturar: sesion.hasPermission('CAJA_APERTURAR')
+                            ? () => showAperturarCajaSheet(context,
+                                fecha: _selectedDate)
+                            : null,
+                      )
                     : Padding(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                         child: Column(
@@ -505,6 +513,29 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                     child: const Icon(Icons.print_rounded, size: 18),
                   ),
                 ),
+                if (cajaState.registers.first.isAperturada &&
+                    sesion.hasPermission('CAJA_CERRAR')) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 1,
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          showCerrarCajaSheet(context, fecha: _selectedDate),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFDC2626),
+                        side: BorderSide(
+                          color:
+                              const Color(0xFFDC2626).withValues(alpha: 0.4),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                      ),
+                      child: const Icon(Icons.lock_outline_rounded, size: 18),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -6,6 +6,7 @@ import 'package:teki_app/src/data/repositories/cash_register_repository_impl.dar
 import 'package:teki_app/src/domain/repositories/cash_register_repository.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 final cashRegisterProvider =
     StateNotifierProvider<CashRegisterNotifier, CashRegisterState>((ref) {
@@ -69,6 +70,58 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
         return fb.compareTo(fa);
       });
     return ordenadas.first;
+  }
+
+  /// Apertura una caja para [fecha] con los montos iniciales por moneda y
+  /// recarga la vista. Devuelve true si la operación fue exitosa.
+  Future<bool> aperturarCaja({
+    required DateTime fecha,
+    required Map<String, double> montosIniciales,
+  }) async {
+    final sesion = ref.read(sesionProvider);
+    final idPV = sesion.office?.id;
+    final idEV = sesion.saleStation?.id;
+    if (idPV == null || idEV == null) {
+      errorNotification('No hay punto de venta o estación seleccionados');
+      return false;
+    }
+    try {
+      await repository.aperturarCaja(
+        fecha: fecha,
+        idPuntoVenta: idPV,
+        idEstacionVenta: idEV,
+        montosIniciales: montosIniciales,
+      );
+      successNotification('Caja aperturada');
+      await fetchAndLoadDetail(fecha: fecha);
+      return true;
+    } catch (e) {
+      errorNotification(e.toString());
+      return false;
+    }
+  }
+
+  /// Cierra la caja actualmente cargada con el arqueo de [montosReales]
+  /// y recarga la vista. Devuelve true si la operación fue exitosa.
+  Future<bool> cerrarCaja({
+    required Map<String, double> montosReales,
+    DateTime? fecha,
+  }) async {
+    final idCaja =
+        state.registers.isNotEmpty ? state.registers.first.id : null;
+    if (idCaja == null) {
+      errorNotification('No hay una caja para cerrar');
+      return false;
+    }
+    try {
+      await repository.cerrarCaja(idCaja: idCaja, montosReales: montosReales);
+      successNotification('Caja cerrada');
+      await fetchAndLoadDetail(fecha: fecha);
+      return true;
+    } catch (e) {
+      errorNotification(e.toString());
+      return false;
+    }
   }
 
   /// Dispara la carga del historial usando el primer registro disponible y

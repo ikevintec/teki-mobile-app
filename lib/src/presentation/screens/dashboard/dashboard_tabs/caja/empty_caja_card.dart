@@ -10,7 +10,11 @@ import 'package:intl/intl.dart';
 class EmptyCajaCard extends StatelessWidget {
   final DateTime fecha;
 
-  const EmptyCajaCard({super.key, required this.fecha});
+  /// Acción "Aperturar caja". Null oculta el botón (sin permiso
+  /// CAJA_APERTURAR).
+  final VoidCallback? onAperturar;
+
+  const EmptyCajaCard({super.key, required this.fecha, this.onAperturar});
 
   bool get _esHoy {
     final now = DateTime.now();
@@ -55,6 +59,24 @@ class EmptyCajaCard extends StatelessWidget {
               color: Colors.grey.shade500,
             ),
           ),
+          if (onAperturar != null) ...[
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: onAperturar,
+              icon: const Icon(Icons.lock_open_rounded, size: 17),
+              label: const Text('Aperturar caja'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                textStyle: GoogleFonts.roboto(
+                    fontSize: 13, fontWeight: FontWeight.w600),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+              ),
+            ),
+          ],
         ],
       ),
     );
