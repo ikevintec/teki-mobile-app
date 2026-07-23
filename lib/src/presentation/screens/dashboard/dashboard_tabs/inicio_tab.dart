@@ -38,7 +38,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       warningNotification('No tienes permiso para crear ventas');
       return;
     }
-    _irANuevaVenta();
+    Get.toNamed(AppRoutes.productsSales);
   }
   Key _todayReportKey = UniqueKey();
   bool _hasConnectionError = false;
