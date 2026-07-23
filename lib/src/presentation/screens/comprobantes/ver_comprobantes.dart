@@ -152,6 +152,11 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
       }
     }
 
+    // Los totales del periodo son dato sensible (paridad web: VENTAS_VER_TOTALES)
+    if (!ref.watch(sesionProvider).hasPermission('VENTAS_VER_TOTALES')) {
+      return const SizedBox.shrink();
+    }
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Column(

@@ -40,6 +40,30 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!ref.watch(sesionProvider).hasPermission('RESTAURANTE_COBRADOR_VER')) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Cobrador')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline_rounded,
+                    color: Colors.grey.shade400, size: 44),
+                const SizedBox(height: 12),
+                Text(
+                  'No tienes permisos para ver el cobrador',
+                  textAlign: TextAlign.center,
+                  style:
+                      TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     ref.listen(sesionProvider, (prev, next) {
       final newPvId = next.office?.id;
       if (newPvId != null && newPvId != prev?.office?.id) {

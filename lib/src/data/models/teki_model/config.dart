@@ -49,6 +49,7 @@ class ConfigCompany {
   bool? adicionarRetencionEnCotizacion;
   double? porcentajeRetencion;
   bool? motivoAnulacionPlato;
+  bool? busquedaProductosLocalmente;
 
   ConfigCompany({
     this.envioAutomaticoSunat,
@@ -96,6 +97,7 @@ class ConfigCompany {
     this.adicionarRetencionEnCotizacion,
     this.porcentajeRetencion,
     this.motivoAnulacionPlato,
+    this.busquedaProductosLocalmente,
   });
 
   factory ConfigCompany.fromJson(Map<String, dynamic> json) {
@@ -151,6 +153,7 @@ class ConfigCompany {
       adicionarRetencionEnCotizacion: json['adicionarRetencionEnCotizacion'],
       porcentajeRetencion: (json['porcentajeRetencion'] as num?)?.toDouble(),
       motivoAnulacionPlato: json['motivoAnulacionPlato'],
+      busquedaProductosLocalmente: json['busquedaProductosLocalmente'],
     );
   }
 
@@ -201,6 +204,7 @@ class ConfigCompany {
       'adicionarRetencionEnCotizacion': adicionarRetencionEnCotizacion,
       'porcentajeRetencion': porcentajeRetencion,
       'motivoAnulacionPlato': motivoAnulacionPlato,
+      'busquedaProductosLocalmente': busquedaProductosLocalmente,
     };
   }
 }

@@ -254,7 +254,10 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Botón editar
+                      // Botón editar (requiere permiso; paridad web)
+                      if (ref
+                          .watch(sesionProvider)
+                          .hasPermission('PRODUCTOS_EDITAR'))
                       InkWell(
                         borderRadius: BorderRadius.circular(8),
                         onTap: () {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/providers/formularios/product_form.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -10,6 +11,10 @@ class PreciosCompraSection extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // El precio de compra es dato sensible: solo visible con permiso
+    if (!ref.watch(sesionProvider).hasPermission('PRODUCTOS_MOSTRAR_PRECIO_COMPRA')) {
+      return const SizedBox.shrink();
+    }
     final formProvider = ref.watch(productFormProvider);
     final notifier = ref.read(productFormProvider.notifier);
     

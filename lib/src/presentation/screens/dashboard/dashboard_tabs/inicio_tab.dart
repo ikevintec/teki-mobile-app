@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/today_reports_section.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
@@ -30,6 +31,15 @@ class InicioTab extends ConsumerStatefulWidget {
 }
 
 class _InicioTabState extends ConsumerState<InicioTab> {
+
+  /// Crear una venta requiere permiso (paridad web: VENTAS_CREAR).
+  void _irANuevaVenta() {
+    if (!ref.read(sesionProvider).hasPermission('VENTAS_CREAR')) {
+      warningNotification('No tienes permiso para crear ventas');
+      return;
+    }
+    Get.toNamed(AppRoutes.productsSales);
+  }
   Key _todayReportKey = UniqueKey();
   bool _hasConnectionError = false;
   bool _isRetrying = false;
@@ -93,7 +103,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       ref.invalidate(ticketProvider);
       ref.invalidate(productSaleProvider);
       ref.invalidate(customerSaleProvider);
-      Get.toNamed(AppRoutes.productsSales);
+      _irANuevaVenta();
     }
 
     if (hasData && fromOrder) {
@@ -107,7 +117,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       if (ticketState.isQuotation) {
         resetAndNavigate();
       } else {
-        Get.toNamed(AppRoutes.productsSales);
+        _irANuevaVenta();
       }
       return;
     }
@@ -155,7 +165,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
     );
 
     if (continuar == true) {
-      Get.toNamed(AppRoutes.productsSales);
+      _irANuevaVenta();
     } else if (continuar == false) {
       resetAndNavigate();
     }
@@ -177,12 +187,12 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       ref.invalidate(productSaleProvider);
       ref.invalidate(customerSaleProvider);
       ref.read(ticketProvider.notifier).startNewQuotation();
-      Get.toNamed(AppRoutes.productsSales);
+      _irANuevaVenta();
     }
 
     if (!hasData) {
       ref.read(ticketProvider.notifier).startNewQuotation();
-      Get.toNamed(AppRoutes.productsSales);
+      _irANuevaVenta();
       return;
     }
 
@@ -229,7 +239,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
     );
 
     if (continuar == true) {
-      Get.toNamed(AppRoutes.productsSales);
+      _irANuevaVenta();
     } else if (continuar == false) {
       resetAndNavigate();
     }

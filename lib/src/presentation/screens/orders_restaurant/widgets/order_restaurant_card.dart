@@ -65,6 +65,10 @@ class OrderRestaurantCard extends ConsumerWidget {
   }
 
   Future<void> _anularOrden(BuildContext context, WidgetRef ref) async {
+    if (!ref.read(sesionProvider).hasPermission('RESTAURANTE_PEDIDOS_ANULAR')) {
+      warningNotification('No tienes permiso para anular órdenes');
+      return;
+    }
     final result = await showDialog<({bool confirmed, bool updateInventory, String observacion})>(
       context: context,
       builder: (_) => const AnularOrdenDialog(),
@@ -151,7 +155,10 @@ class OrderRestaurantCard extends ConsumerWidget {
                     _finalizarOrden(context, ref);
                   },
                 ),
-              if (_canAnular)
+              if (_canAnular &&
+                  ref
+                      .read(sesionProvider)
+                      .hasPermission('RESTAURANTE_PEDIDOS_ANULAR'))
                 ListTile(
                   leading: Container(
                     width: 38,

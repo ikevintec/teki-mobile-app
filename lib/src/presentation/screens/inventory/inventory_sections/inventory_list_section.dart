@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/presentation/screens/inventory/widgets/inventory_movements_sheet.dart';
 import 'package:teki_app/src/providers/inventory/inventory_provider.dart';
@@ -123,7 +124,10 @@ class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
         return _InventoryCard(
           inventory: item,
           onMovementsPressed: () => _openMovementsSheet(item),
-          onAdjustPressed: item.producto != null
+          onAdjustPressed: (item.producto != null &&
+                  ref
+                      .read(sesionProvider)
+                      .hasPermission('INVENTARIO_AJUSTAR'))
               ? () async {
                   await Get.toNamed(
                     AppRoutes.inventoryAdjustmentCreate,

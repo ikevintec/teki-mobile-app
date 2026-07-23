@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
+import 'package:teki_app/src/data/models/teki_model/company_summary.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -40,9 +41,15 @@ class SettingsScreen extends ConsumerWidget {
                         child: Text(company.razonSocial ?? 'Sin nombre'),
                       ))
                   .toList(),
-              onChanged: (value) {
-                ref.read(sesionProvider.notifier).changeCompany(value!);
-              },
+              // Cambiar de empresa adjunta requiere permiso (paridad web);
+              // sin él, el selector se muestra deshabilitado.
+              onChanged: !ref
+                      .watch(sesionProvider)
+                      .hasPermission('SELECCIONAR_EMPRESAS_ADJUNTAS')
+                  ? null
+                  : (Companysummary? value) {
+                      ref.read(sesionProvider.notifier).changeCompany(value!);
+                    },
             ),
             const SizedBox(height: 20),
             _buildSectionTitle('Punto de Venta'),
@@ -95,7 +102,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildDropdown<T>({
     required T? value,
     required List<DropdownMenuItem<T>>? items,
-    required ValueChanged<T?> onChanged,
+    required ValueChanged<T?>? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(

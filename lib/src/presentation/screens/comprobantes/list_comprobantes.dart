@@ -154,6 +154,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
   Widget build(BuildContext context) {
     final provider = ref.watch(comprobantesSaleProvider);
     final puedeAnular = ref.watch(puedeAnularProvider);
+    final puedeEditar = ref.watch(puedeEditarProvider);
     final tickets = provider.tickets;
     final hasMore = provider.hasMore;
     final isLoading = provider.isLoading;
@@ -208,7 +209,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: DismissibleActionWidget(
               actions: createComprobanteActions(
-                onEdit: ticket.anulado == true
+                onEdit: (ticket.anulado == true || !puedeEditar)
                     ? null
                     : () => _handleEdit(ticket),
                 onAnular: (puedeAnular && canAnular(ticket))

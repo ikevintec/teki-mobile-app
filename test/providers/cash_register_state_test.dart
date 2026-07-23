@@ -61,6 +61,95 @@ void main() {
     });
   });
 
+  group('CashRegisterState.openRegisterEsOtraFecha', () {
+    final hoy = DateTime(2026, 7, 22);
+
+    test('sin caja abierta no hay aviso', () {
+      expect(const CashRegisterState().openRegisterEsOtraFecha(hoy), isFalse);
+    });
+
+    test('caja abierta del mismo día no genera aviso', () {
+      final state = CashRegisterState(
+        openRegister: CashRegisterResponse(
+          id: 1,
+          estadoCaja: 'APERTURADA',
+          fecha: DateTime(2026, 7, 22, 18, 30),
+          montosTotalesIngresos: const [],
+          montosTotalesEgresos: const [],
+          montosIngresosEfectivo: const [],
+        ),
+      );
+      expect(state.openRegisterEsOtraFecha(hoy), isFalse);
+    });
+
+    test('caja abierta de otro día genera aviso', () {
+      final state = CashRegisterState(
+        openRegister: CashRegisterResponse(
+          id: 1,
+          estadoCaja: 'APERTURADA',
+          fecha: DateTime(2026, 7, 19),
+          montosTotalesIngresos: const [],
+          montosTotalesEgresos: const [],
+          montosIngresosEfectivo: const [],
+        ),
+      );
+      expect(state.openRegisterEsOtraFecha(hoy), isTrue);
+    });
+
+    test('caja abierta sin fecha no genera aviso', () {
+      final state = CashRegisterState(
+        openRegister: CashRegisterResponse(
+          id: 1,
+          montosTotalesIngresos: const [],
+          montosTotalesEgresos: const [],
+          montosIngresosEfectivo: const [],
+        ),
+      );
+      expect(state.openRegisterEsOtraFecha(hoy), isFalse);
+    });
+  });
+
+  group('CashRegisterState.copyWith y openRegister', () {
+    final caja = CashRegisterResponse(
+      id: 9,
+      montosTotalesIngresos: const [],
+      montosTotalesEgresos: const [],
+      montosIngresosEfectivo: const [],
+    );
+
+    test('copyWith sin openRegister lo conserva', () {
+      final state = CashRegisterState(openRegister: caja);
+      expect(state.copyWith(isLoading: true).openRegister, same(caja));
+    });
+
+    test('copyWith puede limpiar openRegister con null explícito', () {
+      final state = CashRegisterState(openRegister: caja);
+      expect(state.copyWith(openRegister: null).openRegister, isNull);
+    });
+  });
+
+  group('CashRegisterResponse', () {
+    test('isAperturada según estadoCaja', () {
+      expect(register().isAperturada, isFalse);
+      final abierta = CashRegisterResponse(
+        estadoCaja: 'APERTURADA',
+        montosTotalesIngresos: const [],
+        montosTotalesEgresos: const [],
+        montosIngresosEfectivo: const [],
+      );
+      expect(abierta.isAperturada, isTrue);
+    });
+
+    test('fromJson parsea la fecha en formatos flexibles', () {
+      final r = CashRegisterResponse.fromJson({
+        'id': 1,
+        'estadoCaja': 'APERTURADA',
+        'fecha': '2026-07-19T00:00:00',
+      });
+      expect(r.fecha, DateTime(2026, 7, 19));
+    });
+  });
+
   group('CashRegisterState.balancePorMoneda', () {
     test('ingresos menos egresos por moneda', () {
       final state = CashRegisterState(registers: [
@@ -71,6 +160,41 @@ void main() {
         register(ingresos: [MontoMoneda(monto: 50, moneda: 'PEN')]),
       ]);
       expect(state.balancePorMoneda['PEN'], 120.0);
+    });
+  });
+
+  group('CashRegisterState.aperturaRetrocede', () {
+    CashRegisterState conCajaAbierta(DateTime fecha) => CashRegisterState(
+          openRegister: CashRegisterResponse(
+            id: 1,
+            estadoCaja: 'APERTURADA',
+            fecha: fecha,
+            montosTotalesIngresos: const [],
+            montosTotalesEgresos: const [],
+            montosIngresosEfectivo: const [],
+          ),
+        );
+
+    test('destino anterior a la caja abierta retrocede (bloquear)', () {
+      final state = conCajaAbierta(DateTime(2026, 7, 22));
+      expect(state.aperturaRetrocede(DateTime(2026, 7, 21)), isTrue);
+    });
+
+    test('destino posterior a la caja abierta no retrocede (flujo guiado)', () {
+      final state = conCajaAbierta(DateTime(2026, 6, 28));
+      expect(state.aperturaRetrocede(DateTime(2026, 7, 22)), isFalse);
+    });
+
+    test('mismo día no retrocede', () {
+      final state = conCajaAbierta(DateTime(2026, 7, 22, 18, 30));
+      expect(state.aperturaRetrocede(DateTime(2026, 7, 22)), isFalse);
+    });
+
+    test('sin caja abierta no retrocede', () {
+      expect(
+        const CashRegisterState().aperturaRetrocede(DateTime(2026, 7, 21)),
+        isFalse,
+      );
     });
   });
 }

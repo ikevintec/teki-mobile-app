@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/datasource/remote_cash_register.dart';
+import 'package:teki_app/src/data/models/response/caja_resumen.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 import 'package:teki_app/src/domain/datasource/cash_register_datasource.dart';
 import 'package:teki_app/src/domain/repositories/cash_register_repository.dart';
 
@@ -23,6 +25,17 @@ class CashRegisterRepositoryImpl extends CashRegisterRepository {
       idEstacionVenta: idEstacionVenta,
       fecha: fecha,
       cancelToken: cancelToken,
+    );
+  }
+
+  @override
+  Future<List<CashRegisterResponse>> getOpenCashRegisters({
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  }) {
+    return datasource.getOpenCashRegisters(
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
     );
   }
 
@@ -54,5 +67,93 @@ class CashRegisterRepositoryImpl extends CashRegisterRepository {
       idCaja: idCaja,
       cancelToken: cancelToken,
     );
+  }
+
+  @override
+  Future<CashRegisterDetail> createCashMovement({
+    required int idCaja,
+    required String tipoMovimiento,
+    required String concepto,
+    required String moneda,
+    required double monto,
+    required String descripcion,
+    String? detalle,
+    required int turno,
+    required List<Map<String, dynamic>> pagos,
+    CancelToken? cancelToken,
+  }) {
+    return datasource.createCashMovement(
+      idCaja: idCaja,
+      tipoMovimiento: tipoMovimiento,
+      concepto: concepto,
+      moneda: moneda,
+      monto: monto,
+      descripcion: descripcion,
+      detalle: detalle,
+      turno: turno,
+      pagos: pagos,
+      cancelToken: cancelToken,
+    );
+  }
+
+  @override
+  Future<CajaResumen> getResumen({
+    required String desde,
+    required String hasta,
+    int? idPuntoVenta,
+    int? idEstacionVenta,
+  }) {
+    return datasource.getResumen(
+      desde: desde,
+      hasta: hasta,
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
+    );
+  }
+
+  @override
+  Future<CashRegisterDetailPage> getMovimientosRango({
+    required String desde,
+    required String hasta,
+    int? idPuntoVenta,
+    int? idEstacionVenta,
+    String? tipo,
+    required int page,
+    required int perPage,
+    CancelToken? cancelToken,
+  }) {
+    return datasource.getMovimientosRango(
+      desde: desde,
+      hasta: hasta,
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
+      tipo: tipo,
+      page: page,
+      perPage: perPage,
+      cancelToken: cancelToken,
+    );
+  }
+
+  @override
+  Future<CashRegisterResponse> aperturarCaja({
+    required DateTime fecha,
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+    required Map<String, double> montosIniciales,
+  }) {
+    return datasource.aperturarCaja(
+      fecha: fecha,
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
+      montosIniciales: montosIniciales,
+    );
+  }
+
+  @override
+  Future<void> cerrarCaja({
+    required int idCaja,
+    required Map<String, double> montosReales,
+  }) {
+    return datasource.cerrarCaja(idCaja: idCaja, montosReales: montosReales);
   }
 }

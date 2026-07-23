@@ -10,39 +10,72 @@ class TipoSelector extends StatelessWidget {
   final bool isBlocked;
   final ValueChanged<String> onChanged;
 
+  /// Acción del botón "+" (registrar movimiento). Null oculta el botón
+  /// (caja cerrada o usuario sin permiso CAJA_INGRESO_EGRESO_CREAR).
+  final VoidCallback? onAdd;
+
   const TipoSelector({
     super.key,
     required this.tipo,
     required this.isBlocked,
     required this.onChanged,
+    this.onAdd,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          _TipoBtn(
-            label: 'Ingresos',
-            isSelected: tipo == 'INGRESO',
-            isBlocked: isBlocked && tipo != 'INGRESO',
-            selectedColor: const Color(0xFF16A34A),
-            onTap: () => onChanged('INGRESO'),
+    final esIngreso = tipo == 'INGRESO';
+    final addColor =
+        esIngreso ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                _TipoBtn(
+                  label: 'Ingresos',
+                  isSelected: tipo == 'INGRESO',
+                  isBlocked: isBlocked && tipo != 'INGRESO',
+                  selectedColor: const Color(0xFF16A34A),
+                  onTap: () => onChanged('INGRESO'),
+                ),
+                _TipoBtn(
+                  label: 'Egresos',
+                  isSelected: tipo == 'EGRESO',
+                  isBlocked: isBlocked && tipo != 'EGRESO',
+                  selectedColor: const Color(0xFFDC2626),
+                  onTap: () => onChanged('EGRESO'),
+                ),
+              ],
+            ),
           ),
-          _TipoBtn(
-            label: 'Egresos',
-            isSelected: tipo == 'EGRESO',
-            isBlocked: isBlocked && tipo != 'EGRESO',
-            selectedColor: const Color(0xFFDC2626),
-            onTap: () => onChanged('EGRESO'),
+        ),
+        if (onAdd != null) ...[
+          const SizedBox(width: 8),
+          // ── Botón + (registrar movimiento del tipo activo) ──────────────
+          GestureDetector(
+            onTap: onAdd,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              height: 42,
+              width: 42,
+              decoration: BoxDecoration(
+                color: addColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: addColor.withValues(alpha: 0.3)),
+              ),
+              child: Icon(Icons.add_rounded, color: addColor, size: 22),
+            ),
           ),
         ],
-      ),
+      ],
     );
   }
 }

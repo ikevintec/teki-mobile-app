@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:get/get.dart';
 // import 'package:google_fonts/google_fonts.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/product_list_section.dart';
 import 'package:teki_app/src/presentation/screens/products/products_sections/search_field.dart';
@@ -180,11 +181,14 @@ class _ProductsMainScreenState extends ConsumerState<ProductsMainScreen> {
             ),
         ],
       ),
-      floatingActionButton: const CustomFloatingActionButton(
-        buttonName: "Agregar",
-        routeName: AppRoutes.createProduct,
-        iconData: Icons.add_circle_outline,
-      ),
+      floatingActionButton:
+          ref.watch(sesionProvider).hasPermission('PRODUCTOS_CREAR')
+              ? const CustomFloatingActionButton(
+                  buttonName: "Agregar",
+                  routeName: AppRoutes.createProduct,
+                  iconData: Icons.add_circle_outline,
+                )
+              : null,
     );
   }
 }

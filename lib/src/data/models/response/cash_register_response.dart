@@ -1,6 +1,11 @@
+import 'package:teki_app/src/utils/formats.dart';
+
 class CashRegisterResponse {
   final int? id;
   final String? estadoCaja;
+
+  /// Fecha operativa de la caja (día al que pertenece).
+  final DateTime? fecha;
   final List<MontoMoneda> montosTotalesIngresos;
   final List<MontoMoneda> montosTotalesEgresos;
   final List<MontoMoneda> montosIngresosEfectivo;
@@ -8,15 +13,19 @@ class CashRegisterResponse {
   CashRegisterResponse({
     this.id,
     this.estadoCaja,
+    this.fecha,
     required this.montosTotalesIngresos,
     required this.montosTotalesEgresos,
     required this.montosIngresosEfectivo,
   });
 
+  bool get isAperturada => estadoCaja?.toUpperCase() == 'APERTURADA';
+
   factory CashRegisterResponse.fromJson(Map<String, dynamic> json) {
     return CashRegisterResponse(
       id: json['id'],
       estadoCaja: json['estadoCaja'],
+      fecha: parseDateTimeFlexible(json['fecha']),
       montosTotalesIngresos: _parseMontos(json['montosTotalesIngresos']),
       montosTotalesEgresos: _parseMontos(json['montosTotalesEgresos']),
       montosIngresosEfectivo: _parseMontos(json['montosIngresosEfectivo']),

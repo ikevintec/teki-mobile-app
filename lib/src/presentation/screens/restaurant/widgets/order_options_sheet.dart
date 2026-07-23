@@ -12,6 +12,7 @@ import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/services/command_print_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 // Re-exports para consumidores existentes (restaurant_mesas_screen, order_restaurant_card)
 export 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options/anular_orden_dialog.dart' show AnularOrdenDialog;
@@ -43,6 +44,11 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final sesion = ref.watch(sesionProvider);
+    final puedeAnularOrden =
+        sesion.hasPermission('RESTAURANTE_PEDIDOS_ANULAR');
+    final puedeEliminarPrecuentas =
+        sesion.hasPermission('RESTAURANTE_CUENTA_ELIMINAR');
     final order = widget.order;
     final estado = order.estado;
     final isPendiente = estado == 'PENDIENTE';
@@ -219,30 +225,33 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
                       color: Colors.green,
                       onTap: () => _finalizarCuenta(context, order),
                     ),
-                    ActionTile(
-                      icon: Icons.cancel_outlined,
-                      label: 'Anular orden',
-                      subtitle: 'Cancelar todos los productos de la mesa',
-                      color: Colors.red,
-                      onTap: () => _anularOrden(context, order),
-                      isLast: true,
-                    ),
+                    if (puedeAnularOrden)
+                      ActionTile(
+                        icon: Icons.cancel_outlined,
+                        label: 'Anular orden',
+                        subtitle: 'Cancelar todos los productos de la mesa',
+                        color: Colors.red,
+                        onTap: () => _anularOrden(context, order),
+                        isLast: true,
+                      ),
                   ] else ...[
-                    ActionTile(
-                      icon: Icons.delete_outline_rounded,
-                      label: 'Eliminar precuentas',
-                      subtitle: 'La orden volverá a estado PENDIENTE',
-                      color: Colors.orange,
-                      onTap: () => _eliminarPrecuentas(context, order),
-                    ),
-                    ActionTile(
-                      icon: Icons.cancel_outlined,
-                      label: 'Anular orden',
-                      subtitle: 'Cancelar todos los productos de la mesa',
-                      color: Colors.red,
-                      onTap: () => _anularOrden(context, order),
-                      isLast: true,
-                    ),
+                    if (puedeEliminarPrecuentas)
+                      ActionTile(
+                        icon: Icons.delete_outline_rounded,
+                        label: 'Eliminar precuentas',
+                        subtitle: 'La orden volverá a estado PENDIENTE',
+                        color: Colors.orange,
+                        onTap: () => _eliminarPrecuentas(context, order),
+                      ),
+                    if (puedeAnularOrden)
+                      ActionTile(
+                        icon: Icons.cancel_outlined,
+                        label: 'Anular orden',
+                        subtitle: 'Cancelar todos los productos de la mesa',
+                        color: Colors.red,
+                        onTap: () => _anularOrden(context, order),
+                        isLast: true,
+                      ),
                   ],
                 ],
               ),
@@ -377,6 +386,12 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
   }
 
   Future<void> _eliminarPrecuentas(BuildContext context, OrderRestaurant order) async {
+    if (!ref
+        .read(sesionProvider)
+        .hasPermission('RESTAURANTE_CUENTA_ELIMINAR')) {
+      warningNotification('No tienes permiso para eliminar precuentas');
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => Dialog(
@@ -492,6 +507,10 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
   }
 
   Future<void> _anularOrden(BuildContext context, OrderRestaurant order) async {
+    if (!ref.read(sesionProvider).hasPermission('RESTAURANTE_PEDIDOS_ANULAR')) {
+      warningNotification('No tienes permiso para anular órdenes');
+      return;
+    }
     final result = await showDialog<({bool confirmed, bool updateInventory, String observacion})>(
       context: context,
       builder: (_) => const AnularOrdenDialog(),

@@ -24,6 +24,15 @@ final puedeVerTodosVendedoresProvider = Provider<bool>((ref) {
   return roles.contains(kRoleVerTodosVendedores);
 });
 
+/// Rol que permite editar comprobantes emitidos.
+const String kRoleEditar = 'VENTAS_EDITAR';
+
+/// Indica si el usuario en sesión tiene permiso para editar comprobantes.
+final puedeEditarProvider = Provider<bool>((ref) {
+  final roles = ref.watch(sesionProvider).roles ?? const <String>[];
+  return roles.contains(kRoleEditar);
+});
+
 /// Rol que permite anular comprobantes.
 const String kRoleAnular = 'VENTAS_ANULAR';
 
