@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:teki_app/src/presentation/screens/comprobantes/widgets/calendar_filter.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/currency_selector.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/empty_caja_card.dart';
@@ -121,6 +122,83 @@ class _CajaTabState extends ConsumerState<CajaTab> {
   void _onMonedaChanged(String newMoneda) {
     setState(() => _selectedMoneda = newMoneda);
     ref.read(cashRegisterDetailProvider.notifier).changeMoneda(newMoneda);
+  }
+
+  /// Tap en "Aperturar caja": si hay una caja abierta de otra fecha, el
+  /// backend rechazará la apertura — en vez de dejarlo fallar, guiamos el
+  /// flujo natural: cerrar esa caja y luego aperturar la de la fecha actual.
+  Future<void> _onAperturarTap() async {
+    final cajaState = ref.read(cashRegisterProvider);
+    if (!cajaState.openRegisterEsOtraFecha(_selectedDate)) {
+      await showAperturarCajaSheet(context, fecha: _selectedDate);
+      return;
+    }
+
+    final fechaAbierta = cajaState.openRegister!.fecha!;
+    final fechaLabel = DateFormat('dd/MM/yyyy').format(fechaAbierta);
+    final continuar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Caja pendiente de cierre',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        content: Text(
+          'Para aperturar la caja de esta fecha primero debes cerrar la caja '
+          'abierta del $fechaLabel. Te llevamos a su arqueo y, al cerrarla, '
+          'volvemos aquí para aperturar.',
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorSchema.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Cerrar y aperturar'),
+          ),
+        ],
+      ),
+    );
+    if (continuar == true && mounted) {
+      await _cerrarCajaAbiertaYAperturar(fechaAbierta, _selectedDate);
+    }
+  }
+
+  /// Flujo encadenado: ir a la caja abierta → arqueo y cierre → volver a la
+  /// fecha destino → sheet de apertura. Si el usuario cancela el arqueo,
+  /// se queda viendo la caja abierta (decisión consciente).
+  Future<void> _cerrarCajaAbiertaYAperturar(
+      DateTime fechaAbierta, DateTime fechaDestino) async {
+    final diaAbierta =
+        DateTime(fechaAbierta.year, fechaAbierta.month, fechaAbierta.day);
+    setState(() {
+      _selectedDate = diaAbierta;
+      _selectedRange = DateTimeRange(start: diaAbierta, end: diaAbierta);
+      _selectedMoneda = null;
+    });
+    await _fetchCashRegister();
+    if (!mounted) return;
+
+    final cerrada = await showCerrarCajaSheet(context, fecha: diaAbierta);
+    if (!cerrada || !mounted) return;
+
+    final destino =
+        DateTime(fechaDestino.year, fechaDestino.month, fechaDestino.day);
+    setState(() {
+      _selectedDate = destino;
+      _selectedRange = DateTimeRange(start: destino, end: destino);
+      _selectedMoneda = null;
+    });
+    await _fetchCashRegister();
+    if (!mounted) return;
+    await showAperturarCajaSheet(context, fecha: destino);
   }
 
   /// Salta a la fecha de la caja aperturada detectada (modo día) y recarga.
@@ -303,8 +381,7 @@ class _CajaTabState extends ConsumerState<CajaTab> {
                     ? EmptyCajaCard(
                         fecha: _selectedDate,
                         onAperturar: sesion.hasPermission('CAJA_APERTURAR')
-                            ? () => showAperturarCajaSheet(context,
-                                fecha: _selectedDate)
+                            ? _onAperturarTap
                             : null,
                       )
                     : Padding(
