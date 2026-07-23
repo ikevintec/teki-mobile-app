@@ -26,8 +26,7 @@ Mapa priorizado de mejoras identificadas en el análisis del 2026-07-21. Cada í
 ## P1 — Configuración y bugs latentes
 
 ### 5. Separación de entornos inexistente
-- [ ] `Environment.intiEnvironment()` (en `lib/src/utils/contstants.dart`) siempre carga `.env`; `.env.production` nunca se usa y ambos apuntan a producción. Correr localmente pega contra producción.
-- **Cierre**: `.env` apunta a dev/staging, release carga producción (por `kReleaseMode` o `--dart-define`), documentado en README.
+- [x] Resuelto (2026-07-23): `initEnvironment()` decide por `kReleaseMode` — release carga siempre `.env.production`; debug/profile cargan `.env` (config local del desarrollador). Motivado por un AAB que salió compilado con `API_URL=localhost`.
 
 ### 6. `KeyValueStorageServiceImpl` solo soporta `int` y `String` ✅ (2026-07-21)
 - [x] Agregados los casos `bool` y `double`; el default (llamadas sin tipo, `T = dynamic`) se mantiene como `String` por compatibilidad y quedó documentado. Cubierto con tests en `test/shared/key_value_storage_test.dart`.

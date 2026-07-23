@@ -75,8 +75,7 @@ Datasources and repositories are symmetric: each `data/datasource/remote_X.dart`
 
 ## Environment Configuration
 
-- `flutter_dotenv`; `Environment.initEnvironment()` in `lib/src/utils/constants.dart` **always loads `.env`**.
-- `.env.production` exists but is never loaded, and currently both files point to production (`https://api.teki.pe/api`). There is no dev/staging environment — be careful: local runs hit production.
+- `flutter_dotenv`; `Environment.initEnvironment()` in `lib/src/utils/constants.dart` loads by build mode: **release → `.env.production`** (always production URLs), **debug/profile → `.env`** (developer's local config, gitignored).
 - Variables: `API_URL`, `WS_URL`, `WS_PATH`, `PRINT_URL`.
 
 ## Feature Map (presentation/screens/)
