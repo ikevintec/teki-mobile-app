@@ -60,10 +60,12 @@ class ComandaDetailItemTile extends StatelessWidget {
   final bool interactive;
 
   /// Called when the user confirms "Servir" for this item.
-  final VoidCallback? onServir;
+  /// [cantidad] null = línea completa; N = solo N unidades.
+  final void Function(double? cantidad)? onServir;
 
   /// Called when the user confirms "Anular" for this item.
-  final void Function(String? motivo)? onAnular;
+  /// [cantidad] null = línea completa; N = solo N unidades.
+  final void Function(String? motivo, double? cantidad)? onAnular;
 
   const ComandaDetailItemTile({
     super.key,

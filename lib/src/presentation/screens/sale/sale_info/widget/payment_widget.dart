@@ -17,6 +17,7 @@ import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/providers/sale/credito_cuotas.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:intl/intl.dart';
@@ -286,10 +287,10 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
   }
 
   void redistribuirMontos() {
-    final montoEquitativo =
-        total / (montoCredito.isNotEmpty ? montoCredito.length : 1);
-    for (var c in montoCredito) {
-      c.text = montoEquitativo.toStringAsFixed(2);
+    // Reparto que suma exacto: la última cuota absorbe el residuo de centavos.
+    final montos = CreditoCuotas.repartir(total, montoCredito.length);
+    for (var i = 0; i < montoCredito.length; i++) {
+      montoCredito[i].text = montos[i].toStringAsFixed(2);
     }
     setState(() {});
   }
@@ -343,6 +344,14 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       errorNotification("Todos los montos de las cuotas deben ser mayores a cero");
       return false;
     }
+    // Paridad web (validador totalCuotas): las cuotas no pueden exceder
+    // el total de la venta.
+    if (CreditoCuotas.excedeTotal(
+        cuotas.map((c) => c.monto ?? 0).toList(), total)) {
+      errorNotification(
+          "Las cuotas no pueden exceder el total de la venta (S/. ${total.toStringAsFixed(2)})");
+      return false;
+    }
     provider.setCuotas(cuotas, diasCredito: int.tryParse(diasCredito.text));
     return true;
   }
@@ -357,8 +366,11 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       final effectiveAmount = isCash ? (amount - _cambio).clamp(0.0, amount) : amount;
       return PaymentDetail(
         formaPago: e.method.formaPago,
+        // Paridad web: monto = neto aplicado a la venta; montoPagado = lo
+        // que el cliente ENTREGÓ (crudo). Con vuelto difieren y el arqueo
+        // necesita el crudo para cuadrar el efectivo recibido.
         monto: effectiveAmount,
-        montoPagado: effectiveAmount,
+        montoPagado: amount,
         metodoPago: e.method,
         numeroOperacion: e.operationController.text.isNotEmpty
             ? e.operationController.text
@@ -368,7 +380,13 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       );
     }).toList();
 
-    provider.setMovimientoCaja(total: total, pagos: pagos, cambio: _cambio);
+    provider.setMovimientoCaja(
+      total: total,
+      pagos: pagos,
+      cambio: _cambio,
+      // Efectivo crudo recibido (paridad web: ticket.efectivo).
+      efectivo: _cashTotal,
+    );
   }
 
   @override

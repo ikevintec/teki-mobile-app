@@ -7,6 +7,29 @@ import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/product_preparation.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_item_form.dart';
 
+
+Product productoConGrupoGlobal({
+  bool requerido = true,
+  bool? permitirCantidad,
+  int? forzarMinimo,
+  int? forzarMaximo,
+}) {
+  return Product(grupos: [
+    Group(
+      id: 5,
+      nombre: 'Cremas',
+      requerido: requerido,
+      permitirCantidad: permitirCantidad,
+      forzarMinimo: forzarMinimo,
+      forzarMaximo: forzarMaximo,
+      opciones: [
+        GroupOption(id: 51, nombre: 'Ají', precio: 1.5),
+        GroupOption(id: 52, nombre: 'Mayonesa', precio: 0),
+      ],
+    ),
+  ]);
+}
+
 void main() {
   final productoConPreparacion = Product(preparaciones: [
     ProductPreparation(
@@ -223,6 +246,59 @@ void main() {
       );
       expect(opciones.first.cantidad, 1.0);
       expect(opciones.first.nombreOpcion, 'Mayonesa');
+    });
+  });
+
+  group('ComandaItemForm.totalPrice', () {
+    test('los adicionales multiplican por la cantidad del item (bug 45 vs 50)', () {
+      // Caso reportado: combo S/.20, cantidad 2, adicional coca cola S/.5
+      final producto = Product(grupos: [
+        Group(
+          id: 5,
+          nombre: 'Agrega gaseosa',
+          requerido: true,
+          forzarMinimo: 1,
+          forzarMaximo: 1,
+          opciones: [GroupOption(id: 51, nombre: 'coca cola 1/2', precio: 5.0)],
+        ),
+      ]);
+      final total = ComandaItemForm.totalPrice(
+        product: producto,
+        price: 20.0,
+        quantity: 2,
+        groupSelections: {
+          5: {51}
+        },
+        groupQuantities: {},
+      );
+      expect(total, 50.0); // (20 + 5) × 2 — igual que la web y CartItem.totalPrice
+    });
+
+    test('sin adicionales: precio × cantidad', () {
+      final total = ComandaItemForm.totalPrice(
+        product: Product(),
+        price: 20.0,
+        quantity: 3,
+        groupSelections: {},
+        groupQuantities: {},
+      );
+      expect(total, 60.0);
+    });
+
+    test('con cantidades de opción tambien multiplica por el item', () {
+      final producto = productoConGrupoGlobal(permitirCantidad: true);
+      final total = ComandaItemForm.totalPrice(
+        product: producto,
+        price: 10.0,
+        quantity: 2,
+        groupSelections: {
+          5: {51}
+        },
+        groupQuantities: {
+          5: {51: 3}
+        },
+      );
+      expect(total, (10.0 + 1.5 * 3) * 2); // 29.0
     });
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/providers/restaurant/check_totals.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -18,8 +19,7 @@ class CheckCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = check.items ?? [];
-    final total = items.fold<double>(
-        0, (s, d) => s + ((d.precioVenta ?? 0) * (d.cantidad ?? 1)));
+    final total = checkItemsTotal(items);
     final hasMesa = check.pedido?.mesa != null;
     final mesaNum = check.pedido?.mesa?.numero;
     final tipo = check.pedido?.tipo;

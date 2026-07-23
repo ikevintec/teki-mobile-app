@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:teki_app/src/providers/restaurant/check_totals.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -112,10 +113,7 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
 
   void _showCheckDetail(Check check, int index) {
     final items = check.items ?? [];
-    final total = items.fold<double>(
-      0,
-      (s, d) => s + ((d.precioVenta ?? 0) * (d.cantidad ?? 1)),
-    );
+    final total = checkItemsTotal(items);
     final hasMesa = check.pedido?.mesa != null;
     final title = hasMesa
         ? 'Mesa ${check.pedido?.mesa?.numero} · Cuenta ${index + 1}'

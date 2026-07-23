@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
@@ -280,7 +282,18 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
 
         // Producto principal
         final qty = (detail.cantidad ?? 1).toDouble();
-        final price = getPriceProduct(detail.producto!, sesion.office!, {
+        // Paridad con la web: el precio base sale del precioVenta PERSISTIDO
+        // en la comanda menos sus adicionales (respeta precios editados por
+        // el mozo); solo si no hay persistido se cae al catálogo.
+        final baseUnit = persistedBaseUnitPrice(detail);
+        final mainProductForPricing = baseUnit != null
+            ? _productWithOverridePrice(
+                detail.producto!,
+                baseUnit,
+                sesion.office!.id,
+              )
+            : detail.producto!;
+        final price = getPriceProduct(mainProductForPricing, sesion.office!, {
           'qty': qty,
           'igv': sesion.config!.igv,
           'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
@@ -311,9 +324,12 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         // Productos de grupoProductoOpciones (también bloqueados como items del check)
         for (final option in (detail.grupoProductoOpciones ?? [])) {
           if (option.producto == null) continue;
+          if (option.eliminado == true) continue;
           if ((option.precio ?? 0) <= 0) continue;
 
-          final optQty = (option.cantidad ?? 1).toDouble();
+          // Regla web: la cantidad del adicional se multiplica por la
+          // cantidad del item (3 combos con 1 gaseosa c/u → 3 gaseosas).
+          final optQty = optionLineQuantity(detail, option);
 
           // Si option.precio tiene un valor, lo inyectamos como precio base
           // en una copia del producto para que getPriceProduct aplique
@@ -402,6 +418,26 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
       setLoading(false);
     }
   }
+}
+
+/// Cantidad de la línea de un adicional al emitir el comprobante:
+/// cantidad de la opción × cantidad del item. Misma regla que la web
+/// (emitir-comprobante: gpo.cantidad * item.cantidad).
+double optionLineQuantity(CommandDetail detail, CommandDetailGroupOption option) =>
+    ((option.cantidad ?? 1) * (detail.cantidad ?? 1)).toDouble();
+
+/// Precio unitario base del item de comanda para el comprobante: el
+/// precioVenta persistido (que incluye adicionales) menos sus adicionales
+/// vigentes — misma regla que la web. Devuelve null si no hay precio
+/// persistido utilizable (el caller cae al precio de catálogo).
+double? persistedBaseUnitPrice(CommandDetail detail) {
+  final persistido = detail.precioVenta;
+  if (persistido == null || persistido <= 0) return null;
+  final extras = (detail.grupoProductoOpciones ?? [])
+      .where((g) => g.eliminado != true)
+      .fold<double>(0.0, (s, g) => s + ((g.precio ?? 0) * (g.cantidad ?? 1)));
+  final base = persistido - extras;
+  return base > 0 ? base : null;
 }
 
 /// Devuelve una copia del [product] con un [preciosVenta] sintético que

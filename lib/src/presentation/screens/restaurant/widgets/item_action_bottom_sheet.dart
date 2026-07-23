@@ -13,13 +13,16 @@ import 'package:teki_app/src/utils/constants.dart';
 /// - PREPARADO  → Servir, Anular item
 /// - DESPACHADO → Anular item
 /// - CANCELADO  → (no sheet shown — caller should guard this)
+///
+/// Para items con cantidad > 1 muestra un selector de unidades: la acción
+/// aplica solo a las unidades elegidas ([cantidad] null = línea completa).
 class ItemActionBottomSheet {
   static Future<void> show(
     BuildContext context, {
     required CommandDetail item,
     required String status,
-    VoidCallback? onServir,
-    void Function(String? motivo)? onAnular,
+    void Function(double? cantidad)? onServir,
+    void Function(String? motivo, double? cantidad)? onAnular,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -40,8 +43,8 @@ class ItemActionBottomSheet {
 class _ItemActionSheetContent extends ConsumerStatefulWidget {
   final CommandDetail item;
   final String status;
-  final VoidCallback? onServir;
-  final void Function(String? motivo)? onAnular;
+  final void Function(double? cantidad)? onServir;
+  final void Function(String? motivo, double? cantidad)? onAnular;
 
   const _ItemActionSheetContent({
     required this.item,
@@ -55,12 +58,28 @@ class _ItemActionSheetContent extends ConsumerStatefulWidget {
 }
 
 class _ItemActionSheetContentState extends ConsumerState<_ItemActionSheetContent> {
+  late int _unidades;
+
+  int get _maxUnidades => (widget.item.cantidad ?? 1).toInt();
+
+  /// null = línea completa (comportamiento por defecto del backend);
+  /// N < total = el backend divide la línea y solo N unidades cambian.
+  double? get _cantidadAfectada =>
+      _unidades >= _maxUnidades ? null : _unidades.toDouble();
+
+  @override
+  void initState() {
+    super.initState();
+    _unidades = _maxUnidades;
+  }
+
   Future<void> _handleAnular() async {
     final requiresMotivo = ref.read(sesionProvider).config?.motivoAnulacionPlato == true;
+    final cantidad = _cantidadAfectada;
 
     if (!requiresMotivo) {
       Navigator.of(context).pop();
-      widget.onAnular?.call(null);
+      widget.onAnular?.call(null, cantidad);
       return;
     }
 
@@ -73,7 +92,7 @@ class _ItemActionSheetContentState extends ConsumerState<_ItemActionSheetContent
     if (motivo == null) return;
 
     if (mounted) Navigator.of(context).pop();
-    widget.onAnular?.call(motivo);
+    widget.onAnular?.call(motivo, cantidad);
   }
 
   @override
@@ -137,6 +156,55 @@ class _ItemActionSheetContentState extends ConsumerState<_ItemActionSheetContent
             Divider(height: 1, color: Colors.grey.shade200),
             const SizedBox(height: 4),
 
+            // ── Selector de unidades (solo items multi-cantidad) ──────────
+            if (_maxUnidades > 1) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Unidades a afectar',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _unidades >= _maxUnidades
+                                ? 'Se aplicará a todo el item'
+                                : 'Se aplicará solo a $_unidades de $_maxUnidades',
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _StepperButton(
+                      icon: Icons.remove,
+                      enabled: _unidades > 1,
+                      onTap: () => setState(() => _unidades--),
+                    ),
+                    SizedBox(
+                      width: 36,
+                      child: Text(
+                        '$_unidades',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    _StepperButton(
+                      icon: Icons.add,
+                      enabled: _unidades < _maxUnidades,
+                      onTap: () => setState(() => _unidades++),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: Colors.grey.shade200),
+              const SizedBox(height: 4),
+            ],
+
             // ── Servir (PREPARADO only) ───────────────────────────────────
             if (showServir)
               _ActionTile(
@@ -144,8 +212,9 @@ class _ItemActionSheetContentState extends ConsumerState<_ItemActionSheetContent
                 label: 'Servir',
                 color: const Color(0xFF1E88E5),
                 onTap: () {
+                  final cantidad = _cantidadAfectada;
                   Navigator.of(context).pop();
-                  widget.onServir?.call();
+                  widget.onServir?.call(cantidad);
                 },
               ),
 
@@ -324,6 +393,43 @@ class _MotivoAnulacionDialogState extends State<_MotivoAnulacionDialog> {
           ),
         ],
       ),
+      ),
+    );
+  }
+}
+
+// ─── Stepper button ───────────────────────────────────────────────────────────
+
+class _StepperButton extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _StepperButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: enabled
+              ? ColorSchema.primaryColor.withValues(alpha: 0.1)
+              : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: enabled ? ColorSchema.primaryColor : Colors.grey.shade400,
+        ),
       ),
     );
   }

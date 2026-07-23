@@ -155,11 +155,14 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
     }
   }
 
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String itemStatus, {String? motivoAnulacion}) async {
+  /// [cantidad] null afecta toda la línea; un valor menor a la cantidad de la
+  /// línea hace que el backend divida la línea y solo esas unidades cambien
+  /// de estado (paridad web: anular/servir parcial de items multi-cantidad).
+  Future<void> updateCommandItemStatus(int commandId, int itemId, String itemStatus, {String? motivoAnulacion, double? cantidad}) async {
     final pvId = state.pvId;
     if (pvId == null) return;
     try {
-      await repository.updateCommandItemStatus(commandId, itemId, itemStatus, motivoAnulacion: motivoAnulacion);
+      await repository.updateCommandItemStatus(commandId, itemId, itemStatus, motivoAnulacion: motivoAnulacion, cantidad: cantidad);
       await reload(pvId);
     } catch (e) {
       errorNotification(e.toString());

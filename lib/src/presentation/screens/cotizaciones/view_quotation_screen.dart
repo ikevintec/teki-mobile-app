@@ -35,6 +35,9 @@ class ViewQuotationScreen extends ConsumerStatefulWidget {
 }
 
 class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
+  // Ancla desde donde revienta el confeti al venir de una venta.
+  final GlobalKey _celebrationCheckKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -114,8 +117,7 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
         ),
         SuccessCelebrationOverlay(
           show: widget.fromSale,
-          title: '¡Cotización realizada!',
-          subtitle: 'La cotización fue registrada con éxito',
+          anchorKey: _celebrationCheckKey,
         ),
       ],
     );
@@ -126,6 +128,10 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
       child: Column(
         children: [
+          if (widget.fromSale) ...[
+            AnimatedSuccessCheck(key: _celebrationCheckKey),
+            const SizedBox(height: 16),
+          ],
           Text(
             'Cotización',
             textAlign: TextAlign.center,

@@ -379,7 +379,13 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       cantidad: 1,
       detalle: '',
       codigoUnidadMedida: 'NIU',
-      codigoTipoAfectacionIgv: '10',
+      // Paridad web: el item libre respeta la afectación por defecto del
+      // punto de venta (p. ej. exonerado en Amazonía); '10' solo de último.
+      codigoTipoAfectacionIgv: ref
+              .read(sesionProvider)
+              .office
+              ?.codigoAfectacionPorDefecto ??
+          '10',
       precioVentaUnitario: 0.0,
       valorUnitario: 0.0,
       valorVenta: 0.0,
@@ -426,7 +432,13 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     // ignore: unused_local_variable
     final tc = state.tipoComprobante;
     final porcentajeDescuentoGlobal = state.porcentajeDescuentoGlobal ?? 0.0;
-    final porcentajeOtrosCargos = null;
+    // Paridad web: el % de otros cargos viene del item PLAN de la venta
+    // (la web lo lee del form al seleccionar el plan). Antes estaba
+    // cableado a null y los planes perdían su recargo.
+    final double? porcentajeOtrosCargos = state.productsSales
+        .map((d) => d.porcentajeOtrosCargos)
+        .where((pct) => pct != null && pct > 0)
+        .firstOrNull;
     Ticket ticket = ref.read(ticketProvider).ticket;
     ticket = ticket.copyWith(
       totalValorVentaExonerada: 0,
@@ -448,6 +460,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       montoBaseRetencion: 0,
       montoRetencion: 0,
       montoDetraccion: 0,
+      otrosCargos: 0,
     );
     for (var i = 0; i < state.productsSales.length; i++) {
       TicketDetail ticketDetailToUpdate = state.productsSales[i];
@@ -724,8 +737,9 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         otrosCargos: ticket.totalValorVenta! * (porcentajeOtrosCargos / 100),
       );
     }
-    // ignore: unnecessary_null_comparison
-    if (porcentajeRecargoPorItem != null) {
+    // Paridad web: solo si hay recargo (> 0); con 0 la web no toca
+    // otrosCargos y así no pisa el recargo de un PLAN.
+    if (porcentajeRecargoPorItem > 0) {
       ticket = ticket.copyWith(
         otrosCargos: ticket.totalValorVenta! * (porcentajeRecargoPorItem / 100),
       );

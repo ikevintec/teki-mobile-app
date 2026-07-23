@@ -7,8 +7,8 @@ import 'package:teki_app/src/presentation/screens/restaurant/widgets/item_action
 
 class CommandaItemRow extends StatefulWidget {
   final CommandDetail item;
-  final VoidCallback? onServir;
-  final void Function(String? motivo)? onAnular;
+  final void Function(double? cantidad)? onServir;
+  final void Function(String? motivo, double? cantidad)? onAnular;
   final bool showStatus;
 
   const CommandaItemRow({

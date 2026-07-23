@@ -159,13 +159,13 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
   // Extras total
   // -------------------------------------------------------------------------
 
-  double get _extrasPrice => ComandaItemForm.extrasPrice(
+  double get _totalPrice => ComandaItemForm.totalPrice(
         product: widget.product,
+        price: _price,
+        quantity: _quantity,
         groupSelections: _groupSelections,
         groupQuantities: _groupQuantities,
       );
-
-  double get _totalPrice => _price * _quantity + _extrasPrice;
 
   // -------------------------------------------------------------------------
   // Validation

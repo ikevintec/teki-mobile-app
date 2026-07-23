@@ -402,6 +402,22 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   }
 }
 
+/// Muestra la cantidad sin ".0" cuando es entera (el accessor por defecto
+/// de FormControl&lt;double&gt; renderizaría "1.0") y parsea decimales al escribir.
+class _QuantityValueAccessor extends ControlValueAccessor<double, String> {
+  @override
+  String modelToViewValue(double? modelValue) {
+    if (modelValue == null) return '';
+    return modelValue % 1 == 0
+        ? modelValue.toInt().toString()
+        : modelValue.toString();
+  }
+
+  @override
+  double? viewToModelValue(String? viewValue) =>
+      (viewValue == null || viewValue.isEmpty) ? null : double.tryParse(viewValue);
+}
+
 // Widget personalizado para el control de cantidad
 class QuantityControl extends ConsumerStatefulWidget {
   final FormGroup formGroup;
@@ -434,35 +450,36 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
     super.dispose();
   }
 
-  void _updateQuantity(int newValue) {
+  void _updateQuantity(double newValue) {
     if (newValue > 0) {
-      final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+      final quantityControl = widget.formGroup.control('quantity') as FormControl<double>;
       quantityControl.updateValue(newValue);
       widget.onQuantityChanged();
     }
   }
 
   void _increment() {
-    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+    final quantityControl = widget.formGroup.control('quantity') as FormControl<double>;
     final currentValue = quantityControl.value ?? 1;
     _updateQuantity(currentValue + 1);
   }
 
   void _decrement() {
-    final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+    final quantityControl = widget.formGroup.control('quantity') as FormControl<double>;
     final currentValue = quantityControl.value ?? 1;
-    if (currentValue > 1) {
-      _updateQuantity(currentValue - 1);
-    }
+    // El guard de _updateQuantity (> 0) impide bajar a 0 o negativos;
+    // con decimales sí permite p.ej. 1.5 → 0.5.
+    _updateQuantity(currentValue - 1);
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.locked) {
-      final quantityControl = widget.formGroup.control('quantity') as FormControl<int>;
+      final quantityControl = widget.formGroup.control('quantity') as FormControl<double>;
       return ReactiveFormConsumer(
         builder: (context, form, _) {
-          final qty = (quantityControl.value ?? 1).toString();
+          final qtyValue = quantityControl.value ?? 1;
+          final qty = qtyValue % 1 == 0 ? qtyValue.toInt().toString() : qtyValue.toString();
           return Container(
             width: 120,
             height: 32,
@@ -518,10 +535,11 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
               const SizedBox(width: 4),
               // Campo de entrada
               Expanded(
-                child: ReactiveTextField<int>(
+                child: ReactiveTextField<double>(
                   formControlName: 'quantity',
                   focusNode: _focusNode,
-                  keyboardType: TextInputType.number,
+                  valueAccessor: _QuantityValueAccessor(),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14),
                   decoration: InputDecoration(
@@ -538,7 +556,7 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
                   onSubmitted: (control) {
                     widget.onQuantityChanged();
                   },
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                 ),
               ),
               const SizedBox(width: 4),

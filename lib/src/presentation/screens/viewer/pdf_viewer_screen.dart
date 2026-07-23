@@ -49,7 +49,9 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
   String get _pdfUrl {
     if (widget.customPdfUrl != null) return widget.customPdfUrl!;
     final domain = Environment.apiUrl;
-    return '$domain/public/pdf/tickets/${widget.uuid}/${widget.fileName}?tipo=${widget.fileSize}';
+    // fileSize puede llegar null explícito desde un caller (pisa el default
+    // del constructor); sin el fallback la URL interpolaría "tipo=null".
+    return '$domain/public/pdf/tickets/${widget.uuid}/${widget.fileName}?tipo=${widget.fileSize ?? 'A4'}';
   }
 
   Future<void> _handlePrint() async {

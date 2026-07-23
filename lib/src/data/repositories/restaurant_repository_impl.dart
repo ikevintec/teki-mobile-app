@@ -59,6 +59,10 @@ class RestaurantRepositoryImpl extends RestaurantRepository {
       restaurantDatasource.updateCheck(id, check);
 
   @override
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String status, {String? motivoAnulacion}) =>
-      restaurantDatasource.updateCommandItemStatus(commandId, itemId, status, motivoAnulacion: motivoAnulacion);
+  Future<void> updateCommandItemStatus(int commandId, int itemId, String status, {String? motivoAnulacion, double? cantidad}) =>
+      restaurantDatasource.updateCommandItemStatus(commandId, itemId, status, motivoAnulacion: motivoAnulacion, cantidad: cantidad);
+
+  @override
+  Future<void> expandCommandItem(int itemId) =>
+      restaurantDatasource.expandCommandItem(itemId);
 }

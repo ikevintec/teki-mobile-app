@@ -6,6 +6,10 @@ class Office {
   final String? codigo;
   final String? nombre;
   final String? nombreCorto;
+
+  /// Afectación IGV por defecto del punto de venta (p. ej. '20' exonerado
+  /// en zonas como Amazonía). La web la usa para los items libres.
+  final String? codigoAfectacionPorDefecto;
   final Openinghour? horario;
   final List<Citycoverage>? ciudadesAtencion;
   final String? telefono;
@@ -27,6 +31,7 @@ class Office {
     this.codigo,
     this.nombre,
     this.nombreCorto,
+    this.codigoAfectacionPorDefecto,
     this.horario,
     this.ciudadesAtencion,
     this.telefono,
@@ -49,6 +54,8 @@ class Office {
         codigo: json['codigo']?.toString(),
         nombre: json['nombre']?.toString(),
         nombreCorto: json['nombreCorto']?.toString(),
+        codigoAfectacionPorDefecto:
+            json['codigoAfectacionPorDefecto']?.toString(),
         horario: json['horario'] != null
             ? Openinghour.fromJson(json['horario'])
             : null,
