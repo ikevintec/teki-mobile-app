@@ -57,6 +57,25 @@ class ComandaItemForm {
     return null;
   }
 
+  /// Total del item: (precio unitario + adicionales) × cantidad.
+  /// Misma semántica que la web y que CartItem.totalPrice: los adicionales
+  /// forman parte del precio UNITARIO, por lo que se multiplican por la
+  /// cantidad del item. Ej: (20 + 5) × 2 = 50, no 20×2 + 5 = 45.
+  static double totalPrice({
+    required Product product,
+    required double price,
+    required int quantity,
+    required Map<int, Set<int>> groupSelections,
+    required Map<int, Map<int, int>> groupQuantities,
+  }) {
+    final extras = extrasPrice(
+      product: product,
+      groupSelections: groupSelections,
+      groupQuantities: groupQuantities,
+    );
+    return (price + extras) * quantity;
+  }
+
   /// Total de los adicionales seleccionados (precio × cantidad por opción).
   static double extrasPrice({
     required Product product,
