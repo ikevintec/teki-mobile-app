@@ -98,21 +98,38 @@ class _SuccessCelebrationOverlayState extends State<SuccessCelebrationOverlay>
     )..addListener(_tick);
 
     if (widget.show) {
-      // El ancla se resuelve después del primer frame, cuando el check ya
-      // tiene posición en pantalla. Las partículas nacen todas de golpe
-      // (explosión), no por goteo: así el efecto no depende del frame rate
-      // durante la carga de la pantalla.
+      // Esperar a que termine la transición de entrada de la ruta: si la
+      // explosión arranca mientras la página aún se desliza, ocurre fuera
+      // de vista y apenas se percibe.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _origin = _resolveOrigin();
-        _emitBurst(140);
-        _tickController.repeat();
-        // Segundo "pop" más pequeño, como el remate de la explosión.
-        Future.delayed(const Duration(milliseconds: 180), () {
-          if (mounted) _emitBurst(80);
-        });
+        final anim = ModalRoute.of(context)?.animation;
+        if (anim == null || anim.isCompleted) {
+          _start();
+        } else {
+          late final AnimationStatusListener listener;
+          listener = (status) {
+            if (status == AnimationStatus.completed) {
+              anim.removeStatusListener(listener);
+              if (mounted) _start();
+            }
+          };
+          anim.addStatusListener(listener);
+        }
       });
     }
+  }
+
+  /// Dispara la explosión: las partículas nacen todas de golpe (no por
+  /// goteo), así el efecto no depende del frame rate del dispositivo.
+  void _start() {
+    _origin = _resolveOrigin();
+    _emitBurst(140);
+    _tickController.repeat();
+    // Segundo "pop" más pequeño, como el remate de la explosión.
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (mounted) _emitBurst(80);
+    });
   }
 
   void _emitBurst(int count) {
@@ -126,8 +143,16 @@ class _SuccessCelebrationOverlayState extends State<SuccessCelebrationOverlay>
   Offset _resolveOrigin() {
     final anchorContext = widget.anchorKey?.currentContext;
     final box = anchorContext?.findRenderObject() as RenderBox?;
-    if (box != null && box.hasSize) {
-      return box.localToGlobal(box.size.center(Offset.zero));
+    final myBox = context.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize && myBox != null && myBox.hasSize) {
+      // Origen relativo al propio overlay, NO global: en el primer frame la
+      // ruta aún está entrando con la transición (deslizada a la derecha) y
+      // las coordenadas globales incluirían ese desplazamiento. Como el check
+      // y el overlay viven en la misma ruta, restar sus posiciones globales
+      // cancela la traslación de la transición.
+      final checkCenter = box.localToGlobal(box.size.center(Offset.zero));
+      final overlayTopLeft = myBox.localToGlobal(Offset.zero);
+      return checkCenter - overlayTopLeft;
     }
     // Fallback: parte superior central de la pantalla.
     return Offset(_canvasSize.width / 2, _canvasSize.height * 0.22);
