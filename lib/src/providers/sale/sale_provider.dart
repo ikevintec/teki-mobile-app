@@ -152,11 +152,15 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     required double total,
     required List<PaymentDetail> pagos,
     required double cambio,
+    double? efectivo,
   }) {
     Ticket ticketToUpdate = state.ticket.copyWith(
       cuotas: null,
       movimientoCaja: CashRegisterDetail(pagos: pagos),
       cambio: cambio,
+      // Efectivo crudo recibido del cliente (la web guarda ticket.efectivo);
+      // con vuelto difiere del neto y el arqueo lo necesita para cuadrar.
+      efectivo: efectivo,
       tipoVenta: "CONTADO",
     );
     state = state.copyWith(ticket: ticketToUpdate);
