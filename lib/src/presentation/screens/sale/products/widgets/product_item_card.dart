@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
 import 'package:teki_app/src/presentation/widgets/form/smart_price_value_accessor.dart';
@@ -271,6 +272,12 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                   : GestureDetector(
                                       behavior: HitTestBehavior.opaque,
                                       onTap: () {
+                                        // Editar el precio del item requiere permiso (paridad web)
+                                        if (!ref
+                                            .read(sesionProvider)
+                                            .hasPermission('VENTAS_EDITAR_PRECIO')) {
+                                          return;
+                                        }
                                         setState(() => _isPriceEditMode = true);
                                         WidgetsBinding.instance.addPostFrameCallback((_) => _priceFocusNode.requestFocus());
                                       },

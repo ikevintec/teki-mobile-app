@@ -172,8 +172,12 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
           ],
         ),
       ),
-      floatingActionButton: const CustomFloatingActionButton(
-          buttonName: "Crear Cliente", routeName: AppRoutes.addCustomer),
+      floatingActionButton:
+          ref.watch(sesionProvider).hasPermission('CLIENTES_CREAR')
+              ? const CustomFloatingActionButton(
+                  buttonName: "Crear Cliente",
+                  routeName: AppRoutes.addCustomer)
+              : null,
     );
   }
 

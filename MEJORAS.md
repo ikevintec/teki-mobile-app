@@ -131,6 +131,18 @@ Contexto: la app se construyó sobre la plantilla Flutter "inventual"; quedaban 
 
 ---
 
+## Permisos por rol en móvil — audit y paridad con web ✅ (2026-07-22)
+
+Auditados los ~40 códigos de la web (`hasPermission()` + directiva `*appPermission`) contra la superficie del móvil. Implementado (patrón: ocultar UI + guard en handler para destructivas):
+- **Restaurante**: `RESTAURANTE_PEDIDOS_ANULAR` (order_options + order_restaurant_card), `RESTAURANTE_PEDIDOS_CANCELAR_PLATILLO` (detalle de orden), `RESTAURANTE_CUENTA_ELIMINAR` (precuentas), `RESTAURANTE_COBRADOR_VER` (pantalla).
+- **Ventas**: `VENTAS_CREAR` (7 entradas del dashboard), `VENTAS_EDITAR` (editar comprobante), `VENTAS_EDITAR_PRECIO` (item en venta y en comanda), `VENTAS_SELECCIONAR_PRECIO_ESPECIAL` (picker), `VENTAS_VER_TOTALES` (totales de comprobantes). Ya existían: `VENTAS_ANULAR`, `VENTAS_VER_VENTAS_TODOS_VENDEDORES`.
+- **Productos/Inventario/Clientes/Empresa**: `PRODUCTOS_CREAR/EDITAR` (FAB y botón editar), `PRODUCTOS_MOSTRAR_PRECIO_COMPRA` (sección del form), `INVENTARIO_AJUSTAR`, `CLIENTES_CREAR`, `SELECCIONAR_EMPRESAS_ADJUNTAS` (selector deshabilitado).
+- **Caja**: completo desde antes.
+
+Pendientes:
+- [ ] `VENTAS_VER_TODO_HISTORIAL`: la web limita cuán atrás puedes consultar; requiere definir la regla de negocio para el filtro de fechas del móvil.
+- [ ] ⚠️ **Backend**: `TicketApi`, `InventoryApi`, `InventoryAdjustmentApi`, `OrderRestaurantApi`, `CommandApi`, `CheckApi` y `QuotationApi` **no tienen ningún @PreAuthorize** — la UI (web y ahora móvil) es la única barrera. Sumar al hardening acordado.
+
 ## Pendiente en backend (cbetfactback) — acordado atacar al final
 
 - [ ] **Validar caja CERRADA en `saveCashRegisterDetailAsDto`** (crear y editar movimientos): hoy solo la UI lo impide; cualquier cliente puede inyectar movimientos en cajas arqueadas. Contemplar la excepción `CAJA_EDITAR_CIERRE` que la web usa para editar tras el cierre.

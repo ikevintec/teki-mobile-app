@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/group.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/detail_sheet_components.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/grupos_section.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/preparaciones_section.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail/price_picker_sheet.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_item_form.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -38,7 +40,7 @@ void showProductDetailSheet(
 // Sheet widget
 // ---------------------------------------------------------------------------
 
-class ProductDetailSheet extends StatefulWidget {
+class ProductDetailSheet extends ConsumerStatefulWidget {
   final Product product;
   final CartItem? existingItem;
   final int? cartIndex;
@@ -53,10 +55,11 @@ class ProductDetailSheet extends StatefulWidget {
   });
 
   @override
-  State<ProductDetailSheet> createState() => _ProductDetailSheetState();
+  ConsumerState<ProductDetailSheet> createState() =>
+      _ProductDetailSheetState();
 }
 
-class _ProductDetailSheetState extends State<ProductDetailSheet> {
+class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
   late int _quantity;
   late double _price;
   late bool _paraLlevar;
@@ -408,6 +411,9 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
               width: 68,
               child: TextField(
                 controller: _priceController,
+                readOnly: !ref
+                    .watch(sesionProvider)
+                    .hasPermission('VENTAS_EDITAR_PRECIO'),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 textAlign: TextAlign.center,
@@ -439,7 +445,10 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
                 },
               ),
             ),
-            if ((widget.product.preciosVenta ?? []).isNotEmpty) ...[
+            if ((widget.product.preciosVenta ?? []).isNotEmpty &&
+                ref
+                    .watch(sesionProvider)
+                    .hasPermission('VENTAS_SELECCIONAR_PRECIO_ESPECIAL')) ...[
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: () => showProductPricePicker(

@@ -297,7 +297,10 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                                 .read(restaurantProvider.notifier)
                                 .updateCommandItemStatus(comanda.id!, item.id!, 'DESPACHADO')
                           : null,
-                      onAnular: (comanda.id != null && item.id != null)
+                      onAnular: (comanda.id != null &&
+                              item.id != null &&
+                              ref.read(sesionProvider).hasPermission(
+                                  'RESTAURANTE_PEDIDOS_CANCELAR_PLATILLO'))
                           ? (motivo) {
                               final commandId = comanda.id!;
                               ref
