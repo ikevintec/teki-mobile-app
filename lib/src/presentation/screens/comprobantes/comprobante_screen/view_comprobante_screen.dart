@@ -9,12 +9,13 @@ import 'package:teki_app/src/utils/whatsapp_helper.dart';
 import 'package:teki_app/src/presentation/screens/viewer/pdf_viewer_screen.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
-import 'package:teki_app/src/presentation/widgets/dropdown_action_button/dropdown_action_button.dart';
 import 'package:teki_app/src/presentation/widgets/celebration/success_celebration_overlay.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
-import 'package:teki_app/src/presentation/widgets/split_action_button/split_action_button.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
@@ -37,6 +38,195 @@ class ViewComponentScreen extends ConsumerStatefulWidget {
 class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
   // Ancla desde donde revienta el confeti al venir de una venta.
   final GlobalKey _celebrationCheckKey = GlobalKey();
+
+  void _enviarWhatsapp(Ticket ticket) {
+    final nombreComercial = ref.read(sesionProvider).company?.nombreComercial ?? 'Empresa';
+    final dataSend = WhatsappHelper.getDataSend(ticket, nombreComercial);
+    showCustomModal(
+      context: context,
+      child: FormSendWhatsapp(
+        data: WhatsappSendData(
+          initialPhone: ticket.telefonoReceptor,
+          message: dataSend.textMessage,
+          filename: dataSend.nameMessage,
+          documentUrl: dataSend.url,
+        ),
+      ),
+      tittle: 'Enviar por Whatsapp',
+      allowButtons: false,
+      showButtoms: false,
+    );
+  }
+
+  void _showPdfOptions(Ticket ticket) {
+    final tipoImpresion = ref.read(sesionProvider).config?.tipoImpresion ?? 'A4';
+    final isTicketDefault = tipoImpresion == 'TICKET' || tipoImpresion == 'ESCPOS';
+
+    void verPdf(String tipo) {
+      Navigator.of(context).pop();
+      Get.to(() => PdfViewerScreen(
+            uuid: ticket.uuid!,
+            fileName: ticket.identificadorDocumento!,
+            fileSize: tipo,
+            ticketId: ticket.id,
+          ));
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _PdfOptionTile(
+              icon: Icons.description_outlined,
+              label: 'Ver formato A4',
+              isDefault: !isTicketDefault,
+              onTap: () => verPdf('A4'),
+            ),
+            _PdfOptionTile(
+              icon: Icons.confirmation_number_outlined,
+              label: 'Ver formato Ticket',
+              isDefault: isTicketDefault,
+              onTap: () => verPdf('TICKET'),
+            ),
+            Divider(height: 1, color: Colors.grey.shade200),
+            _PdfOptionTile(
+              icon: Icons.download_rounded,
+              label: 'Descargar A4',
+              onTap: () {
+                Navigator.of(context).pop();
+                _downloadPdf(ticket, 'A4');
+              },
+            ),
+            _PdfOptionTile(
+              icon: Icons.download_rounded,
+              label: 'Descargar Ticket',
+              onTap: () {
+                Navigator.of(context).pop();
+                _downloadPdf(ticket, 'TICKET');
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadPdf(Ticket ticket, String tipo) async {
+    final uri = Uri.parse(
+      '${Environment.apiUrl}/public/pdf/tickets/${ticket.uuid!}/${ticket.identificadorDocumento!}?tipo=$tipo',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      errorNotification('No se pudo abrir el comprobante para descarga.');
+    }
+  }
+
+  /// Un solo tap para atender al siguiente cliente. El flujo de venta ya
+  /// invalidó los providers al completar, pero se reinvalidan por si el
+  /// usuario dejó algo a medias antes de llegar aquí.
+  void _nuevaVenta() {
+    if (!ref.read(sesionProvider).hasPermission('VENTAS_CREAR')) {
+      warningNotification('No tienes permiso para crear ventas');
+      return;
+    }
+    ref.invalidate(ticketProvider);
+    ref.invalidate(productSaleProvider);
+    ref.invalidate(customerSaleProvider);
+    Get.offAllNamed(AppRoutes.dashboard);
+    Get.toNamed(AppRoutes.productsSales);
+  }
+
+  Widget _buildBottomSaleBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _nuevaVenta,
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: const Text(
+                'Nueva venta',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorSchema.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => Get.offAllNamed(AppRoutes.dashboard),
+                  icon: const Icon(Icons.home_outlined, size: 17),
+                  label: const Text('Inicio', style: TextStyle(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    side: BorderSide(color: Colors.grey.shade300),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Get.offAllNamed(AppRoutes.dashboard);
+                    Get.toNamed(AppRoutes.comprobantesVer);
+                  },
+                  icon: const Icon(Icons.receipt_long_outlined, size: 17),
+                  label: const Text('Comprobantes', style: TextStyle(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    side: BorderSide(color: Colors.grey.shade300),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -95,7 +285,7 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                                 '${formatTipoComprobanteTitulo(ticketToShow.tipoComprobante ?? '')} electrónica',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.roboto(
-                                  fontSize: 38,
+                                  fontSize: 30,
                                   fontWeight: FontWeight.bold,
                                   color: ColorSchema.primaryColor,
                                 ),
@@ -123,48 +313,61 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                                 ),
                               ],
                               const SizedBox(height: 10),
-                              Align(
-                                alignment: Alignment.centerRight,
+                              Center(
                                 child: _buildSunatBadge(ticketToShow.estadoSunat),
                               ),
                             ],
                           ),
                         ),
-                        // ── Acciones ─────────────────────────────────────
+                        // ── Total cobrado, junto al check de éxito ───────
                         Padding(
-                          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 20),
-                          child: Row(
-                            children: [
-                              Expanded(child: _buildSendDropdown(
-                                ticketToShow,
-                                context,
-                                ref.watch(sesionProvider).company?.nombreComercial ?? 'Empresa',
-                              )),
-                              const SizedBox(width: 12),
-                              Expanded(child: _PrintButton(ticket: ticketToShow)),
-                            ],
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: _buildComprobanteSummary(ticketToShow),
                           ),
                         ),
+                        // ── Acciones rápidas del documento ───────────────
                         Padding(
-                          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 20),
-                          child: _buildDocsDropdown(ticketToShow, context, ref.watch(sesionProvider).config?.tipoImpresion ?? 'A4'),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 20),
-                          child: _DownloadButton(ticket: ticketToShow),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 24),
-                          child: _buildVerComprobantesButton(context, widget.fromSale),
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _QuickActionTile(
+                                  iconWidget: Image.asset(
+                                    'assets/icons/icon_image/whatsapp.png',
+                                    width: 20,
+                                    height: 20,
+                                    color: const Color(0xFF25D366),
+                                  ),
+                                  label: 'Enviar',
+                                  onTap: () => _enviarWhatsapp(ticketToShow),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(child: _PrintButton(ticket: ticketToShow)),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _QuickActionTile(
+                                  icon: Icons.description_outlined,
+                                  label: 'PDF',
+                                  onTap: () => _showPdfOptions(ticketToShow),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: _buildComprobanteSummary(ticketToShow),
-                ),
+                // ── Siguiente acción del cajero (solo al terminar venta) ─
+                if (widget.fromSale) _buildBottomSaleBar(),
               ],
             ),
           ),
@@ -278,129 +481,134 @@ Widget _buildErrorScreen(String message, bool fromSale) {
     );
   }
 
-  Widget _buildVerComprobantesButton(BuildContext context, bool fromSale) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          if (fromSale) {
-            Get.offAllNamed(AppRoutes.dashboard);
-            Get.toNamed(AppRoutes.comprobantesVer);
-          } else {
-            Get.back();
-          }
-        },
-        icon: const Icon(Icons.receipt_long, size: 18),
-        label: const Text('Ver Comprobantes'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: ColorSchema.primaryColor,
-          side: BorderSide(color: ColorSchema.primaryColor),
+// ── Quick action tile ─────────────────────────────────────────────────────────
+
+class _QuickActionTile extends StatelessWidget {
+  final IconData? icon;
+  final Widget? iconWidget;
+  final String label;
+  final VoidCallback? onTap;
+  final bool loading;
+
+  const _QuickActionTile({
+    this.icon,
+    this.iconWidget,
+    required this.label,
+    this.onTap,
+    this.loading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSplitButton({
-    required BuildContext context,
-    required IconData directIcon,
-    Widget? directIconWidget,
-    required String directLabel,
-    required VoidCallback onDirectAction,
-    required List<DropdownActionOption> dropdownOptions,
-    Color? color,
-  }) {
-    return SplitActionButton(
-      directIcon: directIcon,
-      directIconWidget: directIconWidget,
-      directLabel: directLabel,
-      onDirectAction: onDirectAction,
-      dropdownOptions: dropdownOptions,
-      color: color ?? ColorSchema.primaryColor,
-    );
-  }
-
-  Widget _buildSendDropdown(Ticket ticket, BuildContext context, String nombreComercial) {
-    return _buildSplitButton(
-      context: context,
-      directIcon: Icons.chat_rounded,
-      directIconWidget: Image.asset(
-        'assets/icons/icon_image/whatsapp.png',
-        width: 18,
-        height: 18,
-        color: Colors.white,
-      ),
-      directLabel: 'Enviar',
-      color: const Color(0xFF25D366),
-      onDirectAction: () {
-        final dataSend = WhatsappHelper.getDataSend(ticket, nombreComercial);
-        showCustomModal(
-          context: context,
-          child: FormSendWhatsapp(
-            data: WhatsappSendData(
-              initialPhone: ticket.telefonoReceptor,
-              message: dataSend.textMessage,
-              filename: dataSend.nameMessage,
-              documentUrl: dataSend.url,
-            ),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
           ),
-          tittle: 'Enviar por Whatsapp',
-          allowButtons: false,
-          showButtoms: false,
-        );
-      },
-      dropdownOptions: [],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: ColorSchema.primaryColor,
+                  ),
+                )
+              else if (iconWidget != null)
+                iconWidget!
+              else
+                Icon(
+                  icon,
+                  size: 20,
+                  color: enabled ? ColorSchema.primaryColor : Colors.grey.shade400,
+                ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: enabled ? Colors.grey.shade800 : Colors.grey.shade400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
+}
 
-  Widget _buildDocsDropdown(Ticket ticket, BuildContext context, String tipoImpresion) {
-    final isTicket = tipoImpresion == 'TICKET' || tipoImpresion == 'ESCPOS';
-    final directLabel = 'Ver PDF';
-    final directIcon = isTicket ? Icons.confirmation_number : Icons.description;
+// ── PDF option tile (bottom sheet) ────────────────────────────────────────────
 
-    return _buildSplitButton(
-      context: context,
-      directIcon: directIcon,
-      directLabel: directLabel,
-      color: ColorSchema.primaryColor,
-      onDirectAction: () {
-        Get.to(() => PdfViewerScreen(
-              uuid: ticket.uuid!,
-              fileName: ticket.identificadorDocumento!,
-              fileSize: isTicket ? 'TICKET' : 'A4',
-              ticketId: ticket.id,
-            ));
-      },
-      dropdownOptions: [
-        DropdownActionOption(
-          label: 'Formato A4',
-          icon: Icons.description,
-          iconColor: Colors.blue[600],
-          onPressed: () {
-            Get.to(() => PdfViewerScreen(
-                  uuid: ticket.uuid!,
-                  fileName: ticket.identificadorDocumento!,
-                  ticketId: ticket.id,
-                ));
-          },
+class _PdfOptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDefault;
+  final VoidCallback onTap;
+
+  const _PdfOptionTile({
+    required this.icon,
+    required this.label,
+    this.isDefault = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: ColorSchema.primaryColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 19, color: ColorSchema.primaryColor),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ),
+            if (isDefault)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Por defecto',
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                ),
+              ),
+          ],
         ),
-        DropdownActionOption(
-          label: 'Formato Ticket',
-          icon: Icons.confirmation_number,
-          iconColor: Colors.blue[600],
-          onPressed: () {
-            Get.to(() => PdfViewerScreen(
-                  uuid: ticket.uuid!,
-                  fileName: ticket.identificadorDocumento!,
-                  fileSize: 'TICKET',
-                  ticketId: ticket.id,
-                ));
-          },
-        ),
-      ],
+      ),
     );
   }
+}
 
 // ── Print Button ──────────────────────────────────────────────────────────────
 
@@ -457,88 +665,11 @@ class _PrintButtonState extends ConsumerState<_PrintButton> {
     final printer = session.saleStation?.impresoraComprobante;
     final canPrint = clienteImpresion == 'COFFE' && printer != null;
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-      onPressed: (canPrint && !_isPrinting) ? _handlePrint : null,
-      icon: _isPrinting
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-            )
-          : const Icon(Icons.print, size: 18),
-      label: Text(
-        canPrint ? 'Imprimir en ${printer.nombre}' : 'Sin impresora',
-        overflow: TextOverflow.ellipsis,
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: canPrint ? ColorSchema.primaryColor : Colors.grey.shade400,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    ),
-    );
-  }
-}
-
-// ── Download Button ───────────────────────────────────────────────────────────
-
-class _DownloadButton extends ConsumerStatefulWidget {
-  final Ticket ticket;
-
-  const _DownloadButton({required this.ticket});
-
-  @override
-  ConsumerState<_DownloadButton> createState() => _DownloadButtonState();
-}
-
-class _DownloadButtonState extends ConsumerState<_DownloadButton> {
-  bool _isDownloading = false;
-
-  String _buildPdfUrl(String tipoImpresion) {
-    final domain = Environment.apiUrl;
-    return '$domain/public/pdf/tickets/${widget.ticket.uuid!}/${widget.ticket.identificadorDocumento!}?tipo=$tipoImpresion';
-  }
-
-  Future<void> _handleDownload(String tipoImpresion) async {
-    setState(() => _isDownloading = true);
-    try {
-      final uri = Uri.parse(_buildPdfUrl(tipoImpresion));
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        errorNotification('No se pudo abrir el comprobante para descarga.');
-      }
-    } finally {
-      if (mounted) setState(() => _isDownloading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tipoImpresion = ref.watch(sesionProvider).config?.tipoImpresion ?? 'A4';
-
-    return SplitActionButton(
-      directIcon: Icons.download,
-      directLabel: 'Descargar',
-      onDirectAction: _isDownloading ? () {} : () => _handleDownload(tipoImpresion),
-      color: Colors.grey.shade800,
-      dropdownOptions: [
-        DropdownActionOption(
-          label: 'Descargar PDF',
-          icon: Icons.description,
-          iconColor: Colors.blue[600],
-          onPressed: () => _handleDownload('A4'),
-        ),
-        DropdownActionOption(
-          label: 'Descargar Ticket',
-          icon: Icons.confirmation_number,
-          iconColor: Colors.blue[600],
-          onPressed: () => _handleDownload('TICKET'),
-        ),
-      ],
+    return _QuickActionTile(
+      icon: Icons.print_rounded,
+      label: canPrint ? 'Imprimir' : 'Sin impresora',
+      loading: _isPrinting,
+      onTap: (canPrint && !_isPrinting) ? _handlePrint : null,
     );
   }
 }
