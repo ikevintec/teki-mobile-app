@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/response/caja_resumen.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
@@ -170,6 +171,78 @@ class RemoteCashRegister extends CashRegisterDatasource {
         cancelToken: cancelToken,
       );
       return CashRegisterDetail.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) rethrow;
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      errorNotification(msg);
+      return Future.error(msg);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<CajaResumen> getResumen({
+    required String desde,
+    required String hasta,
+    int? idPuntoVenta,
+    int? idEstacionVenta,
+  }) async {
+    try {
+      final response = await dio.get(
+        '/cash-register-detail/operations/resumen',
+        queryParameters: {
+          'filtroDesde': desde,
+          'filtroHasta': hasta,
+          if (idPuntoVenta != null) 'idPuntoVenta': idPuntoVenta,
+          if (idEstacionVenta != null) 'idEstacionVenta': idEstacionVenta,
+        },
+      );
+      return CajaResumen.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) {
+        return Future.error('Sin conexión a internet');
+      }
+      final resData = e.response?.data;
+      final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error(msg);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<CashRegisterDetailPage> getMovimientosRango({
+    required String desde,
+    required String hasta,
+    int? idPuntoVenta,
+    int? idEstacionVenta,
+    String? tipo,
+    required int page,
+    required int perPage,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final response = await dio.get(
+        '/cash-register-detail',
+        queryParameters: {
+          'filtroDesde': desde,
+          'filtroHasta': hasta,
+          if (idPuntoVenta != null) 'idPuntoVenta': idPuntoVenta,
+          if (idEstacionVenta != null) 'idEstacionVenta': idEstacionVenta,
+          if (tipo != null) 'tipo': tipo,
+          'perPage': perPage,
+          'pageNumber': page,
+        },
+        cancelToken: cancelToken,
+      );
+      return CashRegisterDetailPage.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');

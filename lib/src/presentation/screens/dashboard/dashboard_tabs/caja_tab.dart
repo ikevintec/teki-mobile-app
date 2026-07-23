@@ -6,11 +6,14 @@ import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/empty_caja_card.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/historial_item.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/open_register_banner.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/rango_movimientos_sheet.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/resumen_view.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/imprimir_caja_modal.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/movimiento_item.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/tipo_selector.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_balance_screen.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/widgets/cash_movement_sheet.dart';
+import 'package:teki_app/src/providers/cash_register/caja_resumen_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_detail_provider.dart';
 import 'package:teki_app/src/providers/cash_register/cash_register_provider.dart';
 import 'package:teki_app/src/providers/cash_register/currencies_provider.dart';
@@ -31,7 +34,16 @@ class CajaTab extends ConsumerStatefulWidget {
 class _CajaTabState extends ConsumerState<CajaTab> {
   String? _selectedMoneda;
   DateTime _selectedDate = DateTime.now();
+
+  /// Rango seleccionado en el picker. Un solo día = modo operativo (caja);
+  /// más de un día = modo reporte (resumen agregado).
+  DateTimeRange? _selectedRange;
   late final ScrollController _scrollController;
+
+  bool get _isDayMode {
+    final r = _selectedRange;
+    return r == null || r.start == r.end;
+  }
 
   @override
   void initState() {
@@ -63,19 +75,31 @@ class _CajaTabState extends ConsumerState<CajaTab> {
   }
 
   /// Llamado por refreshNotifier (al volver de una sub-pantalla).
-  /// Refresca la fecha actualmente seleccionada.
+  /// Refresca la selección actual (día o rango).
   void _onRefresh() {
     setState(() => _selectedMoneda = null);
-    _fetchCashRegister();
+    if (_isDayMode) {
+      _fetchCashRegister();
+    } else if (_selectedRange != null) {
+      ref.read(cajaResumenProvider.notifier).fetch(_selectedRange!);
+    }
   }
 
-  /// Llamado por CustomDatePicker cada vez que el usuario selecciona una fecha.
+  /// Llamado por CustomDatePicker cada vez que el usuario selecciona
+  /// una fecha o un rango.
   void _onDateChanged(DateTimeRange range) {
+    final start = DateTime(range.start.year, range.start.month, range.start.day);
+    final end = DateTime(range.end.year, range.end.month, range.end.day);
     setState(() {
-      _selectedDate = range.start;
+      _selectedRange = DateTimeRange(start: start, end: end);
+      _selectedDate = start;
       _selectedMoneda = null;
     });
-    _fetchCashRegister();
+    if (_isDayMode) {
+      _fetchCashRegister();
+    } else {
+      ref.read(cajaResumenProvider.notifier).fetch(_selectedRange!);
+    }
   }
 
   Future<void> _fetchCashRegister() async {
@@ -97,10 +121,12 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     ref.read(cashRegisterDetailProvider.notifier).changeMoneda(newMoneda);
   }
 
-  /// Salta a la fecha de la caja aperturada detectada y recarga.
+  /// Salta a la fecha de la caja aperturada detectada (modo día) y recarga.
   void _goToOpenRegister(DateTime fecha) {
+    final dia = DateTime(fecha.year, fecha.month, fecha.day);
     setState(() {
-      _selectedDate = DateTime(fecha.year, fecha.month, fecha.day);
+      _selectedDate = dia;
+      _selectedRange = DateTimeRange(start: dia, end: dia);
       _selectedMoneda = null;
     });
     _fetchCashRegister();
@@ -190,29 +216,33 @@ class _CajaTabState extends ConsumerState<CajaTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Selector de fecha ─────────────────────────────────────────────
+        // ── Selector de fecha / rango ─────────────────────────────────────
         Padding(
           padding: const EdgeInsets.only(top: 0, left: 8, right: 4),
           child: CustomDatePicker(
             onDateSelected: _onDateChanged,
-            singleDayPicker: true,
             initialFilter: CalendarFilter.day,
-            selectedRange: DateTimeRange(
-              start: DateTime(
-                  _selectedDate.year, _selectedDate.month, _selectedDate.day),
-              end: DateTime(
-                  _selectedDate.year, _selectedDate.month, _selectedDate.day),
-            ),
+            selectedRange: _selectedRange ??
+                DateTimeRange(
+                  start: DateTime(_selectedDate.year, _selectedDate.month,
+                      _selectedDate.day),
+                  end: DateTime(_selectedDate.year, _selectedDate.month,
+                      _selectedDate.day),
+                ),
           ),
         ),
         SizedBox(height: 12),
         // ── Aviso de caja abierta en otra fecha ────────────────────────────
-        if (!cajaState.isLoading &&
-            cajaState.openRegisterEsOtraFecha(_selectedDate))
+        if (cajaState.openRegister?.fecha != null &&
+            (!_isDayMode ||
+                (!cajaState.isLoading &&
+                    cajaState.openRegisterEsOtraFecha(_selectedDate))))
           OpenRegisterBanner(
             fecha: cajaState.openRegister!.fecha!,
             onTap: () => _goToOpenRegister(cajaState.openRegister!.fecha!),
           ),
+        // ── Modo día: caja operativa ──────────────────────────────────────
+        if (_isDayMode) ...[
         // ── Tarjeta de balance ─────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -502,6 +532,20 @@ class _CajaTabState extends ConsumerState<CajaTab> {
         Expanded(
           child: _buildHistorialList(detailState, cajaState.isLoading),
         ),
+        ] else
+          // ── Modo reporte: resumen agregado del rango ────────────────────
+          Expanded(
+            child: CajaResumenView(
+              state: ref.watch(cajaResumenProvider),
+              selectedMoneda: _selectedMoneda,
+              onMonedaChanged: (m) => setState(() => _selectedMoneda = m),
+              onVerMovimientos: () =>
+                  showRangoMovimientosSheet(context, range: _selectedRange!),
+              onRetry: () => ref
+                  .read(cajaResumenProvider.notifier)
+                  .fetch(_selectedRange!),
+            ),
+          ),
       ],
     );
   }

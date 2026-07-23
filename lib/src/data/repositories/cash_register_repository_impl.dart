@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/datasource/remote_cash_register.dart';
+import 'package:teki_app/src/data/models/response/caja_resumen.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
@@ -91,6 +92,44 @@ class CashRegisterRepositoryImpl extends CashRegisterRepository {
       detalle: detalle,
       turno: turno,
       pagos: pagos,
+      cancelToken: cancelToken,
+    );
+  }
+
+  @override
+  Future<CajaResumen> getResumen({
+    required String desde,
+    required String hasta,
+    int? idPuntoVenta,
+    int? idEstacionVenta,
+  }) {
+    return datasource.getResumen(
+      desde: desde,
+      hasta: hasta,
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
+    );
+  }
+
+  @override
+  Future<CashRegisterDetailPage> getMovimientosRango({
+    required String desde,
+    required String hasta,
+    int? idPuntoVenta,
+    int? idEstacionVenta,
+    String? tipo,
+    required int page,
+    required int perPage,
+    CancelToken? cancelToken,
+  }) {
+    return datasource.getMovimientosRango(
+      desde: desde,
+      hasta: hasta,
+      idPuntoVenta: idPuntoVenta,
+      idEstacionVenta: idEstacionVenta,
+      tipo: tipo,
+      page: page,
+      perPage: perPage,
       cancelToken: cancelToken,
     );
   }

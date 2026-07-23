@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/response/caja_resumen.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
@@ -42,6 +43,26 @@ abstract class CashRegisterRepository {
     String? detalle,
     required int turno,
     required List<Map<String, dynamic>> pagos,
+    CancelToken? cancelToken,
+  });
+
+  /// Resumen agregado del rango (modo reporte), calculado en el servidor.
+  Future<CajaResumen> getResumen({
+    required String desde,
+    required String hasta,
+    int? idPuntoVenta,
+    int? idEstacionVenta,
+  });
+
+  /// Movimientos del rango, paginados (drill-down del modo reporte).
+  Future<CashRegisterDetailPage> getMovimientosRango({
+    required String desde,
+    required String hasta,
+    int? idPuntoVenta,
+    int? idEstacionVenta,
+    String? tipo,
+    required int page,
+    required int perPage,
     CancelToken? cancelToken,
   });
 }
