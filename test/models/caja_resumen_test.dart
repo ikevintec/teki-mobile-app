@@ -50,10 +50,10 @@ void main() {
       expect(resumen.monedas.first, 'PEN');
     });
 
-    test('conceptosDe: rendimiento primero, operativos al final', () {
+    test('conceptosDe: rendimiento primero, informativos al final', () {
       final conceptos = resumen.conceptosDe('PEN');
       expect(conceptos.map((c) => c.concepto).toList(),
-          ['VENTAS', 'PROPINAS', 'COMPRAS', 'APERTURA_CAJA']);
+          ['VENTAS', 'COMPRAS', 'APERTURA_CAJA', 'PROPINAS']);
     });
 
     test('métodos de pago exponen ganancia por moneda', () {
@@ -71,6 +71,8 @@ void main() {
       expect(c('APERTURA_CAJA').esApertura, isTrue);
       expect(c('APERTURA_CAJA').esOperativo, isTrue);
       expect(c('RETIRO_CAJA').esOperativo, isTrue);
+      expect(c('PROPINAS').esPropina, isTrue);
+      expect(c('PROPINAS').esOperativo, isTrue);
       expect(c('VENTAS').esOperativo, isFalse);
       expect(c('DESCONOCIDO').etiqueta, 'DESCONOCIDO');
     });

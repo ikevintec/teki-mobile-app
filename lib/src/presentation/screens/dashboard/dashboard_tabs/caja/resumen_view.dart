@@ -308,7 +308,9 @@ class CajaResumenView extends StatelessWidget {
               esOperativo
                   ? (c.esRetiro
                       ? Icons.savings_outlined
-                      : Icons.lock_open_rounded)
+                      : c.esPropina
+                          ? Icons.volunteer_activism_outlined
+                          : Icons.lock_open_rounded)
                   : (c.esIngreso
                       ? Icons.arrow_downward_rounded
                       : Icons.arrow_upward_rounded),
