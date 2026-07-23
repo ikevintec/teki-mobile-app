@@ -155,7 +155,10 @@ class OrderRestaurantCard extends ConsumerWidget {
                     _finalizarOrden(context, ref);
                   },
                 ),
-              if (_canAnular)
+              if (_canAnular &&
+                  ref
+                      .read(sesionProvider)
+                      .hasPermission('RESTAURANTE_PEDIDOS_ANULAR'))
                 ListTile(
                   leading: Container(
                     width: 38,
