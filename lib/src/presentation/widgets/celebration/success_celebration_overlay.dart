@@ -85,17 +85,9 @@ class _SuccessCelebrationOverlayState extends State<SuccessCelebrationOverlay>
   late final AnimationController _tickController;
   final List<_ConfettiParticle> _particles = [];
   final Random _rand = Random();
-  bool _emitting = false;
-  double _emitElapsed = 0;
-  double _emitAccumulator = 0;
   Duration? _prevElapsed;
   Size _canvasSize = Size.zero;
   Offset? _origin;
-
-  // Ventana de emisión: ráfaga corta, tipo explosión.
-  static const _kEmitWindow = 0.45; // segundos
-  static const _kEmitInterval = 0.016;
-  static const _kParticlesPerEmit = 7;
 
   @override
   void initState() {
@@ -106,14 +98,28 @@ class _SuccessCelebrationOverlayState extends State<SuccessCelebrationOverlay>
     )..addListener(_tick);
 
     if (widget.show) {
-      _emitting = true;
       // El ancla se resuelve después del primer frame, cuando el check ya
-      // tiene posición en pantalla.
+      // tiene posición en pantalla. Las partículas nacen todas de golpe
+      // (explosión), no por goteo: así el efecto no depende del frame rate
+      // durante la carga de la pantalla.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _origin = _resolveOrigin();
+        _emitBurst(140);
         _tickController.repeat();
+        // Segundo "pop" más pequeño, como el remate de la explosión.
+        Future.delayed(const Duration(milliseconds: 180), () {
+          if (mounted) _emitBurst(80);
+        });
       });
+    }
+  }
+
+  void _emitBurst(int count) {
+    final origin = _origin;
+    if (origin == null) return;
+    for (int i = 0; i < count; i++) {
+      _particles.add(_ConfettiParticle.burst(origin, _rand));
     }
   }
 
@@ -128,7 +134,7 @@ class _SuccessCelebrationOverlayState extends State<SuccessCelebrationOverlay>
   }
 
   void _tick() {
-    if (_canvasSize == Size.zero || _origin == null) return;
+    if (_canvasSize == Size.zero) return;
 
     final elapsed = _tickController.lastElapsedDuration ?? Duration.zero;
     final dt = _prevElapsed == null
@@ -142,19 +148,9 @@ class _SuccessCelebrationOverlayState extends State<SuccessCelebrationOverlay>
       p.update(dtClamped, _canvasSize.height);
     }
 
-    if (_emitting) {
-      _emitElapsed += dtClamped;
-      _emitAccumulator += dtClamped;
-      while (_emitAccumulator >= _kEmitInterval) {
-        _emitAccumulator -= _kEmitInterval;
-        for (int i = 0; i < _kParticlesPerEmit; i++) {
-          _particles.add(_ConfettiParticle.burst(_origin!, _rand));
-        }
-      }
-      if (_emitElapsed >= _kEmitWindow) _emitting = false;
-    }
-
-    if (!_emitting && _particles.isEmpty) {
+    // El segundo pop llega hasta 180ms después del arranque: no apagar el
+    // ticker antes de ese margen aunque la primera tanda ya haya muerto.
+    if (_particles.isEmpty && elapsed > const Duration(milliseconds: 400)) {
       _tickController.stop();
     }
   }
@@ -213,13 +209,14 @@ class _ConfettiParticle {
     Colors.lightBlueAccent,
   ];
 
-  /// Emite una partícula que revienta radialmente desde [origin],
-  /// con sesgo hacia arriba (como confeti de fiesta).
+  /// Emite una partícula que revienta radialmente desde [origin] en
+  /// cualquier dirección (explosión esférica, tipo RappiCard). Las que
+  /// salen hacia abajo frenan rápido por el drag y caen con gravedad.
   factory _ConfettiParticle.burst(Offset origin, Random rand) {
-    // Ángulo en todo el círculo pero concentrado hacia arriba:
-    // -PI/2 (arriba en coords de pantalla) ± una dispersión amplia.
-    final a = -pi / 2 + (rand.nextDouble() - 0.5) * pi * 1.6;
-    final speed = 160.0 + rand.nextDouble() * 380.0;
+    final a = rand.nextDouble() * 2 * pi;
+    // sqrt para distribuir la energía: pocas lentas, muchas rápidas
+    // hacia el borde de la explosión.
+    final speed = 220.0 + sqrt(rand.nextDouble()) * 620.0;
     return _ConfettiParticle(
       position: origin,
       velocity: Offset(cos(a) * speed, sin(a) * speed),
@@ -227,13 +224,16 @@ class _ConfettiParticle {
       w: 8.0 + rand.nextDouble() * 8.0,
       h: 5.0 + rand.nextDouble() * 5.0,
       angle: rand.nextDouble() * 2 * pi,
-      spin: (rand.nextDouble() - 0.5) * 10.0,
-      lifetime: 1.4 + rand.nextDouble() * 1.0,
+      spin: (rand.nextDouble() - 0.5) * 12.0,
+      lifetime: 1.3 + rand.nextDouble() * 1.1,
     );
   }
 
   void update(double dt, double canvasHeight) {
-    velocity = Offset(velocity.dx * 0.985, velocity.dy + 520.0 * dt);
+    // Drag fuerte (la explosión se frena y las piezas quedan flotando) +
+    // gravedad suave. Time-based para no depender del frame rate.
+    final drag = pow(0.08, dt).toDouble();
+    velocity = Offset(velocity.dx * drag, velocity.dy * drag + 420.0 * dt);
     position += velocity * dt;
     angle += spin * dt;
     _age += dt;
