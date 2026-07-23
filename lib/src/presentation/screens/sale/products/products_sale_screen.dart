@@ -60,9 +60,11 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
             value: product.precioVentaUnitario ?? 0.0,
             validators: [Validators.required, Validators.min(0.01)],
           ),
-          'quantity': FormControl<int>(
-            value: (product.cantidad ?? 1).toInt(),
-            validators: [Validators.required, Validators.min(1)],
+          // Cantidad decimal (paridad web: pKeyFilter num + min 0.01),
+          // p.ej. productos por peso.
+          'quantity': FormControl<double>(
+            value: (product.cantidad ?? 1).toDouble(),
+            validators: [Validators.required, Validators.min(0.01)],
           ),
         }),
       );
@@ -133,9 +135,9 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
             value: 0.0,
             validators: [Validators.required, Validators.min(0.01)],
           ),
-          'quantity': FormControl<int>(
-            value: 1,
-            validators: [Validators.required, Validators.min(1)],
+          'quantity': FormControl<double>(
+            value: 1.0,
+            validators: [Validators.required, Validators.min(0.01)],
           ),
         }),
       ],
@@ -616,9 +618,11 @@ void _syncFormArrayWithProvider(
             value: product.precioVentaUnitario ?? 0,
             validators: [Validators.required, Validators.min(0.01)],
           ),
-          'quantity': FormControl<int>(
-            value: (product.cantidad ?? 1).toInt(),
-            validators: [Validators.required, Validators.min(1)],
+          // Cantidad decimal (paridad web: pKeyFilter num + min 0.01),
+          // p.ej. productos por peso.
+          'quantity': FormControl<double>(
+            value: (product.cantidad ?? 1).toDouble(),
+            validators: [Validators.required, Validators.min(0.01)],
           ),
         }),
       );
@@ -629,7 +633,7 @@ void _syncFormArrayWithProvider(
   } else {
     for (int i = 0; i < formArray.controls.length; i++) {
       final control = formArray.controls[i] as FormGroup;
-      final cantidad = (products[i].cantidad ?? 1).toInt();
+      final cantidad = (products[i].cantidad ?? 1).toDouble();
       final precio = products[i].precioVentaUnitario ?? 0.0;
       final precioUnitario = products[i].valorUnitario ?? 0.0;
       if (control.control('quantity').value != cantidad) {
