@@ -21,6 +21,10 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
   final CashRegisterRepository repository;
   CancelToken? _cancelToken;
 
+  /// Identificador de la carga vigente: una llamada superada por otra más
+  /// reciente no debe decidir (clear/loadDetail) con registros viciados.
+  int _loadId = 0;
+
   CashRegisterNotifier({required this.ref, required this.repository})
       : super(const CashRegisterState());
 
@@ -32,6 +36,7 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
     String? selectedMoneda,
     DateTime? fecha,
   }) async {
+    final loadId = ++_loadId;
     final sesion = ref.read(sesionProvider);
     final idPV = sesion.office?.id ?? 0;
     final idEV = sesion.saleStation?.id ?? 0;
@@ -47,7 +52,9 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
       idEstacionVenta: idEV,
       fecha: fecha != null ? DateFormat('dd-MM-yyyy').format(fecha) : null,
     );
-    if (!mounted) return;
+    // Si otra carga nos superó (cambio rápido de fecha), no decidir con
+    // registros que no corresponden a esta petición.
+    if (!mounted || loadId != _loadId) return;
     if (state.registers.isEmpty) {
       ref.read(cashRegisterDetailProvider.notifier).clear();
     } else {
@@ -55,7 +62,7 @@ class CashRegisterNotifier extends StateNotifier<CashRegisterState> {
     }
 
     final abiertas = await openFuture;
-    if (!mounted) return;
+    if (!mounted || loadId != _loadId) return;
     state = state.copyWith(openRegister: _masReciente(abiertas));
   }
 

@@ -16,6 +16,11 @@ class CashRegisterDetailNotifier
   final CashRegisterRepository repository;
   CancelToken? _cancelToken;
 
+  /// Identificador de la petición vigente: cualquier respuesta de una
+  /// petición superada (por otro load o por clear) se descarta, evitando
+  /// que un historial viejo "resucite" tras cambiar de fecha.
+  int _requestId = 0;
+
   CashRegisterDetailNotifier({required this.repository})
       : super(const CashRegisterDetailState());
 
@@ -25,6 +30,7 @@ class CashRegisterDetailNotifier
     String tipo = 'INGRESO',
     required String moneda,
   }) async {
+    final requestId = ++_requestId;
     _cancelToken?.cancel();
     _cancelToken = CancelToken();
 
@@ -48,7 +54,7 @@ class CashRegisterDetailNotifier
         page: 0,
         cancelToken: _cancelToken,
       );
-      if (!mounted) return;
+      if (!mounted || requestId != _requestId) return;
       final items =
           page.rawItems.map(CashRegisterDetail.fromJson).toList();
       state = state.copyWith(
@@ -59,10 +65,10 @@ class CashRegisterDetailNotifier
       );
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) return;
-      if (!mounted) return;
+      if (!mounted || requestId != _requestId) return;
       state = state.copyWith(isLoading: false, error: e.message);
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || requestId != _requestId) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -72,6 +78,7 @@ class CashRegisterDetailNotifier
     if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
     if (state.idCaja == null) return;
 
+    final requestId = _requestId;
     _cancelToken?.cancel();
     _cancelToken = CancelToken();
 
@@ -86,7 +93,7 @@ class CashRegisterDetailNotifier
         page: nextPage,
         cancelToken: _cancelToken,
       );
-      if (!mounted) return;
+      if (!mounted || requestId != _requestId) return;
       final newItems =
           page.rawItems.map(CashRegisterDetail.fromJson).toList();
       state = state.copyWith(
@@ -97,10 +104,10 @@ class CashRegisterDetailNotifier
       );
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) return;
-      if (!mounted) return;
+      if (!mounted || requestId != _requestId) return;
       state = state.copyWith(isLoadingMore: false);
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || requestId != _requestId) return;
       state = state.copyWith(isLoadingMore: false);
     }
   }
@@ -119,7 +126,10 @@ class CashRegisterDetailNotifier
   }
 
   void clear() {
-    state = CashRegisterDetailState();
+    // Invalida cualquier petición en vuelo: su respuesta será descartada.
+    _requestId++;
+    _cancelToken?.cancel();
+    state = const CashRegisterDetailState();
   }
 
   @override
