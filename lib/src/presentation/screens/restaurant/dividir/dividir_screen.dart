@@ -48,6 +48,8 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
   late List<LocalCheck> _checks;
   bool _isSubmitting = false;
   bool _isDragging = false;
+  // Id del item que se está separando en el servidor (muestra spinner en su tile).
+  int? _expandingItemId;
   final _scrollController = ScrollController();
 
   @override
@@ -63,40 +65,91 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
     super.dispose();
   }
 
+  /// Líneas completas de la orden, con sus objetos originales (id real,
+  /// opciones de grupo, etc.). Para repartir unidades de una línea multi-
+  /// cantidad se usa "Separar" (endpoint expand del servidor), igual que la web.
   List<CommandDetail> _getAllItems(OrderRestaurant order) {
     final List<CommandDetail> result = [];
     for (final comanda in (order.comandas ?? [])) {
       for (final item in (comanda.items ?? [])) {
         if (item.cuenta != null) continue;
-        final isCancelled = ComandaDetailStatus.isCancelledItem(item);
-        // Cancelled items are added as-is (qty 1 each) so they appear but
-        // cannot be dragged. Non-cancelled items are split by quantity.
-        if (isCancelled) {
-          result.add(CommandDetail(
-            id: item.id,
-            producto: item.producto,
-            cantidad: item.cantidad,
-            precioVenta: item.precioVenta,
-            comanda: item.comanda,
-            estadoComandaDetalle: item.estadoComandaDetalle,
-            eliminado: item.eliminado,
-          ));
-        } else {
-          final qty = (item.cantidad ?? 1).toInt();
-          for (int i = 0; i < qty; i++) {
-            result.add(CommandDetail(
-              id: item.id,
-              producto: item.producto,
-              cantidad: 1,
-              precioVenta: item.precioVenta,
-              comanda: item.comanda,
-              estadoComandaDetalle: item.estadoComandaDetalle,
-            ));
-          }
-        }
+        // eliminado=true son líneas reemplazadas por el servidor (p.ej. al
+        // separar): no se muestran. Las CANCELADO sí, como no arrastrables.
+        if (item.eliminado == true) continue;
+        result.add(item);
       }
     }
     return result;
+  }
+
+  /// Separa una línea multi-cantidad en N líneas de cantidad 1 usando el
+  /// endpoint expand del servidor (ids reales), y reconstruye el estado local
+  /// conservando las asignaciones existentes por id.
+  Future<void> _separarItem(CommandDetail item) async {
+    if (_expandingItemId != null || item.id == null) return;
+    final qty = (item.cantidad ?? 1).toInt();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Separar item', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Text(
+          '¿Está seguro de separar "${item.producto?.nombre ?? '-'}" en $qty items?',
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Separar', style: TextStyle(color: ColorSchema.primaryColor, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _expandingItemId = item.id);
+    // Capturar antes de los await: tras desmontar el widget, ref deja de ser válido.
+    final pvId = ref.read(sesionProvider).office?.id;
+    final notifier = ref.read(restaurantProvider.notifier);
+    try {
+      await RestaurantRepositoryImpl().expandCommandItem(item.id!);
+      if (pvId != null) await notifier.reload(pvId);
+      if (!mounted) return;
+      final updatedOrder = ref.read(restaurantProvider).orders.firstWhere(
+            (o) => o.id == widget.order.id,
+            orElse: () => widget.order,
+          );
+      _rebuildFromOrder(updatedOrder);
+    } catch (e) {
+      errorNotification(e.toString());
+    } finally {
+      if (mounted) setState(() => _expandingItemId = null);
+    }
+  }
+
+  /// Reconstruye sin asignar + cuentas a partir de la orden recargada:
+  /// los items ya asignados se re-vinculan por id; el resto queda sin asignar.
+  void _rebuildFromOrder(OrderRestaurant order) {
+    final byId = <int?, CommandDetail>{
+      for (final i in _getAllItems(order)) i.id: i,
+    };
+    setState(() {
+      _checks = _checks
+          .map((c) => c.copyWith(
+                items: c.items
+                    .map((old) => byId.remove(old.id))
+                    .whereType<CommandDetail>()
+                    .toList(),
+              ))
+          .toList();
+      _unassigned = byId.values.toList();
+    });
   }
 
   void _onDropToCheck(_DragItem drag, int targetCheckIndex) {
@@ -179,9 +232,11 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
     setState(() => _isSubmitting = true);
     try {
       final repo = RestaurantRepositoryImpl();
+      // Cada item es una línea real del servidor (id único), por lo que se
+      // envía tal cual, sin reagrupar en el cliente.
       final checksToSend = _checks
           .where((c) => c.items.isNotEmpty)
-          .map((c) => Check(items: _groupItems(c.items)))
+          .map((c) => Check(items: c.items))
           .toList();
 
       final pvId = ref.read(sesionProvider).office?.id;
@@ -196,25 +251,6 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
       setState(() => _isSubmitting = false);
       errorNotification(e.toString());
     }
-  }
-
-  List<CommandDetail> _groupItems(List<CommandDetail> items) {
-    final Map<int?, CommandDetail> grouped = {};
-    for (final item in items) {
-      final key = item.id;
-      if (key != null && grouped.containsKey(key)) {
-        grouped[key] = CommandDetail(
-          id: item.id,
-          producto: item.producto,
-          cantidad: (grouped[key]!.cantidad ?? 0) + 1,
-          precioVenta: item.precioVenta,
-          comanda: item.comanda,
-        );
-      } else {
-        grouped[key ?? items.indexOf(item)] = item;
-      }
-    }
-    return grouped.values.toList();
   }
 
   @override
@@ -370,6 +406,8 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
       return _buildItemTile(item, isLast: isLast, isCancelled: true);
     }
 
+    final canSeparar = (item.cantidad ?? 1) > 1 && item.id != null;
+
     return LongPressDraggable<_DragItem>(
       data: _DragItem(item: item, index: index, fromUnassigned: true),
       delay: const Duration(milliseconds: 150),
@@ -393,7 +431,7 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  item.producto?.nombre ?? '-',
+                  '${(item.cantidad ?? 1).toInt()}x ${item.producto?.nombre ?? '-'}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
@@ -415,7 +453,11 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
         opacity: 0.35,
         child: _buildItemTile(item, isLast: isLast),
       ),
-      child: _buildItemTile(item, isLast: isLast),
+      child: _buildItemTile(
+        item,
+        isLast: isLast,
+        onSeparar: canSeparar ? () => _separarItem(item) : null,
+      ),
     );
   }
 
@@ -423,6 +465,7 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
     CommandDetail item, {
     bool isLast = false,
     VoidCallback? onUndo,
+    VoidCallback? onSeparar,
     bool isCancelled = false,
   }) {
     final textDecor = isCancelled ? TextDecoration.lineThrough : TextDecoration.none;
@@ -453,7 +496,7 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.producto?.nombre ?? '-',
+                    '${(item.cantidad ?? 1).toInt()}x ${item.producto?.nombre ?? '-'}',
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: 13,
@@ -513,7 +556,42 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
                     ],
                   ),
                 ),
-              ),
+              )
+            else if (onSeparar != null)
+              _expandingItemId == item.id
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: ColorSchema.primaryColor,
+                        ),
+                      ),
+                    )
+                  : GestureDetector(
+                      onTap: onSeparar,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: ColorSchema.primaryColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: ColorSchema.primaryColor.withValues(alpha: 0.4)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.call_split_rounded, size: 14, color: ColorSchema.primaryColor),
+                            SizedBox(width: 4),
+                            Text(
+                              'Separar',
+                              style: TextStyle(fontSize: 11, color: ColorSchema.primaryColor, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
           ],
         ),
       ),
@@ -660,7 +738,7 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            ie.value.producto?.nombre ?? '-',
+                                            '${(ie.value.cantidad ?? 1).toInt()}x ${ie.value.producto?.nombre ?? '-'}',
                                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87),
                                             overflow: TextOverflow.ellipsis,
                                           ),

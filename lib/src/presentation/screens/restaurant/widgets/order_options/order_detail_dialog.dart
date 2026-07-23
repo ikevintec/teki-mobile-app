@@ -293,19 +293,19 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                 ...items.where((i) => !ComandaDetailStatus.isCancelledItem(i)).map((item) => CommandaItemRow(
                       item: item,
                       onServir: (comanda.id != null && item.id != null)
-                          ? () => ref
+                          ? (cantidad) => ref
                                 .read(restaurantProvider.notifier)
-                                .updateCommandItemStatus(comanda.id!, item.id!, 'DESPACHADO')
+                                .updateCommandItemStatus(comanda.id!, item.id!, 'DESPACHADO', cantidad: cantidad)
                           : null,
                       onAnular: (comanda.id != null &&
                               item.id != null &&
                               ref.read(sesionProvider).hasPermission(
                                   'RESTAURANTE_PEDIDOS_CANCELAR_PLATILLO'))
-                          ? (motivo) {
+                          ? (motivo, cantidad) {
                               final commandId = comanda.id!;
                               ref
                                   .read(restaurantProvider.notifier)
-                                  .updateCommandItemStatus(commandId, item.id!, 'CANCELADO', motivoAnulacion: motivo)
+                                  .updateCommandItemStatus(commandId, item.id!, 'CANCELADO', motivoAnulacion: motivo, cantidad: cantidad)
                                   .then((_) {
                                     final sesion = ref.read(sesionProvider);
                                     final office = sesion.office;

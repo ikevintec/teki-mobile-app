@@ -145,7 +145,7 @@ Pendientes:
 
 ## Auditoría de paridad web↔móvil (2026-07-23) — hallazgos pendientes
 
-De 18 hallazgos, 9 corregidos (mayoreo sin ordenar, preview comandero, conversión cuenta→venta, cancelados en cobrador, cuotas, efectivo/montoPagado, item libre, otrosCargos PLAN ×2). Pendientes:
+De 18 hallazgos, 11 corregidos (mayoreo sin ordenar, preview comandero, conversión cuenta→venta, cancelados en cobrador, cuotas, efectivo/montoPagado, item libre, otrosCargos PLAN ×2, anulación/despacho parcial multi-cantidad, división de cuentas con endpoint expand). Pendientes:
 
 **Requieren decisión de producto:**
 - [ ] **Recargo sobre precio de mayoreo**: el móvil lo des-infla (con comentario deliberado de no duplicar el recargo global); la web NO lo toca. Uno de los dos está mal (~S/. 7.81 por unidad en el ejemplo 100/18%/10%). Decidir cuál es la semántica correcta y alinear.
@@ -154,8 +154,8 @@ De 18 hallazgos, 9 corregidos (mayoreo sin ordenar, preview comandero, conversi�
 **Bugs confirmados de mayor esfuerzo (backlog):**
 - [ ] `ComandaNotifier.computePrice` no aplica gross-up de IGV para productos con `igv=false` (subcobro 18%), no filtra precios por punto de venta, ni maneja ESPECIAL/canal ni recargo — necesita converger con `getPriceProduct`.
 - [ ] `montoDelivery` no se suma en los totales del cobrador (se pierde el flete en pedidos delivery).
-- [ ] Anulación/despacho parcial de items multi-cantidad: el móvil manda `cantidad: null` (afecta toda la línea); la web permite elegir unidades. Requiere UI + payload.
-- [ ] División de cuentas: el móvil parte items por cantidad en el cliente reutilizando el mismo id (la web usa PATCH /commands/items/{id}/expand del servidor) y descarta grupoOpciones del payload. Rediseñar con el endpoint expand.
+- [x] Anulación/despacho parcial de items multi-cantidad: selector de unidades en el bottom sheet de acciones; el payload manda `cantidad` y el backend divide la línea (2026-07-23).
+- [x] División de cuentas: rediseñada con líneas enteras (objetos originales con id real y grupoOpciones) + acción "Separar" que usa PATCH /commands/items/{id}/expand del servidor, igual que la web (2026-07-23).
 
 **Gaps de feature (la web los tiene, el móvil no):**
 - [ ] Precios ESPECIALES por canal de venta (el móvil no tiene canales).

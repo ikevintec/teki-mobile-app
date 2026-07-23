@@ -207,13 +207,15 @@ class RemoteRestaurant extends RestaurantDatasource {
   }
 
   @override
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String status, {String? motivoAnulacion}) async {
+  Future<void> updateCommandItemStatus(int commandId, int itemId, String status, {String? motivoAnulacion, double? cantidad}) async {
     try {
       await dio.patch(
         '/commands/$commandId/items/$itemId/estadoComandaDetalle',
         data: {
           'estadoComandaDetalle': status,
-          'cantidad': null,
+          // null = afecta toda la línea; N < cantidad de la línea = el backend
+          // divide la línea y solo N unidades cambian de estado.
+          'cantidad': cantidad,
           'updateInventory': true,
           if (motivoAnulacion != null) 'motivoAnulacion': motivoAnulacion,
         },
@@ -221,6 +223,17 @@ class RemoteRestaurant extends RestaurantDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error al actualizar el item';
+      throw Exception(msg);
+    }
+  }
+
+  @override
+  Future<void> expandCommandItem(int itemId) async {
+    try {
+      await dio.patch('/commands/items/$itemId/expand');
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final rd = e.response?.data; final msg = (rd is Map ? (rd['mensaje'] ?? rd['message']) : null) ?? e.message ?? 'Error al separar el item';
       throw Exception(msg);
     }
   }
