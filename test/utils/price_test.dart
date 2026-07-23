@@ -61,6 +61,29 @@ void main() {
       expect(getPriceProduct(product, office, {'qty': 500.0}), 6.0);
     });
 
+
+    test('mayoreo con tramos DESORDENADOS elige el tramo correcto', () {
+      // El backend no garantiza orden; la búsqueda binaria exige ordenar antes
+      final product = buildProduct(precios: [
+        ProductPrice(tipoPrecio: 'POR_DEFECTO', precio: 10.0),
+        ProductPrice(tipoPrecio: 'MAYOREO', precio: 6.0, unidadesMayoreo: 50),
+        ProductPrice(tipoPrecio: 'MAYOREO', precio: 8.0, unidadesMayoreo: 10),
+      ]);
+      expect(getPriceProduct(product, office, {'qty': 30.0}), 8.0);
+      expect(getPriceProduct(product, office, {'qty': 60.0}), 6.0);
+      expect(getPriceProduct(product, office, {'qty': 5.0}), 10.0);
+    });
+
+    test('precios no-MAYOREO con unidadesMayoreo no activan tramos', () {
+      final product = buildProduct(precios: [
+        ProductPrice(tipoPrecio: 'POR_DEFECTO', precio: 10.0),
+        // Dato contaminado: especial con unidadesMayoreo poblado
+        ProductPrice(
+            tipoPrecio: 'ESPECIAL', precio: 4.0, unidadesMayoreo: 10),
+      ]);
+      expect(getPriceProduct(product, office, {'qty': 30.0}), 10.0);
+    });
+
     test('preciosPorPuntoVenta filtra por el punto de venta', () {
       final product = buildProduct(
         preciosPorPuntoVenta: true,

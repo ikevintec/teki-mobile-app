@@ -54,7 +54,14 @@ double getPriceProduct(Product product, Office puntoVenta, Map<String, dynamic>?
   }
 
   ProductPrice? _wholesale(List<ProductPrice> arr, double target) {
-    arr = arr.where((pv) => pv.unidadesMayoreo != null).toList();
+    // Paridad con la web (util-functions.ts wholesale): solo precios de tipo
+    // MAYOREO y ORDENADOS por unidadesMayoreo — la búsqueda binaria de abajo
+    // exige orden ascendente; sin él puede devolver el tramo equivocado.
+    arr = arr
+        .where((pv) =>
+            pv.tipoPrecio == 'MAYOREO' && pv.unidadesMayoreo != null)
+        .toList()
+      ..sort((a, b) => a.unidadesMayoreo!.compareTo(b.unidadesMayoreo!));
     int start = 0;
     int end = arr.length - 1;
     int ans = -1;
