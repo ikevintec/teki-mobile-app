@@ -35,6 +35,9 @@ class ViewComponentScreen extends ConsumerStatefulWidget {
 }
 
 class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
+  // Ancla desde donde revienta el confeti al venir de una venta.
+  final GlobalKey _celebrationCheckKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -84,6 +87,10 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                           padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
                           child: Column(
                             children: [
+                              if (widget.fromSale) ...[
+                                AnimatedSuccessCheck(key: _celebrationCheckKey),
+                                const SizedBox(height: 16),
+                              ],
                               Text(
                                 '${formatTipoComprobanteTitulo(ticketToShow.tipoComprobante ?? '')} electrónica',
                                 textAlign: TextAlign.center,
@@ -162,7 +169,10 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
             ),
           ),
         ),                     // Scaffold
-        SuccessCelebrationOverlay(show: widget.fromSale),
+        SuccessCelebrationOverlay(
+          show: widget.fromSale,
+          anchorKey: _celebrationCheckKey,
+        ),
       ],
     );
   }
