@@ -162,4 +162,39 @@ void main() {
       expect(state.balancePorMoneda['PEN'], 120.0);
     });
   });
+
+  group('CashRegisterState.aperturaRetrocede', () {
+    CashRegisterState conCajaAbierta(DateTime fecha) => CashRegisterState(
+          openRegister: CashRegisterResponse(
+            id: 1,
+            estadoCaja: 'APERTURADA',
+            fecha: fecha,
+            montosTotalesIngresos: const [],
+            montosTotalesEgresos: const [],
+            montosIngresosEfectivo: const [],
+          ),
+        );
+
+    test('destino anterior a la caja abierta retrocede (bloquear)', () {
+      final state = conCajaAbierta(DateTime(2026, 7, 22));
+      expect(state.aperturaRetrocede(DateTime(2026, 7, 21)), isTrue);
+    });
+
+    test('destino posterior a la caja abierta no retrocede (flujo guiado)', () {
+      final state = conCajaAbierta(DateTime(2026, 6, 28));
+      expect(state.aperturaRetrocede(DateTime(2026, 7, 22)), isFalse);
+    });
+
+    test('mismo día no retrocede', () {
+      final state = conCajaAbierta(DateTime(2026, 7, 22, 18, 30));
+      expect(state.aperturaRetrocede(DateTime(2026, 7, 22)), isFalse);
+    });
+
+    test('sin caja abierta no retrocede', () {
+      expect(
+        const CashRegisterState().aperturaRetrocede(DateTime(2026, 7, 21)),
+        isFalse,
+      );
+    });
+  });
 }

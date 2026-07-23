@@ -136,6 +136,47 @@ class _CajaTabState extends ConsumerState<CajaTab> {
 
     final fechaAbierta = cajaState.openRegister!.fecha!;
     final fechaLabel = DateFormat('dd/MM/yyyy').format(fechaAbierta);
+
+    // Aperturar hacia atrás nunca es válido: cerrar la caja vigente no lo
+    // haría posible (el backend exige que las cajas avancen en el tiempo).
+    if (cajaState.aperturaRetrocede(_selectedDate)) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('No se puede aperturar esta fecha',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+          content: Text(
+            'Ya tienes una caja del $fechaLabel: no es posible aperturar una '
+            'caja para una fecha anterior. Puedes revisar u operar la caja '
+            'del $fechaLabel.',
+            style: const TextStyle(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              style:
+                  TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+              child: const Text('Entendido'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _goToOpenRegister(fechaAbierta);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorSchema.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Ir a la caja del $fechaLabel'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     final continuar = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

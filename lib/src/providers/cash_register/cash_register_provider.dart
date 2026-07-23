@@ -210,6 +210,18 @@ class CashRegisterState {
     return f.year != fecha.year || f.month != fecha.month || f.day != fecha.day;
   }
 
+  /// True si [fecha] es ANTERIOR al día de la caja abierta. Aperturar hacia
+  /// atrás nunca es válido (el backend exige que el historial de cajas
+  /// avance en el tiempo), así que en ese caso no debe ofrecerse el flujo
+  /// "cerrar y aperturar".
+  bool aperturaRetrocede(DateTime fecha) {
+    final f = openRegister?.fecha;
+    if (f == null) return false;
+    final diaAbierta = DateTime(f.year, f.month, f.day);
+    final destino = DateTime(fecha.year, fecha.month, fecha.day);
+    return destino.isBefore(diaAbierta);
+  }
+
   /// Suma de ingresos agrupados por moneda (considerando todos los registros del día)
   Map<String, double> get totalIngresosPorMoneda {
     final totals = <String, double>{};
