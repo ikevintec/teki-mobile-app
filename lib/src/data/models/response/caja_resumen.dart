@@ -51,10 +51,13 @@ class CajaResumen {
     return null;
   }
 
-  /// Conceptos de la moneda, ordenados: ingresos primero y por monto desc.
+  /// Conceptos de la moneda, ordenados: rendimiento primero (ingresos y
+  /// luego egresos, por monto desc) y los operativos (apertura/retiro) al
+  /// final como informativos.
   List<ConceptoResumen> conceptosDe(String moneda) {
     final lista = porConcepto.where((c) => c.moneda == moneda).toList()
       ..sort((a, b) {
+        if (a.esOperativo != b.esOperativo) return a.esOperativo ? 1 : -1;
         if (a.esIngreso != b.esIngreso) return a.esIngreso ? -1 : 1;
         return b.monto.compareTo(a.monto);
       });
@@ -112,6 +115,11 @@ class ConceptoResumen {
 
   bool get esIngreso => tipo == 'INGRESO';
   bool get esApertura => concepto == 'APERTURA_CAJA';
+  bool get esRetiro => concepto == 'RETIRO_CAJA';
+
+  /// Conceptos operativos (flotante de apertura, retiros al cofre): no son
+  /// rendimiento del periodo y quedan fuera de todas las sumas del resumen.
+  bool get esOperativo => esApertura || esRetiro;
 
   /// Etiqueta legible del concepto.
   String get etiqueta {

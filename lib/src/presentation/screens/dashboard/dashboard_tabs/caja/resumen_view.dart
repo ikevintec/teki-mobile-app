@@ -289,8 +289,8 @@ class CajaResumenView extends StatelessWidget {
       );
 
   Widget _conceptoRow(ConceptoResumen c, String moneda) {
-    final esApertura = c.esApertura;
-    final color = esApertura
+    final esOperativo = c.esOperativo;
+    final color = esOperativo
         ? Colors.grey.shade500
         : (c.esIngreso ? const Color(0xFF16A34A) : const Color(0xFFDC2626));
     return Padding(
@@ -305,8 +305,10 @@ class CajaResumenView extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              esApertura
-                  ? Icons.lock_open_rounded
+              esOperativo
+                  ? (c.esRetiro
+                      ? Icons.savings_outlined
+                      : Icons.lock_open_rounded)
                   : (c.esIngreso
                       ? Icons.arrow_downward_rounded
                       : Icons.arrow_upward_rounded),
@@ -323,7 +325,7 @@ class CajaResumenView extends StatelessWidget {
                     style: GoogleFonts.roboto(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: esApertura
+                        color: esOperativo
                             ? Colors.grey.shade500
                             : const Color(0xFF1F1F1F))),
                 Text('${c.operaciones} operación(es)',
