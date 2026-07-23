@@ -358,7 +358,7 @@ Widget _buildErrorScreen(String message, bool fromSale) {
         Get.to(() => PdfViewerScreen(
               uuid: ticket.uuid!,
               fileName: ticket.identificadorDocumento!,
-              fileSize: isTicket ? 'TICKET' : null,
+              fileSize: isTicket ? 'TICKET' : 'A4',
               ticketId: ticket.id,
             ));
       },
