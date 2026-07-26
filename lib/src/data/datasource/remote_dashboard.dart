@@ -189,7 +189,9 @@ class RemoteDashboardDatasource implements DashboardDatasource {
   @override
   Future<List<TopProduct>> getTopProducts(Map<String, dynamic> params) async {
     try {
-      final response = await dio.get('/products/top-orders', queryParameters: params);
+      // Misma ruta que la web (product.service.ts findTopOrders); sin el
+      // segmento /operations el backend hace match con GET /products/{id}.
+      final response = await dio.get('/products/operations/top-orders', queryParameters: params);
       return (response.data as List)
           .map((e) => TopProduct.fromJson(e as Map<String, dynamic>))
           .toList();
