@@ -265,10 +265,10 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                             'Fecha de emisión: ${ticket.fechaEmision?.toString() ?? "--"}',
                             style: GoogleFonts.roboto(fontSize: 11),
                           ),
-                          // Un solo estado por card: Anulado domina; con
-                          // SUNAT aceptado basta 'Emitido' (el check SUNAT va
-                          // junto al monto); en el resto se muestra el estado
-                          // SUNAT, que es el dato pendiente/relevante.
+                          // La línea de estado solo existe cuando hay algo
+                          // que decir: Anulado (domina) o un estado SUNAT
+                          // pendiente/rechazado. Lo aceptado lleva su sello
+                          // junto al monto y lo demás no necesita etiqueta.
                           Builder(builder: (_) {
                             final String label;
                             final Color color;
@@ -277,8 +277,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                               color = Colors.red;
                             } else if (ticket.estadoSunat == 'ACEPT' ||
                                 (ticket.estadoSunat ?? '').isEmpty) {
-                              label = 'Emitido';
-                              color = ColorSchema.primaryColor;
+                              return const SizedBox.shrink();
                             } else if (ticket.estadoSunat == 'RECHA') {
                               label = 'SUNAT: Rechazado';
                               color = Colors.red.shade600;
