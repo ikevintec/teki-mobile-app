@@ -241,13 +241,15 @@ class _StatusLegend extends StatelessWidget {
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // Paleta canónica de la web: pendiente ámbar, preparado verde,
+          // precuenta morado.
           _LegendItem(color: Color(0xFFE8E8E8), textColor: Colors.grey, label: 'Libre'),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFE3F2FD), textColor: Color(0xFF1565C0), label: 'Pendiente'),
+          _LegendItem(color: Color(0xFFFEEDAF), textColor: Color(0xFF8A5340), label: 'Pendiente'),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFFFF3E0), textColor: Color(0xFFE65100), label: 'Preparado'),
+          _LegendItem(color: Color(0xFFE8F5E9), textColor: Color(0xFF256029), label: 'Preparado'),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFE8F5E9), textColor: Color(0xFF2E7D32), label: 'Precuenta'),
+          _LegendItem(color: Color(0xFFECCFFF), textColor: Color(0xFF694382), label: 'Precuenta'),
         ],
       ),
     );

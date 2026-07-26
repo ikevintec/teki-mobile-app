@@ -18,29 +18,32 @@ class ComandaDetailStatus {
 
 // ─── Status style helpers ─────────────────────────────────────────────────────
 
+// Paleta canónica de la WEB para items de comanda (pedido-detalle y cocina):
+// PENDIENTE (en preparación) = ámbar, PREPARADO (listo) = verde,
+// DESPACHADO = azul, CANCELADO = rojo.
 Color statusBgColor(String? status) {
   switch (status?.toUpperCase()) {
     case ComandaDetailStatus.preparado:
-      return const Color(0xFFFFFDE7);
+      return const Color(0xFFE6FFEB);
     case ComandaDetailStatus.cancelado:
       return const Color(0xFFFFF5F5);
     case ComandaDetailStatus.despachado:
-      return const Color(0xFFE3F2FD);
+      return const Color(0xFFE4EAFF);
     default:
-      return Colors.white;
+      return const Color(0xFFFFF8E1);
   }
 }
 
 Color statusBorderColor(String? status) {
   switch (status?.toUpperCase()) {
     case ComandaDetailStatus.preparado:
-      return const Color(0xFFF9A825);
+      return const Color(0xFF2E7D32);
     case ComandaDetailStatus.cancelado:
       return const Color(0xFFE53935);
     case ComandaDetailStatus.despachado:
       return const Color(0xFF1E88E5);
     default:
-      return const Color(0xFFE0E0E0);
+      return const Color(0xFFF9A825);
   }
 }
 
@@ -327,9 +330,10 @@ class ComandaStatusBadge extends StatelessWidget {
     final String label;
     final IconData icon;
 
+    // Colores canónicos de la web: preparado verde, pendiente ámbar.
     switch (status.toUpperCase()) {
       case ComandaDetailStatus.preparado:
-        color = const Color(0xFFF9A825);
+        color = const Color(0xFF2E7D32);
         label = 'Preparado';
         icon = Icons.check_circle_outline_rounded;
         break;
@@ -344,7 +348,7 @@ class ComandaStatusBadge extends StatelessWidget {
         icon = Icons.local_shipping_outlined;
         break;
       default:
-        color = Colors.grey.shade500;
+        color = const Color(0xFFC98A00);
         label = 'Pendiente';
         icon = Icons.hourglass_empty_rounded;
     }

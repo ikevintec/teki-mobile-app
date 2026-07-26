@@ -70,19 +70,22 @@ class _TableCardState extends State<TableCard> {
     String statusLabel;
     IconData statusIcon;
 
+    // Paleta canónica de la WEB (los usuarios ya la conocen):
+    // items preparados = verde (listo), PENDIENTE = ámbar,
+    // PRECUENTA = morado (status-renewal), libre = gris.
     if (hasItemPreparado) {
-      cardColor = const Color(0xFFFFF3E0);
-      textColor = const Color(0xFFE65100);
+      cardColor = const Color(0xFFE8F5E9);
+      textColor = const Color(0xFF256029);
       statusLabel = 'Preparado';
       statusIcon = Icons.room_service_rounded;
     } else if (estado == 'PENDIENTE') {
-      cardColor = const Color(0xFFE3F2FD);
-      textColor = const Color(0xFF1565C0);
+      cardColor = const Color(0xFFFEEDAF);
+      textColor = const Color(0xFF8A5340);
       statusLabel = 'Pendiente';
       statusIcon = Icons.receipt_long;
     } else if (estado == 'PRECUENTA') {
-      cardColor = const Color(0xFFE8F5E9);
-      textColor = const Color(0xFF2E7D32);
+      cardColor = const Color(0xFFECCFFF);
+      textColor = const Color(0xFF694382);
       statusLabel = 'Precuenta';
       statusIcon = Icons.payment;
     } else {
