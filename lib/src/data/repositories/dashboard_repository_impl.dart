@@ -1,4 +1,5 @@
 import 'package:teki_app/src/data/models/response/daily_sales_summary.dart';
+import 'package:teki_app/src/data/models/response/dashboard_analytics.dart';
 import 'package:teki_app/src/data/models/response/top_product.dart';
 import 'package:teki_app/src/data/models/teki_model/total_counter.dart';
 import 'package:teki_app/src/domain/datasource/dashboard_datasource.dart';
@@ -37,4 +38,16 @@ class DashboardRepositoryImpl extends DashboardRepository {
   Future<List<TopProduct>> getTopProducts(Map<String, dynamic> params) {
     return dashboardDatasource.getTopProducts(params);
   }
+
+  @override
+  Future<List<TotalCategory>> getTotalCategories(Map<String, dynamic> params) =>
+      dashboardDatasource.getTotalCategories(params);
+
+  @override
+  Future<List<ScheduleSale>> getSalesBySchedule(Map<String, dynamic> params) =>
+      dashboardDatasource.getSalesBySchedule(params);
+
+  @override
+  Future<List<VendorSummary>> getVendorsSummary(Map<String, dynamic> params) =>
+      dashboardDatasource.getVendorsSummary(params);
 }

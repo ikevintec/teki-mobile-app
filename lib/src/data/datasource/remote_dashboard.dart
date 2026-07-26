@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/daily_sales_summary.dart';
+import 'package:teki_app/src/data/models/response/dashboard_analytics.dart';
 import 'package:teki_app/src/data/models/response/top_product.dart';
 import 'package:teki_app/src/data/models/teki_model/total_counter.dart';
 import 'package:teki_app/src/domain/datasource/dashboard_datasource.dart';
@@ -205,4 +206,44 @@ class RemoteDashboardDatasource implements DashboardDatasource {
       return Future.error('❌ Top productos: ${e.toString()}');
     }
   }
+
+  /// GET genérico para listas de analíticas: aplica el mismo manejo de
+  /// errores de todo el datasource y mapea cada elemento con [fromJson].
+  Future<List<T>> _getAnalyticsList<T>(
+    String path,
+    Map<String, dynamic> params,
+    T Function(Map<String, dynamic>) fromJson, {
+    required String label,
+    bool paginated = false,
+  }) async {
+    try {
+      final response = await dio.get(path, queryParameters: params);
+      final data =
+          paginated ? (response.data['content'] as List? ?? []) : (response.data as List);
+      return data.map((e) => fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) rethrow;
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error('❌ $label: $message');
+    } catch (e) {
+      return Future.error('❌ $label: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<List<TotalCategory>> getTotalCategories(Map<String, dynamic> params) =>
+      _getAnalyticsList('/total-categories', params, TotalCategory.fromJson,
+          label: 'Ventas por categoría');
+
+  @override
+  Future<List<ScheduleSale>> getSalesBySchedule(Map<String, dynamic> params) =>
+      _getAnalyticsList('/sales-by-schedule', params, ScheduleSale.fromJson,
+          label: 'Ventas por horario');
+
+  @override
+  Future<List<VendorSummary>> getVendorsSummary(Map<String, dynamic> params) =>
+      _getAnalyticsList('/summary-vendedores', params, VendorSummary.fromJson,
+          label: 'Ventas por vendedor', paginated: true);
 }

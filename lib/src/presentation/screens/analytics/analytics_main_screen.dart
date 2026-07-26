@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_categorias_section.dart';
 import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_chart_section.dart';
 import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_chart_section_two.dart';
+import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_horarios_section.dart';
 import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_reports_section.dart';
+import 'package:teki_app/src/presentation/screens/analytics/analytics_sections/analytics_vendedores_section.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 
@@ -98,6 +101,12 @@ class _AnalyticsMainScreenState extends ConsumerState<AnalyticsMainScreen> {
             ),
             const SizedBox(height: 10),
             AnalyticsReportSection(idPuntoVenta: id),
+            const SizedBox(height: 12),
+            AnalyticsCategoriasSection(id: id),
+            const SizedBox(height: 12),
+            AnalyticsHorariosSection(id: id),
+            const SizedBox(height: 12),
+            AnalyticsVendedoresSection(id: id),
             const SizedBox(height: 20),
             AnalyticsChartSection(id: id),
             const SizedBox(height: 20),
