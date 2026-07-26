@@ -243,6 +243,21 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     calculoTotal();
   }
 
+  /// Cambia el tipo de afectación IGV (catálogo 07) del item y recalcula.
+  /// calculoTotal ya ramifica por grupo tributario (gravado, exonerado,
+  /// inafecto, exportación, gratuitas) con las mismas reglas que la web.
+  void setAfectacionIgvProductSale(int index, String codigoAfectacion) {
+    final existingTicketDetail = state.productsSales[index];
+    final updatedTicketDetail = existingTicketDetail.copyWith(
+      codigoTipoAfectacionIgv: codigoAfectacion,
+    );
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)
+        ..[index] = updatedTicketDetail,
+    );
+    calculoTotal();
+  }
+
   void setDescriptionProductSale(int index, String description) {
     final existingTicketDetail = state.productsSales[index];
     final updatedTicketDetail =

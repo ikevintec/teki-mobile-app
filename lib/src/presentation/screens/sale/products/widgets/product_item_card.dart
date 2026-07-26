@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
+import 'package:teki_app/src/data/static/lists.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
 import 'package:teki_app/src/presentation/widgets/form/smart_price_value_accessor.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
@@ -146,6 +147,162 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
       );
     }
     return _buildInitialCircle();
+  }
+
+  // ── Tipo de afectación IGV (catálogo 07, paridad web) ────────────────────
+
+  String get _afectacionActual =>
+      widget.productTicketDetail.codigoTipoAfectacionIgv ?? '10';
+
+  /// Default del punto de venta; a falta de config, Gravado - Op. Onerosa.
+  String get _afectacionPorDefecto =>
+      ref.read(sesionProvider).office?.codigoAfectacionPorDefecto ?? '10';
+
+  static const _familiasIgv = {
+    '1001': 'Gravado',
+    '1003': 'Exonerado',
+    '1002': 'Inafecto',
+    '1000': 'Exportación',
+    '1004': 'Gratuita',
+  };
+
+  Map<String, dynamic> get _afectacionInfo => catalogo07.firstWhere(
+        (e) => e['codigo'] == _afectacionActual,
+        orElse: () => catalogo07.first,
+      );
+
+  /// Fila discreta bajo el precio (mismo patrón que "Ver series"): gris
+  /// cuando es la afectación por defecto, azul cuando el item es especial.
+  Widget _buildAfectacionIgvRow() {
+    final esDefault = _afectacionActual == _afectacionPorDefecto;
+    final grupo = _afectacionInfo['codigoRelacionado'] as String;
+    final familia = _familiasIgv[grupo] ?? 'Gravado';
+    final esGratuita = grupo == '1004';
+    final color = esDefault ? Colors.grey.shade500 : ColorSchema.primaryColor;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _showAfectacionSheet,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.percent_rounded, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(
+              esGratuita ? 'IGV: $familia · no suma al total' : 'IGV: $familia',
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: esDefault ? FontWeight.w400 : FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAfectacionSheet() {
+    final actual = _afectacionActual;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.72,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Tipo de IGV (afectación)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Divider(height: 1, color: Colors.grey.shade200),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final grupo in ['1001', '1003', '1002', '1000', '1004']) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _familiasIgv[grupo]!.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.6,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      for (final item in catalogo07
+                          .where((e) => e['codigoRelacionado'] == grupo))
+                        InkWell(
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            ref
+                                .read(productSaleProvider.notifier)
+                                .setAfectacionIgvProductSale(
+                                    widget.index, item['codigo'] as String);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 11),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item['descripcion'] as String,
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: item['codigo'] == actual
+                                          ? FontWeight.w700
+                                          : FontWeight.w400,
+                                      color: item['codigo'] == actual
+                                          ? ColorSchema.primaryColor
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                if (item['codigo'] == actual)
+                                  const Icon(Icons.check_rounded,
+                                      size: 18, color: ColorSchema.primaryColor),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildInitialCircle() {
@@ -363,6 +520,10 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                 ),
                               );
                             }),
+                          // La afectación de comandas viene fijada por el
+                          // producto del restaurante: no se edita aquí.
+                          if (widget.productTicketDetail.comandaDetalle == null)
+                            _buildAfectacionIgvRow(),
                         ],
                       ),
                     ),

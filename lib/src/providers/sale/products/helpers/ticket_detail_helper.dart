@@ -25,7 +25,13 @@ TicketDetail getTicketDetail(
     codigoUnidadMedida: product.unidad?.codigo ?? '',
     precioCompraUnitario: product.precioCompra ?? 0,
     valorUnitario: 0,
-    codigoTipoAfectacionIgv: product.tipoAfectacion ?? '',
+    // Paridad web: prioridad al default del punto de venta (p. ej. exonerado
+    // en Amazonía), luego la afectación del producto y '10' (Gravado -
+    // Operación Onerosa) como último recurso. Un '' rompería el lookup
+    // del catálogo 07 en calculoTotal.
+    codigoTipoAfectacionIgv: sesion.office?.codigoAfectacionPorDefecto ??
+        product.tipoAfectacion ??
+        '10',
     tieneImpuestoBolsas: product.tieneImpuestoBolsas ?? false,
     porcentajeDescuentoGlobal: 0,
     porcentajeOtrosCargos:
