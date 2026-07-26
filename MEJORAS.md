@@ -142,6 +142,25 @@ Pendientes:
 - [ ] `VENTAS_VER_TODO_HISTORIAL`: la web limita cuán atrás puedes consultar; requiere definir la regla de negocio para el filtro de fechas del móvil.
 - [ ] ⚠️ **Backend**: `TicketApi`, `InventoryApi`, `InventoryAdjustmentApi`, `OrderRestaurantApi`, `CommandApi`, `CheckApi` y `QuotationApi` **no tienen ningún @PreAuthorize** — la UI (web y ahora móvil) es la única barrera. Sumar al hardening acordado.
 
+## Auditoría UX de toda la app (2026-07-25)
+
+**P0 RESUELTO — purga de plantilla ronda 2**: eliminados 29 módulos demo (sales, invoice, purchase*, expense*, supplier, biller, add_product, category, brand, unit, add_user, user_role, reports hub + 11 reportes) con datos fake en inglés y toasts de éxito falsos; el push `sale_update` ahora navega al listado real de comprobantes; drawer simplificado al menú real. El lint bajó de 185 a 81.
+
+**Backlog: features de la web que valdría construir en móvil** (decisión de Kevin: solo lo más útil en celular, diseño desde cero con los patrones actuales — nunca revivir plantilla):
+- [ ] Consulta de compras (listado + detalle, sin registro complejo).
+- [ ] Consulta de gastos.
+- [ ] Reportes clave (2-3 máximo; evaluar cuáles pide más la gente — el resto lo cubre Analytics + el asistente IA).
+
+**P1 pendiente (fricción diaria, de la auditoría con 3 agentes):**
+- [ ] Cobrador: refrescar al volver de cobrar (copiar patrón RouteAware de orders_restaurant), feedback al emitir comprobante, numeración de cuenta real (no índice del filtro), pull-to-refresh con lista vacía, filtro "Todos".
+- [ ] Unificar semáforo PENDIENTE/PREPARADO (Mesas vs Pedidos vs items usan 3 paletas distintas; canon: comanda_detail_item_tile).
+- [ ] Card de pedido: hora relativa + total + color de urgencia; mesa ocupada: escalar color por tiempo.
+- [ ] Cotizaciones: refrescar lista al volver de editar/generar venta; acciones visibles (no solo swipe); fecha formateada; estado vencida.
+- [ ] CxC/CxP: BUG filtro `saldo > 1` oculta saldos de 0.01–1.00; "vence hace N días" relativo con color en la lista; verificar gates de permiso (Anular/Extender/Registrar pago) contra la web.
+- [ ] Productos: símbolo de moneda en precios; `double.parse` sin try en inputs (crash latente); contador de clientes muestra paginados, no total.
+
+**P2 pendiente (pulido):** empty states con icono+CTA, fechas relativas generalizadas, typos ("TIPO OPREACIÓN", "Compañia", "Aun no hay"), perfil muestra teléfono/email de la EMPRESA como del usuario, total del detalle de orden no incluye delivery (inconsistente con order_ready_to_pay), confirmación al borrar item en comanda, PDF viewer sin onDocumentLoadFailed, settings sin explicar dropdown deshabilitado, badge "Pendiente" hardcodeado en order_ready_to_pay_screen:341.
+
 ## Auditoría de paridad web↔móvil (2026-07-23) — hallazgos pendientes
 
 De 18 hallazgos, 11 corregidos (mayoreo sin ordenar, preview comandero, conversión cuenta→venta, cancelados en cobrador, cuotas, efectivo/montoPagado, item libre, otrosCargos PLAN ×2, anulación/despacho parcial multi-cantidad, división de cuentas con endpoint expand). Pendientes:

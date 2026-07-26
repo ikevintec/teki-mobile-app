@@ -7,7 +7,6 @@ import 'package:teki_app/src/data/enums/products.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/product_price.dart';
-import 'package:teki_app/src/presentation/screens/products/products_sections/update_product_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/products/products.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
@@ -320,26 +319,5 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
     );
   }
 
-  void buildModalBottomSheet(
-      BuildContext context, Product product, int idPuntoVenta) {
-    showModalBottomSheet(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
-      ),
-      context: context,
-      builder: (_) {
-        return SizedBox(
-          height: MediaQuery.of(context).size.height * 0.9,
-          child:
-              UpdateProductScreen(product: product, idPuntoVenta: idPuntoVenta),
-        );
-      },
-    );
-  }
+
 }

@@ -326,7 +326,9 @@ class NotificationService {
           });
         }
       case 'sale_update':
-        Get.toNamed('/sales', arguments: data);
+        // La pantalla /sales era plantilla (eliminada): una venta actualizada
+        // se consulta en el listado real de comprobantes.
+        Get.toNamed('/ver_comprobantes');
       default:
         Get.toNamed('/dashboard');
     }

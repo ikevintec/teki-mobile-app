@@ -81,15 +81,14 @@ Datasources and repositories are symmetric: each `data/datasource/remote_X.dart`
 ## Feature Map (presentation/screens/)
 
 - **Auth/boot**: splash_screen, onboarding, authentication (login/register/forgot)
-- **Core**: dashboard (tabs: inicio, caja, balance, movimientos), management, analytics, settings, profile, notification, support, viewer (PDF)
-- **Sales**: `sale` (current modular sale flow), `sales`, `pos_sales` (older flows — check MEJORAS.md before touching), invoice, comprobantes, cotizaciones, accounts_receivable (single screen parameterized `tipoCuenta: 'CC' | 'CP'`)
-- **Products**: product/products/add_product, category, brand, unit
+- **Core**: dashboard (tabs: inicio, inventario, caja), analytics, settings, profile, viewer (PDF), ai_chat (asistente Teki AI)
+- **Sales**: `sale` (modular sale flow), comprobantes, cotizaciones, accounts_receivable (single screen parameterized `tipoCuenta: 'CC' | 'CP'`)
+- **Products**: product (create/edit), products (list)
 - **Restaurant**: restaurant (mesas, comanda, dividir, cobrador), orders_restaurant, push_notification_events
-- **Purchases**: purchase, purchase_invoice, supplier, biller
-- **Inventory**: inventory, inventory_adjustment, warehouse
-- **Customers/users**: customer, add_user, user_role
-- **Expenses**: expense, expense_list, expense_category, expense_payment, expense_invoice
-- **Reports**: reports hub + ~11 domain-specific report screens
+- **Inventory**: inventory, inventory_adjustment
+- **Customers**: customer
+
+NOTE (2026-07-25): the app was built on a purchased Flutter template ("inventual"); the second template purge removed 29 demo modules (sales, invoice, purchase*, expense*, supplier, biller, add_product, category, brand, unit, add_user, user_role, reports hub + 11 report screens) with fake English data and fake success toasts. Web features like compras/gastos/reportes have NO mobile screens yet — build them fresh with current app patterns, never resurrect template code.
 
 ## Coding Conventions
 

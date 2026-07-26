@@ -3,13 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/main.dart';
-import 'package:teki_app/src/data/models/route_item_model/customer_route_model.dart';
 import 'package:teki_app/src/data/models/route_item_model/dashboar_route_model.dart';
-import 'package:teki_app/src/data/models/route_item_model/expense_route_model.dart';
-import 'package:teki_app/src/data/models/route_item_model/invoice_route_model.dart';
-import 'package:teki_app/src/data/models/route_item_model/products_route_model.dart';
-import 'package:teki_app/src/data/models/route_item_model/reports_route_model.dart';
-import 'package:teki_app/src/data/models/route_item_model/trading_route_model.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
@@ -44,34 +38,12 @@ class _DashboardDrawerState extends State<DashboardDrawer> {
         'route': AppRoutes.login
       }
     ];
-    switch (widget.routeName) {
-      case "Dashboard":
-        items = [
-          ...DashboardRouteModel,
-          ...defaultRoutes,
-        ];
-        break;
-      case "Products":
-        items = [...ProductsRouteModel, ...defaultRoutes];
-        break;
-      case "Reports":
-        items = [...reportsRouteModel, ...defaultRoutes];
-        break;
-      case "Expense":
-        items = [...expenseRouteModel, ...defaultRoutes];
-        break;
-      case "Customer":
-        items = [...customerRouteModel, ...defaultRoutes];
-        break;
-      case "Trading":
-        items = [...tradingRouteModel, ...defaultRoutes];
-        break;
-      case "Invoice":
-        items = [...invoiceRouteModel, ...defaultRoutes];
-        break;
-      default:
-        items = [...DashboardRouteModel, ...defaultRoutes];
-    }
+    // Purga de plantilla: el único menú real es el del Dashboard; los casos
+    // por módulo (Reports/Trading/Invoice/etc.) eran pantallas demo.
+    items = [
+      ...DashboardRouteModel,
+      ...defaultRoutes,
+    ];
 
     final initialIndex = items.indexWhere((item) => item['route']
         .toString()
