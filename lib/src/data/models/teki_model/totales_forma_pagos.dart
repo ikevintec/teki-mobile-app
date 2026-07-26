@@ -1,5 +1,8 @@
-/// Totales de venta por método de pago para una moneda — espejo de
-/// TotalVentasFormaPago de la web (GET /tickets/operations/totales-forma-pago).
+/// Totales de venta por método de pago para una moneda.
+///
+/// El backend (GET /tickets/operations/totales-forma-pago) responde PLANO:
+/// `[{codigoMoneda, metodoPago, monto}, ...]` — igual que en la web, el
+/// agrupado por moneda se hace en el cliente ([fromFlatJsonList]).
 class TotalVentasFormaPago {
   final String codigoMoneda;
   final List<PaymentMethodTotal> metodosPago;
@@ -9,13 +12,19 @@ class TotalVentasFormaPago {
     this.metodosPago = const [],
   });
 
-  factory TotalVentasFormaPago.fromJson(Map<String, dynamic> json) {
-    return TotalVentasFormaPago(
-      codigoMoneda: json['codigoMoneda'] ?? '',
-      metodosPago: (json['metodosPago'] as List? ?? [])
-          .map((e) => PaymentMethodTotal.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
+  /// Agrupa la lista plana del backend por moneda (espejo del reduce de
+  /// loadTotalesFormaPago en ver-comprobantes web).
+  static List<TotalVentasFormaPago> fromFlatJsonList(List<dynamic> raw) {
+    final Map<String, List<PaymentMethodTotal>> porMoneda = {};
+    for (final e in raw) {
+      final m = e as Map<String, dynamic>;
+      final moneda = (m['codigoMoneda'] ?? '') as String;
+      porMoneda.putIfAbsent(moneda, () => []).add(PaymentMethodTotal.fromJson(m));
+    }
+    return porMoneda.entries
+        .map((e) =>
+            TotalVentasFormaPago(codigoMoneda: e.key, metodosPago: e.value))
+        .toList();
   }
 }
 

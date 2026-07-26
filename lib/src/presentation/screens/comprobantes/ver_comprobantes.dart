@@ -424,6 +424,16 @@ class _DesgloseTotalesSheetState extends State<_DesgloseTotalesSheet> {
                     ),
                   );
                 }
+                if (snapshot.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      'No se pudo cargar el desglose por método de pago',
+                      style: GoogleFonts.roboto(
+                          fontSize: 12, color: Colors.grey.shade500),
+                    ),
+                  );
+                }
                 final metodos = (snapshot.data ?? [])
                         .where((e) => e.codigoMoneda == _moneda)
                         .expand((e) => e.metodosPago)

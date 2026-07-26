@@ -269,9 +269,9 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         '/tickets/operations/totales-forma-pago',
         queryParameters: params,
       );
-      return (response.data as List)
-          .map((e) => TotalVentasFormaPago.fromJson(e as Map<String, dynamic>))
-          .toList();
+      // Respuesta plana [{codigoMoneda, metodoPago, monto}]: se agrupa por
+      // moneda en el cliente, igual que la web.
+      return TotalVentasFormaPago.fromFlatJsonList(response.data as List);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       final resData = e.response?.data;
