@@ -224,7 +224,8 @@ class _AccountsReceivableMainScreenState
   }
 
   Widget _buildTotalesSection(AccountsReceivableState state) {
-    final totales = state.totales.where((t) => t.saldo > 1).toList();
+    // BUG previo: `saldo > 1` ocultaba deudas entre 0.01 y 1.00.
+    final totales = state.totales.where((t) => t.saldo > 0.009).toList();
 
     if (totales.isEmpty) return const SizedBox.shrink();
 

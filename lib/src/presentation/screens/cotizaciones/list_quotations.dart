@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -74,6 +75,15 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
         ],
       ),
     );
+  }
+
+  /// El backend manda la fecha como string con hora; se muestra solo la
+  /// fecha en formato local (antes salía el string crudo completo).
+  String _fechaEmision(dynamic fecha) {
+    if (fecha == null) return '--';
+    final parsed = DateTime.tryParse(fecha.toString());
+    if (parsed == null) return fecha.toString();
+    return DateFormat('dd/MM/yyyy').format(parsed);
   }
 
   Color _estadoColor(String? estado) {
@@ -167,7 +177,9 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                         onTap: () {
                           Get.to(
                             () => ProductsSaleScreen(quotationId: quotation.id),
-                          );
+                          )?.then((_) => ref
+                              .read(quotationListProvider.notifier)
+                              .refresh());
                         },
                       ),
                       DismissibleActionData(
@@ -183,11 +195,15 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                         icon: Icons.point_of_sale,
                         backgroundColor: Colors.green.shade600,
                         onTap: () {
+                          // Al volver, la cotización quedó CONCRETADA:
+                          // se refresca para que no siga viéndose PENDIENTE.
                           Get.to(
                             () => ProductsSaleScreen(
                               quotationIdForSale: quotation.id,
                             ),
-                          );
+                          )?.then((_) => ref
+                              .read(quotationListProvider.notifier)
+                              .refresh());
                         },
                       ),
                     ],
@@ -226,7 +242,7 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                         children: [
                           const SizedBox(height: 4),
                           Text(
-                            'Fecha de emisión: ${quotation.fechaEmision ?? "--"}',
+                            'Fecha de emisión: ${_fechaEmision(quotation.fechaEmision)}',
                             style: GoogleFonts.roboto(fontSize: 11),
                           ),
                           Text(
@@ -260,6 +276,23 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                                 : 'Al crédito',
                             style: GoogleFonts.roboto(fontSize: 11),
                           ),
+                          // Pista de que la card tiene acciones por swipe
+                          // (antes eran indescubribles).
+                          if (!isAnulada && !isConcretada)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.swipe_left_outlined,
+                                    size: 11, color: Colors.grey.shade400),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Desliza',
+                                  style: GoogleFonts.roboto(
+                                      fontSize: 9,
+                                      color: Colors.grey.shade400),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                       onTap: () {

@@ -49,6 +49,38 @@ class _AccountsReceivableListSectionState
         .loadFirstPage();
   }
 
+  bool _estaVencida(DateTime? vence) {
+    if (vence == null) return false;
+    final hoy = DateTime.now();
+    return DateTime(vence.year, vence.month, vence.day)
+        .isBefore(DateTime(hoy.year, hoy.month, hoy.day));
+  }
+
+  /// "Venció hace N días" / "Vence hoy/mañana/en N días" comunica más que
+  /// la fecha cruda para una deuda; la fecha exacta queda como sufijo.
+  String _venceLabel(DateTime? vence) {
+    if (vence == null) return 'Vence: --';
+    final hoy = DateTime.now();
+    final dias = DateTime(vence.year, vence.month, vence.day)
+        .difference(DateTime(hoy.year, hoy.month, hoy.day))
+        .inDays;
+    final fecha = DateFormat('dd/MM/yy').format(vence);
+    if (dias < 0) return 'Venció hace ${-dias} día(s) · $fecha';
+    if (dias == 0) return 'Vence hoy · $fecha';
+    if (dias == 1) return 'Vence mañana · $fecha';
+    return 'Vence en $dias días · $fecha';
+  }
+
+  Color _venceColor(DateTime? vence) {
+    if (vence == null) return Colors.grey.shade600;
+    if (_estaVencida(vence)) return const Color(0xFFC62828);
+    final dias = DateTime(vence.year, vence.month, vence.day)
+        .difference(DateTime.now())
+        .inDays;
+    if (dias <= 3) return const Color(0xFFE65100);
+    return Colors.grey.shade600;
+  }
+
   Color _estadoColor(String? estado) {
     switch (estado) {
       case 'VENCIDO':
@@ -165,8 +197,14 @@ class _AccountsReceivableListSectionState
                         style: GoogleFonts.roboto(fontSize: 12),
                       ),
                       Text(
-                        'Vence: ${item.fechaVencimiento != null ? DateFormat('dd-MM-yyyy').format(item.fechaVencimiento!) : '--'}',
-                        style: GoogleFonts.roboto(fontSize: 11),
+                        _venceLabel(item.fechaVencimiento),
+                        style: GoogleFonts.roboto(
+                          fontSize: 11,
+                          fontWeight: _estaVencida(item.fechaVencimiento)
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: _venceColor(item.fechaVencimiento),
+                        ),
                       ),
                       Text(
                         item.estadoCredito ?? '--',

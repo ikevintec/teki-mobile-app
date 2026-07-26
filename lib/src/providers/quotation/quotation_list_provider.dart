@@ -19,6 +19,16 @@ class QuotationListNotifier extends StateNotifier<QuotationListState> {
   QuotationListNotifier({required this.repository, required this.ref})
       : super(QuotationListState.initial());
 
+  /// Recarga la lista con los filtros vigentes (p. ej. al volver de editar
+  /// una cotización o de generar la venta: el estado cambió en el backend).
+  Future<void> refresh() => loadFirstPage(
+        desde: state.filtroDesde,
+        hasta: state.filtroHasta,
+        serie: state.filtroSerie,
+        numero: state.filtroNumero,
+        estadoCotizacion: state.filtroEstadoCotizacion,
+      );
+
   Future<void> loadFirstPage({
     required String desde,
     required String hasta,
