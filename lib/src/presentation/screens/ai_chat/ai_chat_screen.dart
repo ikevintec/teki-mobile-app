@@ -117,19 +117,51 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(22),
-            child: Container(
-              color: Colors.white.withValues(alpha: 0.94),
-              child: Column(
-                children: [
-                  _buildHeader(companyName),
-                  Expanded(
-                    child: _puedeUsarIa
-                        ? _buildMessages(state)
-                        : _buildBloqueado(),
+            child: Stack(
+              children: [
+                // Tintes del marco traslucidos dentro del panel, girando con
+                // él (paridad web: el glow cónico se ve a través del glass).
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _frameSpin,
+                    builder: (context, _) => DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: SweepGradient(
+                          colors: const [...kAiColors, Color(0xFF0A84FF)],
+                          transform: GradientRotation(
+                              _frameSpin.value * 2 * math.pi),
+                        ),
+                      ),
+                    ),
                   ),
-                  _buildInputBar(state),
-                ],
-              ),
+                ),
+                // Velo glass que suaviza los tintes a pastel.
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.90),
+                          Colors.white.withValues(alpha: 0.86),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Column(
+                  children: [
+                    _buildHeader(companyName),
+                    Expanded(
+                      child: _puedeUsarIa
+                          ? _buildMessages(state)
+                          : _buildBloqueado(),
+                    ),
+                    _buildInputBar(state),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -404,7 +436,9 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen>
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         constraints: const BoxConstraints(maxWidth: 330),
         decoration: BoxDecoration(
-          color: m.error ? const Color(0xFFFDECEC) : Colors.white,
+          color: m.error
+              ? const Color(0xFFFDECEC)
+              : Colors.white.withValues(alpha: 0.78),
           borderRadius: BorderRadius.circular(16).copyWith(
             bottomLeft: const Radius.circular(4),
           ),
@@ -646,8 +680,9 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen>
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        color: Colors.white.withValues(alpha: 0.55),
+        border: Border(
+            top: BorderSide(color: Colors.white.withValues(alpha: 0.7))),
       ),
       child: Row(
         children: [
