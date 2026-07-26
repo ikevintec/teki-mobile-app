@@ -18,12 +18,16 @@ class InicioTab extends ConsumerStatefulWidget {
   final VoidCallback? onConnectionError;
   final VoidCallback? onConnectionResolved;
 
+  /// Navega al tab de Caja (lo resuelve el dashboard, dueño de los tabs).
+  final VoidCallback? onIrACaja;
+
   const InicioTab({
     super.key,
     required this.idPuntoVenta,
     required this.refreshNotifier,
     this.onConnectionError,
     this.onConnectionResolved,
+    this.onIrACaja,
   });
 
   @override
@@ -262,14 +266,14 @@ class _InicioTabState extends ConsumerState<InicioTab> {
           'action': () => Get.toNamed(AppRoutes.products),
         },
         {
-          'title': 'Clientes',
-          'icon': 'assets/icons/icon_svg/customer.svg',
-          'action': () => Get.toNamed(AppRoutes.customer),
+          'title': 'Crear\nCotización',
+          'icon': 'assets/icons/icon_svg/generate_invoice.svg',
+          'action': () => _openNewQuotation(),
         },
         {
-          'title': 'Inventario',
-          'icon': 'assets/icons/icon_image/inventory_list.png',
-          'action': () => Get.toNamed(AppRoutes.inventory),
+          'title': 'Cotizaciones',
+          'icon': 'assets/icons/icon_svg/invoice_icon.svg',
+          'action': () => Get.toNamed(AppRoutes.quotationsVer),
         },
         {
           'title': 'Más\nOpciones',
@@ -278,16 +282,18 @@ class _InicioTabState extends ConsumerState<InicioTab> {
         },
       ];
 
-  List<Map<String, dynamic>> get _documentosServices => [
+  /// Accesos de gestión ocasional: viven en el sheet de "Más Opciones"
+  /// (Inventario además ya está en la barra inferior).
+  List<Map<String, dynamic>> get _gestionServices => [
         {
-          'title': 'Crear Cotización',
-          'icon': 'assets/icons/icon_svg/generate_invoice.svg',
-          'action': () => _openNewQuotation(),
+          'title': 'Clientes',
+          'icon': 'assets/icons/icon_svg/customer.svg',
+          'action': () => Get.toNamed(AppRoutes.customer),
         },
         {
-          'title': 'Ver Cotizaciones',
-          'icon': 'assets/icons/icon_svg/invoice_icon.svg',
-          'action': () => Get.toNamed(AppRoutes.quotationsVer),
+          'title': 'Inventario',
+          'icon': 'assets/icons/icon_image/inventory_list.png',
+          'action': () => Get.toNamed(AppRoutes.inventory),
         },
       ];
 
@@ -335,8 +341,8 @@ class _InicioTabState extends ConsumerState<InicioTab> {
               ),
               const SizedBox(height: 10),
               Divider(height: 1, color: Colors.grey.shade200),
-              _buildSheetSectionLabel('Cotizaciones'),
-              ..._documentosServices.map(_buildSheetOptionRow),
+              _buildSheetSectionLabel('Gestión'),
+              ..._gestionServices.map(_buildSheetOptionRow),
               const SizedBox(height: 4),
             ],
           ),
@@ -381,15 +387,21 @@ class _InicioTabState extends ConsumerState<InicioTab> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
-                child: SvgPicture.asset(
-                  icon,
-                  colorFilter: const ColorFilter.mode(
-                    ColorSchema.primaryColor,
-                    BlendMode.srcIn,
-                  ),
-                  width: 18,
-                  height: 18,
-                ),
+                child: icon.endsWith('.svg')
+                    ? SvgPicture.asset(
+                        icon,
+                        colorFilter: const ColorFilter.mode(
+                          ColorSchema.primaryColor,
+                          BlendMode.srcIn,
+                        ),
+                        width: 18,
+                        height: 18,
+                      )
+                    : ImageIcon(
+                        AssetImage(icon),
+                        color: ColorSchema.primaryColor,
+                        size: 18,
+                      ),
               ),
             ),
             const SizedBox(width: 14),
@@ -456,6 +468,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
             idPuntoVenta: widget.idPuntoVenta,
             onConnectionError: _onConnectionError,
             onLoadSuccess: _onLoadSuccess,
+            onIrACaja: widget.onIrACaja,
           ),
         ),
         const SizedBox(height: 24),
@@ -470,10 +483,13 @@ class _InicioTabState extends ConsumerState<InicioTab> {
                 const SizedBox(height: 12),
                 _buildServicesGrid(_ventaServices),
                 const SizedBox(height: 24),
-                _buildSectionLabel('Restaurante'),
-                const SizedBox(height: 12),
-                _buildServicesGrid(_restauranteServices),
-                const SizedBox(height: 24),
+                // Solo negocios de rubro restaurante ven Mesas/Cobrador/Pedidos.
+                if (ref.watch(sesionProvider).config?.esRestaurante == true) ...[
+                  _buildSectionLabel('Restaurante'),
+                  const SizedBox(height: 12),
+                  _buildServicesGrid(_restauranteServices),
+                  const SizedBox(height: 24),
+                ],
                 _buildSectionLabel('Operaciones'),
                 const SizedBox(height: 12),
                 _buildServicesGrid(_cuentasServices),
@@ -624,7 +640,8 @@ class _InicioTabState extends ConsumerState<InicioTab> {
         crossAxisCount: 3,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
-        childAspectRatio: 1.15,
+        // Cards más compactos: menos scroll para llegar a las secciones de abajo.
+        childAspectRatio: 1.55,
       ),
       itemCount: services.length,
       itemBuilder: (context, index) {

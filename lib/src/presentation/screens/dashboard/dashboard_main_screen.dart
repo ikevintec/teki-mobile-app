@@ -176,6 +176,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
                   refreshNotifier: _refreshNotifiers[0],
                   onConnectionError: () => setState(() => _dashboardConnectionError = true),
                   onConnectionResolved: () => setState(() => _dashboardConnectionError = false),
+                  onIrACaja: () => _onTabSelected(2),
                 ),
                 InventarioTab(
                   refreshNotifier: _refreshNotifiers[1],

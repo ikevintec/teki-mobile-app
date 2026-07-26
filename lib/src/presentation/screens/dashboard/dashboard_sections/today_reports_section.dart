@@ -1,33 +1,52 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:teki_app/src/data/models/response/cash_register_response.dart';
+import 'package:teki_app/src/data/models/response/daily_sales_summary.dart';
+import 'package:teki_app/src/data/repositories/cash_register_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/dashboard_repository_impl.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 
-class TodayReportsSection extends StatefulWidget {
+class TodayReportsSection extends ConsumerStatefulWidget {
   final int idPuntoVenta;
   final VoidCallback? onConnectionError;
   final VoidCallback? onLoadSuccess;
-  const TodayReportsSection({super.key, required this.idPuntoVenta, this.onConnectionError, this.onLoadSuccess});
+
+  /// Navega al tab de Caja (usado por el pill de estado y el banner).
+  final VoidCallback? onIrACaja;
+
+  const TodayReportsSection({
+    super.key,
+    required this.idPuntoVenta,
+    this.onConnectionError,
+    this.onLoadSuccess,
+    this.onIrACaja,
+  });
 
   @override
-  State<TodayReportsSection> createState() => _TodayReportsSectionState();
+  ConsumerState<TodayReportsSection> createState() => _TodayReportsSectionState();
 }
 
-class _TodayReportsSectionState extends State<TodayReportsSection> {
+class _TodayReportsSectionState extends ConsumerState<TodayReportsSection> {
   final DashboardRepositoryImpl _repo = DashboardRepositoryImpl();
+  final CashRegisterRepositoryImpl _cajaRepo = CashRegisterRepositoryImpl();
 
-  int? totalClientes;
-  int? totalVentas;
-  List<Map<String, dynamic>>? montosPorMoneda;
+  DailySalesSummary? ventasHoy;
   String? _selectedMoneda;
-
-  bool loadingClientes = true;
-  bool loadingVentas = true;
   bool loadingMontos = true;
+
+  /// Caja del día de la estación de la sesión; null = sin aperturar o error.
+  CashRegisterResponse? cajaHoy;
+  bool cajaConsultada = false;
+  bool loadingCaja = true;
+
+  /// Caja APERTURADA con fecha distinta a hoy (banner de pendiente).
+  CashRegisterResponse? cajaOtraFecha;
 
   @override
   void initState() {
@@ -46,40 +65,28 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
 
     int networkFailures = 0;
 
-    final f1 = _repo.getCustomerCount().then((r) {
-      if (!mounted) return;
-      setState(() { totalClientes = r.total; loadingClientes = false; });
-    }).catchError((e) {
-      if (_isNetworkError(e)) networkFailures++;
-      if (!mounted) return;
-      setState(() => loadingClientes = false);
-    });
-
-    final f2 = _repo.getSalesCount(widget.idPuntoVenta).then((r) {
-      if (!mounted) return;
-      setState(() { totalVentas = r.total; loadingVentas = false; });
-    }).catchError((e) {
-      if (_isNetworkError(e)) networkFailures++;
-      if (!mounted) return;
-      setState(() => loadingVentas = false);
-    });
-
-    final f3 = _repo.getAmountsByCurrency({
+    // Montos + nº de ventas del día en una sola consulta.
+    final f1 = _repo.getTodaySalesSummary({
       'filtroEstadoAnulacion': 'false',
       'filtroDesde': desde,
       'filtroHasta': hasta,
       'idPuntoVenta': widget.idPuntoVenta.toString(),
     }).then((r) {
       if (!mounted) return;
-      setState(() { montosPorMoneda = r; loadingMontos = false; });
+      setState(() { ventasHoy = r; loadingMontos = false; });
     }).catchError((e) {
-      printError(info: '❌ Error montos: $e');
       if (_isNetworkError(e)) networkFailures++;
       if (!mounted) return;
       setState(() => loadingMontos = false);
     });
 
-    await Future.wait([f1, f2, f3]);
+    final f2 = _loadCaja().catchError((e) {
+      if (_isNetworkError(e)) networkFailures++;
+      if (!mounted) return;
+      setState(() => loadingCaja = false);
+    });
+
+    await Future.wait([f1, f2]);
 
     if (!mounted) return;
     if (networkFailures > 1) {
@@ -89,12 +96,47 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
     }
   }
 
+  Future<void> _loadCaja() async {
+    final sesion = ref.read(sesionProvider);
+    final office = sesion.office;
+    final station = sesion.saleStation;
+    // La caja pertenece a la estación de la sesión.
+    if (office?.id != widget.idPuntoVenta || station?.id == null) {
+      if (mounted) setState(() => loadingCaja = false);
+      return;
+    }
+    final hoy = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    final results = await Future.wait([
+      _cajaRepo.getCashRegister(
+        idPuntoVenta: office!.id!,
+        idEstacionVenta: station!.id!,
+        fecha: hoy,
+      ),
+      _cajaRepo.getOpenCashRegisters(
+        idPuntoVenta: office.id!,
+        idEstacionVenta: station.id!,
+      ),
+    ]);
+    if (!mounted) return;
+    final cajas = results[0];
+    final abiertas = results[1];
+    setState(() {
+      cajaConsultada = true;
+      cajaHoy = cajas.where((c) => c.isAperturada).isNotEmpty
+          ? cajas.firstWhere((c) => c.isAperturada)
+          : (cajas.isNotEmpty ? cajas.first : null);
+      cajaOtraFecha = abiertas.where((c) {
+        final f = c.fecha;
+        return f != null &&
+            DateFormat('dd-MM-yyyy').format(f) != hoy;
+      }).firstOrNull;
+      loadingCaja = false;
+    });
+  }
+
   List<String> get _monedas {
-    if (montosPorMoneda == null) return [];
-    final list = montosPorMoneda!
-        .map((m) => m['codigoMoneda'] as String? ?? '')
-        .where((c) => c.isNotEmpty)
-        .toList()
+    if (ventasHoy == null) return [];
+    final list = ventasHoy!.montos.map((m) => m.moneda).toList()
       ..sort((a, b) => a == 'PEN' ? -1 : 1);
     return list;
   }
@@ -115,12 +157,9 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
   };
 
   String _monto(String codigo) {
-    if (montosPorMoneda == null) return '0.00';
-    final entry = montosPorMoneda!.firstWhere(
-      (m) => m['codigoMoneda'] == codigo,
-      orElse: () => {},
-    );
-    return (entry['monto'] ?? 0).toStringAsFixed(2);
+    if (ventasHoy == null) return '0.00';
+    final entry = ventasHoy!.montos.where((m) => m.moneda == codigo);
+    return (entry.isEmpty ? 0.0 : entry.first.monto).toStringAsFixed(2);
   }
 
   @override
@@ -130,7 +169,10 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Stack(
         clipBehavior: Clip.none,
         children: [
           // ── Tarjeta principal ──────────────────────────────────────────
@@ -264,13 +306,20 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
                 ),
 
                 const SizedBox(height: 2),
-                Text(
-                  todayLabel,
-                  style: GoogleFonts.roboto(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.75),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        todayLabel,
+                        style: GoogleFonts.roboto(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ),
+                    if (!loadingCaja && cajaConsultada) _buildCajaPill(),
+                  ],
                 ),
 
                 const SizedBox(height: 18),
@@ -283,21 +332,23 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
 
                 const SizedBox(height: 16),
 
-                // ── Métricas secundarias ────────────────────────────────
+                // ── Métricas secundarias: SOLO datos de hoy ─────────────
                 Row(
                   children: [
                     _SecondaryMetric(
                       icon: 'assets/icons/icon_svg/purchase_service_icon.svg',
-                      label: 'Ventas Cerradas',
-                      value: loadingVentas ? '---' : '${totalVentas ?? 0}',
-                      loading: loadingVentas,
+                      label: 'Ventas de hoy',
+                      value: loadingMontos ? '---' : '${ventasHoy?.totalVentas ?? 0}',
+                      loading: loadingMontos,
                     ),
                     _VerticalDivider(),
                     _SecondaryMetric(
                       icon: 'assets/icons/icon_svg/expenses_icon.svg',
-                      label: 'Clientes',
-                      value: loadingClientes ? '---' : '${totalClientes ?? 0}',
-                      loading: loadingClientes,
+                      label: 'Ticket promedio',
+                      value: loadingMontos
+                          ? '---'
+                          : '${_simbolo(_monedaActiva)} ${(ventasHoy?.ticketPromedio(_monedaActiva) ?? 0).toStringAsFixed(2)}',
+                      loading: loadingMontos,
                     ),
                   ],
                 ),
@@ -354,6 +405,92 @@ class _TodayReportsSectionState extends State<TodayReportsSection> {
             ),
           ),
         ],
+      ),
+          if (cajaOtraFecha != null) _buildCajaPendienteBanner(),
+        ],
+      ),
+    );
+  }
+
+  /// Pill de estado de caja del día (junto a la fecha).
+  Widget _buildCajaPill() {
+    final abierta = cajaHoy?.isAperturada == true;
+    final cerrada = cajaHoy != null && !abierta;
+    final color = abierta
+        ? const Color(0xFF9FE1CB)
+        : cerrada
+            ? Colors.white70
+            : const Color(0xFFFAC775);
+    final label = abierta
+        ? 'Caja abierta'
+        : cerrada
+            ? 'Caja cerrada'
+            : 'Caja sin aperturar';
+    return GestureDetector(
+      onTap: widget.onIrACaja,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.circle, size: 7, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.roboto(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Banner: hay una caja de una fecha anterior que sigue abierta.
+  Widget _buildCajaPendienteBanner() {
+    final fecha = DateFormat('dd/MM').format(cajaOtraFecha!.fecha!);
+    return GestureDetector(
+      onTap: widget.onIrACaja,
+      child: Container(
+        margin: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8E1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFFAC775)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded,
+                size: 15, color: Color(0xFF9B6F00)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'La caja del $fecha sigue abierta',
+                style: GoogleFonts.roboto(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF9B6F00),
+                ),
+              ),
+            ),
+            Text(
+              'Ir ›',
+              style: GoogleFonts.roboto(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF9B6F00),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
