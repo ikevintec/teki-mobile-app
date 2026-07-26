@@ -118,7 +118,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Clientes (${ref.watch(customersProvider).customers?.length ?? 0})',
+                    'Clientes',
                     style: GoogleFonts.roboto(
                       color: const Color(0xFF2D3748),
                       fontSize: 18,

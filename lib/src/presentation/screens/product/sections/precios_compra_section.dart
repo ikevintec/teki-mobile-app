@@ -75,7 +75,7 @@ class PreciosCompraSection extends HookConsumerWidget {
                         showDoneButton: true,
                         onChanged: (value) => value.isNotEmpty
                             ? notifier.setPrecioCompraTemporal(
-                                double.parse(value))
+                                (double.tryParse(value) ?? 0))
                             : null,
                       ),
                     ),
@@ -91,7 +91,7 @@ class PreciosCompraSection extends HookConsumerWidget {
                         onChanged: (value) {
                           if (value.isNotEmpty) {
                             notifier.setPrecioCompraTemporal(
-                                double.parse(value));
+                                (double.tryParse(value) ?? 0));
                           }
                         },
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -230,7 +231,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    'Venta: ${precioVenta ?? "—"}',
+                                    'Venta: ${precioVenta != null ? '${formatExchange(moneda: product.moneda ?? 'PEN')} $precioVenta' : "—"}',
                                     style: GoogleFonts.roboto(
                                       fontSize: 11,
                                       color: const Color(0xFF555555),
@@ -240,7 +241,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                 ),
                                 Expanded(
                                   child: Text(
-                                    'Compra: ${product.precioCompra ?? "—"}',
+                                    'Compra: ${product.precioCompra != null ? '${formatExchange(moneda: product.moneda ?? 'PEN')} ${product.precioCompra}' : "—"}',
                                     style: GoogleFonts.roboto(
                                       fontSize: 11,
                                       color: const Color(0xFF555555),

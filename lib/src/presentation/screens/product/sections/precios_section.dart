@@ -214,7 +214,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                         ref
                             .read(productFormProvider.notifier)
                             .modifyPrecioVenta(index, (item) {
-                          return item.copyWith(precio: double.parse(value));
+                          return item.copyWith(precio: (double.tryParse(value) ?? 0));
                         }, false);
                       },
                       validator: (value) {
@@ -224,7 +224,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                         if (double.tryParse(value) == null) {
                           return "El precio no es válido";
                         }
-                        if (double.parse(value) <= 0) {
+                        if ((double.tryParse(value) ?? 0) <= 0) {
                           return "Precio no debe ser 0";
                         }
                         return null;
@@ -264,7 +264,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                               .read(productFormProvider.notifier)
                               .modifyPrecioVenta(index, (item) {
                             return item.copyWith(
-                                unidadesMayoreo: double.parse(value));
+                                unidadesMayoreo: (double.tryParse(value) ?? 0));
                           }, false);
                         },
                         validator: (value) {
@@ -276,7 +276,7 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                           if (double.tryParse(value) == null) {
                             return "El precio no es válido";
                           }
-                          if (double.parse(value) <= 0) {
+                          if ((double.tryParse(value) ?? 0) <= 0) {
                             return "Unidad minima es 1";
                           }
                           return null;

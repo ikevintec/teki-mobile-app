@@ -185,7 +185,7 @@ class ProductGeneralSection extends HookConsumerWidget {
                     showDoneButton: true,
                     onChanged: (value) {
                       if (value.isNotEmpty) {
-                        notifier.setFactor(double.parse(value));
+                        notifier.setFactor((double.tryParse(value) ?? 0));
                       }
                     },
                   ),
