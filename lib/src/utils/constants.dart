@@ -21,4 +21,5 @@ class Environment {
   static String wsUrl = dotenv.env['WS_URL'] ?? 'https://sock.teki.pe';
   static String wsPath = dotenv.env['WS_PATH'] ?? '/tekiwss';
   static String printUrl = dotenv.env['PRINT_URL'] ?? '';
+  static String iaUrl = dotenv.env['IA_URL'] ?? 'https://ai.teki.pe/ai';
 }

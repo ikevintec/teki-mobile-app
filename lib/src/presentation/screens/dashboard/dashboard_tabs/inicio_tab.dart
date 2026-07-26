@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/utils/notifications.dart';
+import 'package:teki_app/src/presentation/screens/ai_chat/ai_chat_screen.dart';
+import 'package:teki_app/src/presentation/screens/ai_chat/widgets/ai_orb_button.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/today_reports_section.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
@@ -521,7 +523,22 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       );
     }
 
-    return dashboardContent;
+    return Stack(
+      children: [
+        dashboardContent,
+        // Orbe del asistente Teki AI (solo en el inicio). El gate de permiso
+        // vive dentro de la pantalla, igual que el panel web.
+        Positioned(
+          right: 16,
+          bottom: 100,
+          child: AiOrbButton(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AiChatScreen()),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildNoConnectionScreen() {
