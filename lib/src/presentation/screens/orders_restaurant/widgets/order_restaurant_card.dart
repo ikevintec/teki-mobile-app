@@ -207,6 +207,16 @@ class OrderRestaurantCard extends ConsumerWidget {
               children: [
                 _buildOrderNumber(),
                 const Spacer(),
+                // Pago como eje independiente del estado (paridad web:
+                // ícono money verde pagado / ámbar pendiente).
+                Icon(
+                  Icons.payments_outlined,
+                  size: 15,
+                  color: order.pagado == true
+                      ? const Color(0xFF2E7D32)
+                      : const Color(0xFFC98A00),
+                ),
+                const SizedBox(width: 6),
                 _buildEstadoBadge(),
                 // Pista de que la card abre acciones al tocar.
                 Icon(Icons.chevron_right_rounded,
@@ -317,7 +327,10 @@ class OrderRestaurantCard extends ConsumerWidget {
     if (m < 1) return 'recién';
     if (m < 60) return 'hace $m min';
     final h = m ~/ 60;
-    return 'hace ${h}h ${(m % 60).toString().padLeft(2, '0')}m';
+    if (h < 24) return 'hace ${h}h ${(m % 60).toString().padLeft(2, '0')}m';
+    // Pedidos viejos: en días ('hace 2076h' no le dice nada a nadie).
+    final d = h ~/ 24;
+    return d == 1 ? 'hace 1 día' : 'hace $d días';
   }
 
   Color _antiguedadColor() {

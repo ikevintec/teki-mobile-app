@@ -11,12 +11,17 @@ class CommandaItemRow extends StatefulWidget {
   final void Function(String? motivo, double? cantidad)? onAnular;
   final bool showStatus;
 
+  /// La orden completa ya fue pagada: los items se muestran como pagados
+  /// aunque su cuenta individual no traiga el flag (pago directo sin dividir).
+  final bool orderPagado;
+
   const CommandaItemRow({
     super.key,
     required this.item,
     this.onServir,
     this.onAnular,
     this.showStatus = true,
+    this.orderPagado = false,
   });
 
   @override
@@ -106,7 +111,7 @@ class CommandaItemRowState extends State<CommandaItemRow>
     final item = widget.item;
     final isCancelled = ComandaDetailStatus.isCancelledItem(item);
     final status = item.estadoComandaDetalle?.toUpperCase() ?? ComandaDetailStatus.pendiente;
-    final isPagado = item.cuenta?.pagado == true;
+    final isPagado = widget.orderPagado || item.cuenta?.pagado == true;
     final hasActions =
         !isCancelled && !isPagado && (widget.onServir != null || widget.onAnular != null);
     final grupoOpciones =

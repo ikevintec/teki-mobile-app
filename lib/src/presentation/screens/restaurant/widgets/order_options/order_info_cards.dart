@@ -255,10 +255,22 @@ class DireccionInfoCard extends StatelessWidget {
     this.montoDelivery,
   });
 
+  /// El backend concatena campos que pueden venir null y entrega strings
+  /// como "null null": se tratan como vacío.
+  static String? _sanitize(String? value) {
+    if (value == null) return null;
+    final limpio = value
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty && t.toLowerCase() != 'null')
+        .join(' ')
+        .trim();
+    return limpio.isEmpty ? null : limpio;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dir = direccionCompleta?.isNotEmpty == true ? direccionCompleta! : null;
-    final ref = referencia?.isNotEmpty == true ? referencia! : null;
+    final dir = _sanitize(direccionCompleta);
+    final ref = _sanitize(referencia);
     final monto = (montoDelivery != null && montoDelivery! > 0) ? montoDelivery : null;
     if (dir == null && ref == null && monto == null) return const SizedBox.shrink();
     return LabeledInfoCard(

@@ -84,7 +84,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
     final month = dt.month.toString().padLeft(2, '0');
     final hour = dt.hour.toString().padLeft(2, '0');
     final min = dt.minute.toString().padLeft(2, '0');
-    return '$day/$month ${dt.year} $hour:$min';
+    return '$day/$month/${dt.year} $hour:$min';
   }
 
   /// Agrupa los items de las comandas por cuenta (cuenta.id).
@@ -126,11 +126,15 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
   }
 
   Widget _buildOrdenView(OrderRestaurant order, bool hasItemPreparado, bool isPendiente) {
+    // Paleta canónica web: items listos = verde, PENDIENTE = ámbar,
+    // PRECUENTA = morado, PREPARADO (orden) = azul.
     final estadoColor = hasItemPreparado
-        ? const Color(0xFFE65100)
+        ? const Color(0xFF2E7D32)
         : isPendiente
-            ? const Color(0xFF1565C0)
-            : const Color(0xFF2E7D32);
+            ? const Color(0xFFC98A00)
+            : order.estado == 'PRECUENTA'
+                ? const Color(0xFF694382)
+                : const Color(0xFF1E88E5);
     final estadoLabel = hasItemPreparado ? 'PREPARADO' : (order.estado ?? '-');
     final isDelivery = order.tipo == 'DELIVERY';
     final isPedidoOnline = order.tipo == 'PEDIDO_ONLINE';
@@ -143,21 +147,57 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
             // Información General
           LabeledInfoCard(
             title: 'Información General',
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: estadoColor,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                estadoLabel,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  letterSpacing: 0.3,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // El pago es un eje independiente del estado (paridad web:
+                // badge de estado + ícono de pago por separado).
+                if (order.pagado == true) ...[
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7D32),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.payments_outlined,
+                            size: 11, color: Colors.white),
+                        SizedBox(width: 3),
+                        Text(
+                          'PAGADO',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: estadoColor,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    estadoLabel,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
             children: [
               OrderInfoRow(
@@ -219,7 +259,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
     );
   }
 
-  Widget _buildComandasView(List<Command> comandas) {
+  Widget _buildComandasView(List<Command> comandas, {bool orderPagado = false}) {
     if (comandas.isEmpty) {
       return const Center(
         child: Padding(
@@ -292,6 +332,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                 ),
                 ...items.where((i) => !ComandaDetailStatus.isCancelledItem(i)).map((item) => CommandaItemRow(
                       item: item,
+                      orderPagado: orderPagado,
                       onServir: (comanda.id != null && item.id != null)
                           ? (cantidad) => ref
                                 .read(restaurantProvider.notifier)
@@ -361,7 +402,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
               ? s
               : s + ((i.precioVenta ?? 0.0) * (i.cantidad ?? 1.0)),
         );
-        final isPagado = cuenta.pagado == true;
+        final isPagado = cuenta.pagado == true || order.pagado == true;
         final cardBg = isPagado
             ? const Color(0xFFF1FBF4)
             : const Color(0xFFFFF8F0);
@@ -445,7 +486,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                   )
                 else ...[
                   ...items.where((i) => !ComandaDetailStatus.isCancelledItem(i)).map(
-                        (item) => CommandaItemRow(item: item, showStatus: false),
+                        (item) => CommandaItemRow(item: item, showStatus: false, orderPagado: order.pagado == true),
                       ),
                   if (items.any(ComandaDetailStatus.isCancelledItem))
                     CancelledItemsBar(
@@ -673,7 +714,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
               controller: _tabController,
               children: [
                 _buildOrdenView(order, hasItemPreparado, isPendiente),
-                _buildComandasView(comandas),
+                _buildComandasView(comandas, orderPagado: order.pagado == true),
                 _buildCuentasView(order),
               ],
             ),
