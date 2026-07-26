@@ -208,6 +208,9 @@ class OrderRestaurantCard extends ConsumerWidget {
                 _buildOrderNumber(),
                 const Spacer(),
                 _buildEstadoBadge(),
+                // Pista de que la card abre acciones al tocar.
+                Icon(Icons.chevron_right_rounded,
+                    size: 18, color: Colors.grey.shade400),
               ],
             ),
             const SizedBox(height: 8),
@@ -247,11 +250,84 @@ class OrderRestaurantCard extends ConsumerWidget {
                 ],
               ),
             ],
+            // ── Antigüedad (con urgencia) + total del pedido ──────────────
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                if (order.fecha != null) ...[
+                  Icon(Icons.schedule_rounded,
+                      size: 13, color: _antiguedadColor()),
+                  const SizedBox(width: 4),
+                  Text(
+                    _antiguedadLabel(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: _esUrgente()
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: _antiguedadColor(),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                Text(
+                  'S/. ${_totalPedido().toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: ColorSchema.primaryColor,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
       ),
     );
+  }
+
+  /// Total del pedido: items no cancelados de todas las comandas
+  /// (misma fórmula que el detalle de orden).
+  double _totalPedido() {
+    var total = 0.0;
+    for (final c in (order.comandas ?? [])) {
+      for (final item in (c.items ?? [])) {
+        final cancelado = item.eliminado == true ||
+            item.estadoComandaDetalle?.toUpperCase() == 'CANCELADO';
+        if (cancelado) continue;
+        total += (item.precioVenta ?? 0.0) * (item.cantidad ?? 1.0);
+      }
+    }
+    return total;
+  }
+
+  int get _minutos => order.fecha == null
+      ? 0
+      : DateTime.now().difference(order.fecha!).inMinutes;
+
+  /// Un pedido activo con más de 45 min merece atención.
+  bool _esUrgente() =>
+      _minutos >= 45 &&
+      order.estado != 'FINALIZADO' &&
+      order.estado != 'CANCELADO';
+
+  String _antiguedadLabel() {
+    final m = _minutos;
+    if (m < 1) return 'recién';
+    if (m < 60) return 'hace $m min';
+    final h = m ~/ 60;
+    return 'hace ${h}h ${(m % 60).toString().padLeft(2, '0')}m';
+  }
+
+  Color _antiguedadColor() {
+    if (order.estado == 'FINALIZADO' || order.estado == 'CANCELADO') {
+      return Colors.grey.shade500;
+    }
+    final m = _minutos;
+    if (m >= 90) return const Color(0xFFC62828);
+    if (m >= 45) return const Color(0xFFE65100);
+    return Colors.grey.shade500;
   }
 
   Widget _buildOrderNumber() {

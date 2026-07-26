@@ -207,7 +207,18 @@ class _TableCardState extends State<TableCard> {
                               ],
                               _infoRow(icon: Icons.restaurant_menu, label: '${_totalItems(order)} items', textColor: textColor),
                               const SizedBox(height: 3),
-                              _infoRow(icon: Icons.access_time_rounded, label: _formatElapsed(_elapsed), textColor: textColor, bold: true),
+                              // El tiempo escala de color con la espera:
+                              // >45 min naranja, >90 min rojo.
+                              _infoRow(
+                                icon: Icons.access_time_rounded,
+                                label: _formatElapsed(_elapsed),
+                                textColor: _elapsed.inMinutes >= 90
+                                    ? const Color(0xFFC62828)
+                                    : _elapsed.inMinutes >= 45
+                                        ? const Color(0xFFE65100)
+                                        : textColor,
+                                bold: true,
+                              ),
                             ],
                           ],
                         ),
