@@ -168,13 +168,12 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
                         }
                         _scaffoldKey.currentState?.openDrawer();
                       },
-                      // El orbe del asistente solo se muestra en el tab Inicio.
-                      onAiTap: _selectedTab == 0
-                          ? () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (_) => const AiChatScreen()),
-                              )
-                          : null,
+                      // El orbe del asistente vive en el header, visible en
+                      // todos los tabs del dashboard.
+                      onAiTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const AiChatScreen()),
+                      ),
                     ),
                   ),
                 ],
