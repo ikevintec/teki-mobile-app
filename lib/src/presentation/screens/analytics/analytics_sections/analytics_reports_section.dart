@@ -227,13 +227,18 @@ class _AnalyticsReportSectionState
         children: [
           const SizedBox(height: 4),
           _sectionLabel('HOY'),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(flex: 3, child: _buildVentasHoyCard()),
-              const SizedBox(width: 8),
-              Expanded(flex: 2, child: _buildCajaCard()),
-            ],
+          // IntrinsicHeight acota la altura de la fila: dentro del ListView
+          // la altura es no acotada y stretch a secas fuerza altura infinita
+          // (rompe el layout y desata asserts de semantics en cascada).
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 3, child: _buildVentasHoyCard()),
+                const SizedBox(width: 8),
+                Expanded(flex: 2, child: _buildCajaCard()),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Row(
