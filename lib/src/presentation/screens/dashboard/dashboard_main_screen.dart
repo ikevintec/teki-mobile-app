@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sidebarx/sidebarx.dart';
 import 'package:teki_app/main.dart';
+import 'package:teki_app/src/presentation/screens/ai_chat/ai_chat_screen.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/header_section.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_tab.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/inicio_tab.dart';
@@ -167,6 +168,13 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
                         }
                         _scaffoldKey.currentState?.openDrawer();
                       },
+                      // El orbe del asistente solo se muestra en el tab Inicio.
+                      onAiTap: _selectedTab == 0
+                          ? () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => const AiChatScreen()),
+                              )
+                          : null,
                     ),
                   ),
                 ],

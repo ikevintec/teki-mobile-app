@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:teki_app/src/presentation/screens/ai_chat/widgets/ai_orb_button.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 
 class DashboardHeaderSection extends ConsumerWidget {
   final Function openDrawer;
 
-  const DashboardHeaderSection({super.key, required this.openDrawer});
+  /// Abre el asistente Teki AI; null oculta el orbe (solo el tab Inicio lo pasa).
+  final VoidCallback? onAiTap;
+
+  const DashboardHeaderSection({super.key, required this.openDrawer, this.onAiTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -108,6 +112,12 @@ class DashboardHeaderSection extends ConsumerWidget {
           ),
 
           const SizedBox(width: 10),
+
+          // ── Orbe del asistente Teki AI (solo lo pasa el tab Inicio) ────
+          if (onAiTap != null) ...[
+            AiOrbButton(onTap: onAiTap!, size: 40),
+            const SizedBox(width: 10),
+          ],
 
           // ── Botón ajustes ──────────────────────────────────────────────
           GestureDetector(
