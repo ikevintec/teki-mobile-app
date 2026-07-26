@@ -153,6 +153,7 @@ De 18 hallazgos, 11 corregidos (mayoreo sin ordenar, preview comandero, conversi
 **Bugs confirmados de mayor esfuerzo (backlog):**
 - [ ] `ComandaNotifier.computePrice` no aplica gross-up de IGV para productos con `igv=false` (subcobro 18%), no filtra precios por punto de venta, ni maneja ESPECIAL/canal ni recargo — necesita converger con `getPriceProduct`.
 - [ ] `montoDelivery` no se suma en los totales del cobrador (se pierde el flete en pedidos delivery).
+- [ ] Bug de precedencia en totales ISC de `calculoTotal` (products_sale_notifier_setters): `ticket.totalValorBaseIsc ?? 0 + valorVenta` evalúa `a ?? (0+b)` — si el total ya tiene valor, no acumula. Afecta solo ventas con ISC (licores, combustibles). Corregir con paréntesis como el resto de acumuladores.
 - [x] Anulación/despacho parcial de items multi-cantidad: selector de unidades en el bottom sheet de acciones; el payload manda `cantidad` y el backend divide la línea (2026-07-23).
 - [x] División de cuentas: rediseñada con líneas enteras (objetos originales con id real y grupoOpciones) + acción "Separar" que usa PATCH /commands/items/{id}/expand del servidor, igual que la web (2026-07-23).
 

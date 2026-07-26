@@ -625,7 +625,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
               (ticket.totalValorVentaExportacion ?? 0) + valorAgrgador,
         );
         ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
-          montoBaseExonerado: ticketDetailToUpdate.valorVenta!,
+          montoBaseExportacion: ticketDetailToUpdate.valorVenta!,
         );
       } else if (tipoIgv['codigoRelacionado'] == '1004') {
         if (['11', '12', '13', '14', '15', '16', '17']

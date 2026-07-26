@@ -295,6 +295,16 @@ class TicketDetail {
       };
 
   // implement copywith
+  /// Centinela para distinguir "no me pasaron el parámetro" de "me pasaron
+  /// null": los campos de impuestos DEBEN poder limpiarse a null al cambiar
+  /// la afectación IGV (p. ej. gravado → exonerado), igual que hace la web
+  /// con patchValue(null). Con el patrón `?? this.x` el null se ignoraba y
+  /// el IGV viejo viajaba a SUNAT (rechazo 3110).
+  static const Object _noValue = Object();
+
+  static double? _resolve(Object? param, double? current) =>
+      identical(param, _noValue) ? current : param as double?;
+
   TicketDetail copyWith({
     int? id,
     int? numeroOrden,
@@ -309,24 +319,24 @@ class TicketDetail {
     double? valorUnitario,
     double? precioCompraUnitario,
     double? precioVentaUnitario,
-    double? valorReferencialUnitario,
-    double? montoBaseIgv,
+    Object? valorReferencialUnitario = _noValue,
+    Object? montoBaseIgv = _noValue,
     double? montoBaseIvap,
-    double? montoBaseExportacion,
-    double? montoBaseExonerado,
-    double? montoBaseInafecto,
-    double? montoBaseGratuito,
-    double? montoBaseIsc,
-    double? tributoVentaGratuita,
+    Object? montoBaseExportacion = _noValue,
+    Object? montoBaseExonerado = _noValue,
+    Object? montoBaseInafecto = _noValue,
+    Object? montoBaseGratuito = _noValue,
+    Object? montoBaseIsc = _noValue,
+    Object? tributoVentaGratuita = _noValue,
     double? tributoBolsa,
     double? ivap,
-    double? igv,
+    Object? igv = _noValue,
     double? isc,
-    double? porcentajeIgv,
+    Object? porcentajeIgv = _noValue,
     double? porcentajeIvap,
     double? porcentajeIsc,
     double? porcentajeOtrosTributos,
-    double? porcentajeTributoVentaGratuita,
+    Object? porcentajeTributoVentaGratuita = _noValue,
     String? codigoTipoCalculoIsc,
     String? codigoTipoAfectacionIgv,
     double? valorVenta,
@@ -375,26 +385,28 @@ class TicketDetail {
       precioCompraUnitario: precioCompraUnitario ?? this.precioCompraUnitario,
       precioVentaUnitario: precioVentaUnitario ?? this.precioVentaUnitario,
       valorReferencialUnitario:
-          valorReferencialUnitario ?? this.valorReferencialUnitario,
-      montoBaseIgv: montoBaseIgv ?? this.montoBaseIgv,
+          _resolve(valorReferencialUnitario, this.valorReferencialUnitario),
+      montoBaseIgv: _resolve(montoBaseIgv, this.montoBaseIgv),
       montoBaseIvap: montoBaseIvap ?? this.montoBaseIvap,
-      montoBaseExportacion: montoBaseExportacion ?? this.montoBaseExportacion,
-      montoBaseExonerado: montoBaseExonerado ?? this.montoBaseExonerado,
-      montoBaseInafecto: montoBaseInafecto ?? this.montoBaseInafecto,
-      montoBaseGratuito: montoBaseGratuito ?? this.montoBaseGratuito,
-      montoBaseIsc: montoBaseIsc ?? this.montoBaseIsc,
-      tributoVentaGratuita: tributoVentaGratuita ?? this.tributoVentaGratuita,
+      montoBaseExportacion:
+          _resolve(montoBaseExportacion, this.montoBaseExportacion),
+      montoBaseExonerado: _resolve(montoBaseExonerado, this.montoBaseExonerado),
+      montoBaseInafecto: _resolve(montoBaseInafecto, this.montoBaseInafecto),
+      montoBaseGratuito: _resolve(montoBaseGratuito, this.montoBaseGratuito),
+      montoBaseIsc: _resolve(montoBaseIsc, this.montoBaseIsc),
+      tributoVentaGratuita:
+          _resolve(tributoVentaGratuita, this.tributoVentaGratuita),
       tributoBolsa: tributoBolsa ?? this.tributoBolsa,
       ivap: ivap ?? this.ivap,
-      igv: igv ?? this.igv,
+      igv: _resolve(igv, this.igv),
       isc: isc ?? this.isc,
-      porcentajeIgv: porcentajeIgv ?? this.porcentajeIgv,
+      porcentajeIgv: _resolve(porcentajeIgv, this.porcentajeIgv),
       porcentajeIvap: porcentajeIvap ?? this.porcentajeIvap,
       porcentajeIsc: porcentajeIsc ?? this.porcentajeIsc,
       porcentajeOtrosTributos:
           porcentajeOtrosTributos ?? this.porcentajeOtrosTributos,
-      porcentajeTributoVentaGratuita:
-          porcentajeTributoVentaGratuita ?? this.porcentajeTributoVentaGratuita,
+      porcentajeTributoVentaGratuita: _resolve(
+          porcentajeTributoVentaGratuita, this.porcentajeTributoVentaGratuita),
       codigoTipoCalculoIsc: codigoTipoCalculoIsc ?? this.codigoTipoCalculoIsc,
       codigoTipoAfectacionIgv:
           codigoTipoAfectacionIgv ?? this.codigoTipoAfectacionIgv,
