@@ -265,26 +265,76 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                             'Fecha de emisión: ${ticket.fechaEmision?.toString() ?? "--"}',
                             style: GoogleFonts.roboto(fontSize: 11),
                           ),
-                          Text(
-                            'SUNAT: ${formatEstadoSunat(ticket.estadoSunat ?? '')}',
-                            style: GoogleFonts.roboto(fontSize: 11),
-                          ),
-                          //texto to show if its Anulado or nor
-                          Text(
-                            ticket.anulado == true ? 'Anulado' : 'Emitido',
-                            style: GoogleFonts.roboto(
-                              fontSize: 11,
-                              color: ticket.anulado == true
-                                  ? Colors.red
-                                  : ColorSchema.primaryColor,
-                            ),
-                          ),
+                          // Un solo estado por card: Anulado domina; con
+                          // SUNAT aceptado basta 'Emitido' (el check SUNAT va
+                          // junto al monto); en el resto se muestra el estado
+                          // SUNAT, que es el dato pendiente/relevante.
+                          Builder(builder: (_) {
+                            final String label;
+                            final Color color;
+                            if (ticket.anulado == true) {
+                              label = 'Anulado';
+                              color = Colors.red;
+                            } else if (ticket.estadoSunat == 'ACEPT' ||
+                                (ticket.estadoSunat ?? '').isEmpty) {
+                              label = 'Emitido';
+                              color = ColorSchema.primaryColor;
+                            } else if (ticket.estadoSunat == 'RECHA') {
+                              label = 'SUNAT: Rechazado';
+                              color = Colors.red.shade600;
+                            } else {
+                              label =
+                                  'SUNAT: ${formatEstadoSunat(ticket.estadoSunat)}';
+                              color = Colors.orange.shade800;
+                            }
+                            return Text(
+                              label,
+                              style: GoogleFonts.roboto(
+                                fontSize: 11,
+                                color: color,
+                              ),
+                            );
+                          }),
                         ],
                       ),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
+                          // Sello sutil de aceptación SUNAT, sobre el monto.
+                          if (ticket.estadoSunat == 'ACEPT' &&
+                              ticket.anulado != true) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2ECC71)
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'SUNAT',
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.4,
+                                      color: const Color(0xFF1565C0),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  const Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 11,
+                                    color: Color(0xFF2ECC71),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                          ],
                           Text(
                             '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalVenta?.toStringAsFixed(2) ?? "--"}',
                             style: GoogleFonts.poppins(
