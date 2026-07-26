@@ -312,10 +312,15 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 10),
-                              Center(
-                                child: _buildSunatBadge(ticketToShow.estadoSunat),
-                              ),
+                              // Las notas de venta son documentos internos:
+                              // nunca van a SUNAT, no llevan badge de estado.
+                              if (ticketToShow.tipoComprobante != 'NV') ...[
+                                const SizedBox(height: 10),
+                                Center(
+                                  child:
+                                      _buildSunatBadge(ticketToShow.estadoSunat),
+                                ),
+                              ],
                             ],
                           ),
                         ),

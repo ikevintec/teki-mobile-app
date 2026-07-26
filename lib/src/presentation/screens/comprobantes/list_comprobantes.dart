@@ -275,8 +275,11 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                             if (ticket.anulado == true) {
                               label = 'Anulado';
                               color = Colors.red;
-                            } else if (ticket.estadoSunat == 'ACEPT' ||
+                            } else if (ticket.tipoComprobante == 'NV' ||
+                                ticket.estadoSunat == 'ACEPT' ||
                                 (ticket.estadoSunat ?? '').isEmpty) {
+                              // Las notas de venta son documentos internos:
+                              // nunca van a SUNAT, no llevan estado.
                               return const SizedBox.shrink();
                             } else if (ticket.estadoSunat == 'RECHA') {
                               label = 'SUNAT: Rechazado';
