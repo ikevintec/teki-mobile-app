@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/response/daily_sales_summary.dart';
+import 'package:teki_app/src/data/models/response/top_product.dart';
 import 'package:teki_app/src/data/models/teki_model/total_counter.dart';
 import 'package:teki_app/src/domain/datasource/dashboard_datasource.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
@@ -144,6 +146,61 @@ class RemoteDashboardDatasource implements DashboardDatasource {
       return Future.error('❌ Montos por moneda: $message');
     } catch (e) {
       return Future.error('❌ Montos por moneda: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<DailySalesSummary> getTodaySalesSummary(
+      Map<String, dynamic> params) async {
+    try {
+      final response = await dio.get('/tickets', queryParameters: params);
+      final List<dynamic> tickets = response.data;
+
+      final Map<String, double> montos = {};
+      int count = 0;
+      for (final ticket in tickets) {
+        final t = Map<String, dynamic>.from(ticket);
+        final moneda = (t['codigoMoneda'] ?? 'PEN') as String;
+        final total = ((t['totalVenta'] ?? 0) as num).toDouble();
+        final esNotaCredito = (t['tipoComprobante'] ?? '').toString() == '07';
+        // Las NC restan monto y no cuentan como venta realizada.
+        montos[moneda] = (montos[moneda] ?? 0) + (esNotaCredito ? -total : total);
+        if (!esNotaCredito) count++;
+      }
+
+      if (montos.isEmpty) montos['PEN'] = 0;
+      return DailySalesSummary(
+        totalVentas: count,
+        montos: montos.entries
+            .map((e) => MontoMonedaVenta(moneda: e.key, monto: e.value))
+            .toList(),
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) rethrow;
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error('❌ Ventas del día: $message');
+    } catch (e) {
+      return Future.error('❌ Ventas del día: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<List<TopProduct>> getTopProducts(Map<String, dynamic> params) async {
+    try {
+      final response = await dio.get('/products/top-orders', queryParameters: params);
+      return (response.data as List)
+          .map((e) => TopProduct.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) rethrow;
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
+      return Future.error('❌ Top productos: $message');
+    } catch (e) {
+      return Future.error('❌ Top productos: ${e.toString()}');
     }
   }
 }

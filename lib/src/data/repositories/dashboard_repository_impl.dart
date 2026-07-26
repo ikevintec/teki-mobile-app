@@ -1,3 +1,5 @@
+import 'package:teki_app/src/data/models/response/daily_sales_summary.dart';
+import 'package:teki_app/src/data/models/response/top_product.dart';
 import 'package:teki_app/src/data/models/teki_model/total_counter.dart';
 import 'package:teki_app/src/domain/datasource/dashboard_datasource.dart';
 import 'package:teki_app/src/domain/repositories/dashboard_repository.dart';
@@ -24,5 +26,15 @@ class DashboardRepositoryImpl extends DashboardRepository {
   Future<List<Map<String, dynamic>>> getAmountsByCurrency(
       Map<String, dynamic> params) {
     return dashboardDatasource.getAmountsByCurrency(params);
+  }
+
+  @override
+  Future<DailySalesSummary> getTodaySalesSummary(Map<String, dynamic> params) {
+    return dashboardDatasource.getTodaySalesSummary(params);
+  }
+
+  @override
+  Future<List<TopProduct>> getTopProducts(Map<String, dynamic> params) {
+    return dashboardDatasource.getTopProducts(params);
   }
 }
