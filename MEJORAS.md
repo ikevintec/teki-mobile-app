@@ -151,13 +151,9 @@ Pendientes:
 - [ ] Consulta de gastos.
 - [ ] Reportes clave (2-3 máximo; evaluar cuáles pide más la gente — el resto lo cubre Analytics + el asistente IA).
 
-**P1 pendiente (fricción diaria, de la auditoría con 3 agentes):**
-- [ ] Cobrador: refrescar al volver de cobrar (copiar patrón RouteAware de orders_restaurant), feedback al emitir comprobante, numeración de cuenta real (no índice del filtro), pull-to-refresh con lista vacía, filtro "Todos".
-- [ ] Unificar semáforo PENDIENTE/PREPARADO (Mesas vs Pedidos vs items usan 3 paletas distintas; canon: comanda_detail_item_tile).
-- [ ] Card de pedido: hora relativa + total + color de urgencia; mesa ocupada: escalar color por tiempo.
-- [ ] Cotizaciones: refrescar lista al volver de editar/generar venta; acciones visibles (no solo swipe); fecha formateada; estado vencida.
-- [ ] CxC/CxP: BUG filtro `saldo > 1` oculta saldos de 0.01–1.00; "vence hace N días" relativo con color en la lista; verificar gates de permiso (Anular/Extender/Registrar pago) contra la web.
-- [ ] Productos: símbolo de moneda en precios; `double.parse` sin try en inputs (crash latente); contador de clientes muestra paginados, no total.
+**P1 RESUELTO (2026-07-25):** cobrador (refresh al volver + feedback + número real + pull-to-refresh vacío + filtro Todos), semáforo alineado al canon WEB (pendiente ámbar, preparado verde item / azul pedido, precuenta morado), cards de pedido/mesa con antigüedad y urgencia (45/90 min) + total, cotizaciones (refresh al volver + fecha + pista de swipe), CxC (bug saldo>1 + vencimiento relativo con color), productos (moneda en precios + tryParse + contador engañoso fuera).
+- [ ] Pendiente de P1: gates de permiso en CxC (Anular/Extender/Registrar pago) — verificar equivalentes web antes de aplicar.
+- [ ] Pendiente de P1: estado "vencida" en cotizaciones (requiere decidir si aplica fecha de vencimiento).
 
 **P2 pendiente (pulido):** empty states con icono+CTA, fechas relativas generalizadas, typos ("TIPO OPREACIÓN", "Compañia", "Aun no hay"), perfil muestra teléfono/email de la EMPRESA como del usuario, total del detalle de orden no incluye delivery (inconsistente con order_ready_to_pay), confirmación al borrar item en comanda, PDF viewer sin onDocumentLoadFailed, settings sin explicar dropdown deshabilitado, badge "Pendiente" hardcodeado en order_ready_to_pay_screen:341.
 
