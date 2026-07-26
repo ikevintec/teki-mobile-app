@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
+import 'package:teki_app/src/data/models/teki_model/totales_forma_pagos.dart';
 
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
@@ -255,6 +256,32 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       debugPrint("❌ Excepción: $e");
       debugPrint("📍 Stack: $stack");
       errorNotification("Error al obtener totales por moneda 2: $e");
+      return Future.error(e.toString());
+    }
+  }
+
+  @override
+  Future<List<TotalVentasFormaPago>> getTotalesFormaPago(
+    Map<String, dynamic> params,
+  ) async {
+    try {
+      final response = await dio.get(
+        '/tickets/operations/totales-forma-pago',
+        queryParameters: params,
+      );
+      return (response.data as List)
+          .map((e) => TotalVentasFormaPago.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final resData = e.response?.data;
+      final message = (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
+          e.message ??
+          'Error al obtener totales por forma de pago';
+      return Future.error(message);
+    } catch (e) {
       return Future.error(e.toString());
     }
   }

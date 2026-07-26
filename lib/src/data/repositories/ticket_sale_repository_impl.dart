@@ -1,5 +1,6 @@
 import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
+import 'package:teki_app/src/data/models/teki_model/totales_forma_pagos.dart';
 
 import 'package:teki_app/src/domain/datasource/tickets_sale_datasource.dart';
 import 'package:teki_app/src/data/datasource/remote_ticket_sale.dart';
@@ -52,6 +53,12 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
   Future<List<TotalesPorMoneda>> getTotalesPorMoneda(
       Map<String, dynamic> params) {
     return datasource.getTotalesPorMoneda(params);
+  }
+
+  @override
+  Future<List<TotalVentasFormaPago>> getTotalesFormaPago(
+      Map<String, dynamic> params) {
+    return datasource.getTotalesFormaPago(params);
   }
   
   @override

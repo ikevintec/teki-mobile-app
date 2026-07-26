@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
+import 'package:teki_app/src/data/models/teki_model/totales_forma_pagos.dart';
 import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -255,6 +256,12 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
     } catch (e) {
       errorNotification("Error al obtener totales por moneda: $e");
     }
+  }
+
+  /// Desglose por método de pago del filtro actual. Se consulta bajo demanda
+  /// (al abrir el sheet de desglose), no en cada recarga de la lista.
+  Future<List<TotalVentasFormaPago>> fetchTotalesFormaPago() {
+    return repository.getTotalesFormaPago(buildComprobanteQueryParams(state));
   }
 }
 

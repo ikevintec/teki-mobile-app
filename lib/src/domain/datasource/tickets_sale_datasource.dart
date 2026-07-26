@@ -1,6 +1,7 @@
 import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/totales_comprobantes.dart';
+import 'package:teki_app/src/data/models/teki_model/totales_forma_pagos.dart';
 
 abstract class TicketSaleDatasource {
   /// Obtiene el siguiente número de comprobante según tipoDocumento y serie
@@ -19,6 +20,8 @@ abstract class TicketSaleDatasource {
   Future<List<Ticket>> getComprobantes(Map<String, dynamic> params);
 
   Future<List<TotalesPorMoneda>> getTotalesPorMoneda(Map<String, dynamic> params);
+
+  Future<List<TotalVentasFormaPago>> getTotalesFormaPago(Map<String, dynamic> params);
 
   Future<Ticket> getTicketById(int id);
 
