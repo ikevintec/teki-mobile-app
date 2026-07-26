@@ -65,10 +65,18 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
 
   void _onTabSelected(int index) {
     if (_selectedTab == index) return;
+    // Los tabs viven en un IndexedStack (no se recrean al cambiar): al volver
+    // a un tab ya visitado sus datos pueden estar viejos — p.ej. regresar a
+    // Inicio después de aperturar la caja en el tab Caja. Se recarga el tab
+    // de destino, salvo en su primera visita (ahí ya carga al montarse).
+    final yaVisitado = _visitedTabs.contains(index);
     setState(() {
       _selectedTab = index;
       _visitedTabs.add(index);
     });
+    if (yaVisitado) {
+      _refreshNotifiers[index].value++;
+    }
   }
 
   @override
