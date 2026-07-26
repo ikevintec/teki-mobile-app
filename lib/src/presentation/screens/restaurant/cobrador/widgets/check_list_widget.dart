@@ -27,28 +27,45 @@ class CheckListWidget extends ConsumerWidget {
       );
     }
 
-    if (checks.isEmpty) {
-      return const Center(
-        child: Text(
-          'No hay cuentas',
-          style: TextStyle(color: Colors.grey, fontSize: 14),
-        ),
-      );
-    }
-
+    // El vacío también vive dentro del RefreshIndicator: se puede jalar
+    // para refrescar aunque no haya cuentas (antes quedaba atrapado).
     return RefreshIndicator(
       color: ColorSchema.primaryColor,
       onRefresh: () => ref.read(cobradorProvider.notifier).init(pvId),
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(14),
-        itemCount: checks.length,
-        itemBuilder: (_, i) => CheckCardWidget(
-          check: checks[i],
-          index: i,
-          onTap: () => onTap(checks[i], i),
-        ),
-      ),
+      child: checks.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                const SizedBox(height: 90),
+                Icon(Icons.receipt_long_outlined,
+                    size: 56, color: Colors.grey.shade300),
+                const SizedBox(height: 10),
+                const Center(
+                  child: Text(
+                    'No hay cuentas con este filtro',
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Center(
+                  child: Text(
+                    'Desliza hacia abajo para actualizar',
+                    style: TextStyle(
+                        color: Colors.grey.shade400, fontSize: 12),
+                  ),
+                ),
+              ],
+            )
+          : ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(14),
+              itemCount: checks.length,
+              itemBuilder: (_, i) => CheckCardWidget(
+                check: checks[i],
+                index: i,
+                onTap: () => onTap(checks[i], i),
+              ),
+            ),
     );
   }
 }

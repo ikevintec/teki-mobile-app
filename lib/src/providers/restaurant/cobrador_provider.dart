@@ -5,6 +5,22 @@ import 'package:teki_app/src/domain/repositories/restaurant_repository.dart';
 
 enum TipoPedidoFilter { todos, mesa, pedido, envios }
 
+/// Filtro de estado de pago (con 'Todos', como pide la vista combinada).
+enum EstadoPagoFilter { todos, pendientes, pagados }
+
+extension EstadoPagoFilterX on EstadoPagoFilter {
+  String get label {
+    switch (this) {
+      case EstadoPagoFilter.todos:
+        return 'Todos';
+      case EstadoPagoFilter.pendientes:
+        return 'Pendientes';
+      case EstadoPagoFilter.pagados:
+        return 'Pagados';
+    }
+  }
+}
+
 extension TipoPedidoFilterX on TipoPedidoFilter {
   String get label {
     switch (this) {
@@ -52,7 +68,7 @@ class CobradorNotifier extends StateNotifier<CobradorState> {
           checks: [],
           selectedDate: DateTime.now(),
           tipoPedidoFilter: TipoPedidoFilter.todos,
-          pagado: false,
+          pagadoFilter: EstadoPagoFilter.pendientes,
           isLoading: false,
         ));
 
@@ -66,7 +82,9 @@ class CobradorNotifier extends StateNotifier<CobradorState> {
     final dateStr =
         '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}';
     final checks = await repository.getChecks({
-      'pagado': state.pagado,
+      // 'Todos' no manda el filtro: el backend devuelve pagadas y pendientes.
+      if (state.pagadoFilter != EstadoPagoFilter.todos)
+        'pagado': state.pagadoFilter == EstadoPagoFilter.pagados,
       'idPuntoVenta': pvId,
       'fecha': dateStr,
       'tipoPedido': state.tipoPedidoFilter.tipos,
@@ -84,8 +102,8 @@ class CobradorNotifier extends StateNotifier<CobradorState> {
     await _load(pvId);
   }
 
-  Future<void> setPagado(bool pagado, int pvId) async {
-    state = state.copyWith(pagado: pagado);
+  Future<void> setEstadoPago(EstadoPagoFilter filtro, int pvId) async {
+    state = state.copyWith(pagadoFilter: filtro);
     await _load(pvId);
   }
 
@@ -96,14 +114,14 @@ class CobradorState {
   final List<Check> checks;
   final DateTime selectedDate;
   final TipoPedidoFilter tipoPedidoFilter;
-  final bool pagado;
+  final EstadoPagoFilter pagadoFilter;
   final bool isLoading;
 
   CobradorState({
     required this.checks,
     required this.selectedDate,
     required this.tipoPedidoFilter,
-    required this.pagado,
+    required this.pagadoFilter,
     required this.isLoading,
   });
 
@@ -111,14 +129,14 @@ class CobradorState {
     List<Check>? checks,
     DateTime? selectedDate,
     TipoPedidoFilter? tipoPedidoFilter,
-    bool? pagado,
+    EstadoPagoFilter? pagadoFilter,
     bool? isLoading,
   }) =>
       CobradorState(
         checks: checks ?? this.checks,
         selectedDate: selectedDate ?? this.selectedDate,
         tipoPedidoFilter: tipoPedidoFilter ?? this.tipoPedidoFilter,
-        pagado: pagado ?? this.pagado,
+        pagadoFilter: pagadoFilter ?? this.pagadoFilter,
         isLoading: isLoading ?? this.isLoading,
       );
 }

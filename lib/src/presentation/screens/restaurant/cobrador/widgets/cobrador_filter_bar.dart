@@ -40,12 +40,12 @@ class CobradorFilterBar extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             flex: 3,
-            child: _FilterDropdown<bool>(
+            child: _FilterDropdown<EstadoPagoFilter>(
               label: 'Estado',
-              value: state.pagado,
-              items: const [false, true],
-              itemLabel: (v) => v ? 'Pagados' : 'Pendientes',
-              onChanged: (v) => notifier.setPagado(v, pvId),
+              value: state.pagadoFilter,
+              items: EstadoPagoFilter.values,
+              itemLabel: (f) => f.label,
+              onChanged: (f) => notifier.setEstadoPago(f, pvId),
             ),
           ),
           const SizedBox(width: 4),

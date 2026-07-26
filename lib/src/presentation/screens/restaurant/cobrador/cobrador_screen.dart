@@ -9,6 +9,7 @@ import 'package:teki_app/src/providers/restaurant/cobrador_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/constants.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'widgets/cobrador_filter_bar.dart';
 import 'widgets/check_list_widget.dart';
@@ -98,6 +99,12 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
       body: Column(
         children: [
           CobradorFilterBar(pvId: _currentPvId),
+          // Cargando la cuenta para emitir el comprobante.
+          if (_cargandoCuenta)
+            const LinearProgressIndicator(
+              minHeight: 2,
+              color: ColorSchema.primaryColor,
+            ),
           Expanded(
             child: CheckListWidget(
               pvId: _currentPvId,
@@ -115,9 +122,12 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
     final items = check.items ?? [];
     final total = checkItemsTotal(items);
     final hasMesa = check.pedido?.mesa != null;
+    // Identificador REAL del pedido (igual que el card): el índice de la
+    // lista cambiaba con cada filtro y confundía.
+    final numero = formatOrderNumber(check.pedido?.id);
     final title = hasMesa
-        ? 'Mesa ${check.pedido?.mesa?.numero} · Cuenta ${index + 1}'
-        : 'Cuenta ${index + 1}';
+        ? 'Mesa ${check.pedido?.mesa?.numero} · #$numero'
+        : 'Pedido #$numero';
 
     showDialog(
       context: context,
@@ -179,9 +189,14 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
     );
   }
 
+  bool _cargandoCuenta = false;
+
   Future<void> _emitirComprobante(Check check) async {
+    if (check.id == null || _cargandoCuenta) return;
     Navigator.pop(context); // cerrar el dialog
-    if (check.id == null) return;
+    // Feedback: antes las 2 llamadas de red corrían en silencio y el
+    // usuario no sabía si el tap funcionó.
+    setState(() => _cargandoCuenta = true);
 
     try {
       // Cargar el check completo desde el backend para obtener todos los items
@@ -189,18 +204,22 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
           await ref.read(cobradorProvider.notifier).getCheckById(check.id!);
 
       // Pre-llenar los providers de venta con los datos del check
-      await ref
-          .read(productSaleProvider.notifier)
-          .initFromCheck(fullCheck);
+      await ref.read(productSaleProvider.notifier).initFromCheck(fullCheck);
 
       if (!mounted) return;
 
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const ProductsSaleScreen()),
       );
+      // Al volver del cobro, la cuenta pagada debe desaparecer de la lista.
+      if (mounted) {
+        ref.read(cobradorProvider.notifier).init(_currentPvId);
+      }
     } catch (e) {
       errorNotification('Error al cargar la cuenta: $e');
+    } finally {
+      if (mounted) setState(() => _cargandoCuenta = false);
     }
   }
 }
