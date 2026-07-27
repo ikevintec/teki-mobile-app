@@ -422,4 +422,19 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
       return Future.error(e.toString());
     }
   }
+
+  @override
+  Future<void> updateMetodoPago(int idTicket, Map<String, dynamic> movimiento) async {
+    try {
+      await dio.patch('/tickets/$idTicket/movimiento-caja', data: movimiento);
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      if (e.response == null) rethrow;
+      final resData = e.response?.data;
+      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error al cambiar el método de pago';
+      return Future.error(message);
+    } catch (e) {
+      return Future.error(e.toString());
+    }
+  }
 }

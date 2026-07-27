@@ -27,6 +27,9 @@ abstract class TicketSaleDatasource {
 
   Future<EstadoSunatResponse> consultarEstadoSunat(Ticket ticket);
 
+  /// Cambia el método de pago de una venta contado (PATCH /tickets/{id}/movimiento-caja).
+  Future<void> updateMetodoPago(int idTicket, Map<String, dynamic> movimiento);
+
   /// Anula un comprobante por su identificador de documento, indicando el motivo
   Future<void> anularComprobante(String identificadorDocumento, String motivo);
 }

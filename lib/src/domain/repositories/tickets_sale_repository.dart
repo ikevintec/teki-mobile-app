@@ -36,6 +36,8 @@ abstract class TicketsSaleRepository {
 
   Future<EstadoSunatResponse> consultarEstadoSunat(Ticket ticket);
 
+  Future<void> updateMetodoPago(int idTicket, Map<String, dynamic> movimiento);
+
   /// Anula un comprobante por su identificador de documento, indicando el motivo
   Future<void> anularComprobante(String identificadorDocumento, String motivo);
 }

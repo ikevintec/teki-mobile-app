@@ -1,17 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_method.dart';
 import 'package:teki_app/src/data/models/teki_model/purchase.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/data/repositories/ticket_sale_repository_impl.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
-class CajaMovimientoScreen extends StatelessWidget {
+class CajaMovimientoScreen extends ConsumerStatefulWidget {
   final CashRegisterDetail item;
 
   const CajaMovimientoScreen({super.key, required this.item});
+
+  @override
+  ConsumerState<CajaMovimientoScreen> createState() =>
+      _CajaMovimientoScreenState();
+}
+
+class _CajaMovimientoScreenState extends ConsumerState<CajaMovimientoScreen> {
+  CashRegisterDetail get item => widget.item;
+
+  /// Pagos mostrados: parten del movimiento y se actualizan en memoria
+  /// cuando se cambia el método de pago.
+  late List<PaymentDetail> _pagos = item.pagos ?? [];
 
   bool get _esIngreso => item.tipoMovimientoCaja == 'INGRESO';
 
@@ -53,8 +71,7 @@ class CajaMovimientoScreen extends StatelessWidget {
               _buildCompraCard(item.compra!),
               const SizedBox(height: 12),
             ],
-            if (item.pagos != null && item.pagos!.isNotEmpty)
-              _buildPagosCard(item.pagos!),
+            if (_pagos.isNotEmpty) _buildPagosCard(_pagos),
           ],
         ),
       ),
@@ -283,20 +300,99 @@ class CajaMovimientoScreen extends StatelessWidget {
   // ── Pagos ────────────────────────────────────────────────────────────────
 
   Widget _buildPagosCard(List<PaymentDetail> pagos) {
+    // Cambiar método de pago: solo ventas contado (ingreso con ticket) y con
+    // el mismo permiso que la web.
+    final puedeCambiar = item.ticket?.id != null &&
+        _esIngreso &&
+        item.ticket?.tipoVenta == 'CONTADO' &&
+        ref.watch(sesionProvider).hasPermission('EDITAR_METODO_PAGO');
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(
-            icon: Icons.payments_rounded,
-            label: 'Formas de pago',
-            color: ColorSchema.primaryColor,
+          Row(
+            children: [
+              Expanded(
+                child: _SectionHeader(
+                  icon: Icons.payments_rounded,
+                  label: 'Formas de pago',
+                  color: ColorSchema.primaryColor,
+                ),
+              ),
+              if (puedeCambiar)
+                TextButton.icon(
+                  onPressed: _cambiarMetodoPago,
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                  label: const Text('Cambiar', style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: ColorSchema.primaryColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 14),
           ...pagos.map((p) => _PagoItem(pago: p)),
         ],
       ),
     );
+  }
+
+  /// Sheet de pagos mixtos: varios métodos con montos que deben sumar
+  /// EXACTO el total de la venta (misma validación totalFormaPago de la web).
+  /// Espeja PATCH /tickets/{id}/movimiento-caja.
+  Future<void> _cambiarMetodoPago() async {
+    final ticket = item.ticket!;
+    final total = ticket.totalVenta ?? item.monto ?? 0;
+    final metodos = (ref.read(sesionProvider).config?.formasPago ?? [])
+        .where((m) => m.tipoMovimiento == null || m.tipoMovimiento == 'INGRESO')
+        .toList();
+    if (metodos.isEmpty) {
+      warningNotification('No hay métodos de pago configurados', fromTop: false);
+      return;
+    }
+
+    final pagos = await showModalBottomSheet<List<PaymentDetail>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _CambiarMetodoPagoSheet(
+        titulo: '${ticket.serie ?? ''}-${ticket.numero ?? ''}',
+        total: total,
+        metodos: metodos,
+      ),
+    );
+    if (pagos == null || pagos.isEmpty) return;
+
+    try {
+      await TicketSaleRepositoryImpl().updateMetodoPago(ticket.id!, {
+        'pagos': [
+          for (final p in pagos)
+            {
+              'metodoPago': {'id': p.metodoPago?.id},
+              'formaPago': p.formaPago,
+              'nombre': p.nombre,
+              'tipoTarjeta': p.tipoTarjeta,
+              'monto': p.monto,
+              'montoPagado': p.montoPagado,
+            }
+        ],
+        'tipoMovimientoCaja': 'INGRESO',
+        'conceptoMovimientoCaja': 'VENTAS',
+        'monedaMovimientoCaja': ticket.codigoMoneda ?? 'PEN',
+        'monto': total,
+      });
+      if (!mounted) return;
+      setState(() => _pagos = pagos);
+      successNotification('Método de pago actualizado', fromTop: false);
+    } catch (e) {
+      errorNotification(e.toString(), fromTop: false);
+    }
   }
 
   // ── Helper ───────────────────────────────────────────────────────────────
@@ -518,6 +614,233 @@ class _PagoItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Sheet de cambio de método de pago (pagos mixtos) ─────────────────────────
+
+class _CambiarMetodoPagoSheet extends StatefulWidget {
+  final String titulo;
+  final double total;
+  final List<PaymentMethod> metodos;
+
+  const _CambiarMetodoPagoSheet({
+    required this.titulo,
+    required this.total,
+    required this.metodos,
+  });
+
+  @override
+  State<_CambiarMetodoPagoSheet> createState() =>
+      _CambiarMetodoPagoSheetState();
+}
+
+class _PagoEntry {
+  PaymentMethod metodo;
+  final TextEditingController controller;
+  _PagoEntry(this.metodo, double monto)
+      : controller = TextEditingController(
+            text: monto > 0 ? monto.toStringAsFixed(2) : '');
+}
+
+class _CambiarMetodoPagoSheetState extends State<_CambiarMetodoPagoSheet> {
+  late final List<_PagoEntry> _entries = [
+    // Arranca con el primer método cubriendo el total (caso común: un método).
+    _PagoEntry(widget.metodos.first, widget.total),
+  ];
+
+  @override
+  void dispose() {
+    for (final e in _entries) {
+      e.controller.dispose();
+    }
+    super.dispose();
+  }
+
+  double get _asignado => _entries.fold(
+      0.0, (s, e) => s + (double.tryParse(e.controller.text) ?? 0));
+
+  /// La suma debe ser EXACTA al total (tolerancia de céntimo por redondeo).
+  bool get _sumaExacta => (_asignado - widget.total).abs() < 0.01;
+
+  void _agregarEntry() {
+    // Sugiere el primer método no usado y precarga el monto faltante.
+    final usados = _entries.map((e) => e.metodo.id).toSet();
+    final libre = widget.metodos.firstWhere(
+      (m) => !usados.contains(m.id),
+      orElse: () => widget.metodos.first,
+    );
+    final faltante = (widget.total - _asignado).clamp(0.0, widget.total);
+    setState(() => _entries.add(_PagoEntry(libre, faltante)));
+  }
+
+  void _confirmar() {
+    final pagos = <PaymentDetail>[
+      for (final e in _entries)
+        if ((double.tryParse(e.controller.text) ?? 0) > 0)
+          PaymentDetail(
+            metodoPago: e.metodo,
+            formaPago: e.metodo.formaPago,
+            nombre: e.metodo.nombre,
+            tipoTarjeta: e.metodo.tipoTarjeta,
+            monto: double.parse(e.controller.text),
+            montoPagado: double.parse(e.controller.text),
+          ),
+    ];
+    Navigator.of(context).pop(pagos);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('Cambiar método de pago',
+                  style: GoogleFonts.raleway(
+                      fontWeight: FontWeight.bold, fontSize: 15)),
+              Text(
+                '${widget.titulo} · total S/. ${widget.total.toStringAsFixed(2)}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              ),
+              const SizedBox(height: 12),
+              // Entradas de pago (método + monto)
+              ...List.generate(_entries.length, (i) {
+                final e = _entries[i];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<int>(
+                          initialValue: e.metodo.id,
+                          isDense: true,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 10),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                          items: [
+                            for (final m in widget.metodos)
+                              DropdownMenuItem<int>(
+                                value: m.id,
+                                child: Text(m.nombre ?? '-',
+                                    style: const TextStyle(fontSize: 13),
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                          ],
+                          onChanged: (id) {
+                            setState(() => e.metodo = widget.metodos
+                                .firstWhere((m) => m.id == id));
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: e.controller,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9.]')),
+                          ],
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            prefixText: 'S/. ',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 10),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ),
+                      if (_entries.length > 1)
+                        IconButton(
+                          icon: Icon(Icons.close,
+                              size: 18, color: Colors.red.shade400),
+                          onPressed: () => setState(() {
+                            _entries.removeAt(i).controller.dispose();
+                          }),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed:
+                      _entries.length < widget.metodos.length ? _agregarEntry : null,
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Agregar método',
+                      style: TextStyle(fontSize: 12.5)),
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Resumen asignado vs total
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _sumaExacta
+                      ? const Color(0xFFE8F5E9)
+                      : const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _sumaExacta
+                      ? 'Asignado S/. ${_asignado.toStringAsFixed(2)} ✓'
+                      : 'Asignado S/. ${_asignado.toStringAsFixed(2)} de S/. ${widget.total.toStringAsFixed(2)} · '
+                          '${_asignado < widget.total ? 'faltan' : 'sobran'} S/. ${(_asignado - widget.total).abs().toStringAsFixed(2)}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: _sumaExacta
+                        ? const Color(0xFF2E7D32)
+                        : const Color(0xFFE65100),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _sumaExacta ? _confirmar : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorSchema.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Confirmar'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

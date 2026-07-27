@@ -72,6 +72,11 @@ class TicketSaleRepositoryImpl extends TicketsSaleRepository {
   }
 
   @override
+  Future<void> updateMetodoPago(int idTicket, Map<String, dynamic> movimiento) {
+    return datasource.updateMetodoPago(idTicket, movimiento);
+  }
+
+  @override
   Future<void> anularComprobante(String identificadorDocumento, String motivo) {
     return datasource.anularComprobante(identificadorDocumento, motivo);
   }
