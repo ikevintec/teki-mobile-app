@@ -15,6 +15,7 @@ class PurchaseDetail {
   final double? factor;
   final List<BatchProductPurchase>? lotes;
   final Supplier? proveedor;
+  final double? importeTotal;
   final bool? eliminado;
   final bool? modificado;
 
@@ -29,6 +30,7 @@ class PurchaseDetail {
     this.factor,
     this.lotes,
     this.proveedor,
+    this.importeTotal,
     this.eliminado,
     this.modificado,
   });
@@ -44,6 +46,7 @@ class PurchaseDetail {
     factor: (json['factor'] as num?)?.toDouble(),
     lotes: (json['lotes'] as List?)?.map((e) => BatchProductPurchase.fromJson(e)).toList(),
     proveedor: json['proveedor'] != null ? Supplier.fromJson(json['proveedor']) : null,
+    importeTotal: (json['importeTotal'] as num?)?.toDouble(),
     eliminado: json['eliminado'],
     modificado: json['modificado'],
   );
@@ -59,6 +62,7 @@ class PurchaseDetail {
     'factor': factor,
     'lotes': lotes?.map((e) => e.toJson()).toList(),
     'proveedor': proveedor?.toJson(),
+    'importeTotal': importeTotal,
     'eliminado': eliminado,
     'modificado': modificado,
   };

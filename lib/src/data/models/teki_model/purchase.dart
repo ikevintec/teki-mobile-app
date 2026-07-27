@@ -4,6 +4,7 @@ import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/purchase_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/sale_station.dart';
 import 'package:teki_app/src/data/models/teki_model/supplier.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_fee.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -31,6 +32,12 @@ class Purchase {
   final bool? anulado;
   final String? motivoAnulacion;
   final bool? estado;
+  final DateTime? fechaEntrega;
+  final bool? incIgv;
+  final double? igv;
+  final String? observacion;
+  final List<TicketFee>? cuotas;
+  final bool? tieneNotaCredito;
 
   Purchase({
     this.id,
@@ -56,6 +63,12 @@ class Purchase {
     this.anulado,
     this.motivoAnulacion,
     this.estado,
+    this.fechaEntrega,
+    this.incIgv,
+    this.igv,
+    this.observacion,
+    this.cuotas,
+    this.tieneNotaCredito,
   });
 
   factory Purchase.fromJson(Map<String, dynamic> json) => Purchase(
@@ -82,6 +95,12 @@ class Purchase {
     anulado: json['anulado'],
     motivoAnulacion: json['motivoAnulacion'],
     estado: json['estado'],
+    fechaEntrega: json['fechaEntrega'] != null ? parseDateTimeFlexible(json['fechaEntrega']) : null,
+    incIgv: json['incIgv'],
+    igv: (json['igv'] as num?)?.toDouble(),
+    observacion: json['observacion'],
+    cuotas: (json['cuotas'] as List?)?.map((e) => TicketFee.fromJson(e)).toList(),
+    tieneNotaCredito: json['tieneNotaCredito'],
   );
 
   Map<String, dynamic> toJson() => {
@@ -108,5 +127,10 @@ class Purchase {
     'anulado': anulado,
     'motivoAnulacion': motivoAnulacion,
     'estado': estado,
+    'fechaEntrega': fechaEntrega?.toIso8601String(),
+    'incIgv': incIgv,
+    'igv': igv,
+    'observacion': observacion,
+    'cuotas': cuotas?.map((e) => e.toJson()).toList(),
   };
 }

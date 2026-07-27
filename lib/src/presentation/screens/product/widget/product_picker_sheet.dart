@@ -43,6 +43,15 @@ class _ProductPickerSheetState extends ConsumerState<ProductPickerSheet> {
   bool _loading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // El provider arranca con isLoading=true: sin esta carga inicial el sheet
+    // se queda en spinner hasta que el usuario escribe.
+    Future.microtask(
+        () => ref.read(productsProvider.notifier).searchProducts(''));
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _debounce?.cancel();

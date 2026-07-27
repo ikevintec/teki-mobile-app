@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/today_reports_section.dart';
+import 'package:teki_app/src/presentation/screens/purchases/purchases_main_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
@@ -307,6 +308,13 @@ class _InicioTabState extends ConsumerState<InicioTab> {
           'title': 'Cuentas por Pagar',
           'icon': 'assets/icons/icon_svg/expense_payment.svg',
           'action': () => Get.toNamed(AppRoutes.accountsPayable),
+        },
+        {
+          'title': 'Compras',
+          'icon': 'assets/icons/icon_svg/purchase.svg',
+          'action': () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PurchasesMainScreen()),
+              ),
         },
       ];
 
