@@ -6,25 +6,45 @@ ProductSearchEntry entry(
   String nombre, {
   String codigo = '',
   String codigoBarra = '',
+  int createdOn = 0,
 }) =>
     ProductSearchEntry(
       position: position,
       nombre: nombre.toLowerCase(),
       codigo: codigo.toLowerCase(),
       codigoBarra: codigoBarra.toLowerCase(),
+      createdOn: createdOn,
     );
 
 void main() {
   final catalogo = [
-    entry(0, 'Coca Cola 500ml', codigo: 'CC500', codigoBarra: '7501055300006'),
-    entry(1, 'Inca Kola 500ml', codigo: 'IK500', codigoBarra: '7751271000011'),
-    entry(2, 'Galleta Oreo', codigo: 'GO100', codigoBarra: '7622210951045'),
-    entry(3, 'Café Altomayo 250g', codigo: 'CA250'),
-    entry(4, 'Coca Cola Zero 1.5L', codigo: 'CCZ15'),
+    entry(0, 'Coca Cola 500ml',
+        codigo: 'CC500', codigoBarra: '7501055300006', createdOn: 100),
+    entry(1, 'Inca Kola 500ml',
+        codigo: 'IK500', codigoBarra: '7751271000011', createdOn: 200),
+    entry(2, 'Galleta Oreo',
+        codigo: 'GO100', codigoBarra: '7622210951045', createdOn: 300),
+    entry(3, 'Café Altomayo 250g', codigo: 'CA250', createdOn: 400),
+    entry(4, 'Coca Cola Zero 1.5L', codigo: 'CCZ15', createdOn: 500),
   ];
 
-  test('la coincidencia directa va primero y en el orden de la lista', () {
-    expect(runProductSearch(catalogo, 'coca cola'), [0, 4]);
+  test('la coincidencia directa va primero, ordenada por createdOn desc', () {
+    expect(runProductSearch(catalogo, 'coca cola'), [4, 0]);
+  });
+
+  test('el orden replica el de la web (caso "pal")', () {
+    // Los 5 son coincidencia directa: municiPAL, PALabras, PALma, PALito.
+    final productos = [
+      entry(0, 'Aceite vegetal 1L Palma Real',
+          codigo: 'AVPR01', createdOn: 1683863639577),
+      entry(1, '1 PALITO DE ANTICUCHO', createdOn: 1683863639271),
+      entry(2, 'MÓJAME LAS PALABRAS', createdOn: 1683863646180),
+      entry(3, 'CAMISETA DEPORTIVO MUNICIPAL OFICIAL 2022 AAA L',
+          codigoBarra: 'C1777', createdOn: 1684298143211),
+      entry(4, 'CAMISETA DEPORTIVO MUNICIPAL OFICIAL 2022 AAA S',
+          codigoBarra: 'C1778', createdOn: 1684298143227),
+    ];
+    expect(runProductSearch(productos, 'pal'), [4, 3, 2, 0, 1]);
   });
 
   test('busca por codigo y por codigo de barras', () {

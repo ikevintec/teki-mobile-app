@@ -79,6 +79,7 @@ class Product {
   final bool? mostrarEnWeb;
   final bool? favorito;
   final bool? estado;
+  final int? createdOn;
   final bool? validacionLote;
   final double? precioCompraUnidad;
 
@@ -146,6 +147,7 @@ class Product {
     this.mostrarEnWeb,
     this.favorito,
     this.estado,
+    this.createdOn,
     this.validacionLote,
     this.precioCompraUnidad,
   });
@@ -247,6 +249,7 @@ class Product {
         mostrarEnWeb: json['mostrarEnWeb'],
         favorito: json['favorito'],
         estado: json['estado'],
+        createdOn: (json['createdOn'] as num?)?.toInt(),
         validacionLote: json['validacionLote'],
         inventarios: (json['inventarios'] as List?)
             ?.map((e) => Inventory.fromJson(e))
@@ -318,6 +321,7 @@ class Product {
         'mostrarEnWeb': mostrarEnWeb,
         'favorito': favorito,
         'estado': estado,
+        'createdOn': createdOn,
         'validacionLote': validacionLote,
         'inventarios': inventarios?.map((e) => e.toJson()).toList(),
       };
@@ -386,6 +390,7 @@ class Product {
     bool? mostrarEnWeb,
     bool? favorito,
     bool? estado,
+    int? createdOn,
     bool? validacionLote,
     double? precioCompraUnidad,
   }) {
@@ -457,6 +462,7 @@ class Product {
       mostrarEnWeb: mostrarEnWeb ?? this.mostrarEnWeb,
       favorito: favorito ?? this.favorito,
       estado: estado ?? this.estado,
+      createdOn: createdOn ?? this.createdOn,
       validacionLote: validacionLote ?? this.validacionLote,
       precioCompraUnidad: precioCompraUnidad ?? this.precioCompraUnidad,
     );

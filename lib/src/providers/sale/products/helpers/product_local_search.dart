@@ -38,12 +38,24 @@ class ProductSearchEntry {
   final String codigo;
   final String codigoBarra;
 
+  /// Criterio de orden dentro de cada grupo (ver [_byCreatedOnDesc]).
+  final int createdOn;
+
   const ProductSearchEntry({
     required this.position,
     required this.nombre,
     required this.codigo,
     required this.codigoBarra,
+    this.createdOn = 0,
   });
+}
+
+/// Mismo orden que el endpoint (`sortField: createdOn, sortOrder: -1`) y que la
+/// búsqueda interna de la web: más reciente primero. La posición desempata para
+/// que el resultado sea estable.
+int _byCreatedOnDesc(ProductSearchEntry a, ProductSearchEntry b) {
+  final byDate = b.createdOn.compareTo(a.createdOn);
+  return byDate != 0 ? byDate : a.position.compareTo(b.position);
 }
 
 String _normalize(String? value) => (value ?? '').trim().toLowerCase();
@@ -56,6 +68,7 @@ List<ProductSearchEntry> buildProductSearchIndex(List<Product> products) {
       nombre: _normalize(products[i].nombre),
       codigo: _normalize(products[i].codigo),
       codigoBarra: _normalize(products[i].codigoBarra),
+      createdOn: products[i].createdOn ?? 0,
     ),
     growable: false,
   );
@@ -65,8 +78,8 @@ List<ProductSearchEntry> buildProductSearchIndex(List<Product> products) {
 ///
 /// Igual que la búsqueda interna de la web, Fuse no es el primer criterio:
 /// primero van las coincidencias directas (`includes` en nombre, código o
-/// código de barras, en el orden original) y después las difusas. Los grupos no
-/// se mezclan.
+/// código de barras) y después las difusas. Los grupos no se mezclan y cada uno
+/// se ordena por [_byCreatedOnDesc].
 List<int> runProductSearch(
   List<ProductSearchEntry> index,
   String query, {
@@ -75,28 +88,33 @@ List<int> runProductSearch(
   final term = query.trim().toLowerCase();
   if (term.isEmpty || index.isEmpty || limit <= 0) return const [];
 
-  final direct = <int>[];
-  final matched = <int>{};
-
+  final direct = <ProductSearchEntry>[];
   for (final entry in index) {
     if (entry.nombre.contains(term) ||
         entry.codigo.contains(term) ||
         entry.codigoBarra.contains(term)) {
-      direct.add(entry.position);
-      matched.add(entry.position);
-      // Lo difuso iría después del corte igual: nos ahorramos el scan completo.
-      if (direct.length >= limit) return direct;
+      direct.add(entry);
     }
   }
+  direct.sort(_byCreatedOnDesc);
 
+  // El grupo difuso siempre va después del directo, así que si este ya llena el
+  // límite el fuzzy quedaría fuera del corte: nos ahorramos ese recorrido.
+  if (direct.length >= limit) {
+    return [for (final entry in direct.take(limit)) entry.position];
+  }
+
+  final matched = {for (final entry in direct) entry.position};
   final rest = [
     for (final entry in index)
       if (!matched.contains(entry.position)) entry,
   ];
 
   final fuzzy = _fuzzyMatches(rest, term, limit - direct.length);
-  if (fuzzy.isEmpty) return direct;
-  return [...direct, ...fuzzy];
+  return [
+    for (final entry in direct) entry.position,
+    ...fuzzy,
+  ];
 }
 
 /// Equivalente a Fuse con `useExtendedSearch: true`: cada token separado por
@@ -114,26 +132,15 @@ List<int> _fuzzyMatches(
   if (tokens.isEmpty) return const [];
 
   var candidates = entries;
-  var scores = const <int, double>{};
 
   for (final token in tokens) {
     final results =
         Fuzzy<ProductSearchEntry>(candidates, options: _fuzzyOptions)
             .search(token);
     if (results.isEmpty) return const [];
-
-    final nextCandidates = <ProductSearchEntry>[];
-    final nextScores = <int, double>{};
-    for (final result in results) {
-      final position = result.item.position;
-      nextScores[position] = (scores[position] ?? 0) + result.score;
-      nextCandidates.add(result.item);
-    }
-    candidates = nextCandidates;
-    scores = nextScores;
+    candidates = [for (final result in results) result.item];
   }
 
-  final ordered = scores.entries.toList()
-    ..sort((a, b) => a.value.compareTo(b.value));
-  return [for (final entry in ordered.take(limit)) entry.key];
+  candidates.sort(_byCreatedOnDesc);
+  return [for (final entry in candidates.take(limit)) entry.position];
 }
