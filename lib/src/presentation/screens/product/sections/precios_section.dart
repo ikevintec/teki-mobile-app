@@ -5,6 +5,7 @@ import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/precios_compra_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
+import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/providers/formularios/product_form.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -152,7 +153,8 @@ class PriceEditBottomSheet extends HookConsumerWidget {
     }, [precioVenta.unidadesMayoreo]);
 
     final bool isReadOnly = precioVenta.tipoPrecio != "ESPECIAL";
-    final bool isMayoreo = precioVenta.tipoPrecio != "POR_DEFECTO";
+    // Unidades mayoreo solo aplica al tipo MAYOREO (no a ESPECIAL ni por defecto).
+    final bool isMayoreo = precioVenta.tipoPrecio == "MAYOREO";
 
     return Stack(
       children: [
@@ -268,8 +270,8 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                           }, false);
                         },
                         validator: (value) {
-                          if (precioVenta.tipoPrecio == "POR_DEFECTO")
-                            return null;
+                          // Solo el tipo MAYOREO exige unidades mayoreo.
+                          if (precioVenta.tipoPrecio != "MAYOREO") return null;
                           if (value == null || value.isEmpty) {
                             return "Campo requerido";
                           }
@@ -302,6 +304,27 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                       },
                     ),
                   ),
+                  // Flag "Para canje": este precio se aplica automáticamente
+                  // cuando la venta es un canje de envase. No aplica al precio
+                  // por defecto (ese es el fallback).
+                  if (index != 0)
+                    SizedBox(
+                      width: constraints.maxWidth,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: CustomSwitch(
+                          title: "Para canje",
+                          value: precioVenta.paraCanje ?? false,
+                          onChanged: (value) {
+                            ref
+                                .read(productFormProvider.notifier)
+                                .modifyPrecioVenta(index, (item) {
+                              return item.copyWith(paraCanje: value);
+                            }, false);
+                          },
+                        ),
+                      ),
+                    ),
                 ],
               );
             },

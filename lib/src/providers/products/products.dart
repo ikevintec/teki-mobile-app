@@ -70,6 +70,17 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
     setLoading(false);
   }
 
+  /// Recarga la lista conservando la búsqueda activa (para volver de editar
+  /// sin perder el filtro). Si no hay búsqueda, resetea a la lista completa.
+  void refreshKeepingFilter() {
+    final filtro = state.filterGlobal ?? '';
+    if (filtro.isNotEmpty) {
+      searchProducts(filtro);
+    } else {
+      resetProducts();
+    }
+  }
+
   void searchProducts(String search) async {
     setLoading(true);
     setPageNumber(0);

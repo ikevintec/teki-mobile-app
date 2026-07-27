@@ -3,12 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:teki_app/src/data/models/teki_model/brand.dart';
+import 'package:teki_app/src/data/models/teki_model/category.dart';
+import 'package:teki_app/src/presentation/screens/product/sections/envase_retornable_section.dart';
+import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
+import 'package:teki_app/src/providers/formularios/product_catalogs_provider.dart';
 import 'package:teki_app/src/presentation/widgets/segment/custom_segment_selector.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/upload_image/pick_product_image.dart';
-import 'package:teki_app/src/presentation/widgets/upload_image/upload_image.dart';
 import 'package:teki_app/src/providers/formularios/product_form.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -22,10 +26,16 @@ class ProductGeneralSection extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final formProvider = ref.watch(productFormProvider);
     final notifier = ref.read(productFormProvider.notifier);
+    // Sin id = producto nuevo (en edición no se puede cambiar el tipo).
+    final esNuevo = formProvider.product.id == null;
     final factorController =
         useTextEditingController(text: formatDouble(formProvider.factor));
     final nombreController =
         useTextEditingController(text: formProvider.nombre);
+    final codigoController =
+        useTextEditingController(text: formProvider.codigo);
+    final codigoBarraController =
+        useTextEditingController(text: formProvider.codigoBarra);
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         factorController.text = formatDouble(formProvider.factor);
@@ -51,14 +61,13 @@ class ProductGeneralSection extends HookConsumerWidget {
         color: Colors.white54,
         child: ListView(
           children: [
-            const SizedBox(height: 30),
-            UploadImage(
-              image: formProvider.imagenSeleccionada?.url ?? '',
-              onImageSelected: (newImage, file) {
-                notifier.setImagenSeleccionadaFile(newImage, file);
-              },
+            const SizedBox(height: 20),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Imágenes',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             _ProductImageStrip(
               imagenes: formProvider.imagenes,
               selectedSlot: formProvider.imagenSeleccionadaSlot,
@@ -91,31 +100,159 @@ class ProductGeneralSection extends HookConsumerWidget {
             ),
             const SizedBox(height: 20),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: DropdownFormFieldSection(
-                    label: "Tipo de Producto",
-                    hint: "Selecciona una unidad de producto",
-                    items: productTypeItems,
-                    selectionItem: formProvider.tipoProducto,
-                    onChanged: (value) => notifier.setTipoProducto(value!),
+                  child: TextFieldSection(
+                    label: "Código",
+                    controller: codigoController,
+                    hint: "Interno (opcional)",
+                    inputType: TextInputType.text,
+                    onChanged: notifier.setCodigo,
                   ),
                 ),
-
-                if(formProvider.validacionLote)
-                const SizedBox(width: 8),
-                if(formProvider.validacionLote)
-                IntrinsicWidth(
-                  child: CustomSegmentedSelector(
-                    label: "Tipo de Producto",
-                    options: productTypeLote,
-                    selected: formProvider.tipoLote,
-                    onChanged: notifier.setTipoLote,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CustomSwitch(
+                    title: "Es servicio",
+                    value: formProvider.servicio,
+                    onChanged: notifier.setServicio,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextFieldSection(
+                    label: "Código de barras",
+                    controller: codigoBarraController,
+                    hint: "Escanea o escribe",
+                    inputType: TextInputType.text,
+                    onChanged: notifier.setCodigoBarra,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: InkWell(
+                    onTap: () async {
+                      final code = await BarcodeScannerSheet.show(context);
+                      if (code != null && code.isNotEmpty) {
+                        codigoBarraController.text = code;
+                        notifier.setCodigoBarra(code);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: ColorSchema.primaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.qr_code_scanner,
+                          color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: ref.watch(categoriasProvider).when(
+                        data: (cats) => DropdownFormFieldSection(
+                          label: "Categoría",
+                          hint: "Selecciona categoría",
+                          itemsMap: cats
+                              .map((c) => {
+                                    'label': c.nombre ?? '-',
+                                    'value': '${c.id}'
+                                  })
+                              .toList(),
+                          labelKey: 'label',
+                          valueKey: 'value',
+                          selectionItem: formProvider.categoria?.id?.toString(),
+                          onChanged: (value) {
+                            final cat = cats.firstWhere(
+                                (c) => '${c.id}' == value,
+                                orElse: () => Category());
+                            notifier.setCategoria(cat.id != null ? cat : null);
+                          },
+                        ),
+                        loading: () =>
+                            const _SelectorCargando(label: "Categoría"),
+                        error: (_, _) => _SelectorError(
+                          label: "Categoría",
+                          onRetry: () => ref.invalidate(categoriasProvider),
+                        ),
+                      ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ref.watch(marcasProvider).when(
+                        data: (marcas) => DropdownFormFieldSection(
+                          label: "Marca",
+                          hint: "Selecciona marca",
+                          itemsMap: marcas
+                              .map((m) => {
+                                    'label': m.nombre ?? '-',
+                                    'value': '${m.id}'
+                                  })
+                              .toList(),
+                          labelKey: 'label',
+                          valueKey: 'value',
+                          selectionItem: formProvider.marca?.id?.toString(),
+                          onChanged: (value) {
+                            final m = marcas.firstWhere(
+                                (b) => '${b.id}' == value,
+                                orElse: () => Brand());
+                            notifier.setMarca(m.id != null ? m : null);
+                          },
+                        ),
+                        loading: () => const _SelectorCargando(label: "Marca"),
+                        error: (_, _) => _SelectorError(
+                          label: "Marca",
+                          onRetry: () => ref.invalidate(marcasProvider),
+                        ),
+                      ),
+                ),
+              ],
+            ),
+            // El tipo de producto solo se elige al crear (igual que la web);
+            // al editar no se muestra para no permitir cambiarlo.
+            if (esNuevo || formProvider.validacionLote) ...[
+              const SizedBox(height: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (esNuevo)
+                    Expanded(
+                      child: DropdownFormFieldSection(
+                        label: "Tipo de Producto",
+                        hint: "Selecciona una unidad de producto",
+                        items: productTypeItems,
+                        selectionItem: formProvider.tipoProducto,
+                        onChanged: (value) => notifier.setTipoProducto(value!),
+                      ),
+                    ),
+                  if (esNuevo && formProvider.validacionLote)
+                    const SizedBox(width: 8),
+                  if (formProvider.validacionLote)
+                    IntrinsicWidth(
+                      child: CustomSegmentedSelector(
+                        label: "Tipo de lote",
+                        options: productTypeLote,
+                        selected: formProvider.tipoLote,
+                        onChanged: notifier.setTipoLote,
+                      ),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 20),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -208,6 +345,10 @@ class ProductGeneralSection extends HookConsumerWidget {
                 onChanged: notifier.setPrecioCompraIncImp,
               ),
             if (formProvider.igv == true) const SizedBox(height: 20),
+            // Envase retornable: solo para artículos y paquetes producidos.
+            if (formProvider.tipoProducto == 'ARTICULO' ||
+                formProvider.tipoProducto == 'PAQUETE_PRODUCIDO')
+              const EnvaseRetornableSection(),
             const SizedBox(height: 70),
           ],
         ),
@@ -468,6 +609,77 @@ class _Thumbnail extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Placeholder mientras carga un selector (categoría/marca).
+class _SelectorCargando extends StatelessWidget {
+  final String label;
+  const _SelectorCargando({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 6),
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Center(
+            child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Estado de error de un selector (categoría/marca) con opción de reintentar.
+class _SelectorError extends StatelessWidget {
+  final String label;
+  final VoidCallback onRetry;
+  const _SelectorError({required this.label, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: onRetry,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.refresh, size: 18, color: Colors.red.shade400),
+                const SizedBox(width: 6),
+                Text('Error, reintentar',
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade400)),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

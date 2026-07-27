@@ -51,6 +51,8 @@ class Product {
   final Company? empresa;
   final Brand? marca;
   final Category? categoria;
+  final bool? envaseRetornable;
+  final Product? productoEnvase;
   final int? numeroMesesPlan;
   final int? numeroDiasPlan;
   final int? numeroCuotasPlan;
@@ -115,6 +117,8 @@ class Product {
     this.empresa,
     this.marca,
     this.categoria,
+    this.envaseRetornable,
+    this.productoEnvase,
     this.numeroMesesPlan,
     this.numeroDiasPlan,
     this.numeroCuotasPlan,
@@ -192,6 +196,8 @@ class Product {
         empresa:
             json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
         marca: json['marca'] != null ? Brand.fromJson(json['marca']) : null,
+        envaseRetornable: json['envaseRetornable'],
+        productoEnvase: json['productoEnvase'] != null ? Product.fromJson(json['productoEnvase']) : null,
         categoria: json['categoria'] != null
             ? Category.fromJson(json['categoria'])
             : null,
@@ -280,6 +286,8 @@ class Product {
         'empresa': empresa?.toJson(),
         'marca': marca?.toJson(),
         'categoria': categoria?.toJson(),
+        'envaseRetornable': envaseRetornable,
+        'productoEnvase': productoEnvase == null ? null : {'id': productoEnvase!.id, 'nombre': productoEnvase!.nombre},
         'numeroMesesPlan': numeroMesesPlan,
         'numeroDiasPlan': numeroDiasPlan,
         'numeroCuotasPlan': numeroCuotasPlan,
@@ -346,6 +354,8 @@ class Product {
     Company? empresa,
     Brand? marca,
     Category? categoria,
+    bool? envaseRetornable,
+    Product? productoEnvase,
     int? numeroMesesPlan,
     int? numeroDiasPlan,
     int? numeroCuotasPlan,
@@ -412,6 +422,8 @@ class Product {
       empresa: empresa ?? this.empresa,
       marca: marca ?? this.marca,
       categoria: categoria ?? this.categoria,
+      envaseRetornable: envaseRetornable ?? this.envaseRetornable,
+      productoEnvase: productoEnvase ?? this.productoEnvase,
       numeroMesesPlan: numeroMesesPlan ?? this.numeroMesesPlan,
       numeroDiasPlan: numeroDiasPlan ?? this.numeroDiasPlan,
       numeroCuotasPlan: numeroCuotasPlan ?? this.numeroCuotasPlan,

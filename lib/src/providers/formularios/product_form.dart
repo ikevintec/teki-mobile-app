@@ -1,10 +1,13 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:teki_app/src/data/models/teki_model/company.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
+import 'package:teki_app/src/data/models/teki_model/brand.dart';
+import 'package:teki_app/src/data/models/teki_model/category.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/product_item_package.dart';
 import 'package:teki_app/src/data/models/teki_model/product_image.dart';
 import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 import 'package:teki_app/src/data/models/teki_model/unit_code.dart';
@@ -86,6 +89,71 @@ class ProductFormNotifier extends StateNotifier<ProductFormState>
 
   /// Máximo de imágenes por producto (1 por defecto + 4 adicionales).
   static const int maxImagenes = 5;
+
+  void setCodigo(String codigo) {
+    state = state.copyWith(codigo: codigo);
+  }
+
+  void setCodigoBarra(String codigoBarra) {
+    state = state.copyWith(codigoBarra: codigoBarra);
+  }
+
+  void setCategoria(Category? categoria) {
+    // Guardamos referencia mínima: la categoría trae árbol (padre/hijas) que
+    // al serializar puede volverse circular. El backend solo usa el id.
+    state = state.copyWith(
+      categoria: categoria == null
+          ? null
+          : Category(id: categoria.id, nombre: categoria.nombre),
+    );
+  }
+
+  void setMarca(Brand? marca) {
+    state = state.copyWith(
+      marca: marca == null ? null : Brand(id: marca.id, nombre: marca.nombre),
+    );
+  }
+
+  void setServicio(bool servicio) {
+    state = state.copyWith(servicio: servicio);
+  }
+
+  void setEnvaseRetornable(bool value) {
+    state = state.copyWith(
+      envaseRetornable: value,
+      productoEnvase: value ? state.productoEnvase : null,
+    );
+  }
+
+  void setProductoEnvase(Product? producto) {
+    state = state.copyWith(productoEnvase: producto);
+  }
+
+  // ── Items del paquete (composición) ──────────────────────────────────
+  bool addPaqueteItem(Product producto) {
+    final actuales = state.paqueteItems
+        .where((pi) => pi.eliminado != true)
+        .toList();
+    if (actuales.any((pi) => pi.productoItem?.id == producto.id)) {
+      return false;
+    }
+    state = state.copyWith(paqueteItems: [
+      ...state.paqueteItems,
+      ProductItemPackage(productoItem: producto, cantidad: 1),
+    ]);
+    return true;
+  }
+
+  void setPaqueteItemCantidad(int index, double cantidad) {
+    final list = [...state.paqueteItems];
+    list[index].cantidad = cantidad;
+    state = state.copyWith(paqueteItems: list);
+  }
+
+  void removePaqueteItem(int index) {
+    final list = [...state.paqueteItems]..removeAt(index);
+    state = state.copyWith(paqueteItems: list);
+  }
 
   void setNombre(String nombre) {
     state = state.copyWith(nombre: nombre);
@@ -263,6 +331,19 @@ class ProductFormNotifier extends StateNotifier<ProductFormState>
       ); // Reset image file
       state = state.copyWith(
         nombre: product.nombre ?? '',
+        codigo: product.codigo ?? '',
+        codigoBarra: product.codigoBarra ?? '',
+        categoria: product.categoria == null
+            ? null
+            : Category(
+                id: product.categoria!.id, nombre: product.categoria!.nombre),
+        marca: product.marca == null
+            ? null
+            : Brand(id: product.marca!.id, nombre: product.marca!.nombre),
+        servicio: product.servicio ?? false,
+        envaseRetornable: product.envaseRetornable ?? false,
+        productoEnvase: product.productoEnvase,
+        paqueteItems: product.paqueteItems ?? const [],
         unidadCompra: product.unidadCompra ?? state.unidades[0],
         unidad: product.unidad ?? state.unidades[0],
         unidadAlternativa: product.unidadAlternativa ?? state.unidades[0],
@@ -400,6 +481,14 @@ class ProductFormNotifier extends StateNotifier<ProductFormState>
     }
     return state.product.copyWith(
       nombre: state.nombre,
+      codigo: state.codigo,
+      codigoBarra: state.codigoBarra,
+      categoria: state.categoria,
+      marca: state.marca,
+      servicio: state.servicio,
+      envaseRetornable: state.envaseRetornable,
+      productoEnvase: state.envaseRetornable ? state.productoEnvase : null,
+      paqueteItems: state.paqueteItems,
       unidadCompra: state.unidadCompra,
       unidad: state.unidad,
       unidadAlternativa: state.unidadAlternativa,
@@ -450,7 +539,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState>
       await productsRepository.updateProduct(product);
       ref.read(productProvider.notifier).setLoading(false);
       Get.back();
-      ref.read(productsProvider.notifier).resetProducts();
+      ref.read(productsProvider.notifier).refreshKeepingFilter();
       successNotification('Producto actualizado correctamente');
     } catch (e) {
       errorNotification(e.toString());

@@ -204,6 +204,38 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     );
   }
 
+  // Envase retornable: por línea, si el cliente devolvió su envase (canje).
+  // Al marcar se aplica el precio "para canje" del producto (paridad web).
+  Widget _buildDevolvioEnvaseRow() {
+    final devolvio = widget.productTicketDetail.devolvioEnvase == true;
+    final color = devolvio ? const Color(0xFF2E7D32) : Colors.grey.shade500;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => ref
+            .read(productSaleProvider.notifier)
+            .setDevolvioEnvase(widget.index, !devolvio),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(devolvio ? Icons.check_circle : Icons.recycling,
+                size: 13, color: color),
+            const SizedBox(width: 4),
+            Text(
+              devolvio ? 'Devolvió envase' : 'Sin devolución de envase',
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: devolvio ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAfectacionSheet() {
     final actual = _afectacionActual;
     showModalBottomSheet(
@@ -524,6 +556,10 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                           // producto del restaurante: no se edita aquí.
                           if (widget.productTicketDetail.comandaDetalle == null)
                             _buildAfectacionIgvRow(),
+                          if (widget.productTicketDetail.producto
+                                  ?.envaseRetornable ==
+                              true)
+                            _buildDevolvioEnvaseRow(),
                         ],
                       ),
                     ),

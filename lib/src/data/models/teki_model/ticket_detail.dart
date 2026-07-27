@@ -48,6 +48,7 @@ class TicketDetail {
   final double? descuento;
   final String? codigoDescuento;
   final bool? esAnticipo;
+  final bool? devolvioEnvase;
   final bool? estado;
   final String? uuid;
   final String? uuidRelated;
@@ -115,6 +116,7 @@ class TicketDetail {
       this.descuento,
       this.codigoDescuento,
       this.esAnticipo,
+      this.devolvioEnvase,
       this.estado,
       this.uuid,
       this.uuidRelated,
@@ -181,6 +183,7 @@ class TicketDetail {
         descuento: json['descuento'],
         codigoDescuento: json['codigoDescuento'],
         esAnticipo: json['esAnticipo'],
+        devolvioEnvase: json['devolvioEnvase'],
         estado: json['estado'],
         uuid: json['uuid'],
         uuidRelated: json['uuidRelated'],
@@ -268,6 +271,7 @@ class TicketDetail {
         //interes
         if (interes != null) 'interes': interes,
         'esAnticipo': esAnticipo,
+        'devolvioEnvase': devolvioEnvase,
         'estado': estado,
         'uuid': uuid,
         'uuidRelated': uuidRelated,
@@ -346,6 +350,7 @@ class TicketDetail {
     double? descuento,
     String? codigoDescuento,
     bool? esAnticipo,
+    bool? devolvioEnvase,
     bool? estado,
     String? uuid,
     String? uuidRelated,
@@ -417,6 +422,7 @@ class TicketDetail {
       descuento: descuento ?? this.descuento,
       codigoDescuento: codigoDescuento ?? this.codigoDescuento,
       esAnticipo: esAnticipo ?? this.esAnticipo,
+      devolvioEnvase: devolvioEnvase ?? this.devolvioEnvase,
       estado: estado ?? this.estado,
       uuid: uuid ?? this.uuid,
       uuidRelated: uuidRelated ?? this.uuidRelated,

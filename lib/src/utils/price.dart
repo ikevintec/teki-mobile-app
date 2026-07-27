@@ -78,3 +78,19 @@ double getPriceProduct(Product product, Office puntoVenta, Map<String, dynamic>?
 
     return ans >= 0 ? arr[ans] : null;
   }
+/// Precio marcado "para canje" del producto (o null si no tiene). Aplica el
+/// mismo ajuste de IGV que el precio por defecto. Espeja la web.
+double? getCanjePrice(Product product, Office puntoVenta, Map<String, dynamic>? ops) {
+  ops ??= {};
+  if (product.preciosVenta == null || product.preciosVenta!.isEmpty) return null;
+  final porPuntoVenta = product.preciosPorPuntoVenta ?? false;
+  final listPrices = product.preciosVenta!.where((pv) =>
+      (porPuntoVenta && pv.puntoVenta != null && pv.puntoVenta!.id == puntoVenta.id) ||
+      (!porPuntoVenta && pv.puntoVenta == null)).toList();
+  final canje = listPrices.where((pv) => pv.paraCanje == true).toList();
+  if (canje.isEmpty) return null;
+  final double igv = (ops['igv'] ?? 0).toDouble();
+  double price = canje.first.precio ?? 0;
+  if (!(product.igv ?? true)) price *= (1 + igv);
+  return price;
+}

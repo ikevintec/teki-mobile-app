@@ -10,6 +10,7 @@ class ProductPrice {
   final double? margenUtilidad;
   final double? unidadesMayoreo;
   final String? tipoPrecio;
+  final bool? paraCanje;
   final String? nombre;
   final Office? puntoVenta;
   final User? usuario;
@@ -23,6 +24,7 @@ class ProductPrice {
     this.margenUtilidad,
     this.unidadesMayoreo,
     this.tipoPrecio,
+    this.paraCanje,
     this.nombre,
     this.puntoVenta,
     this.usuario,
@@ -37,6 +39,7 @@ class ProductPrice {
         margenUtilidad: (json['margenUtilidad'] as num?)?.toDouble(),
         unidadesMayoreo: (json['unidadesMayoreo'] as num?)?.toDouble(),
         tipoPrecio: json['tipoPrecio'],
+        paraCanje: json['paraCanje'],
         nombre: json['nombre'],
         puntoVenta: json['puntoVenta'] != null
             ? Office.fromJson(json['puntoVenta'])
@@ -55,6 +58,7 @@ class ProductPrice {
         'margenUtilidad': margenUtilidad,
         'unidadesMayoreo': unidadesMayoreo,
         'tipoPrecio': tipoPrecio,
+        'paraCanje': paraCanje,
         'nombre': nombre,
         'puntoVenta': puntoVenta?.toJson(),
         'usuario': usuario?.toJson(),
@@ -71,6 +75,7 @@ extension ProductPriceCopyWith on ProductPrice {
     double? margenUtilidad,
     double? unidadesMayoreo,
     String? tipoPrecio,
+    bool? paraCanje,
     String? nombre,
     Office? puntoVenta,
     User? usuario,
@@ -84,6 +89,7 @@ extension ProductPriceCopyWith on ProductPrice {
       margenUtilidad: margenUtilidad ?? this.margenUtilidad,
       unidadesMayoreo: unidadesMayoreo ?? this.unidadesMayoreo,
       tipoPrecio: tipoPrecio ?? this.tipoPrecio,
+      paraCanje: paraCanje ?? this.paraCanje,
       nombre: nombre ?? this.nombre,
       puntoVenta: puntoVenta ?? this.puntoVenta,
       usuario: usuario ?? this.usuario,

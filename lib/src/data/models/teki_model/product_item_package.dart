@@ -50,7 +50,12 @@ class ProductItemPackage {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'productoItem': productoItem?.toJson(),
+      // Referencia mínima: el backend solo usa el id del productoItem, y
+      // serializar el producto completo puede romper el guardado (precios con
+      // referencia circular / payload gigante).
+      'productoItem': productoItem == null
+          ? null
+          : {'id': productoItem!.id, 'nombre': productoItem!.nombre},
       'cantidad': cantidad,
       'modificado': modificado,
       'eliminado': eliminado,

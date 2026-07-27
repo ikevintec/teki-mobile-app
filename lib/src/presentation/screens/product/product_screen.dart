@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/presentation/screens/product/sections/composicion_section.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/general_section.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/precios_section.dart';
 import 'package:teki_app/src/presentation/screens/product/sections/product_not_found_screen.dart';
@@ -22,8 +23,16 @@ class ProductScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = ref.watch(productProvider);
-    final controller = useTabController(initialLength: 2);
     final selectedTabIndex = useState(0);
+    // La pestaña Composición solo aplica a paquetes/platillos.
+    final tipoProducto = ref.watch(
+        productFormProvider.select((s) => s.tipoProducto));
+    final showComposicion = const {
+      'PAQUETE',
+      'PAQUETE_PRODUCIDO',
+      'PLATILLO',
+      'PLATILLO_PRODUCIDO',
+    }.contains(tipoProducto);
 
     final generalFormKey = useMemoized(() => GlobalKey<FormState>());
     final preciosFormKey = useMemoized(() => GlobalKey<FormState>());
@@ -58,6 +67,20 @@ class ProductScreen extends HookConsumerWidget {
       return const ScreenLoader(message: 'Cargando Producto...');
     }
 
+    final sections = <Widget>[
+      ProductGeneralSection(formKey: generalFormKey),
+      ProductPreciosSection(formKey: preciosFormKey),
+      if (showComposicion) const ComposicionSection(),
+    ];
+    final navItems = <Widget>[
+      const Icon(Icons.description, size: 25, color: Colors.white),
+      const Icon(Icons.attach_money, size: 25, color: Colors.white),
+      if (showComposicion)
+        const Icon(Icons.layers, size: 25, color: Colors.white),
+    ];
+    // Al cambiar de tipo (ocultando Composición) el índice podría quedar fuera.
+    final safeIndex = selectedTabIndex.value.clamp(0, sections.length - 1);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
@@ -69,34 +92,27 @@ class ProductScreen extends HookConsumerWidget {
       body: provider.isError == true
           ? const ProductNotFoundScreen()
           : IndexedStack(
-              index: selectedTabIndex.value,
-              children: [
-                ProductGeneralSection(formKey: generalFormKey),
-                ProductPreciosSection(formKey: preciosFormKey),
-              ],
+              index: safeIndex,
+              children: sections,
             ),
       bottomNavigationBar: CurvedNavigationBar(
-        index: selectedTabIndex.value,
+        index: safeIndex,
         height: 75.0,
         backgroundColor: Colors.transparent, // Fondo detrás de la barra
         color: ColorSchema.primaryColor, // Color de la barra (fondo)
         buttonBackgroundColor:
             ColorSchema.primaryColor, // Botón/tab seleccionado
-        animationDuration: Duration(milliseconds: 300),
+        animationDuration: const Duration(milliseconds: 300),
         animationCurve: Curves.easeInOut,
-        items: const <Widget>[
-          Icon(Icons.description, size: 25, color: Colors.white),
-          Icon(Icons.attach_money, size: 25, color: Colors.white),
-        ],
+        items: navItems,
         onTap: (index) {
           selectedTabIndex.value = index;
-          controller.animateTo(index);
         },
       ),
       floatingActionButton: provider.isError == true
           ? null
           : CustomFloatingActionButton(
-              iconData: productId != null ? Icons.edit : Icons.save,
+              iconData: Icons.save,
               onPressed: () {
                 final generalValid =
                     generalFormKey.currentState?.validate() ?? false;

@@ -12,15 +12,22 @@ TicketDetail getTicketDetail(
     {required Product product,
     required SesionState sesion,
     double? quantity = 1}) {
-  final price = getPriceProduct(product, sesion.office!, {
+    final priceOps = {
     'qty': quantity,
     'igv': sesion.config!.igv,
     'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
-  });
+  };
+  // Envase retornable: al agregar, el canje viene activo por defecto, así que
+  // aplicamos el precio "para canje" si existe (paridad web).
+  final bool devolvioEnvase = product.envaseRetornable == true;
+  final double? canje =
+      devolvioEnvase ? getCanjePrice(product, sesion.office!, priceOps) : null;
+  final price = canje ?? getPriceProduct(product, sesion.office!, priceOps);
   return TicketDetail(
     cantidad: quantity,
     montoOriginal: price,
     precioVentaUnitario: price,
+    devolvioEnvase: devolvioEnvase ? true : null,
     codigoProducto: product.codigo,
     codigoUnidadMedida: product.unidad?.codigo ?? '',
     precioCompraUnitario: product.precioCompra ?? 0,
@@ -51,11 +58,16 @@ TicketDetail changeQtyTicketDetail({
   required double quantity,
   required SesionState sesion,
 }) {
-  final newPrice = getPriceProduct(ticketDetail.producto!, sesion.office!, {
+  final ops = {
     'qty': quantity,
     'igv': sesion.config!.igv,
     'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
-  });
+  };
+  // Conserva el precio de canje si la línea está marcada como devolución.
+  final double? canje = ticketDetail.devolvioEnvase == true
+      ? getCanjePrice(ticketDetail.producto!, sesion.office!, ops)
+      : null;
+  final newPrice = canje ?? getPriceProduct(ticketDetail.producto!, sesion.office!, ops);
   return ticketDetail.copyWith(
     cantidad: quantity,
     precioVentaUnitario: newPrice,

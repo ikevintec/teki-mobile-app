@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/presentation/screens/inventory/inventory_sections/inventory_list_section.dart';
+import 'package:teki_app/src/presentation/screens/inventory_production/inventory_production_screen.dart';
 import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/inventory/inventory_provider.dart';
@@ -45,9 +46,14 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
 
   void _onRefresh() {
     _debounce?.cancel();
-    _searchController.clear();
     final idPuntoVenta = ref.read(sesionProvider).office?.id;
-    if (idPuntoVenta != null) {
+    if (idPuntoVenta == null) return;
+    // Conserva la búsqueda activa: este refresh también se dispara al cerrar
+    // bottom sheets (opciones/historial), y limpiarla borraba los resultados.
+    final search = _searchController.text.trim();
+    if (search.isNotEmpty) {
+      ref.read(inventoryProvider.notifier).searchInventory(search);
+    } else {
       ref.read(inventoryProvider.notifier).loadInventory(idPuntoVenta);
     }
   }
@@ -177,6 +183,24 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
                   ),
                   child: const Icon(Icons.qr_code_scanner,
                       color: Colors.white, size: 22),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => const InventoryProductionScreen()),
+                ),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: ColorSchema.primaryColor),
+                  ),
+                  child: const Icon(Icons.precision_manufacturing_outlined,
+                      color: ColorSchema.primaryColor, size: 22),
                 ),
               ),
             ],

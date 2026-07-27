@@ -10,6 +10,7 @@ import 'package:teki_app/src/data/static/lists.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helper.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/utils/price.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -150,6 +151,33 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       ],
     );
     setCurrency(state.currency!.codigoMoneda!);
+  }
+
+  /// Marca/desmarca "cliente devolvió envase" en una línea y reajusta el
+  /// precio: con canje usa el precio "para canje" (o el por defecto si no
+  /// tiene); sin canje vuelve al por defecto. Espeja la web.
+  void setDevolvioEnvase(int index, bool value) {
+    if (index < 0 || index >= state.productsSales.length) return;
+    final line = state.productsSales[index];
+    final product = line.producto;
+    if (product == null) return;
+    final sesion = ref.read(sesionProvider);
+    final ops = {
+      'qty': line.cantidad,
+      'igv': sesion.config!.igv,
+      'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
+    };
+    final canje = value ? getCanjePrice(product, sesion.office!, ops) : null;
+    final price = canje ?? getPriceProduct(product, sesion.office!, ops);
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)
+        ..[index] = line.copyWith(
+          devolvioEnvase: value,
+          precioVentaUnitario: price,
+          montoOriginal: price,
+        ),
+    );
+    calculoTotal();
   }
 
   void setCurrency(String codigoMoneda, [int? index]) {

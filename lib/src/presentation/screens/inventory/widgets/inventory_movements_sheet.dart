@@ -612,9 +612,7 @@ class _LogItem extends StatelessWidget {
               ),
               Text(
                 record.cantidad != null
-                    ? (record.cantidad! >= 0
-                        ? '+${record.cantidad}'
-                        : '${record.cantidad}')
+                    ? '${isEntrada ? '+' : '-'}${formatDouble(record.cantidad!.abs())}'
                     : '-',
                 style: GoogleFonts.raleway(
                   fontSize: 13,
@@ -714,9 +712,7 @@ class _LoteLogItem extends StatelessWidget {
           // Cantidad
           Text(
             record.cantidad != null
-                ? (record.cantidad! >= 0
-                    ? '+${formatDouble(record.cantidad!)}'
-                    : formatDouble(record.cantidad!))
+                ? '${isEntrada ? '+' : '-'}${formatDouble(record.cantidad!.abs())}'
                 : '-',
             style: GoogleFonts.raleway(
               fontSize: 15,

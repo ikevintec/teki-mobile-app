@@ -1,12 +1,25 @@
 import 'package:image_picker/image_picker.dart';
+import 'package:teki_app/src/data/models/teki_model/brand.dart';
+import 'package:teki_app/src/data/models/teki_model/category.dart';
 import 'package:teki_app/src/data/models/teki_model/company.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/product_item_package.dart';
 import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 import 'package:teki_app/src/data/models/teki_model/unit_code.dart';
 
+const Object _noValue = Object();
+
 class ProductFormState {
   final String nombre;
+  final String codigo;
+  final String codigoBarra;
+  final Category? categoria;
+  final Brand? marca;
+  final bool servicio;
+  final bool envaseRetornable;
+  final Product? productoEnvase;
+  final List<ProductItemPackage> paqueteItems;
   final UnitCode unidad;
   final UnitCode unidadAlternativa;
   final UnitCode unidadCompra;
@@ -40,6 +53,14 @@ class ProductFormState {
 
   ProductFormState({
     required this.nombre,
+    this.codigo = '',
+    this.codigoBarra = '',
+    this.categoria,
+    this.marca,
+    this.servicio = false,
+    this.envaseRetornable = false,
+    this.productoEnvase,
+    this.paqueteItems = const [],
     required this.unidad,
     required this.unidadCompra,
     required this.unidadAlternativa,
@@ -71,6 +92,14 @@ class ProductFormState {
 
   ProductFormState copyWith({
     String? nombre,
+    String? codigo,
+    String? codigoBarra,
+    Object? categoria = _noValue,
+    Object? marca = _noValue,
+    bool? servicio,
+    bool? envaseRetornable,
+    Object? productoEnvase = _noValue,
+    List<ProductItemPackage>? paqueteItems,
     UnitCode? unidad,
     UnitCode? unidadCompra,
     UnitCode? unidadAlternativa,
@@ -101,6 +130,16 @@ class ProductFormState {
   }) {
     return ProductFormState(
       nombre: nombre ?? this.nombre,
+      codigo: codigo ?? this.codigo,
+      codigoBarra: codigoBarra ?? this.codigoBarra,
+      categoria: categoria == _noValue ? this.categoria : categoria as Category?,
+      marca: marca == _noValue ? this.marca : marca as Brand?,
+      servicio: servicio ?? this.servicio,
+      envaseRetornable: envaseRetornable ?? this.envaseRetornable,
+      productoEnvase: productoEnvase == _noValue
+          ? this.productoEnvase
+          : productoEnvase as Product?,
+      paqueteItems: paqueteItems ?? this.paqueteItems,
       unidad: unidad ?? this.unidad,
       unidadCompra: unidadCompra ?? this.unidadCompra,
       unidadAlternativa: unidadAlternativa ?? this.unidadAlternativa,
