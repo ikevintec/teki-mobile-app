@@ -153,9 +153,11 @@ class OrdersRestaurantNotifier
   }
 
   Future<void> _fetchAndSet({required bool resetList}) async {
-    final response = await repository.getOrdersRestaurant(
-      buildOrdersRestaurantQueryParams(state),
-    );
+    final params = buildOrdersRestaurantQueryParams(state);
+    final response = await repository.getOrdersRestaurant(params);
+    // El provider es autoDispose: si el usuario salió de la pantalla mientras
+    // volaba el request, el notifier ya está destruido y no hay que tocar state.
+    if (!mounted) return;
     final newOrders = response.content ?? [];
     state = state.copyWith(
       orders: resetList ? newOrders : [...state.orders, ...newOrders],

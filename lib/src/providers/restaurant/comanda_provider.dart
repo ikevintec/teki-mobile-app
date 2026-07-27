@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
@@ -5,17 +7,23 @@ import 'package:teki_app/src/data/models/teki_model/commandDetail.dart';
 import 'package:teki_app/src/data/models/teki_model/cutomer.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetailGroupOption.dart';
 import 'package:teki_app/src/data/models/teki_model/commandDetailPreparationOption.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/orderRestaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/productImage.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/data/models/teki_model/config.dart';
+import 'package:teki_app/src/data/repositories/inventory_repository_impl.dart';
+import 'package:teki_app/src/data/repositories/products_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/restaurant_repository_impl.dart';
+import 'package:teki_app/src/domain/repositories/inventory_repository.dart';
+import 'package:teki_app/src/domain/repositories/products_repository.dart';
 import 'package:teki_app/src/domain/repositories/restaurant_repository.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/shared/services/command_print_service.dart';
-import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
-import 'package:dio/dio.dart';
 
 // ---------------------------------------------------------------------------
 // CartItem
@@ -104,16 +112,33 @@ class CartItem {
 
 final comandaProvider =
     StateNotifierProvider<ComandaNotifier, ComandaState>(
-  (ref) => ComandaNotifier(repository: RestaurantRepositoryImpl()),
+  (ref) => ComandaNotifier(
+    ref: ref,
+    repository: RestaurantRepositoryImpl(),
+    productsRepository: ProductsRepositoryImpl(),
+    inventoryRepository: InventoryRepositoryImpl(),
+  ),
 );
 
 class ComandaNotifier extends StateNotifier<ComandaState> {
+  final Ref ref;
   final RestaurantRepository repository;
-  final Dio _dio = ApiClient.dio;
+  final ProductsRepository productsRepository;
+  final InventoryRepository inventoryRepository;
   final CommandPrintService _printService = CommandPrintService();
 
-  ComandaNotifier({required this.repository})
-      : super(ComandaState(
+  /// Mismo tope que el `size: 500` del endpoint que se usaba antes.
+  static const _menuLimit = 500;
+
+  /// Imágenes ya pedidas en esta sesión: reabrir el menú no repite el POST.
+  final Map<int, List<ProductImage>> _imagesCache = {};
+
+  ComandaNotifier({
+    required this.ref,
+    required this.repository,
+    required this.productsRepository,
+    required this.inventoryRepository,
+  })  : super(ComandaState(
           table: null,
           existingOrderId: null,
           cartItems: [],
@@ -141,35 +166,127 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
       isLoadingProducts: true,
       isSubmitting: false,
     );
+    if (_useLocalSearch) {
+      unawaited(ref.read(localProductsProvider.notifier).ensureCacheLoaded());
+    }
     await loadProducts();
   }
+
+  bool get _useLocalSearch =>
+      ref.read(sesionProvider).config?.busquedaProductosLocalmente == true;
+
+  /// Si el cache aún no está en memoria (descargando o falló), se cae a la
+  /// búsqueda online para no dejar el menú vacío.
+  bool get _localProductsAvailable =>
+      ref.read(localProductsProvider).allProducts.isNotEmpty;
 
   Future<void> loadProducts({String query = ''}) async {
     state = state.copyWith(isLoadingProducts: true);
     try {
-      final params = <String, dynamic>{
-        'mostrarEnRestaurante': true,
-        'size': 500,
-      };
-      if (query.isNotEmpty) params['filterGlobal'] = query;
-      final response = await _dio.get('/products', queryParameters: params);
-      final data = response.data;
-      final List list = data is List ? data : (data['content'] ?? []);
-      final products = list.map((e) => Product.fromJson(e)).toList();
-      final categorias = products
+      final products = _useLocalSearch && _localProductsAvailable
+          ? await _loadLocal(query)
+          : await _loadOnline(query);
+      final enriched = await _enrich(products);
+      final categorias = enriched
           .map((p) => p.categoria?.nombre ?? '')
           .where((c) => c.isNotEmpty)
           .toSet()
           .toList()
         ..sort();
       state = state.copyWith(
-        products: products,
+        products: enriched,
         categorias: categorias,
         isLoadingProducts: false,
       );
     } catch (e) {
       errorNotification(e.toString());
       state = state.copyWith(isLoadingProducts: false);
+    }
+  }
+
+  /// Menú y búsqueda sobre el cache local: con query vacía devuelve el menú
+  /// completo; con query usa el mismo fuzzy que la venta. En ambos casos solo
+  /// productos con `mostrarEnRestaurante`.
+  Future<List<Product>> _loadLocal(String query) async {
+    if (query.isEmpty) {
+      return ref
+          .read(localProductsProvider)
+          .allProducts
+          .where((p) => p.mostrarEnRestaurante == true)
+          .take(_menuLimit)
+          .toList();
+    }
+    final results =
+        await ref.read(localProductsProvider.notifier).searchLocal(query);
+    return results.where((p) => p.mostrarEnRestaurante == true).toList();
+  }
+
+  /// Búsqueda ligera (`/products/search`) con los mismos filtros que usaba el
+  /// endpoint pesado de `/products`.
+  Future<List<Product>> _loadOnline(String query) {
+    final params = <String, dynamic>{
+      'paginacion': false,
+      'limit': _menuLimit,
+      'mostrarEnRestaurante': true,
+    };
+    if (query.isNotEmpty) params['filterGlobal'] = query;
+    return productsRepository.searchProducts(params);
+  }
+
+  /// La búsqueda ligera y el cache local no traen inventario ni imágenes: se
+  /// completan con los endpoints por lote, en paralelo. Ambos son best-effort:
+  /// si fallan, el menú se muestra igual.
+  Future<List<Product>> _enrich(List<Product> products) async {
+    final ids = products.map((p) => p.id).whereType<int>().toList();
+    if (ids.isEmpty) return products;
+
+    final officeId = ref.read(sesionProvider).office?.id;
+    final missingImageIds =
+        ids.where((id) => !_imagesCache.containsKey(id)).toList();
+
+    final results = await Future.wait<Object>([
+      officeId == null
+          ? Future.value(<int, Inventory>{})
+          : inventoryRepository.getInventoryByProductIds(
+              ids,
+              idPuntoVenta: officeId,
+            ),
+      productsRepository.getImagesByProductIds(missingImageIds),
+    ]);
+    final inventories = results[0] as Map<int, Inventory>;
+    _imagesCache.addAll(results[1] as Map<int, List<ProductImage>>);
+
+    return products.map((p) {
+      final inventory = inventories[p.id];
+      final images = _imagesCache[p.id];
+      if (inventory == null && images == null) return p;
+      return p.copyWith(
+        inventarios: inventory != null ? [inventory] : p.inventarios,
+        imagenes: images ?? p.imagenes,
+      );
+    }).toList();
+  }
+
+  /// Detalle completo del producto (grupos, preparaciones, precios de mayoreo)
+  /// antes de abrir el sheet: ni la búsqueda ligera ni el cache local traen esa
+  /// data. Devuelve `null` si falla (ya notificado).
+  Future<Product?> getFullProduct(Product lightProduct) async {
+    final id = lightProduct.id;
+    if (id == null) return lightProduct;
+    try {
+      final full = await productsRepository.getProductById(id);
+      // Conserva inventario e imágenes ya enriquecidos si el detalle no los trae.
+      return full.copyWith(
+        inventarios: (full.inventarios?.isNotEmpty ?? false)
+            ? full.inventarios
+            : lightProduct.inventarios,
+        imagenes: (full.imagenes?.isNotEmpty ?? false)
+            ? full.imagenes
+            : lightProduct.imagenes,
+      );
+    } catch (e) {
+      errorNotification(e.toString());
+      return null;
     }
   }
 

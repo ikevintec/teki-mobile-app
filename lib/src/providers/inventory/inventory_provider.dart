@@ -44,12 +44,14 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
     try {
       final response = await inventoryRepository
           .getInventory(buildInventoryQueryParams(state));
+      if (!mounted) return;
       state = state.copyWith(
         items: response.content ?? [],
         last: response.last ?? false,
         isLoading: false,
       );
     } catch (_) {
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, errorMessage: 'Sin conexión');
     }
   }
@@ -60,12 +62,14 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
     try {
       final response = await inventoryRepository
           .getInventory(buildInventoryQueryParams(state));
+      if (!mounted) return;
       state = state.copyWith(
         items: [...state.items, ...?response.content],
         last: response.last ?? false,
         isLoading: false,
       );
     } catch (_) {
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         pageNumber: state.pageNumber - 1,
@@ -88,12 +92,14 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
     try {
       final response = await inventoryRepository
           .getInventory(buildInventoryQueryParams(state));
+      if (!mounted) return;
       state = state.copyWith(
         items: response.content ?? [],
         last: response.last ?? false,
         isLoading: false,
       );
     } catch (_) {
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, errorMessage: 'Sin conexión');
     }
   }

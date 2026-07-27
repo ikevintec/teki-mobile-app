@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart' hide Table;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/pedido_sin_mesa_dialog.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/cart_bottom_sheet.dart';
@@ -37,6 +38,10 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
   late final TextEditingController _searchController;
   Timer? _debounce;
 
+  /// Producto cuyo detalle completo se está trayendo tras el tap; bloquea
+  /// nuevos taps y muestra el spinner en su card.
+  int? _openingProductId;
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +74,26 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
     await ref
         .read(comandaProvider.notifier)
         .loadProducts(query: _searchController.text);
+  }
+
+  /// La lista es data ligera: al tocar se trae el detalle completo (grupos,
+  /// preparaciones, mayoreo) y recién ahí se abre el sheet.
+  Future<void> _openProduct(Product product) async {
+    if (_openingProductId != null) return;
+    setState(() => _openingProductId = product.id);
+    final fullProduct =
+        await ref.read(comandaProvider.notifier).getFullProduct(product);
+    if (!mounted) return;
+    setState(() => _openingProductId = null);
+    if (fullProduct == null) return;
+
+    showProductDetailSheet(
+      context,
+      product: fullProduct,
+      onConfirm: (item, _) {
+        ref.read(comandaProvider.notifier).addCartItem(item);
+      },
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -459,17 +484,8 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                           final product = filtered[i];
                           return ProductMenuCard(
                             product: product,
-                            onTap: () {
-                              showProductDetailSheet(
-                                context,
-                                product: product,
-                                onConfirm: (item, _) {
-                                  ref
-                                      .read(comandaProvider.notifier)
-                                      .addCartItem(item);
-                                },
-                              );
-                            },
+                            isLoading: _openingProductId == product.id,
+                            onTap: () => _openProduct(product),
                           );
                         },
                       ),

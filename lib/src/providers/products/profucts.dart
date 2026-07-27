@@ -50,6 +50,7 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
     setPageNumber(state.pageNumber! + 1);
     ProductResponse response =
         await productsRepository.getProducts(buildProductQueryParams(state));
+    if (!mounted) return;
     if (response.content != null || response.content!.isNotEmpty) {
       setProducts([...state.products, ...response.content!]);
     }
@@ -60,9 +61,10 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
 
   Future<void> resetProducts() async {
     setLoading(true);
-    resetFilters(); 
+    resetFilters();
     ProductResponse response =
         await productsRepository.getProducts(buildProductQueryParams(state));
+    if (!mounted) return;
     if (response.content != null || response.content!.isNotEmpty) {
       setProducts(response.content!);
     }
@@ -77,6 +79,7 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
     setFilterGlobal(search);
     ProductResponse response =
         await productsRepository.getProducts(buildProductQueryParams(state));
+    if (!mounted) return;
     if (response.content != null || response.content!.isNotEmpty) {
       setProducts(response.content!);
     }

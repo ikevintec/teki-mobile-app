@@ -40,13 +40,15 @@ class ProductNotifier extends StateNotifier<ProductState> {
     setLoading(true);
     try {
       Product product = await productsRepository.getProductById(id);
+      if (!mounted) return;
       setProduct(product);
     } catch (e) {
+      if (!mounted) return;
       errorNotification(e.toString());
       setProduct(Product());
       setError(true);
     } finally {
-      setLoading(false);
+      if (mounted) setLoading(false);
     }
   }
   Future<void> loadMainData() async {
@@ -59,18 +61,21 @@ class ProductNotifier extends StateNotifier<ProductState> {
         return;
       }
       Company company = await companyRepository.getCompanyById(idCompany);
+      if (!mounted) return;
       if (company.unidades != null && company.unidades!.isNotEmpty) {
         setUnitCodes(company.unidades!);
       } else {
         setUnitCodes([]);
       }
       List<Currency> currencies = await productsRepository.getCurrency();
+      if (!mounted) return;
       setCurrencies(currencies);
     } catch (e) {
+      if (!mounted) return;
       errorNotification(e.toString());
       setError(true);
     } finally {
-      setLoading(false);
+      if (mounted) setLoading(false);
     }
   }
 
