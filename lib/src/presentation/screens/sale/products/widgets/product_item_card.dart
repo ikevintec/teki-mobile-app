@@ -556,9 +556,12 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                           // producto del restaurante: no se edita aquí.
                           if (widget.productTicketDetail.comandaDetalle == null)
                             _buildAfectacionIgvRow(),
-                          if (widget.productTicketDetail.producto
-                                  ?.envaseRetornable ==
-                              true)
+                          if (ref.read(sesionProvider).config
+                                      ?.permitirRetornoEnvase ==
+                                  true &&
+                              widget.productTicketDetail.producto
+                                      ?.envaseRetornable ==
+                                  true)
                             _buildDevolvioEnvaseRow(),
                         ],
                       ),

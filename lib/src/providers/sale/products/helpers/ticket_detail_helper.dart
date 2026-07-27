@@ -18,8 +18,10 @@ TicketDetail getTicketDetail(
     'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
   };
   // Envase retornable: al agregar, el canje viene activo por defecto, así que
-  // aplicamos el precio "para canje" si existe (paridad web).
-  final bool devolvioEnvase = product.envaseRetornable == true;
+  // aplicamos el precio "para canje" si existe (paridad web). Solo si la
+  // empresa habilitó el retorno de envases.
+  final bool devolvioEnvase = sesion.config?.permitirRetornoEnvase == true &&
+      product.envaseRetornable == true;
   final double? canje =
       devolvioEnvase ? getCanjePrice(product, sesion.office!, priceOps) : null;
   final price = canje ?? getPriceProduct(product, sesion.office!, priceOps);

@@ -14,6 +14,7 @@ class ConfigCompany {
   bool? previsualizarPostVenta;
   bool? inventario;
   bool? validacionInventario;
+  bool? permitirRetornoEnvase;
   bool? validacionLote;
   bool? esGasolinera;
   bool? esTiendaRopa;
@@ -63,6 +64,7 @@ class ConfigCompany {
     this.previsualizarPostVenta,
     this.inventario,
     this.validacionInventario,
+    this.permitirRetornoEnvase,
     this.validacionLote,
     this.esGasolinera,
     this.esTiendaRopa,
@@ -113,6 +115,7 @@ class ConfigCompany {
       previsualizarPostVenta: json['previsualizarPostVenta'],
       inventario: json['inventario'],
       validacionInventario: json['validacionInventario'],
+      permitirRetornoEnvase: json['permitirRetornoEnvase'],
       validacionLote: json['validacionLote'],
       esGasolinera: json['esGasolinera'],
       esTiendaRopa: json['esTiendaRopa'],
@@ -170,6 +173,7 @@ class ConfigCompany {
       'previsualizarPostVenta': previsualizarPostVenta,
       'inventario': inventario,
       'validacionInventario': validacionInventario,
+      'permitirRetornoEnvase': permitirRetornoEnvase,
       'validacionLote': validacionLote,
       'esGasolinera': esGasolinera,
       'esTiendaRopa': esTiendaRopa,

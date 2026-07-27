@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/presentation/screens/product/widget/product_picker_sheet.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/providers/formularios/product_form.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -13,6 +14,9 @@ class EnvaseRetornableSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Solo visible si la empresa habilitó el retorno de envases.
+    final permite = ref.watch(sesionProvider).config?.permitirRetornoEnvase == true;
+    if (!permite) return const SizedBox.shrink();
     final form = ref.watch(productFormProvider);
     final notifier = ref.read(productFormProvider.notifier);
 

@@ -7,6 +7,7 @@ import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field
 import 'package:teki_app/src/presentation/widgets/text_field/text_field_section.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/providers/formularios/product_form.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -306,8 +307,11 @@ class PriceEditBottomSheet extends HookConsumerWidget {
                   ),
                   // Flag "Para canje": este precio se aplica automáticamente
                   // cuando la venta es un canje de envase. No aplica al precio
-                  // por defecto (ese es el fallback).
-                  if (index != 0)
+                  // por defecto (ese es el fallback). Solo si la empresa
+                  // habilitó el retorno de envases.
+                  if (index != 0 &&
+                      ref.watch(sesionProvider).config?.permitirRetornoEnvase ==
+                          true)
                     SizedBox(
                       width: constraints.maxWidth,
                       child: Padding(
