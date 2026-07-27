@@ -7,10 +7,15 @@ class ProductMenuCard extends StatelessWidget {
   final Product product;
   final VoidCallback onTap;
 
+  /// Muestra un velo con spinner mientras se trae el detalle completo del
+  /// producto tras el tap.
+  final bool isLoading;
+
   const ProductMenuCard({
     super.key,
     required this.product,
     required this.onTap,
+    this.isLoading = false,
   });
 
   @override
@@ -19,15 +24,43 @@ class ProductMenuCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        elevation: 2,
-        shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.grey.shade300, width: 1),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
+      child: Stack(
+        children: [
+          _buildCard(price),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: ColorSchema.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCard(double price) {
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black26,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300, width: 1),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Product image
@@ -76,7 +109,6 @@ class ProductMenuCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

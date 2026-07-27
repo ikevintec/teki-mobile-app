@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +19,10 @@ import 'package:teki_app/src/providers/sale/products/helpers/product_search_work
 /// directorio de documentos y no a shared_preferences.
 const _cacheFileName = 'flat_products_cache.json';
 const _cacheTimestampKey = 'flat_products_cache_timestamp';
+
+/// Cada cuánto se compara el timestamp local con el de Company para detectar
+/// cambios hechos desde otro dispositivo.
+const _syncInterval = Duration(minutes: 3);
 
 final localProductsProvider =
     StateNotifierProvider<LocalProductsNotifier, LocalProductsState>((ref) {
@@ -56,7 +62,8 @@ class LocalProductsState {
   }
 }
 
-class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
+class LocalProductsNotifier extends StateNotifier<LocalProductsState>
+    with WidgetsBindingObserver {
   final ProductsRepository productsRepository;
   final CompanyRepository companyRepository;
 
@@ -69,6 +76,14 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
   /// apertura de la venta).
   Future<void>? _loadingFuture;
 
+  Timer? _syncTimer;
+  Future<void>? _syncFuture;
+  bool _syncEnabled = false;
+
+  /// Se incrementa al limpiar el cache o parar la sincronización, para que el
+  /// trabajo async que quedó en vuelo no vuelva a publicar estado viejo.
+  int _generation = 0;
+
   LocalProductsNotifier({
     required this.productsRepository,
     required this.companyRepository,
@@ -76,6 +91,7 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
 
   @override
   void dispose() {
+    _stopSync();
     _worker.shutdown();
     super.dispose();
   }
@@ -83,16 +99,26 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
   /// Deja los productos disponibles en memoria, descargándolos si el timestamp
   /// local no coincide con el de Company. No usar desde pantallas: esta ruta
   /// puede pegarle al backend.
-  Future<void> ensureLoaded({bool forceRefresh = false}) {
+  /// [knownTimestamp] evita volver a pedir el timestamp cuando el llamador ya lo
+  /// consultó.
+  Future<void> ensureLoaded({
+    bool forceRefresh = false,
+    String? knownTimestamp,
+  }) {
     if (state.isLoaded && !forceRefresh) return Future.value();
-    return _loadingFuture ??= _load(forceRefresh: forceRefresh)
-        .whenComplete(() => _loadingFuture = null);
+    return _loadingFuture ??= _load(
+      forceRefresh: forceRefresh,
+      knownTimestamp: knownTimestamp,
+    ).whenComplete(() => _loadingFuture = null);
   }
 
-  /// Flujo de login: inicializa el timestamp y descarga o refresca el JSON.
+  /// Flujo de login: inicializa el timestamp, descarga o refresca el JSON y
+  /// arranca la sincronización periódica.
   Future<void> prepareCacheForLocalSearch() async {
-    await ensureTimestampInitialized();
-    await ensureLoaded();
+    final generation = _generation;
+    final timestamp = await _ensureTimestampInitialized();
+    await ensureLoaded(knownTimestamp: timestamp);
+    if (generation == _generation && state.isLoaded) _startSync();
   }
 
   /// Flujo de pantallas: solo lee el archivo ya descargado. Si no existe, la
@@ -103,7 +129,10 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
         _loadCacheOnly().whenComplete(() => _loadingFuture = null);
   }
 
-  Future<void> ensureTimestampInitialized() async {
+  /// Devuelve el timestamp del backend para que [ensureLoaded] no lo vuelva a
+  /// pedir. Devuelve `null` si Company todavía no tenía uno: ahí conviene que
+  /// [_load] lo consulte de nuevo y reintente el push si este falló.
+  Future<String?> _ensureTimestampInitialized() async {
     try {
       final backendTimestamp = await _getBackendTimestamp();
       if (backendTimestamp != null) {
@@ -111,18 +140,26 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
         if (localTimestamp == null) {
           await _saveLocalTimestamp(backendTimestamp);
         }
-        return;
+        return backendTimestamp;
       }
 
       final timestamp = DateTime.now().toUtc().toIso8601String();
       await _saveLocalTimestamp(timestamp);
       await _updateTimestampInBackend(timestamp);
+      return null;
     } catch (e) {
       state = state.copyWith(error: e.toString());
+      return null;
     }
   }
 
+  /// Borra todo lo de la búsqueda local: timer, isolate, índice, JSON en disco,
+  /// timestamp y productos en memoria. Se llama en el logout.
   Future<void> clearCache() async {
+    _generation++;
+    _stopSync();
+    _worker.shutdown();
+    _index = const [];
     try {
       final file = await _cacheFile();
       if (await file.exists()) {
@@ -133,8 +170,6 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
     } catch (_) {
       // Limpiar el cache en el logout es best-effort.
     } finally {
-      _index = const [];
-      _worker.shutdown();
       state = const LocalProductsState();
     }
   }
@@ -146,6 +181,7 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
     final id = product.id;
     if (id == null) return;
 
+    final generation = _generation;
     final loadingFuture = _loadingFuture;
     if (loadingFuture != null) {
       await loadingFuture;
@@ -164,7 +200,7 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
           _UpsertArgs(raw: raw, id: id, product: product.toJson()),
         );
         await file.writeAsString(data.json);
-        _applyCache(data);
+        _applyCache(data, generation);
       } catch (e) {
         state = state.copyWith(error: e.toString());
       }
@@ -204,17 +240,86 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
     return null;
   }
 
-  Future<void> _load({required bool forceRefresh}) async {
+  // --- Sincronización periódica -------------------------------------------
+
+  /// El timer solo corre con la app en primer plano: en background no tiene
+  /// sentido gastar red, y al volver se chequea de una sin esperar el intervalo.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
+    if (!_syncEnabled) return;
+    if (lifecycle == AppLifecycleState.resumed) {
+      _resumeTimer();
+      _syncNow();
+    } else {
+      _syncTimer?.cancel();
+      _syncTimer = null;
+    }
+  }
+
+  void _startSync() {
+    if (_syncEnabled) return;
+    _syncEnabled = true;
+    WidgetsBinding.instance.addObserver(this);
+    _resumeTimer();
+  }
+
+  void _stopSync() {
+    if (!_syncEnabled) return;
+    _syncEnabled = false;
+    _generation++;
+    _syncTimer?.cancel();
+    _syncTimer = null;
+    _syncFuture = null;
+    WidgetsBinding.instance.removeObserver(this);
+  }
+
+  void _resumeTimer() {
+    _syncTimer ??= Timer.periodic(_syncInterval, (_) => _syncNow());
+  }
+
+  void _syncNow() {
+    if (!_syncEnabled || _syncFuture != null) return;
+    final generation = _generation;
+    _syncFuture = _refreshIfTimestampChanged(generation).catchError((e) {
+      if (generation == _generation) state = state.copyWith(error: e.toString());
+    }).whenComplete(() {
+      if (generation == _generation) _syncFuture = null;
+    });
+  }
+
+  /// Solo compara timestamps: la descarga se delega a [ensureLoaded] para no
+  /// duplicar el camino de fetch + cache.
+  Future<void> _refreshIfTimestampChanged(int generation) async {
+    final loadingFuture = _loadingFuture;
+    if (loadingFuture != null) await loadingFuture;
+    if (generation != _generation) return;
+
+    final backendTimestamp = await _getBackendTimestamp();
+    if (generation != _generation || backendTimestamp == null) return;
+
+    final localTimestamp = await _getLocalTimestamp();
+    if (generation != _generation || backendTimestamp == localTimestamp) return;
+
+    await ensureLoaded(forceRefresh: true, knownTimestamp: backendTimestamp);
+  }
+
+  // --- Carga y cache -------------------------------------------------------
+
+  Future<void> _load({
+    required bool forceRefresh,
+    String? knownTimestamp,
+  }) async {
+    final generation = _generation;
     state = state.copyWith(isLoading: true, error: null);
     final file = await _cacheFile();
     try {
-      final backendTimestamp = await _getBackendTimestamp();
+      final backendTimestamp = knownTimestamp ?? await _getBackendTimestamp();
       final localTimestamp = await _getLocalTimestamp();
 
       if (!forceRefresh &&
           backendTimestamp != null &&
           backendTimestamp == localTimestamp &&
-          await _loadFromCacheFile(file)) {
+          await _loadFromCacheFile(file, generation)) {
         state = state.copyWith(isLoading: false);
         return;
       }
@@ -224,21 +329,23 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
       await _fetchAndCache(
         file,
         timestamp: timestamp,
+        generation: generation,
         updateBackendTimestamp: backendTimestamp == null,
       );
       state = state.copyWith(isLoading: false);
     } catch (e) {
       // Ante cualquier fallo se intenta seguir con lo que haya en disco.
-      if (!state.isLoaded) await _loadFromCacheFile(file);
+      if (!state.isLoaded) await _loadFromCacheFile(file, generation);
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   Future<void> _loadCacheOnly() async {
+    final generation = _generation;
     state = state.copyWith(isLoading: true, error: null);
     try {
       final file = await _cacheFile();
-      final loaded = await _loadFromCacheFile(file);
+      final loaded = await _loadFromCacheFile(file, generation);
       state = state.copyWith(
         isLoading: false,
         error: loaded || !await file.exists()
@@ -255,9 +362,11 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
   Future<void> _fetchAndCache(
     File file, {
     required String timestamp,
+    required int generation,
     required bool updateBackendTimestamp,
   }) async {
     final raw = await productsRepository.getFlatProductsRaw();
+    if (generation != _generation) return;
     final data = await compute(_parseCache, raw);
 
     try {
@@ -265,7 +374,7 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
     } catch (_) {
       // El cache en disco es best-effort; si falla seguimos en memoria.
     }
-    _applyCache(data);
+    if (!_applyCache(data, generation)) return;
     await _saveLocalTimestamp(timestamp);
 
     if (updateBackendTimestamp) {
@@ -275,12 +384,11 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
 
   /// `false` si el archivo no existe o está corrupto, sin tocar lo que ya haya
   /// en memoria.
-  Future<bool> _loadFromCacheFile(File file) async {
+  Future<bool> _loadFromCacheFile(File file, int generation) async {
     final raw = await _readCacheFile(file);
     if (raw == null) return false;
     try {
-      _applyCache(await compute(_parseCache, raw));
-      return true;
+      return _applyCache(await compute(_parseCache, raw), generation);
     } catch (_) {
       return false;
     }
@@ -295,7 +403,10 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
     }
   }
 
-  void _applyCache(_CacheData data) {
+  /// `false` si mientras tanto se limpió el cache (logout): en ese caso no se
+  /// publica nada.
+  bool _applyCache(_CacheData data, int generation) {
+    if (generation != _generation) return false;
     _index = data.index;
     state = state.copyWith(
       allProducts: data.products,
@@ -303,6 +414,7 @@ class LocalProductsNotifier extends StateNotifier<LocalProductsState> {
       error: null,
     );
     _worker.setIndex(data.index);
+    return true;
   }
 
   Future<File> _cacheFile() async {

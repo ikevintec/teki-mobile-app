@@ -33,6 +33,7 @@ class InventoryLogsNotifier extends StateNotifier<InventoryLogsState> {
       idInventory,
       buildInventoryLogsQueryParams(state),
     );
+    if (!mounted) return;
     state = state.copyWith(
       logs: response.content ?? [],
       last: response.last ?? false,
@@ -50,6 +51,7 @@ class InventoryLogsNotifier extends StateNotifier<InventoryLogsState> {
       idInventory,
       buildInventoryLogsQueryParams(state),
     );
+    if (!mounted) return;
     state = state.copyWith(
       logs: [...state.logs, ...?response.content],
       last: response.last ?? false,

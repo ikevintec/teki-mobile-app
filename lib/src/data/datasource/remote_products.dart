@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/product_image.dart';
 import 'package:teki_app/src/data/models/response/products.dart';
 import 'package:teki_app/src/domain/datasource/products_datasource.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
@@ -127,6 +128,41 @@ class RemoteProducts extends ProductsDatasource {
       return Future.error(errorMessage);
     } catch (e) {
       return Future.error(e.toString());
+    }
+  }
+
+  /// Imágenes por lote (`/products/operations/images/by-product-ids`) para
+  /// enriquecer resultados de la búsqueda ligera o del cache local, que no las
+  /// traen. Best-effort: ante un error devuelve vacío y las cards muestran el
+  /// placeholder.
+  @override
+  Future<Map<int, List<ProductImage>>> getImagesByProductIds(
+      List<int> productIds) async {
+    final ids = productIds.toSet().toList();
+    if (ids.isEmpty) return {};
+    try {
+      final response = await dio.post(
+        '/products/operations/images/by-product-ids',
+        data: ids,
+        options: Options(contentType: Headers.jsonContentType),
+      );
+      final data = response.data;
+      final list = data is List ? data : const [];
+      final result = <int, List<ProductImage>>{};
+      for (final item in list) {
+        if (item is! Map) continue;
+        final id = item['id'];
+        final imagenes = item['imagenes'];
+        if (id is! int || imagenes is! List) continue;
+        result[id] = [
+          for (final img in imagenes)
+            if (img is Map)
+              ProductImage.fromJson(Map<String, dynamic>.from(img)),
+        ];
+      }
+      return result;
+    } catch (_) {
+      return {};
     }
   }
 
