@@ -224,33 +224,53 @@ class _AccountsReceivableMainScreenState
   }
 
   Widget _buildTotalesSection(AccountsReceivableState state) {
-    // BUG previo: `saldo > 1` ocultaba deudas entre 0.01 y 1.00.
-    final totales = state.totales.where((t) => t.saldo > 0.009).toList();
+    // Paridad web: desglose por moneda (crédito, pagado y saldo), con el
+    // mismo estilo de card que los totales de Ver Comprobantes.
+    final totales = state.totales
+        .where((t) => t.totalCredito.abs() > 0.009 || t.totalPagado.abs() > 0.009)
+        .toList();
 
     if (totales.isEmpty) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: totales.map((t) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: RichText(
-            text: TextSpan(
-              style: GoogleFonts.roboto(fontSize: 14, color: Colors.black),
-              children: [
-                const TextSpan(
-                  text: 'Total:  ',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                TextSpan(
-                  text:
-                      '${formatExchange(moneda: t.codigoMoneda)}${t.saldo.toStringAsFixed(2)}',
-                ),
-              ],
+    final etiquetaSaldo =
+        widget.tipoCuenta == 'CC' ? 'Por cobrar' : 'Por pagar';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < totales.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            Text(
+              '$etiquetaSaldo ${formatExchange(moneda: totales[i].codigoMoneda)}'
+              '${totales[i].saldo.toStringAsFixed(2)}',
+              style: GoogleFonts.roboto(
+                fontSize: i == 0 ? 17 : 13,
+                fontWeight: FontWeight.w700,
+                color: i == 0 ? Colors.black87 : Colors.grey.shade700,
+              ),
             ),
-          ),
-        );
-      }).toList(),
+            Text(
+              'Crédito ${formatExchange(moneda: totales[i].codigoMoneda)}'
+              '${totales[i].totalCredito.toStringAsFixed(2)}'
+              '  ·  Pagado ${formatExchange(moneda: totales[i].codigoMoneda)}'
+              '${totales[i].totalPagado.toStringAsFixed(2)}',
+              style: GoogleFonts.roboto(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -117,10 +117,14 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     if (_paymentEntries.isEmpty) {
       return _submitAttempted ? "Debe seleccionar al menos un método de pago" : null;
     }
-    if (_totalPaid < total) {
+    // FIX CC/CP: comparación en céntimos; los doubles con error binario
+    // (33.33+33.33+33.34) ya no bloquean una suma exacta en decimal.
+    final paidCent = (_totalPaid * 100).round();
+    final totalCent = (total * 100).round();
+    if (paidCent < totalCent) {
       return "El monto pagado es menor al total de la venta";
     }
-    if (_hasNonCash && _totalPaid > total) {
+    if (_hasNonCash && paidCent > totalCent) {
       return "Al usar métodos de pago sin efectivo, el monto debe ser exacto.";
     }
     return null;
@@ -332,7 +336,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       if (fecha.isNotEmpty && monto.isNotEmpty) {
         cuotas.add(TicketFee(
           fecha: DateTime.parse(fecha),
-          monto: double.tryParse(monto) ?? 0.0,
+          monto: CreditoCuotas.round2(double.tryParse(monto) ?? 0.0),
         ));
       }
     }
@@ -344,12 +348,13 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       errorNotification("Todos los montos de las cuotas deben ser mayores a cero");
       return false;
     }
-    // Paridad web (validador totalCuotas): las cuotas no pueden exceder
-    // el total de la venta.
-    if (CreditoCuotas.excedeTotal(
+    // FIX CC/CP: la suma de cuotas debe igualar el total (el backend ahora
+    // rechaza cualquier descuadre con 412).
+    if (CreditoCuotas.descuadraTotal(
         cuotas.map((c) => c.monto ?? 0).toList(), total)) {
+      final suma = cuotas.fold<double>(0, (a, c) => a + (c.monto ?? 0));
       errorNotification(
-          "Las cuotas no pueden exceder el total de la venta (S/. ${total.toStringAsFixed(2)})");
+          "Las cuotas suman S/. ${suma.toStringAsFixed(2)} y deben sumar el total de la venta (S/. ${total.toStringAsFixed(2)})");
       return false;
     }
     provider.setCuotas(cuotas, diasCredito: int.tryParse(diasCredito.text));
@@ -367,10 +372,10 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       return PaymentDetail(
         formaPago: e.method.formaPago,
         // Paridad web: monto = neto aplicado a la venta; montoPagado = lo
-        // que el cliente ENTREGÓ (crudo). Con vuelto difieren y el arqueo
-        // necesita el crudo para cuadrar el efectivo recibido.
-        monto: effectiveAmount,
-        montoPagado: amount,
+        // que el cliente ENTREGÓ. Ambos redondeados a 2 decimales (FIX CC/CP:
+        // los doubles crudos persistían colas binarias en caja).
+        monto: CreditoCuotas.round2(effectiveAmount),
+        montoPagado: CreditoCuotas.round2(amount),
         metodoPago: e.method,
         numeroOperacion: e.operationController.text.isNotEmpty
             ? e.operationController.text

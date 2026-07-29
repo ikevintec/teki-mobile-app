@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teki_app/src/providers/sale/credito_cuotas.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
@@ -176,7 +177,9 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
   }) async {
     state = state.copyWith(submitting: true);
     try {
-      final total = state.totalCompra(igvRate);
+      // FIX CC/CP: el total viaja redondeado a 2 decimales; el backend valida
+      // que las cuotas igualen el total de la compra (tolerancia 1 centavo).
+      final total = CreditoCuotas.round2(state.totalCompra(igvRate));
       final items = state.items.map((it) {
         final precioConIgv =
             state.incIgv ? it.precioCompra : it.precioCompra * (1 + igvRate);

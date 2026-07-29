@@ -2,26 +2,26 @@
 class CreditoCuotas {
   CreditoCuotas._();
 
+  /// Redondeo estándar a 2 decimales (en céntimos, sin errores binarios).
+  static double round2(double v) => (v * 100).round() / 100;
+
   /// Reparte [total] en [n] cuotas de 2 decimales cuya suma reconstruye
-  /// exactamente el total: todas iguales y la última absorbe el residuo
-  /// de centavos. Evita el descuadre de `total/n` redondeado por cuota.
-  /// Ej: 100.00 en 3 → [33.33, 33.33, 33.34].
+  /// exactamente el total. Trabaja en céntimos enteros: las primeras cuotas
+  /// absorben el residuo. Ej: 100.00 en 3 → [33.34, 33.33, 33.33].
   static List<double> repartir(double total, int n) {
     if (n <= 0) return const [];
-    final base = (total / n * 100).floor() / 100; // trunca a 2 decimales
-    final cuotas = List<double>.filled(n, base);
-    // Residuo en centavos que falta para llegar al total exacto.
-    final asignado = base * n;
-    final residuo = ((total - asignado) * 100).round() / 100;
-    cuotas[n - 1] = ((base + residuo) * 100).round() / 100;
-    return cuotas;
+    final totalCent = (total * 100).round();
+    final baseCent = totalCent ~/ n;
+    final residuo = totalCent - baseCent * n;
+    return List<double>.generate(
+        n, (i) => (baseCent + (i < residuo ? 1 : 0)) / 100);
   }
 
-  /// True si la suma de [montos] EXCEDE [total] (más de 1 centavo de
-  /// tolerancia por flotantes). Paridad con el validador web totalCuotas,
-  /// que solo bloquea cuando las cuotas superan el total de la venta.
-  static bool excedeTotal(List<double> montos, double total) {
-    final suma = montos.fold<double>(0, (a, b) => a + b);
-    return suma - total > 0.01;
+  /// True si la suma de [montos] difiere del [total] en más de 1 centavo.
+  /// Paridad con la validación del backend (FIX CC/CP): la suma de cuotas
+  /// debe IGUALAR el total del crédito, ni más ni menos.
+  static bool descuadraTotal(List<double> montos, double total) {
+    final sumaCent = montos.fold<int>(0, (a, b) => a + (b * 100).round());
+    return (sumaCent - (total * 100).round()).abs() > 1;
   }
 }

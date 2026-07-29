@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/providers/sale/credito_cuotas.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -164,9 +165,11 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
           'tipoTarjeta': null,
           'nombre': e.method.nombre,
           'numeroOperacion': null,
-          'monto': effectiveAmount,
-          'montoPagado': amount,
-          'cambio': isCash ? cambio : 0,
+          // FIX CC/CP: montos redondeados a 2 decimales (los doubles crudos
+          // persistían colas binarias en caja).
+          'monto': CreditoCuotas.round2(effectiveAmount),
+          'montoPagado': CreditoCuotas.round2(amount),
+          'cambio': isCash ? CreditoCuotas.round2(cambio) : 0,
           'metodoPago': e.method.toJson(),
         };
       }).toList();
