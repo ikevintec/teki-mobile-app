@@ -17,6 +17,7 @@ class ProductFormState {
   final Category? categoria;
   final Brand? marca;
   final bool servicio;
+  final bool ocultarEnBuscadorVentas;
   final bool envaseRetornable;
   final Product? productoEnvase;
   final List<ProductItemPackage> paqueteItems;
@@ -58,6 +59,7 @@ class ProductFormState {
     this.categoria,
     this.marca,
     this.servicio = false,
+    this.ocultarEnBuscadorVentas = false,
     this.envaseRetornable = false,
     this.productoEnvase,
     this.paqueteItems = const [],
@@ -97,6 +99,7 @@ class ProductFormState {
     Object? categoria = _noValue,
     Object? marca = _noValue,
     bool? servicio,
+    bool? ocultarEnBuscadorVentas,
     bool? envaseRetornable,
     Object? productoEnvase = _noValue,
     List<ProductItemPackage>? paqueteItems,
@@ -135,6 +138,7 @@ class ProductFormState {
       categoria: categoria == _noValue ? this.categoria : categoria as Category?,
       marca: marca == _noValue ? this.marca : marca as Brand?,
       servicio: servicio ?? this.servicio,
+      ocultarEnBuscadorVentas: ocultarEnBuscadorVentas ?? this.ocultarEnBuscadorVentas,
       envaseRetornable: envaseRetornable ?? this.envaseRetornable,
       productoEnvase: productoEnvase == _noValue
           ? this.productoEnvase

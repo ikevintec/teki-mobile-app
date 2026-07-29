@@ -89,6 +89,8 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     setFilterGlobal(filter);
     try {
       final params = buildProductSearchQueryParams(state);
+      // Buscador de ventas: el backend excluye ocultarEnBuscadorVentas.
+      params['contextoVentas'] = true;
       final officeId = ref.read(sesionProvider).office?.id;
       if (officeId != null) params['idPuntoVentaOrder'] = officeId;
       final products = await productsRepository.searchProducts(params);
@@ -131,6 +133,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     state = state.copyWith(isBarcodeSearching: true);
     try {
       final params = buildProductSearchQueryParams(state);
+      params['contextoVentas'] = true;
       params['filterGlobal'] = barcode;
       params['limit'] = 1;
       final officeId = ref.read(sesionProvider).office?.id;

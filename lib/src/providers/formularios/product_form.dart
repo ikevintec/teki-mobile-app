@@ -114,6 +114,10 @@ class ProductFormNotifier extends StateNotifier<ProductFormState>
     );
   }
 
+  void setOcultarEnBuscadorVentas(bool value) {
+    state = state.copyWith(ocultarEnBuscadorVentas: value);
+  }
+
   void setServicio(bool servicio) {
     state = state.copyWith(servicio: servicio);
   }
@@ -341,6 +345,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState>
             ? null
             : Brand(id: product.marca!.id, nombre: product.marca!.nombre),
         servicio: product.servicio ?? false,
+        ocultarEnBuscadorVentas: product.ocultarEnBuscadorVentas ?? false,
         envaseRetornable: product.envaseRetornable ?? false,
         productoEnvase: product.productoEnvase,
         paqueteItems: product.paqueteItems ?? const [],
@@ -486,6 +491,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState>
       categoria: state.categoria,
       marca: state.marca,
       servicio: state.servicio,
+      ocultarEnBuscadorVentas: state.ocultarEnBuscadorVentas,
       envaseRetornable: state.envaseRetornable,
       productoEnvase: state.envaseRetornable ? state.productoEnvase : null,
       paqueteItems: state.paqueteItems,

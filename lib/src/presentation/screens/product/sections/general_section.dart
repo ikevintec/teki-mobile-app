@@ -338,13 +338,20 @@ class ProductGeneralSection extends HookConsumerWidget {
               ],
             ),
             const SizedBox(height: 20),
-            if (formProvider.igv == true)
+            if (formProvider.igv == true) ...[
               CustomSwitch(
                 title: "Aplicar impuestos",
                 value: formProvider.precioCompraIncImp,
                 onChanged: notifier.setPrecioCompraIncImp,
               ),
-            if (formProvider.igv == true) const SizedBox(height: 20),
+              const SizedBox(height: 20),
+            ],
+            CustomSwitch(
+              title: "Ocultar en ventas",
+              value: formProvider.ocultarEnBuscadorVentas,
+              onChanged: notifier.setOcultarEnBuscadorVentas,
+            ),
+            const SizedBox(height: 20),
             // Envase retornable: solo para artículos y paquetes producidos.
             if (formProvider.tipoProducto == 'ARTICULO' ||
                 formProvider.tipoProducto == 'PAQUETE_PRODUCIDO')

@@ -75,6 +75,7 @@ class Product {
   final List<ProductPreparation>? preparaciones;
   final String? tipoProducto;
   final bool? mostrarEnRestaurante;
+  final bool? ocultarEnBuscadorVentas;
   final bool? mostrarEnWeb;
   final bool? favorito;
   final bool? estado;
@@ -141,6 +142,7 @@ class Product {
     this.preparaciones,
     this.tipoProducto,
     this.mostrarEnRestaurante,
+    this.ocultarEnBuscadorVentas,
     this.mostrarEnWeb,
     this.favorito,
     this.estado,
@@ -241,6 +243,7 @@ class Product {
             .toList(),
         tipoProducto: json['tipoProducto'],
         mostrarEnRestaurante: json['mostrarEnRestaurante'],
+        ocultarEnBuscadorVentas: json['ocultarEnBuscadorVentas'],
         mostrarEnWeb: json['mostrarEnWeb'],
         favorito: json['favorito'],
         estado: json['estado'],
@@ -311,6 +314,7 @@ class Product {
         'preparaciones': preparaciones?.map((e) => e.toJson()).toList(),
         'tipoProducto': tipoProducto,
         'mostrarEnRestaurante': mostrarEnRestaurante,
+        'ocultarEnBuscadorVentas': ocultarEnBuscadorVentas,
         'mostrarEnWeb': mostrarEnWeb,
         'favorito': favorito,
         'estado': estado,
@@ -378,6 +382,7 @@ class Product {
     List<ProductPreparation>? preparaciones,
     String? tipoProducto,
     bool? mostrarEnRestaurante,
+    bool? ocultarEnBuscadorVentas,
     bool? mostrarEnWeb,
     bool? favorito,
     bool? estado,
@@ -448,6 +453,7 @@ class Product {
       preparaciones: preparaciones ?? this.preparaciones,
       tipoProducto: tipoProducto ?? this.tipoProducto,
       mostrarEnRestaurante: mostrarEnRestaurante ?? this.mostrarEnRestaurante,
+      ocultarEnBuscadorVentas: ocultarEnBuscadorVentas ?? this.ocultarEnBuscadorVentas,
       mostrarEnWeb: mostrarEnWeb ?? this.mostrarEnWeb,
       favorito: favorito ?? this.favorito,
       estado: estado ?? this.estado,

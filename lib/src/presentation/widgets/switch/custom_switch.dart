@@ -51,12 +51,17 @@ class CustomSwitch extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             if (rightAlign == false)
-              Text(
-                title ?? 'Switch',
-                style: TextStyle(
-                  fontSize: small == true ? 12 : 14,
-                  fontWeight: FontWeight.w500,
-                  color: textColor ?? const Color(0xFF4B5563),
+              // Flexible + ellipsis: los títulos largos se truncan en vez de
+              // desbordar el Row cuando el switch va a mitad de ancho.
+              Flexible(
+                child: Text(
+                  title ?? 'Switch',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: small == true ? 12 : 14,
+                    fontWeight: FontWeight.w500,
+                    color: textColor ?? const Color(0xFF4B5563),
+                  ),
                 ),
               ),
               SizedBox(width: small == true ? 8 : 12),
