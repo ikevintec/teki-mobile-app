@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:teki_app/src/presentation/widgets/floating_action_button/custom_floating_action_button.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -232,18 +233,14 @@ class _OrdersRestaurantMainScreenState
         preferredSize: Size.fromHeight(60),
         child: CustomAppBar(navigateName: 'Pedidos'),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: CustomFloatingActionButton(
+        buttonName: 'Pedido',
         onPressed: () {
           Get.toNamed(
             AppRoutes.restaurantComanda,
             arguments: {'isPedidoSinMesa': true},
           );
         },
-        backgroundColor: ColorSchema.primaryColor,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Pedido',
-            style:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
       body: Column(
         children: [

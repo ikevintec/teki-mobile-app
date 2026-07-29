@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/presentation/widgets/floating_action_button/custom_floating_action_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -86,11 +87,9 @@ class _InventoryProductionScreenState
         preferredSize: Size.fromHeight(60),
         child: CustomAppBar(navigateName: 'Órdenes de producción'),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: CustomFloatingActionButton(
+        buttonName: 'Nueva',
         onPressed: _crearNueva,
-        backgroundColor: ColorSchema.primaryColor,
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva'),
       ),
       body: RefreshIndicator(
         onRefresh: () =>
