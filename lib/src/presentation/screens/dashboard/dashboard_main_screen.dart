@@ -87,9 +87,10 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
 
     ref.listen<SesionState>(sesionProvider, (prev, next) {
       if (prev?.office?.id != next.office?.id) {
-        for (final n in _refreshNotifiers) {
-          n.value++;
-        }
+        // Inventario recibe el id nuevo directamente como propiedad y se
+        // recarga en didUpdateWidget. Inicio y Caja usan sus notifiers.
+        _refreshNotifiers[0].value++;
+        _refreshNotifiers[2].value++;
       }
     });
 
@@ -194,6 +195,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
                   onIrACaja: () => _onTabSelected(2),
                 ),
                 InventarioTab(
+                  idPuntoVenta: idPuntoVenta,
                   refreshNotifier: _refreshNotifiers[1],
                 ),
                 CajaTab(

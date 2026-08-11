@@ -4,14 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/presentation/screens/inventory/inventory_sections/inventory_list_section.dart';
 import 'package:teki_app/src/presentation/screens/inventory_production/inventory_production_screen.dart';
 import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
-import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/inventory/inventory_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
 class InventarioTab extends ConsumerStatefulWidget {
+  final int idPuntoVenta;
   final ValueNotifier<int> refreshNotifier;
 
-  const InventarioTab({super.key, required this.refreshNotifier});
+  const InventarioTab({
+    super.key,
+    required this.idPuntoVenta,
+    required this.refreshNotifier,
+  });
 
   @override
   ConsumerState<InventarioTab> createState() => _InventarioTabState();
@@ -29,10 +33,22 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
     widget.refreshNotifier.addListener(_onRefresh);
     Future.microtask(() {
       if (!mounted) return;
-      final idPuntoVenta = ref.read(sesionProvider).office?.id;
-      if (idPuntoVenta != null) {
-        ref.read(inventoryProvider.notifier).loadInventory(idPuntoVenta);
+      if (widget.idPuntoVenta > 0) {
+        _loadForOffice(widget.idPuntoVenta);
       }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant InventarioTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.idPuntoVenta == widget.idPuntoVenta ||
+        widget.idPuntoVenta <= 0) {
+      return;
+    }
+    _debounce?.cancel();
+    Future.microtask(() {
+      if (mounted) _loadForOffice(widget.idPuntoVenta);
     });
   }
 
@@ -46,13 +62,18 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
 
   void _onRefresh() {
     _debounce?.cancel();
-    final idPuntoVenta = ref.read(sesionProvider).office?.id;
-    if (idPuntoVenta == null) return;
+    if (widget.idPuntoVenta <= 0) return;
+    _loadForOffice(widget.idPuntoVenta);
+  }
+
+  void _loadForOffice(int idPuntoVenta) {
     // Conserva la búsqueda activa: este refresh también se dispara al cerrar
     // bottom sheets (opciones/historial), y limpiarla borraba los resultados.
     final search = _searchController.text.trim();
     if (search.isNotEmpty) {
-      ref.read(inventoryProvider.notifier).searchInventory(search);
+      ref
+          .read(inventoryProvider.notifier)
+          .searchInventory(search, idPuntoVenta: idPuntoVenta);
     } else {
       ref.read(inventoryProvider.notifier).loadInventory(idPuntoVenta);
     }
@@ -61,7 +82,9 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
   void _onSearchChanged(String value) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 700), () {
-      ref.read(inventoryProvider.notifier).searchInventory(value);
+      ref
+          .read(inventoryProvider.notifier)
+          .searchInventory(value, idPuntoVenta: widget.idPuntoVenta);
     });
   }
 
@@ -71,7 +94,9 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
       _debounce?.cancel();
       _searchController.text = code;
       setState(() {});
-      ref.read(inventoryProvider.notifier).searchInventory(code);
+      ref
+          .read(inventoryProvider.notifier)
+          .searchInventory(code, idPuntoVenta: widget.idPuntoVenta);
     }
   }
 
@@ -80,10 +105,12 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
     setState(() => _isRefreshing = true);
     try {
       final currentSearch = _searchController.text.trim();
-      final idPuntoVenta = ref.read(sesionProvider).office?.id;
-      if (idPuntoVenta == null) return;
+      final idPuntoVenta = widget.idPuntoVenta;
+      if (idPuntoVenta <= 0) return;
       if (currentSearch.isNotEmpty) {
-        await ref.read(inventoryProvider.notifier).searchInventory(currentSearch);
+        await ref
+            .read(inventoryProvider.notifier)
+            .searchInventory(currentSearch, idPuntoVenta: idPuntoVenta);
       } else {
         await ref.read(inventoryProvider.notifier).loadInventory(idPuntoVenta);
       }

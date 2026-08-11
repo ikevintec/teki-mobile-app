@@ -13,6 +13,7 @@ final inventoryProvider =
 
 class InventoryNotifier extends StateNotifier<InventoryState> {
   final InventoryRepository inventoryRepository;
+  int _requestVersion = 0;
 
   InventoryNotifier({required this.inventoryRepository})
       : super(InventoryState(
@@ -29,6 +30,7 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
         ));
 
   Future<void> loadInventory(int idPuntoVenta) async {
+    final requestVersion = ++_requestVersion;
     state = InventoryState(
       items: [],
       isLoading: true,
@@ -41,31 +43,41 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
       idPuntoVenta: idPuntoVenta,
       errorMessage: null,
     );
+    final requestState = state;
     try {
       final response = await inventoryRepository
-          .getInventory(buildInventoryQueryParams(state));
+          .getInventory(buildInventoryQueryParams(requestState));
+      if (requestVersion != _requestVersion) return;
       state = state.copyWith(
         items: response.content ?? [],
         last: response.last ?? false,
         isLoading: false,
       );
     } catch (_) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Sin conexión');
+      if (requestVersion != _requestVersion) return;
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Sin conexi\u00f3n',
+      );
     }
   }
 
   Future<void> loadNextPage() async {
     if (state.last || state.isLoading) return;
+    final requestVersion = _requestVersion;
     state = state.copyWith(isLoading: true, pageNumber: state.pageNumber + 1);
+    final requestState = state;
     try {
       final response = await inventoryRepository
-          .getInventory(buildInventoryQueryParams(state));
+          .getInventory(buildInventoryQueryParams(requestState));
+      if (requestVersion != _requestVersion) return;
       state = state.copyWith(
         items: [...state.items, ...?response.content],
         last: response.last ?? false,
         isLoading: false,
       );
     } catch (_) {
+      if (requestVersion != _requestVersion) return;
       state = state.copyWith(
         isLoading: false,
         pageNumber: state.pageNumber - 1,
@@ -73,28 +85,45 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
     }
   }
 
-  Future<void> searchInventory(String search) async {
+  Future<void> searchInventory(
+    String search, {
+    int? idPuntoVenta,
+  }) async {
+    final targetOfficeId = idPuntoVenta ?? state.idPuntoVenta;
+    if (targetOfficeId == null || targetOfficeId <= 0) return;
     if (search.isEmpty) {
-      await loadInventory(state.idPuntoVenta ?? 0);
+      await loadInventory(targetOfficeId);
       return;
     }
-    state = state.copyWith(
-      isLoading: true,
-      pageNumber: 0,
+    final requestVersion = ++_requestVersion;
+    state = InventoryState(
       items: [],
+      isLoading: true,
+      last: false,
+      pageNumber: 0,
+      perPage: state.perPage,
+      sortField: state.sortField,
+      sortOrder: state.sortOrder,
       filterGlobal: search,
+      idPuntoVenta: targetOfficeId,
       errorMessage: null,
     );
+    final requestState = state;
     try {
       final response = await inventoryRepository
-          .getInventory(buildInventoryQueryParams(state));
+          .getInventory(buildInventoryQueryParams(requestState));
+      if (requestVersion != _requestVersion) return;
       state = state.copyWith(
         items: response.content ?? [],
         last: response.last ?? false,
         isLoading: false,
       );
     } catch (_) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Sin conexión');
+      if (requestVersion != _requestVersion) return;
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Sin conexión',
+      );
     }
   }
 }

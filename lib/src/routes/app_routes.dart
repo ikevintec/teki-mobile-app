@@ -22,6 +22,7 @@ import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/inventory/inventory_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/inventory_adjustment/inventory_adjustment_screen.dart';
+import 'package:teki_app/src/presentation/screens/inventory_transfer/inventory_transfer_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/cobrador/cobrador_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/comanda_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/dividir/dividir_screen.dart';
@@ -65,6 +66,7 @@ class AppRoutes {
   // Inventario
   static const String inventory = "/inventory";
   static const String inventoryAdjustmentCreate = "/inventory-adjustment/create";
+  static const String inventoryTransfers = "/inventory-transfers";
   // Restaurante
   static const String restaurantMesas = "/restaurant/mesas";
   static const String restaurantComanda = "/restaurant/comanda";
@@ -142,6 +144,10 @@ class AppRoutes {
     GetPage(name: productsSales, page: () => const ProductsSaleScreen()),
     // Inventario
     GetPage(name: inventory, page: () => const InventoryMainScreen()),
+    GetPage(
+      name: inventoryTransfers,
+      page: () => const InventoryTransferMainScreen(),
+    ),
     GetPage(
       name: inventoryAdjustmentCreate,
       page: () {

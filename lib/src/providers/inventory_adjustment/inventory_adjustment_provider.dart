@@ -7,7 +7,6 @@ import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/repositories/inventory_adjustment_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/inventory_adjustment_repository.dart';
-import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 // Representa un lote/serie en el formulario de ajuste
@@ -35,24 +34,25 @@ class AdjustmentLoteItem {
     double? precioCompra,
     String? tipoLote,
     bool? isExisting,
-  }) =>
-      AdjustmentLoteItem(
-        id: id ?? this.id,
-        nombre: nombre ?? this.nombre,
-        cantidad: cantidad ?? this.cantidad,
-        precioCompra: precioCompra ?? this.precioCompra,
-        tipoLote: tipoLote ?? this.tipoLote,
-        isExisting: isExisting ?? this.isExisting,
-      );
+  }) => AdjustmentLoteItem(
+    id: id ?? this.id,
+    nombre: nombre ?? this.nombre,
+    cantidad: cantidad ?? this.cantidad,
+    precioCompra: precioCompra ?? this.precioCompra,
+    tipoLote: tipoLote ?? this.tipoLote,
+    isExisting: isExisting ?? this.isExisting,
+  );
 }
 
 // Representa un ítem en el formulario de ajuste
 class AdjustmentFormItem {
   final Product product;
+
   /// Stock objetivo que el usuario ingresa directamente
   final double nuevoStock;
   final String concepto;
   final List<AdjustmentLoteItem> lotes;
+
   /// Stock del producto en el punto de venta ANTES del ajuste
   final double stockActual;
 
@@ -87,51 +87,61 @@ class AdjustmentFormItem {
     String? concepto,
     List<AdjustmentLoteItem>? lotes,
     double? stockActual,
-  }) =>
-      AdjustmentFormItem(
-        product: product ?? this.product,
-        nuevoStock: nuevoStock ?? this.nuevoStock,
-        concepto: concepto ?? this.concepto,
-        lotes: lotes ?? this.lotes,
-        stockActual: stockActual ?? this.stockActual,
-      );
+  }) => AdjustmentFormItem(
+    product: product ?? this.product,
+    nuevoStock: nuevoStock ?? this.nuevoStock,
+    concepto: concepto ?? this.concepto,
+    lotes: lotes ?? this.lotes,
+    stockActual: stockActual ?? this.stockActual,
+  );
 }
 
 final inventoryAdjustmentProvider =
-    StateNotifierProvider<InventoryAdjustmentNotifier, InventoryAdjustmentFormState>(
-  (ref) => InventoryAdjustmentNotifier(
-    adjustmentRepository: InventoryAdjustmentRepositoryImpl(),
-  ),
-);
+    StateNotifierProvider<
+      InventoryAdjustmentNotifier,
+      InventoryAdjustmentFormState
+    >(
+      (ref) => InventoryAdjustmentNotifier(
+        adjustmentRepository: InventoryAdjustmentRepositoryImpl(),
+      ),
+    );
 
 class InventoryAdjustmentNotifier
     extends StateNotifier<InventoryAdjustmentFormState> {
   final InventoryAdjustmentRepository adjustmentRepository;
 
   InventoryAdjustmentNotifier({required this.adjustmentRepository})
-      : super(InventoryAdjustmentFormState(
+    : super(
+        InventoryAdjustmentFormState(
           items: [],
           motivo: '',
           observacion: '',
           isSubmitting: false,
           success: false,
-        ));
+        ),
+      );
 
-  void addItem(Product product, {List<BatchProduct> existingLotes = const [], double stockActual = 0}) {
+  void addItem(
+    Product product, {
+    List<BatchProduct> existingLotes = const [],
+    double stockActual = 0,
+  }) {
     final alreadyAdded = state.items.any((i) => i.product.id == product.id);
     if (alreadyAdded) {
       warningNotification('El producto ya fue agregado');
       return;
     }
     final lotes = existingLotes
-        .map((l) => AdjustmentLoteItem(
-              id: l.id,
-              nombre: l.serie ?? '',
-              cantidad: l.cantidad ?? 1,
-              precioCompra: l.precioCompra,
-              tipoLote: l.tipoLote ?? 'SERIE',
-              isExisting: true,
-            ))
+        .map(
+          (l) => AdjustmentLoteItem(
+            id: l.id,
+            nombre: l.serie ?? '',
+            cantidad: l.cantidad ?? 1,
+            precioCompra: l.precioCompra,
+            tipoLote: l.tipoLote ?? 'SERIE',
+            isExisting: true,
+          ),
+        )
         .toList();
     state = state.copyWith(
       items: [
@@ -168,8 +178,9 @@ class InventoryAdjustmentNotifier
   void addLote(int itemIndex, AdjustmentLoteItem lote) {
     final updated = [...state.items];
     final item = updated[itemIndex];
-    final duplicate = item.lotes
-        .any((l) => l.nombre.toLowerCase() == lote.nombre.toLowerCase());
+    final duplicate = item.lotes.any(
+      (l) => l.nombre.toLowerCase() == lote.nombre.toLowerCase(),
+    );
     if (duplicate) {
       warningNotification('El nombre ya está registrado en los lotes');
       return;
@@ -192,7 +203,9 @@ class InventoryAdjustmentNotifier
     final updated = [...state.items];
     final item = updated[itemIndex];
     final updatedLotes = [...item.lotes];
-    updatedLotes[loteIndex] = updatedLotes[loteIndex].copyWith(cantidad: cantidad);
+    updatedLotes[loteIndex] = updatedLotes[loteIndex].copyWith(
+      cantidad: cantidad,
+    );
     updated[itemIndex] = item.copyWith(lotes: updatedLotes);
     state = state.copyWith(items: updated);
   }
@@ -210,7 +223,9 @@ class InventoryAdjustmentNotifier
     final updated = [...state.items];
     final item = updated[itemIndex];
     final updatedLotes = [...item.lotes];
-    updatedLotes[loteIndex] = updatedLotes[loteIndex].copyWith(precioCompra: precio);
+    updatedLotes[loteIndex] = updatedLotes[loteIndex].copyWith(
+      precioCompra: precio,
+    );
     updated[itemIndex] = item.copyWith(lotes: updatedLotes);
     state = state.copyWith(items: updated);
   }
@@ -237,7 +252,9 @@ class InventoryAdjustmentNotifier
         }
       } else {
         if (item.cantidad == 0) {
-          warningNotification('El nuevo stock debe ser diferente al stock actual');
+          warningNotification(
+            'El nuevo stock debe ser diferente al stock actual',
+          );
           return;
         }
       }
@@ -263,13 +280,15 @@ class InventoryAdjustmentNotifier
           List<BatchProduct>? batchLotes;
           if (i.product.validacionLote == true && i.lotes.isNotEmpty) {
             batchLotes = i.lotes
-                .map((l) => BatchProduct(
-                      id: l.id,
-                      cantidad: l.cantidad,
-                      tipoLote: l.tipoLote,
-                      serie: l.nombre,
-                      precioCompra: l.precioCompra,
-                    ))
+                .map(
+                  (l) => BatchProduct(
+                    id: l.id,
+                    cantidad: l.cantidad,
+                    tipoLote: l.tipoLote,
+                    serie: l.nombre,
+                    precioCompra: l.precioCompra,
+                  ),
+                )
                 .toList();
           }
           return InventoryAdjustmentDetail(
@@ -286,7 +305,13 @@ class InventoryAdjustmentNotifier
       state = state.copyWith(isSubmitting: false, success: true);
       successNotification('Ajuste registrado correctamente');
       reset();
-      Get.until((route) => route.settings.name == AppRoutes.inventory);
+      // Vuelve a la pantalla que abrió el ajuste (tab Inventario del dashboard
+      // o /inventory). NO usar Get.until con un nombre de ruta fijo: el tab del
+      // dashboard no empuja /inventory, así que no había coincidencia y se
+      // vaciaba el stack completo dejando pantalla negra.
+      if (Get.key.currentState?.canPop() ?? false) {
+        Get.back(result: true);
+      }
     } catch (e) {
       state = state.copyWith(isSubmitting: false);
       errorNotification(e.toString());
@@ -298,7 +323,9 @@ class InventoryAdjustmentNotifier
   String? loteValidationError(AdjustmentFormItem item) {
     if (item.product.validacionLote != true) return null;
     if (item.nuevoStock < 0) return 'El nuevo stock no puede ser negativo';
-    if (item.cantidad == 0) return 'El nuevo stock debe ser diferente al stock actual';
+    if (item.cantidad == 0) {
+      return 'El nuevo stock debe ser diferente al stock actual';
+    }
     if (item.lotes.any((l) => l.cantidad < 0)) {
       return 'La cantidad de cada lote no puede ser negativa';
     }
@@ -349,13 +376,12 @@ class InventoryAdjustmentFormState {
     bool? isSubmitting,
     bool? success,
     bool? showValidation,
-  }) =>
-      InventoryAdjustmentFormState(
-        items: items ?? this.items,
-        motivo: motivo ?? this.motivo,
-        observacion: observacion ?? this.observacion,
-        isSubmitting: isSubmitting ?? this.isSubmitting,
-        success: success ?? this.success,
-        showValidation: showValidation ?? this.showValidation,
-      );
+  }) => InventoryAdjustmentFormState(
+    items: items ?? this.items,
+    motivo: motivo ?? this.motivo,
+    observacion: observacion ?? this.observacion,
+    isSubmitting: isSubmitting ?? this.isSubmitting,
+    success: success ?? this.success,
+    showValidation: showValidation ?? this.showValidation,
+  );
 }
