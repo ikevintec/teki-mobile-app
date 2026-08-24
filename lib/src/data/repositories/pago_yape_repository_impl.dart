@@ -13,4 +13,17 @@ class PagoYapeRepositoryImpl extends PagoYapeRepository {
   Future<PagoYapePage> getPagos({required int pageNumber, int perPage = 20}) {
     return datasource.getPagos(pageNumber: pageNumber, perPage: perPage);
   }
+
+  @override
+  Future<PagoYape> createPago({
+    required String nombrePagador,
+    required double monto,
+    required String codigoOperacion,
+  }) {
+    return datasource.createPago(
+      nombrePagador: nombrePagador,
+      monto: monto,
+      codigoOperacion: codigoOperacion,
+    );
+  }
 }

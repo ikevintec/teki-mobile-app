@@ -41,4 +41,43 @@ class RemotePagoYape extends PagoYapeDatasource {
       );
     }
   }
+
+  @override
+  Future<PagoYape> createPago({
+    required String nombrePagador,
+    required double monto,
+    required String codigoOperacion,
+  }) async {
+    try {
+      final response = await dio.post(
+        '/pagos-yape',
+        data: {
+          'nombrePagador': nombrePagador,
+          'monto': monto,
+          'codigoOperacion': codigoOperacion,
+        },
+      );
+      final data = response.data;
+      if (data is Map) {
+        return PagoYape.fromJson(Map<String, dynamic>.from(data));
+      }
+      return PagoYape(
+        nombrePagador: nombrePagador,
+        monto: monto,
+        codigoOperacion: codigoOperacion,
+      );
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      if (e.response == null) {
+        throw Exception('Sin conexión a internet');
+      }
+      final data = e.response?.data;
+      final message = data is Map ? data['mensaje'] ?? data['message'] : null;
+      throw Exception(
+        message ?? e.message ?? 'No se pudo registrar el Yape',
+      );
+    }
+  }
 }

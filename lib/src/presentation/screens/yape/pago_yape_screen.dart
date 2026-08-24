@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/yape/pago_yape.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/providers/yape/pago_yape_provider.dart';
+import 'package:teki_app/src/shared/services/yape_notification_service.dart';
+import 'package:teki_app/src/shared/services/yape_sync_controller.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
 class PagoYapeScreen extends ConsumerStatefulWidget {
@@ -14,8 +16,11 @@ class PagoYapeScreen extends ConsumerStatefulWidget {
   ConsumerState<PagoYapeScreen> createState() => _PagoYapeScreenState();
 }
 
-class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen> {
+class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
+    with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
+  final YapeNotificationService _yapeService = YapeNotificationService.instance;
+  bool _permissionGranted = true;
   static final NumberFormat _amountFormat = NumberFormat.currency(
     locale: 'es_PE',
     symbol: 'S/ ',
@@ -29,10 +34,28 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(pagoYapeListProvider.notifier).loadFirstPage();
+      _syncNotifications();
     });
     _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncNotifications();
+    }
+  }
+
+  /// Re-verifica el permiso de acceso a notificaciones y drena la cola nativa.
+  Future<void> _syncNotifications() async {
+    final granted = await _yapeService.isPermissionGranted();
+    if (mounted) setState(() => _permissionGranted = granted);
+    if (granted) {
+      await YapeSyncController.instance.drainNow();
+    }
   }
 
   void _onScroll() {
@@ -45,6 +68,7 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
@@ -53,6 +77,10 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Refresca la lista cuando el controlador global registra un Yape nuevo.
+    ref.listen(yapeSyncRevisionProvider, (previous, next) {
+      ref.read(pagoYapeListProvider.notifier).refresh();
+    });
     final state = ref.watch(pagoYapeListProvider);
 
     return Scaffold(
@@ -63,8 +91,53 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen> {
       ),
       body: Column(
         children: [
+          if (!_permissionGranted) _permissionBanner(),
           _summary(state.totalElements),
           Expanded(child: _content(state)),
+        ],
+      ),
+    );
+  }
+
+  Widget _permissionBanner() {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFFFF4CE),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          const Icon(Icons.notifications_off_outlined,
+              color: Color(0xFF9A6700), size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Activa el acceso a notificaciones',
+                  style: GoogleFonts.roboto(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF9A6700),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Sin este permiso no podemos registrar los Yapes automáticamente.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: () => _yapeService.openSettings(),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF9A6700),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+            ),
+            child: const Text('Activar'),
+          ),
         ],
       ),
     );

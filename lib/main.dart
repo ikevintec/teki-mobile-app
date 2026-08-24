@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:teki_app/src/application.dart';
+import 'package:teki_app/src/shared/services/yape_sync_controller.dart';
 import 'package:teki_app/src/utils/constants.dart';
 // Nota: firebase_options.dart se genera con `flutterfire configure`.
 // Cuando lo ejecutes, descomenta la línea de abajo y usa DefaultFirebaseOptions.currentPlatform.
@@ -35,6 +36,8 @@ void main() async {
       child: const ProviderScope(child: MyApp()),
     ),
   );
+  // Registra los Yapes capturados por el nativo mientras la app esté viva.
+  YapeSyncController.instance.start(globalContainer);
 }
 
 class MyApp extends StatelessWidget {

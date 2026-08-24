@@ -7,6 +7,19 @@ class _FakePagoYapeRepository extends PagoYapeRepository {
   final List<int> requestedPages = [];
 
   @override
+  Future<PagoYape> createPago({
+    required String nombrePagador,
+    required double monto,
+    required String codigoOperacion,
+  }) async {
+    return PagoYape(
+      nombrePagador: nombrePagador,
+      monto: monto,
+      codigoOperacion: codigoOperacion,
+    );
+  }
+
+  @override
   Future<PagoYapePage> getPagos({
     required int pageNumber,
     int perPage = 20,

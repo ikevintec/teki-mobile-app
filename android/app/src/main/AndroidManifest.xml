@@ -48,6 +48,18 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Escucha las notificaciones de la app de Yape. El usuario debe habilitar
+             el acceso a notificaciones manualmente (Ajustes > Acceso a notificaciones). -->
+        <service
+            android:name=".YapeNotificationListenerService"
+            android:label="Teki - Pagos Yape"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
