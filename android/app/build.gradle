@@ -74,8 +74,6 @@ android {
 
     buildTypes {
         release {
-            // Usa la firma release solo si existe key.properties; si no,
-            // cae a la firma de debug para poder compilar/probar sin keystore.
             signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
