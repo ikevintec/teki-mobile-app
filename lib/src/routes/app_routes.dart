@@ -28,6 +28,7 @@ import 'package:teki_app/src/presentation/screens/restaurant/comanda/comanda_scr
 import 'package:teki_app/src/presentation/screens/restaurant/dividir/dividir_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/restaurant_mesas_screen.dart';
 import 'package:teki_app/src/presentation/screens/push_notification_events/dish_desk_ready_screen.dart';
+import 'package:teki_app/src/presentation/screens/yape/pago_yape_screen.dart';
 import 'package:teki_app/src/routes/middleware/auth_middleware.dart';
 
 class AppRoutes {
@@ -77,6 +78,8 @@ class AppRoutes {
   // Cuentas por cobrar / pagar
   static const String accountsReceivable = "/accounts-receivable";
   static const String accountsPayable = "/accounts-payable";
+  // Pagos Yape
+  static const String pagosYape = "/pagos-yape";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -86,49 +89,18 @@ class AppRoutes {
     GetPage(name: forgotPassword, page: () => const ForgotPasswordScreen()),
 
     GetPage(name: analytics, page: () => const AnalyticsMainScreen()),
-//Route Comprobantes
+    //Route Comprobantes
     GetPage(name: comprobantesVer, page: () => const VerComprobanteScreen()),
     GetPage(name: quotationsVer, page: () => const VerQuotationsScreen()),
-    
-    
+
     GetPage(name: products, page: () => const ProductsMainScreen()),
-    
+
     GetPage(name: customer, page: () => const CustomerMainScreen()),
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     GetPage(name: profile, page: () => const ProfileMainScreen()),
-    
-    
-    
-    
-    
-    
-    
+
     GetPage(name: addCustomer, page: () => const AddCustomerSection()),
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     GetPage(name: splashScreen, page: () => const SplashScreen()),
     GetPage(name: settings, page: () => const SettingsScreen()),
     //Pages for products
@@ -211,22 +183,23 @@ class AppRoutes {
       name: accountsPayable,
       page: () => const AccountsReceivableMainScreen(tipoCuenta: 'CP'),
     ),
+    GetPage(name: pagosYape, page: () => const PagoYapeScreen()),
   ];
 
   /// Retorna todas las rutas con el middleware aplicado
   static List<GetPage> get pages => _rawPages.map((page) {
-        return GetPage(
-          name: page.name,
-          page: page.page,
-          binding: page.binding,
-          transition: page.transition,
-          transitionDuration: page.transitionDuration,
-          curve: page.curve,
-          children: page.children,
-          participatesInRootNavigator: page.participatesInRootNavigator,
-          preventDuplicates: page.preventDuplicates,
-          popGesture: page.popGesture,
-          middlewares: [AuthMiddleware()], // aquí lo aplicamos a todas
-        );
-      }).toList();
+    return GetPage(
+      name: page.name,
+      page: page.page,
+      binding: page.binding,
+      transition: page.transition,
+      transitionDuration: page.transitionDuration,
+      curve: page.curve,
+      children: page.children,
+      participatesInRootNavigator: page.participatesInRootNavigator,
+      preventDuplicates: page.preventDuplicates,
+      popGesture: page.popGesture,
+      middlewares: [AuthMiddleware()], // aquí lo aplicamos a todas
+    );
+  }).toList();
 }

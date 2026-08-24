@@ -4,11 +4,16 @@ final List<Map<String, dynamic>> DashboardRouteModel = <Map<String, dynamic>>[
   {
     'icon': "assets/icons/icon_svg/dashboard.svg",
     'label': 'Dashboard',
-    'route': AppRoutes.dashboard
+    'route': AppRoutes.dashboard,
   },
   {
     'icon': "assets/icons/icon_svg/profile.svg",
     'label': 'Perfil',
-    'route': AppRoutes.profile
+    'route': AppRoutes.profile,
+  },
+  {
+    'icon': "assets/icons/icon_svg/view_payment.svg",
+    'label': 'Yapes',
+    'route': AppRoutes.pagosYape,
   },
 ];
