@@ -51,7 +51,10 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
   void _onSearchChanged(String value) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 700), () {
-      ref.read(inventoryProvider.notifier).searchInventory(value);
+      ref.read(inventoryProvider.notifier).searchInventory(
+            value,
+            idPuntoVenta: ref.read(sesionProvider).office?.id,
+          );
     });
   }
 
@@ -61,7 +64,10 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
       _debounce?.cancel();
       _searchController.text = code;
       setState(() {});
-      ref.read(inventoryProvider.notifier).searchInventory(code);
+      ref.read(inventoryProvider.notifier).searchInventory(
+            code,
+            idPuntoVenta: ref.read(sesionProvider).office?.id,
+          );
     }
   }
 
@@ -190,7 +196,10 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
                   if (currentSearch.isNotEmpty) {
                     await ref
                         .read(inventoryProvider.notifier)
-                        .searchInventory(currentSearch);
+                        .searchInventory(
+                          currentSearch,
+                          idPuntoVenta: idPuntoVenta,
+                        );
                   } else {
                     await ref
                         .read(inventoryProvider.notifier)

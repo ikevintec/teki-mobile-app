@@ -299,6 +299,12 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       ];
 
   List<Map<String, dynamic>> get _cuentasServices => [
+        if (ref.watch(sesionProvider).hasPermission('INVENTARIO_TRASLADO_RAPIDOS'))
+          {
+            'title': 'Traslados',
+            'icon': 'assets/icons/icon_image/inventory_list.png',
+            'action': () => Get.toNamed(AppRoutes.inventoryTransfers),
+          },
         {
           'title': 'Cuentas por Cobrar',
           'icon': 'assets/icons/icon_svg/add_payment.svg',
