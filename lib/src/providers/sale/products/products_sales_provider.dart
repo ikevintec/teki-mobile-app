@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
@@ -19,6 +21,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/quotation/quotation_view_provider.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/products_sale_notifier_setters.dart';
+import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/price.dart';
@@ -87,18 +90,47 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   /// solo ocurre cuando el usuario deja de escribir.
   Future<List<Product>> searchProducts(String? filter) async {
     setFilterGlobal(filter);
+    final officeId = ref.read(sesionProvider).office?.id;
     try {
-      final params = buildProductSearchQueryParams(state);
-      // Buscador de ventas: el backend excluye ocultarEnBuscadorVentas.
-      params['contextoVentas'] = true;
-      final officeId = ref.read(sesionProvider).office?.id;
-      if (officeId != null) params['idPuntoVentaOrder'] = officeId;
-      final products = await productsRepository.searchProducts(params);
+      final List<Product> products;
+      // Solo usamos la búsqueda local si está activo el flag Y ya hay productos
+      // disponibles en memoria/cache. Si el JSON aún no se descargó o falló,
+      // caemos a la búsqueda online para siempre buscar con lo disponible.
+      if (_useLocalSearch && _localProductsAvailable) {
+        products =
+            await ref.read(localProductsProvider.notifier).searchLocal(filter ?? '');
+      } else {
+        final params = buildProductSearchQueryParams(state);
+        params['contextoVentas'] = true;
+        if (officeId != null) params['idPuntoVentaOrder'] = officeId;
+        products = await productsRepository.searchProducts(params);
+      }
       return await _enrichWithInventory(products, officeId);
     } catch (e) {
       errorNotification(e.toString());
       return [];
     }
+  }
+
+  /// Indica si la búsqueda de productos debe resolverse localmente (fuzzy sobre
+  /// el cache) según el flag de configuración de la sesión.
+  bool get _useLocalSearch =>
+      ref.read(sesionProvider).config?.busquedaProductosLocalmente == true;
+
+  /// Indica si ya hay productos cargados en memoria para la búsqueda local.
+  /// Si no los hay (aún descargando o falló), se hace fallback a la búsqueda
+  /// online para no dejar al usuario sin resultados.
+  bool get _localProductsAvailable =>
+      ref.read(localProductsProvider).allProducts.isNotEmpty;
+
+  /// Precarga los productos planos en memoria/cache para la búsqueda local.
+  /// Es no bloqueante: solo hace trabajo la primera vez y no afecta la carga
+  /// inicial de la pantalla de venta.
+  /// Desde esta ruta solo se lee cache; el endpoint `/products/flat` se dispara
+  /// desde login/checkAuthStatus.
+  void ensureLocalProductsLoaded() {
+    if (!_useLocalSearch) return;
+    unawaited(ref.read(localProductsProvider.notifier).ensureCacheLoaded());
   }
 
   /// Enriquece productos de la búsqueda ligera con su inventario en el punto de
@@ -132,6 +164,12 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   Future<Product?> getProductByBarcode(String barcode) async {
     state = state.copyWith(isBarcodeSearching: true);
     try {
+      if (_useLocalSearch && _localProductsAvailable) {
+        final localProduct =
+            ref.read(localProductsProvider.notifier).findByBarcode(barcode);
+        if (localProduct != null) return localProduct;
+      }
+
       final params = buildProductSearchQueryParams(state);
       params['contextoVentas'] = true;
       params['filterGlobal'] = barcode;

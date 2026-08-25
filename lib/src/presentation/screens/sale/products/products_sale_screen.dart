@@ -84,6 +84,9 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     });
 
     final providerProductSale = ref.read(productSaleProvider.notifier);
+    // Si la búsqueda local está activa, precargar los productos planos de forma
+    // asíncrona (no bloquea la carga de la pantalla ni el login).
+    providerProductSale.ensureLocalProductsLoaded();
     Future.microtask(() {
       providerProductSale.loadInitialData(
         widget.id,
