@@ -51,6 +51,7 @@ class ConfigCompany {
   double? porcentajeRetencion;
   bool? motivoAnulacionPlato;
   bool? busquedaProductosLocalmente;
+  bool? verNotificacionYape;
 
   ConfigCompany({
     this.envioAutomaticoSunat,
@@ -100,6 +101,7 @@ class ConfigCompany {
     this.porcentajeRetencion,
     this.motivoAnulacionPlato,
     this.busquedaProductosLocalmente,
+    this.verNotificacionYape,
   });
 
   factory ConfigCompany.fromJson(Map<String, dynamic> json) {
@@ -157,6 +159,7 @@ class ConfigCompany {
       porcentajeRetencion: (json['porcentajeRetencion'] as num?)?.toDouble(),
       motivoAnulacionPlato: json['motivoAnulacionPlato'],
       busquedaProductosLocalmente: json['busquedaProductosLocalmente'],
+      verNotificacionYape: json['verNotificacionYape'] == true,
     );
   }
 
@@ -209,6 +212,7 @@ class ConfigCompany {
       'porcentajeRetencion': porcentajeRetencion,
       'motivoAnulacionPlato': motivoAnulacionPlato,
       'busquedaProductosLocalmente': busquedaProductosLocalmente,
+      'verNotificacionYape': verNotificacionYape,
     };
   }
 }

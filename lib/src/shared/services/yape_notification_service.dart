@@ -134,6 +134,16 @@ class YapeNotificationService {
     }
   }
 
+  /// Habilita o detiene la captura nativa segun la configuracion empresarial.
+  Future<void> setListenerEnabled(bool enabled) async {
+    if (!_isSupported) return;
+    try {
+      await _method.invokeMethod('setListenerEnabled', enabled);
+    } catch (e) {
+      debugPrint('[Yape] setListenerEnabled error: $e');
+    }
+  }
+
   /// Lee (sin borrar) las notificaciones de Yape encoladas por el nativo.
   Future<List<YapeCapture>> peekQueue() async {
     if (!_isSupported) return const [];

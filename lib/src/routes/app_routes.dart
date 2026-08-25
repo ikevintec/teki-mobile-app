@@ -30,6 +30,7 @@ import 'package:teki_app/src/presentation/screens/restaurant/restaurant_mesas_sc
 import 'package:teki_app/src/presentation/screens/push_notification_events/dish_desk_ready_screen.dart';
 import 'package:teki_app/src/presentation/screens/yape/pago_yape_screen.dart';
 import 'package:teki_app/src/routes/middleware/auth_middleware.dart';
+import 'package:teki_app/src/routes/middleware/yape_feature_middleware.dart';
 
 class AppRoutes {
   static const String comprobantesVer = "/ver_comprobantes";
@@ -199,7 +200,10 @@ class AppRoutes {
       participatesInRootNavigator: page.participatesInRootNavigator,
       preventDuplicates: page.preventDuplicates,
       popGesture: page.popGesture,
-      middlewares: [AuthMiddleware()], // aquí lo aplicamos a todas
+      middlewares: [
+        AuthMiddleware(),
+        if (page.name == pagosYape) YapeFeatureMiddleware(),
+      ],
     );
   }).toList();
 }

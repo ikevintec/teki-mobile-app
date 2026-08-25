@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,10 +7,11 @@ import 'package:teki_app/main.dart';
 import 'package:teki_app/src/data/models/route_item_model/dashboar_route_model.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
 
-class DashboardDrawer extends StatefulWidget {
+class DashboardDrawer extends ConsumerStatefulWidget {
   final String routeName;
   final SidebarXController controller;
 
@@ -17,10 +19,10 @@ class DashboardDrawer extends StatefulWidget {
       {super.key, required this.routeName, required this.controller});
 
   @override
-  State<DashboardDrawer> createState() => _DashboardDrawerState();
+  ConsumerState<DashboardDrawer> createState() => _DashboardDrawerState();
 }
 
-class _DashboardDrawerState extends State<DashboardDrawer> {
+class _DashboardDrawerState extends ConsumerState<DashboardDrawer> {
   late List<Map<String, dynamic>> items;
 
   @override
@@ -58,6 +60,11 @@ class _DashboardDrawerState extends State<DashboardDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final verNotificacionYape =
+        ref.watch(sesionProvider).config?.verNotificacionYape == true;
+    final visibleItems = items.where((item) {
+      return item['route'] != AppRoutes.pagosYape || verNotificacionYape;
+    }).toList();
     User? user = globalContainer.read(authStateProvider).user;
     String name = user?.name ?? "";
     String cargo = user?.cargo ?? "";
@@ -82,7 +89,7 @@ class _DashboardDrawerState extends State<DashboardDrawer> {
         selectedItemDecoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8), color: Colors.blue.shade50),
         iconTheme: IconThemeData(
-          color: Colors.black.withOpacity(0.7),
+          color: Colors.black.withValues(alpha: 0.7),
           size: 20,
         ),
       ),
@@ -148,7 +155,7 @@ class _DashboardDrawerState extends State<DashboardDrawer> {
           );
         }
       },
-      items: items.map((item) {
+      items: visibleItems.map((item) {
         return SidebarXItem(
           iconBuilder: (context, selected) {
             return SvgPicture.asset(

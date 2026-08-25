@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/repositories/pago_yape_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/pago_yape_repository.dart';
+import 'package:teki_app/src/providers/auth/login.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/shared/services/yape_notification_service.dart';
 
@@ -23,6 +25,7 @@ class YapeSyncController with WidgetsBindingObserver {
 
   bool _started = false;
   bool _draining = false;
+  bool _enabled = false;
 
   /// Permite inyectar dependencias en tests.
   @visibleForTesting
@@ -40,17 +43,38 @@ class YapeSyncController with WidgetsBindingObserver {
     _container = container;
     WidgetsBinding.instance.addObserver(this);
     _service.onCapture.listen((_) => drainNow());
-    drainNow();
+    container.listen<AuthState>(
+      authStateProvider,
+      (_, _) => _syncEnabledState(),
+      fireImmediately: true,
+    );
+    container.listen<SesionState>(
+      sesionProvider,
+      (_, _) => _syncEnabledState(),
+      fireImmediately: true,
+    );
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) drainNow();
+    if (state == AppLifecycleState.resumed) _syncEnabledState();
+  }
+
+  Future<void> _syncEnabledState() async {
+    final container = _container;
+    if (container == null) return;
+    final enabled = container.read(authStateProvider).isLoggedIn &&
+        container.read(sesionProvider).config?.verNotificacionYape == true;
+    if (_enabled != enabled) {
+      _enabled = enabled;
+      await _service.setListenerEnabled(enabled);
+    }
+    if (enabled) await drainNow();
   }
 
   /// Drena la cola nativa y registra cada pago pendiente. Reentrante-seguro.
   Future<void> drainNow() async {
-    if (_draining) return;
+    if (_draining || !_enabled) return;
     _draining = true;
     try {
       // Sin sesión no registramos: un POST sin token dispararía el logout global.

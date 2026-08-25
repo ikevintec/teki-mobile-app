@@ -13,7 +13,7 @@ final List<Map<String, dynamic>> DashboardRouteModel = <Map<String, dynamic>>[
   },
   {
     'icon': "assets/icons/icon_svg/view_payment.svg",
-    'label': 'Yapes',
+    'label': 'Pagos Yape',
     'route': AppRoutes.pagosYape,
   },
 ];
