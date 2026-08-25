@@ -71,9 +71,8 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
     final requestState = state;
     try {
       final response = await inventoryRepository
-          .getInventory(buildInventoryQueryParams(state));
-      if (!mounted) return;
           .getInventory(buildInventoryQueryParams(requestState));
+      if (!mounted) return;
       if (requestVersion != _requestVersion) return;
       state = state.copyWith(
         items: [...state.items, ...?response.content],
@@ -116,9 +115,8 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
     final requestState = state;
     try {
       final response = await inventoryRepository
-          .getInventory(buildInventoryQueryParams(state));
-      if (!mounted) return;
           .getInventory(buildInventoryQueryParams(requestState));
+      if (!mounted) return;
       if (requestVersion != _requestVersion) return;
       state = state.copyWith(
         items: response.content ?? [],

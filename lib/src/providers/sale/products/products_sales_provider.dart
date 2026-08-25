@@ -100,8 +100,8 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         products =
             await ref.read(localProductsProvider.notifier).searchLocal(filter ?? '');
       } else {
-        params['contextoVentas'] = true;
         final params = buildProductSearchQueryParams(state);
+        params['contextoVentas'] = true;
         if (officeId != null) params['idPuntoVentaOrder'] = officeId;
         products = await productsRepository.searchProducts(params);
       }
