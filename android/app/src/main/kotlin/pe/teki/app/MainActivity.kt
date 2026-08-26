@@ -26,6 +26,11 @@ class MainActivity : FlutterActivity() {
                         )
                         result.success(true)
                     }
+                    "setListenerEnabled" -> {
+                        val enabled = call.arguments as? Boolean ?: false
+                        YapeNotificationListenerService.setListenerEnabled(this, enabled)
+                        result.success(true)
+                    }
                     "peekQueue" ->
                         result.success(YapeNotificationListenerService.peekQueue(this))
                     "ackItems" -> {

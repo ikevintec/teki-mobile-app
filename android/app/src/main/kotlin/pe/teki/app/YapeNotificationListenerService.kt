@@ -22,6 +22,7 @@ class YapeNotificationListenerService : NotificationListenerService() {
         private const val TAG = "YapeListener"
         const val PREFS = "yape_listener_prefs"
         const val QUEUE_KEY = "queue"
+        private const val ENABLED_KEY = "listener_enabled"
 
         /** Paquetes de la app de Yape (producción). */
         private val YAPE_PACKAGES = setOf("com.bcp.innovacxion.yapeapp")
@@ -36,6 +37,14 @@ class YapeNotificationListenerService : NotificationListenerService() {
         fun peekQueue(context: Context): String {
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             return prefs.getString(QUEUE_KEY, "[]") ?: "[]"
+        }
+
+        /** Habilita la captura solo para la sesion autorizada desde Flutter. */
+        fun setListenerEnabled(context: Context, enabled: Boolean) {
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(ENABLED_KEY, enabled)
+                .apply()
         }
 
         /** Elimina de la cola los items cuyos ids se confirmaron (POST exitoso). */
@@ -53,6 +62,9 @@ class YapeNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(ENABLED_KEY, false)) return
+
         val notification = sbn ?: return
         if (notification.packageName !in YAPE_PACKAGES) return
 

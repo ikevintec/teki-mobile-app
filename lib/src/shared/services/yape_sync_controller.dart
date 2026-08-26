@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/repositories/pago_yape_repository_impl.dart';
@@ -11,6 +13,8 @@ import 'package:teki_app/src/shared/services/yape_notification_service.dart';
 /// muestran la lista pueden escucharlo para refrescarse.
 final yapeSyncRevisionProvider = StateProvider<int>((ref) => 0);
 
+const _manageNotificationsPermission = 'PERMITIR_GESTIONAR_NOTIFICACIONES';
+
 /// Registra en el backend los Yapes capturados por el servicio nativo, de forma
 /// global a la app: drena la cola al iniciar y al volver del fondo, y escucha
 /// las capturas en vivo. Funciona en cualquier pantalla mientras la app esté
@@ -22,10 +26,12 @@ class YapeSyncController with WidgetsBindingObserver {
   PagoYapeRepository _repository = PagoYapeRepositoryImpl();
   YapeNotificationService _service = YapeNotificationService.instance;
   ProviderContainer? _container;
+  StreamSubscription<YapeCapture>? _captureSubscription;
 
   bool _started = false;
   bool _draining = false;
   bool _enabled = false;
+  bool _listenerStateSynced = false;
 
   /// Permite inyectar dependencias en tests.
   @visibleForTesting
@@ -42,7 +48,6 @@ class YapeSyncController with WidgetsBindingObserver {
     _started = true;
     _container = container;
     WidgetsBinding.instance.addObserver(this);
-    _service.onCapture.listen((_) => drainNow());
     container.listen<AuthState>(
       authStateProvider,
       (_, _) => _syncEnabledState(),
@@ -63,11 +68,25 @@ class YapeSyncController with WidgetsBindingObserver {
   Future<void> _syncEnabledState() async {
     final container = _container;
     if (container == null) return;
-    final enabled = container.read(authStateProvider).isLoggedIn &&
-        container.read(sesionProvider).config?.verNotificacionYape == true;
-    if (_enabled != enabled) {
+    final auth = container.read(authStateProvider);
+    final session = container.read(sesionProvider);
+    final enabled =
+        auth.isLoggedIn &&
+        !auth.isLoading &&
+        session.config?.verNotificacionYape == true &&
+        session.hasPermission(_manageNotificationsPermission);
+    // Siempre sincroniza al menos una vez: el proceso nativo puede conservar
+    // el estado de una sesion anterior aunque este controlador sea nuevo.
+    if (!_listenerStateSynced || _enabled != enabled) {
       _enabled = enabled;
+      _listenerStateSynced = true;
       await _service.setListenerEnabled(enabled);
+      if (enabled) {
+        _captureSubscription ??= _service.onCapture.listen((_) => drainNow());
+      } else {
+        await _captureSubscription?.cancel();
+        _captureSubscription = null;
+      }
     }
     if (enabled) await drainNow();
   }

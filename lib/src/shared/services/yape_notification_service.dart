@@ -134,7 +134,8 @@ class YapeNotificationService {
     }
   }
 
-  /// Habilita o detiene la captura nativa segun la configuracion empresarial.
+  /// Habilita o detiene la captura nativa segun la empresa y los permisos del
+  /// usuario autenticado.
   Future<void> setListenerEnabled(bool enabled) async {
     if (!_isSupported) return;
     try {
