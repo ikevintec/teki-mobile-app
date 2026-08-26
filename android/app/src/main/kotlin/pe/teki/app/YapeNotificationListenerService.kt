@@ -22,10 +22,13 @@ class YapeNotificationListenerService : NotificationListenerService() {
         private const val TAG = "YapeListener"
         const val PREFS = "yape_listener_prefs"
         const val QUEUE_KEY = "queue"
-        private const val ENABLED_KEY = "listener_enabled"
+        private const val ENABLED_APPS_KEY = "enabled_apps"
 
-        /** Paquetes de la app de Yape (producción). */
-        private val YAPE_PACKAGES = setOf("com.bcp.innovacxion.yapeapp")
+        private val APP_PACKAGES = mapOf(
+            "com.bcp.innovacxion.yapeapp" to "YAPE",
+            "com.bbva.nxt_peru" to "BBVA",
+            "pe.com.interbank.mobilebanking" to "INTERBANK"
+        )
 
         /** Sink del EventChannel: lo setea MainActivity mientras la app está viva. */
         @Volatile
@@ -39,12 +42,28 @@ class YapeNotificationListenerService : NotificationListenerService() {
             return prefs.getString(QUEUE_KEY, "[]") ?: "[]"
         }
 
-        /** Habilita la captura solo para la sesion autorizada desde Flutter. */
-        fun setListenerEnabled(context: Context, enabled: Boolean) {
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        fun setEnabledApps(context: Context, apps: List<String>) {
+            val enabled = apps.filter { APP_PACKAGES.containsValue(it) }.toSet()
+            val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            prefs
                 .edit()
-                .putBoolean(ENABLED_KEY, enabled)
+                .putString(ENABLED_APPS_KEY, enabled.joinToString(","))
                 .apply()
+            filterQueue(prefs, enabled)
+        }
+
+        private fun filterQueue(
+            prefs: android.content.SharedPreferences,
+            enabled: Set<String>
+        ) {
+            val current = JSONArray(prefs.getString(QUEUE_KEY, "[]") ?: "[]")
+            val remaining = JSONArray()
+            for (i in 0 until current.length()) {
+                val item = current.optJSONObject(i) ?: continue
+                val type = item.optString("tipoApp", "YAPE")
+                if (type in enabled) remaining.put(item)
+            }
+            prefs.edit().putString(QUEUE_KEY, remaining.toString()).apply()
         }
 
         /** Elimina de la cola los items cuyos ids se confirmaron (POST exitoso). */
@@ -63,10 +82,14 @@ class YapeNotificationListenerService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        if (!prefs.getBoolean(ENABLED_KEY, false)) return
-
         val notification = sbn ?: return
-        if (notification.packageName !in YAPE_PACKAGES) return
+        val typeApp = APP_PACKAGES[notification.packageName] ?: return
+        val enabled = prefs.getString(ENABLED_APPS_KEY, "")
+            ?.split(",")
+            ?.filter { it.isNotBlank() }
+            ?.toSet()
+            ?: emptySet()
+        if (typeApp !in enabled) return
 
         val extras = notification.notification?.extras
         val title = extras?.getCharSequence("android.title")?.toString() ?: ""
@@ -82,10 +105,11 @@ class YapeNotificationListenerService : NotificationListenerService() {
             put("title", title)
             put("text", text)
             put("bigText", bigText)
+            put("tipoApp", typeApp)
             put("postTime", notification.postTime)
         }
 
-        Log.d(TAG, "Yape capturado -> title='$title' text='$text' big='$bigText'")
+        Log.d(TAG, "$typeApp capturado -> title='$title' text='$text' big='$bigText'")
 
         enqueue(item)
         // Aviso en vivo (solo si la app está abierta y registró el sink).

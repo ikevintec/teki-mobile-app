@@ -26,9 +26,11 @@ class MainActivity : FlutterActivity() {
                         )
                         result.success(true)
                     }
-                    "setListenerEnabled" -> {
-                        val enabled = call.arguments as? Boolean ?: false
-                        YapeNotificationListenerService.setListenerEnabled(this, enabled)
+                    "setEnabledApps" -> {
+                        val apps = (call.arguments as? List<*>)
+                            ?.mapNotNull { it as? String }
+                            ?: emptyList()
+                        YapeNotificationListenerService.setEnabledApps(this, apps)
                         result.success(true)
                     }
                     "peekQueue" ->

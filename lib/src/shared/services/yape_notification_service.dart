@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
 
 /// Notificación de Yape capturada por el servicio nativo de Android.
 class YapeCapture {
@@ -9,12 +10,14 @@ class YapeCapture {
   final String title;
   final String text;
   final String bigText;
+  final NotificationAppType typeApp;
 
   const YapeCapture({
     required this.id,
     required this.title,
     required this.text,
     required this.bigText,
+    this.typeApp = NotificationAppType.yape,
   });
 
   factory YapeCapture.fromMap(Map<String, dynamic> map) => YapeCapture(
@@ -22,6 +25,9 @@ class YapeCapture {
     title: map['title']?.toString() ?? '',
     text: map['text']?.toString() ?? '',
     bigText: map['bigText']?.toString() ?? '',
+    typeApp: NotificationAppType.fromCode(
+      map['tipoApp']?.toString() ?? NotificationAppType.yape.code,
+    ),
   );
 
   /// Todo el texto disponible de la notificación, para parsear.
@@ -41,10 +47,15 @@ class YapeCapture {
     final monto = _normalizeMonto(montoMatch.group(1)!);
     if (monto == null || monto <= 0) return null;
 
-    // Nombre: lo que va antes de "te envió" / "te pagó" (sin acentos).
     String nombre = '';
+    final nombrePattern = switch (typeApp) {
+      NotificationAppType.yape =>
+        r'^(.*?)\s+te\s+(?:envió|envio|pagó|pago)(?:\s|$)',
+      NotificationAppType.interbank => r'^(.*?)\s+te\s+ha\s+plineado\b',
+      NotificationAppType.bbva => r'^(.*?)\s+te\s+pline[oó](?:\s|$)',
+    };
     final nombreMatch = RegExp(
-      r'^(.*?)\s+te\s+(envi|pag)',
+      nombrePattern,
       caseSensitive: false,
     ).firstMatch(source.trim());
     if (nombreMatch != null) {
@@ -56,20 +67,23 @@ class YapeCapture {
       nombre = title.trim();
     }
 
-    // Código: el de "operación" si viene; si no, el de "seguridad".
-    String codigo = '';
-    final codigoMatch = RegExp(
-      r'(?:operaci[oó]n|seguridad)\D*(\d+)',
-      caseSensitive: false,
-    ).firstMatch(source);
-    if (codigoMatch != null) {
-      codigo = codigoMatch.group(1)!.trim();
+    String codigo = '-';
+    if (typeApp == NotificationAppType.yape) {
+      codigo = '';
+      final codigoMatch = RegExp(
+        r'(?:operaci[oó]n|seguridad)\D*(\d+)',
+        caseSensitive: false,
+      ).firstMatch(source);
+      if (codigoMatch != null) {
+        codigo = codigoMatch.group(1)!.trim();
+      }
     }
 
     return YapePaymentData(
       nombrePagador: nombre,
       monto: monto,
       codigoOperacion: codigo,
+      tipoApp: typeApp,
     );
   }
 
@@ -93,11 +107,13 @@ class YapePaymentData {
   final String nombrePagador;
   final double monto;
   final String codigoOperacion;
+  final NotificationAppType tipoApp;
 
   const YapePaymentData({
     required this.nombrePagador,
     required this.monto,
     required this.codigoOperacion,
+    required this.tipoApp,
   });
 }
 
@@ -134,14 +150,15 @@ class YapeNotificationService {
     }
   }
 
-  /// Habilita o detiene la captura nativa segun la empresa y los permisos del
-  /// usuario autenticado.
-  Future<void> setListenerEnabled(bool enabled) async {
+  Future<void> setEnabledApps(Set<NotificationAppType> types) async {
     if (!_isSupported) return;
     try {
-      await _method.invokeMethod('setListenerEnabled', enabled);
+      await _method.invokeMethod(
+        'setEnabledApps',
+        types.map((type) => type.code).toList(),
+      );
     } catch (e) {
-      debugPrint('[Yape] setListenerEnabled error: $e');
+      debugPrint('[Replicador] setEnabledApps error: $e');
     }
   }
 

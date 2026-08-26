@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
 import 'package:teki_app/src/data/models/yape/pago_yape.dart';
 import 'package:teki_app/src/domain/repositories/pago_yape_repository.dart';
 import 'package:teki_app/src/providers/yape/pago_yape_provider.dart';
@@ -11,6 +12,7 @@ class _FakePagoYapeRepository extends PagoYapeRepository {
     required String nombrePagador,
     required double monto,
     required String codigoOperacion,
+    required NotificationAppType tipoApp,
   }) async {
     return PagoYape(
       nombrePagador: nombrePagador,

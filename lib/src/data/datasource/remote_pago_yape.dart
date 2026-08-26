@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
 import 'package:teki_app/src/data/models/yape/pago_yape.dart';
 import 'package:teki_app/src/domain/datasource/pago_yape_datasource.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
@@ -47,6 +48,7 @@ class RemotePagoYape extends PagoYapeDatasource {
     required String nombrePagador,
     required double monto,
     required String codigoOperacion,
+    required NotificationAppType tipoApp,
   }) async {
     try {
       final response = await dio.post(
@@ -55,6 +57,7 @@ class RemotePagoYape extends PagoYapeDatasource {
           'nombrePagador': nombrePagador,
           'monto': monto,
           'codigoOperacion': codigoOperacion,
+          'tipoApp': tipoApp.code,
         },
       );
       final data = response.data;
@@ -65,6 +68,7 @@ class RemotePagoYape extends PagoYapeDatasource {
         nombrePagador: nombrePagador,
         monto: monto,
         codigoOperacion: codigoOperacion,
+        tipoApp: tipoApp,
       );
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {

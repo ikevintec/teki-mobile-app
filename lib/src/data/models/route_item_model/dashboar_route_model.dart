@@ -16,4 +16,9 @@ final List<Map<String, dynamic>> DashboardRouteModel = <Map<String, dynamic>>[
     'label': 'Pagos Yape',
     'route': AppRoutes.pagosYape,
   },
+  {
+    'icon': "assets/icons/icon_svg/settings.svg",
+    'label': 'Gestionar replicador',
+    'route': AppRoutes.replicador,
+  },
 ];

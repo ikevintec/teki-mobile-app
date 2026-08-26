@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
 import 'package:teki_app/src/data/models/yape/pago_yape.dart';
 
 abstract class PagoYapeRepository {
@@ -7,5 +8,6 @@ abstract class PagoYapeRepository {
     required String nombrePagador,
     required double monto,
     required String codigoOperacion,
+    required NotificationAppType tipoApp,
   });
 }

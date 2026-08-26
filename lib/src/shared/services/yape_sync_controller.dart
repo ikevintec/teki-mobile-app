@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
 import 'package:teki_app/src/data/repositories/pago_yape_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/pago_yape_repository.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/replicador/replicador_app_provider.dart';
 import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/shared/services/yape_notification_service.dart';
 
@@ -32,6 +34,7 @@ class YapeSyncController with WidgetsBindingObserver {
   bool _draining = false;
   bool _enabled = false;
   bool _listenerStateSynced = false;
+  Set<NotificationAppType> _enabledApps = const {};
 
   /// Permite inyectar dependencias en tests.
   @visibleForTesting
@@ -58,6 +61,11 @@ class YapeSyncController with WidgetsBindingObserver {
       (_, _) => _syncEnabledState(),
       fireImmediately: true,
     );
+    container.listen<ReplicadorAppState>(
+      replicadorAppProvider,
+      (_, _) => _syncEnabledState(),
+      fireImmediately: true,
+    );
   }
 
   @override
@@ -70,17 +78,20 @@ class YapeSyncController with WidgetsBindingObserver {
     if (container == null) return;
     final auth = container.read(authStateProvider);
     final session = container.read(sesionProvider);
-    final enabled =
+    final allowed =
         auth.isLoggedIn &&
         !auth.isLoading &&
         session.config?.verNotificacionYape == true &&
         session.hasPermission(_manageNotificationsPermission);
-    // Siempre sincroniza al menos una vez: el proceso nativo puede conservar
-    // el estado de una sesion anterior aunque este controlador sea nuevo.
-    if (!_listenerStateSynced || _enabled != enabled) {
+    final enabledApps = allowed
+        ? container.read(replicadorAppProvider).selectedTypes
+        : <NotificationAppType>{};
+    final enabled = enabledApps.isNotEmpty;
+    if (!_listenerStateSynced || !_sameApps(_enabledApps, enabledApps)) {
       _enabled = enabled;
+      _enabledApps = Set.unmodifiable(enabledApps);
       _listenerStateSynced = true;
-      await _service.setListenerEnabled(enabled);
+      await _service.setEnabledApps(enabledApps);
       if (enabled) {
         _captureSubscription ??= _service.onCapture.listen((_) => drainNow());
       } else {
@@ -106,6 +117,10 @@ class YapeSyncController with WidgetsBindingObserver {
       final ackIds = <String>[];
       var posted = 0;
       for (final capture in captures) {
+        if (!_enabledApps.contains(capture.typeApp)) {
+          ackIds.add(capture.id);
+          continue;
+        }
         final data = capture.parse();
         if (data == null) {
           debugPrint('[Yape] Ignorada (sin monto): "${capture.text}"');
@@ -117,6 +132,7 @@ class YapeSyncController with WidgetsBindingObserver {
             nombrePagador: data.nombrePagador,
             monto: data.monto,
             codigoOperacion: data.codigoOperacion,
+            tipoApp: data.tipoApp,
           );
           debugPrint(
             '[Yape] Registrado: ${data.nombrePagador} S/ ${data.monto} (op ${data.codigoOperacion})',
@@ -137,4 +153,9 @@ class YapeSyncController with WidgetsBindingObserver {
       _draining = false;
     }
   }
+
+  bool _sameApps(
+    Set<NotificationAppType> first,
+    Set<NotificationAppType> second,
+  ) => first.length == second.length && first.containsAll(second);
 }

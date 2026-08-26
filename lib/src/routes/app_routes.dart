@@ -27,9 +27,11 @@ import 'package:teki_app/src/presentation/screens/restaurant/cobrador/cobrador_s
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/comanda_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/dividir/dividir_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/restaurant_mesas_screen.dart';
+import 'package:teki_app/src/presentation/screens/replicador/replicador_screen.dart';
 import 'package:teki_app/src/presentation/screens/push_notification_events/dish_desk_ready_screen.dart';
 import 'package:teki_app/src/presentation/screens/yape/pago_yape_screen.dart';
 import 'package:teki_app/src/routes/middleware/auth_middleware.dart';
+import 'package:teki_app/src/routes/middleware/replicador_feature_middleware.dart';
 import 'package:teki_app/src/routes/middleware/yape_feature_middleware.dart';
 
 class AppRoutes {
@@ -81,6 +83,7 @@ class AppRoutes {
   static const String accountsPayable = "/accounts-payable";
   // Pagos Yape
   static const String pagosYape = "/pagos-yape";
+  static const String replicador = "/replicador-notificaciones";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -185,6 +188,7 @@ class AppRoutes {
       page: () => const AccountsReceivableMainScreen(tipoCuenta: 'CP'),
     ),
     GetPage(name: pagosYape, page: () => const PagoYapeScreen()),
+    GetPage(name: replicador, page: () => const ReplicadorScreen()),
   ];
 
   /// Retorna todas las rutas con el middleware aplicado
@@ -203,6 +207,7 @@ class AppRoutes {
       middlewares: [
         AuthMiddleware(),
         if (page.name == pagosYape) YapeFeatureMiddleware(),
+        if (page.name == replicador) ReplicadorFeatureMiddleware(),
       ],
     );
   }).toList();

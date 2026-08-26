@@ -62,8 +62,15 @@ class _DashboardDrawerState extends ConsumerState<DashboardDrawer> {
   Widget build(BuildContext context) {
     final verNotificacionYape =
         ref.watch(sesionProvider).config?.verNotificacionYape == true;
+    final gestionarNotificaciones = ref
+        .watch(sesionProvider)
+        .hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES');
     final visibleItems = items.where((item) {
-      return item['route'] != AppRoutes.pagosYape || verNotificacionYape;
+      if (item['route'] == AppRoutes.pagosYape) return verNotificacionYape;
+      if (item['route'] == AppRoutes.replicador) {
+        return verNotificacionYape && gestionarNotificaciones;
+      }
+      return true;
     }).toList();
     User? user = globalContainer.read(authStateProvider).user;
     String name = user?.name ?? "";

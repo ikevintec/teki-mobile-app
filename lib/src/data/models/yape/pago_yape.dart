@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class PagoYape {
@@ -5,6 +6,7 @@ class PagoYape {
   final String nombrePagador;
   final double monto;
   final String codigoOperacion;
+  final NotificationAppType? tipoApp;
   final DateTime? fechaRegistro;
   final bool validado;
 
@@ -13,6 +15,7 @@ class PagoYape {
     required this.nombrePagador,
     required this.monto,
     required this.codigoOperacion,
+    this.tipoApp,
     this.fechaRegistro,
     this.validado = false,
   });
@@ -22,6 +25,9 @@ class PagoYape {
     nombrePagador: json['nombrePagador']?.toString() ?? '',
     monto: _parseDouble(json['monto']),
     codigoOperacion: json['codigoOperacion']?.toString() ?? '',
+    tipoApp: json['tipoApp'] == null
+        ? null
+        : NotificationAppType.fromCode(json['tipoApp'].toString()),
     fechaRegistro: parseDateTimeFlexible(json['fechaRegistro']),
     validado: json['validado'] == true,
   );

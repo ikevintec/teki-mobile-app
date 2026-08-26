@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
 import 'package:teki_app/src/data/models/yape/pago_yape.dart';
 
 void main() {
@@ -10,6 +11,7 @@ void main() {
           'nombrePagador': 'Ana Torres',
           'monto': 25.5,
           'codigoOperacion': 'YAPE-007',
+          'tipoApp': 'YAPE',
           'fechaRegistro': 1724457600000,
           'validado': false,
         },
@@ -25,6 +27,7 @@ void main() {
     expect(page.content.single.nombrePagador, 'Ana Torres');
     expect(page.content.single.monto, 25.5);
     expect(page.content.single.codigoOperacion, 'YAPE-007');
+    expect(page.content.single.tipoApp, NotificationAppType.yape);
     expect(page.content.single.fechaRegistro, isNotNull);
     expect(page.totalElements, 21);
     expect(page.last, isFalse);
