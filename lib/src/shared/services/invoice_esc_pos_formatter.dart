@@ -12,6 +12,15 @@ class InvoiceEscPosFormatter {
     TicketPrint data,
     Printer printer, {
     bool esLite = false,
+  }) =>
+      formatOrders(data, printer, esLite: esLite).map((e) => e.toJson()).toList();
+
+  /// Igual que [format] pero devuelve las órdenes tipadas, para consumidores
+  /// locales (impresión BLE) que no necesitan serializar a JSON.
+  List<EscPosOrder> formatOrders(
+    TicketPrint data,
+    Printer printer, {
+    bool esLite = false,
   }) {
     final is58mm = printer.anchoPapel == 58;
     final separator = is58mm
@@ -77,7 +86,7 @@ class InvoiceEscPosFormatter {
         const EscPosOrder(type: EscPosOrderType.DRAWER),
     ];
 
-    return lines.map((e) => e.toJson()).toList();
+    return lines;
   }
 
   // ---------------------------------------------------------------------------

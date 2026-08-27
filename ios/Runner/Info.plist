@@ -37,6 +37,8 @@
 	<array>
 		<string>_dartobservatory._tcp</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Teki usa Bluetooth para conectarse a impresoras térmicas y poder imprimir tus tickets de venta.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Teki necesita acceso a la cámara para escanear códigos de barras y tomar fotos de productos.</string>
 	<key>NSLocalNetworkUsageDescription</key>

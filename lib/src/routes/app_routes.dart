@@ -11,6 +11,7 @@ import 'package:teki_app/src/presentation/screens/product/product_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/presentation/screens/products/products_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/profile/profile_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/settings/printer_settings_screen.dart';
 import 'package:teki_app/src/presentation/screens/settings/settings_screen.dart';
 import 'package:teki_app/src/presentation/screens/splash_screen/splash_screen.dart';
 import 'package:teki_app/src/presentation/screens/accounts_receivable/accounts_receivable_main_screen.dart';
@@ -62,6 +63,7 @@ class AppRoutes {
   static const String addPurchaseInvoice = "/addPurchaseInvoice";
   static const String splashScreen = "/splashScreen";
   static const String settings = "/settingsScreen";
+  static const String printerSettings = "/printerSettingsScreen";
   // Productos
   static const String createProduct = "/product/create";
   static const String updateProduct = "/product/edit";
@@ -107,6 +109,7 @@ class AppRoutes {
 
     GetPage(name: splashScreen, page: () => const SplashScreen()),
     GetPage(name: settings, page: () => const SettingsScreen()),
+    GetPage(name: printerSettings, page: () => const PrinterSettingsScreen()),
     //Pages for products
     GetPage(name: createProduct, page: () => const ProductScreen()),
     GetPage(

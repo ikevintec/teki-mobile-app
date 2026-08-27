@@ -5,17 +5,21 @@ import 'package:teki_app/src/data/models/teki_model/config.dart';
 import 'package:teki_app/src/data/models/teki_model/printer.dart';
 import 'package:teki_app/src/shared/services/invoice_esc_pos_formatter.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
+import 'package:teki_app/src/shared/services/printer/esc_pos_generator_service.dart';
+import 'package:teki_app/src/shared/services/printer/printer_service.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 
 class ComprobantePrintService {
   final Dio _dio = ApiClient.dio;
   final PrintCoffeService _printCoffeService = PrintCoffeService();
   final InvoiceEscPosFormatter _formatter = InvoiceEscPosFormatter();
+  final EscPosGeneratorService _escPosGenerator = EscPosGeneratorService();
 
-  /// Imprime un comprobante vía Coffe (ESC/POS o PDF).
+  /// Imprime un comprobante vía Coffe (ESC/POS o PDF) y devuelve el resultado
+  /// reportado por el servicio (Coffe responde 200 aunque no haya impreso).
   /// [esLite] = true genera la versión reducida (boleta lite).
   /// Lanza [PrintCoffeException] si el servicio de impresión falla.
-  Future<void> printComprobante({
+  Future<PrintCoffeResult> printComprobante({
     required int ticketId,
     required String pdfUrl,
     required Printer printer,
@@ -29,10 +33,15 @@ class ComprobantePrintService {
 
     if (escPos) {
       final ticketPrint = await _fetchTicketPrint(ticketId);
-      if (ticketPrint == null) return;
+      if (ticketPrint == null) {
+        return PrintCoffeResult(
+          printed: false,
+          message: 'No se pudo obtener los datos del comprobante para imprimir.',
+        );
+      }
 
       final orders = _formatter.format(ticketPrint, printer, esLite: esLite);
-      await _printCoffeService.printCoffe({
+      return _printCoffeService.printCoffe({
         'printerName': printer.nombre,
         'orders': orders,
         'event': 'printEscPos',
@@ -40,7 +49,7 @@ class ComprobantePrintService {
         'officeCode': printerOfficeCode,
       });
     } else {
-      await _printCoffeService.printCoffe({
+      return _printCoffeService.printCoffe({
         'url': pdfUrl,
         'scale': printer.coffeEscala ?? 2.5,
         'printerName': printer.nombre,
@@ -49,6 +58,42 @@ class ComprobantePrintService {
         'officeCode': printerOfficeCode,
       });
     }
+  }
+
+  /// Imprime un comprobante en una impresora térmica BLE local, generando el
+  /// ESC/POS en la app a partir del MISMO formateador de órdenes que usa
+  /// Coffe. Se usa cuando la empresa tiene tipoImpresionMovil = BLUETOOTH_BLE.
+  /// Lanza [PrinterException] si el transporte BLE falla.
+  Future<PrintCoffeResult> printComprobanteBle({
+    required int ticketId,
+    required PrinterService printerService,
+    required PrinterDevice blePrinter,
+    bool esLite = false,
+  }) async {
+    final ticketPrint = await _fetchTicketPrint(ticketId);
+    if (ticketPrint == null) {
+      return PrintCoffeResult(
+        printed: false,
+        message: 'No se pudo obtener los datos del comprobante para imprimir.',
+      );
+    }
+
+    // Configuración sintética de impresora para el formateador: por BLE no
+    // hay logo (imágenes deshabilitadas en la v1) ni gaveta.
+    final printerConfig = Printer(
+      anchoPapel: blePrinter.paperWidthMm,
+      imprimirLogoTicket: false,
+      abrirGaveta: false,
+    );
+    final orders = _formatter.formatOrders(ticketPrint, printerConfig, esLite: esLite);
+    final bytes = await _escPosGenerator.buildFromOrders(
+      orders,
+      paperWidthMm: blePrinter.paperWidthMm,
+    );
+
+    await printerService.ensureConnected(blePrinter);
+    await printerService.printBytes(bytes);
+    return PrintCoffeResult(printed: true);
   }
 
   /// Impresión automática post-venta. Evalúa [ConfigCompany] para decidir si

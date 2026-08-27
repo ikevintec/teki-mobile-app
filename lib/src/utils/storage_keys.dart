@@ -6,4 +6,5 @@ abstract class StorageKeys {
   static const String roles = 'roles';
   static const String configCompany = 'configCompany';
   static const String fcmToken = 'fcm_token';
+  static const String blePrinter = 'ble_printer';
 }

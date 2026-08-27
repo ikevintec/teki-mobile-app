@@ -6,10 +6,12 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/printer/ble_printer.dart';
 import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
+import 'package:teki_app/src/shared/services/printer/printer_service.dart';
+import 'package:teki_app/src/shared/services/pdf_file_service.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PdfViewerScreen extends ConsumerStatefulWidget {
   final String? uuid;
@@ -43,6 +45,7 @@ class PdfViewerScreen extends ConsumerStatefulWidget {
 
 class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
   final ComprobantePrintService _printService = ComprobantePrintService();
+  final PdfFileService _pdfFileService = PdfFileService();
   bool _isPrinting = false;
   bool _isDownloading = false;
 
@@ -56,6 +59,12 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
 
   Future<void> _handlePrint() async {
     final session = ref.read(sesionProvider);
+
+    if ((session.config?.tipoImpresionMovil ?? 'COFFE') == 'BLUETOOTH_BLE') {
+      await _handlePrintBle();
+      return;
+    }
+
     final printer = session.saleStation?.impresoraComprobante;
     final escPos = session.config?.imprimeTicketsEscPos ?? false;
     final officeCode = session.office?.codigo ?? '';
@@ -66,7 +75,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
 
     setState(() => _isPrinting = true);
     try {
-      await _printService.printComprobante(
+      final result = await _printService.printComprobante(
         ticketId: widget.ticketId ?? 0,
         pdfUrl: _pdfUrl,
         printer: printer,
@@ -74,6 +83,14 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
         officeCode: officeCode,
         idCompany: idCompany,
       );
+      if (result.printed) {
+        successNotification('Comprobante impreso correctamente.');
+      } else {
+        warningNotification(
+          result.message ?? 'No se pudo confirmar la impresión.',
+          duration: const Duration(seconds: 4),
+        );
+      }
     } on PrintCoffeException catch (e) {
       errorNotification(e.message);
     } finally {
@@ -81,15 +98,50 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
     }
   }
 
+  /// Impresión local por Bluetooth BLE (tipoImpresionMovil = BLUETOOTH_BLE).
+  Future<void> _handlePrintBle() async {
+    final blePrinter = ref.read(blePrinterProvider).savedPrinter;
+    if (blePrinter == null) {
+      warningNotification('Configure una impresora Bluetooth en Configuración → Impresoras.');
+      return;
+    }
+    if ((widget.ticketId ?? 0) <= 0) return;
+
+    setState(() => _isPrinting = true);
+    try {
+      final result = await _printService.printComprobanteBle(
+        ticketId: widget.ticketId!,
+        printerService: ref.read(printerServiceProvider),
+        blePrinter: blePrinter,
+      );
+      if (result.printed) {
+        successNotification('Comprobante impreso correctamente.');
+      } else {
+        warningNotification(
+          result.message ?? 'No se pudo confirmar la impresión.',
+          duration: const Duration(seconds: 4),
+        );
+      }
+    } on PrinterException catch (e) {
+      errorNotification(e.message);
+    } finally {
+      if (mounted) setState(() => _isPrinting = false);
+    }
+  }
+
+  /// Descarga el PDF localmente y abre el diálogo nativo de guardado,
+  /// que funciona igual en Android (SAF) y en iOS (Files).
   Future<void> _handleDownload() async {
     setState(() => _isDownloading = true);
     try {
-      final uri = Uri.parse(_pdfUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        errorNotification('No se pudo abrir el comprobante para descarga.');
-      }
+      final path = await _pdfFileService.downloadToTemp(
+        url: _pdfUrl,
+        fileName: widget.fileName,
+      );
+      final saved = await _pdfFileService.saveToDevice(path, fileName: widget.fileName);
+      if (saved) successNotification('Comprobante guardado.');
+    } on PdfFileException catch (e) {
+      errorNotification(e.message);
     } finally {
       if (mounted) setState(() => _isDownloading = false);
     }
@@ -100,7 +152,11 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
     final session = ref.watch(sesionProvider);
     final clienteImpresion = session.config?.clienteImpresion;
     final printer = session.saleStation?.impresoraComprobante;
-    final canPrint = widget.allowPrint && clienteImpresion == 'COFFE' && printer != null;
+    final isBle = (session.config?.tipoImpresionMovil ?? 'COFFE') == 'BLUETOOTH_BLE';
+    final canPrint = widget.allowPrint &&
+        (isBle
+            ? ref.watch(blePrinterProvider).hasPrinter && widget.ticketId != null
+            : clienteImpresion == 'COFFE' && printer != null);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -111,7 +167,11 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
       ),
       body: Column(
         children: [
-          _buildActionButtons(canPrint, printer?.nombre),
+          _buildActionButtons(
+            canPrint,
+            isBle ? ref.watch(blePrinterProvider).savedPrinter?.name : printer?.nombre,
+            isBle: isBle,
+          ),
           Expanded(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -138,7 +198,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
     );
   }
 
-  Widget _buildActionButtons(bool canPrint, String? printerName) {
+  Widget _buildActionButtons(bool canPrint, String? printerName, {bool isBle = false}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
@@ -158,7 +218,9 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Configure una impresora en la estación de venta para imprimir el comprobante.',
+                      isBle
+                          ? 'Configure una impresora Bluetooth en Configuración → Impresoras para imprimir el comprobante.'
+                          : 'Configure una impresora en la estación de venta para imprimir el comprobante.',
                       style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
                     ),
                   ),

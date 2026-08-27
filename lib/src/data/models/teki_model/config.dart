@@ -23,6 +23,9 @@ class ConfigCompany {
   bool? ocultarModalRegistroComanda;
   String? tipoImpresion;
   String? tipoImpresionGuia;
+
+  /// Cliente de impresión para la app móvil: 'COFFE' | 'BLUETOOTH_BLE'.
+  String? tipoImpresionMovil;
   String? tipoPedidoRestaurantePorDefecto;
   String? tiposDocumentosEnvioWhatsapp;
   int? cantDecimales;
@@ -74,6 +77,7 @@ class ConfigCompany {
     this.ocultarModalRegistroComanda,
     this.tipoImpresion,
     this.tipoImpresionGuia,
+    this.tipoImpresionMovil,
     this.tipoPedidoRestaurantePorDefecto,
     this.tiposDocumentosEnvioWhatsapp,
     this.cantDecimales,
@@ -126,6 +130,7 @@ class ConfigCompany {
       ocultarModalRegistroComanda: json['ocultarModalRegistroComanda'],
       tipoImpresion: json['tipoImpresion'],
       tipoImpresionGuia: json['tipoImpresionGuia'],
+      tipoImpresionMovil: json['tipoImpresionMovil'],
       tipoPedidoRestaurantePorDefecto: json['tipoPedidoRestaurantePorDefecto'],
       tiposDocumentosEnvioWhatsapp: json['tiposDocumentosEnvioWhatsapp'],
       cantDecimales: json['cantDecimales'],
@@ -185,6 +190,7 @@ class ConfigCompany {
       'ocultarModalRegistroComanda': ocultarModalRegistroComanda,
       'tipoImpresion': tipoImpresion,
       'tipoImpresionGuia': tipoImpresionGuia,
+      'tipoImpresionMovil': tipoImpresionMovil,
       'tipoPedidoRestaurantePorDefecto': tipoPedidoRestaurantePorDefecto,
       'tiposDocumentosEnvioWhatsapp': tiposDocumentosEnvioWhatsapp,
       'cantDecimales': cantDecimales,

@@ -13,16 +13,18 @@ import 'package:teki_app/src/presentation/widgets/celebration/success_celebratio
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/printer/ble_printer.dart';
+import 'package:teki_app/src/shared/services/printer/printer_service.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
+import 'package:teki_app/src/shared/services/pdf_file_service.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ViewComponentScreen extends ConsumerStatefulWidget {
   final Ticket ticket;
@@ -38,6 +40,7 @@ class ViewComponentScreen extends ConsumerStatefulWidget {
 class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
   // Ancla desde donde revienta el confeti al venir de una venta.
   final GlobalKey _celebrationCheckKey = GlobalKey();
+  final PdfFileService _pdfFileService = PdfFileService();
 
   void _enviarWhatsapp(Ticket ticket) {
     final nombreComercial = ref.read(sesionProvider).company?.nombreComercial ?? 'Empresa';
@@ -58,18 +61,19 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
     );
   }
 
-  void _showPdfOptions(Ticket ticket) {
+  /// Bottom sheet con las dos variantes de formato (A4 / Ticket); marca como
+  /// "Por defecto" la que corresponde a la configuración de impresión.
+  void _showFormatOptions({
+    required String labelA4,
+    required String labelTicket,
+    required void Function(String tipo) onSelect,
+  }) {
     final tipoImpresion = ref.read(sesionProvider).config?.tipoImpresion ?? 'A4';
     final isTicketDefault = tipoImpresion == 'TICKET' || tipoImpresion == 'ESCPOS';
 
-    void verPdf(String tipo) {
+    void select(String tipo) {
       Navigator.of(context).pop();
-      Get.to(() => PdfViewerScreen(
-            uuid: ticket.uuid!,
-            fileName: ticket.identificadorDocumento!,
-            fileSize: tipo,
-            ticketId: ticket.id,
-          ));
+      onSelect(tipo);
     }
 
     showModalBottomSheet(
@@ -94,32 +98,15 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
             const SizedBox(height: 8),
             _PdfOptionTile(
               icon: Icons.description_outlined,
-              label: 'Ver formato A4',
+              label: labelA4,
               isDefault: !isTicketDefault,
-              onTap: () => verPdf('A4'),
+              onTap: () => select('A4'),
             ),
             _PdfOptionTile(
               icon: Icons.confirmation_number_outlined,
-              label: 'Ver formato Ticket',
+              label: labelTicket,
               isDefault: isTicketDefault,
-              onTap: () => verPdf('TICKET'),
-            ),
-            Divider(height: 1, color: Colors.grey.shade200),
-            _PdfOptionTile(
-              icon: Icons.download_rounded,
-              label: 'Descargar A4',
-              onTap: () {
-                Navigator.of(context).pop();
-                _downloadPdf(ticket, 'A4');
-              },
-            ),
-            _PdfOptionTile(
-              icon: Icons.download_rounded,
-              label: 'Descargar Ticket',
-              onTap: () {
-                Navigator.of(context).pop();
-                _downloadPdf(ticket, 'TICKET');
-              },
+              onTap: () => select('TICKET'),
             ),
             const SizedBox(height: 8),
           ],
@@ -128,15 +115,53 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
     );
   }
 
-  Future<void> _downloadPdf(Ticket ticket, String tipo) async {
-    final uri = Uri.parse(
-      '${Environment.apiUrl}/public/pdf/tickets/${ticket.uuid!}/${ticket.identificadorDocumento!}?tipo=$tipo',
+  void _showPdfOptions(Ticket ticket) {
+    _showFormatOptions(
+      labelA4: 'Ver formato A4',
+      labelTicket: 'Ver formato Ticket',
+      onSelect: (tipo) => Get.to(() => PdfViewerScreen(
+            uuid: ticket.uuid!,
+            fileName: ticket.identificadorDocumento!,
+            fileSize: tipo,
+            ticketId: ticket.id,
+          )),
     );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      errorNotification('No se pudo abrir el comprobante para descarga.');
+  }
+
+  void _showShareOptions(Ticket ticket) {
+    _showFormatOptions(
+      labelA4: 'Compartir A4',
+      labelTicket: 'Compartir Ticket',
+      onSelect: (tipo) => _sharePdf(ticket, tipo),
+    );
+  }
+
+  /// Descarga el PDF y abre el share sheet del sistema (WhatsApp, correo, etc.).
+  /// El loader se cierra antes de abrir el share sheet para no dejarlo detrás.
+  Future<void> _sharePdf(Ticket ticket, String tipo) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+    );
+    String? path;
+    try {
+      path = await _pdfFileService.downloadToTemp(
+        url: PdfFileService.ticketPdfUrl(ticket.uuid!, ticket.identificadorDocumento!, tipo),
+        fileName: '${ticket.identificadorDocumento!}-$tipo',
+      );
+    } on PdfFileException catch (e) {
+      errorNotification(e.message);
+    } finally {
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
     }
+    if (path == null || !mounted) return;
+
+    final box = context.findRenderObject() as RenderBox?;
+    await _pdfFileService.shareFile(
+      path,
+      sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+    );
   }
 
   /// Un solo tap para atender al siguiente cliente. El flujo de venta ya
@@ -362,6 +387,14 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                                   icon: Icons.description_outlined,
                                   label: 'PDF',
                                   onTap: () => _showPdfOptions(ticketToShow),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _QuickActionTile(
+                                  icon: Icons.share_rounded,
+                                  label: 'Compartir',
+                                  onTap: () => _showShareOptions(ticketToShow),
                                 ),
                               ),
                             ],
@@ -637,6 +670,12 @@ class _PrintButtonState extends ConsumerState<_PrintButton> {
 
   Future<void> _handlePrint() async {
     final session = ref.read(sesionProvider);
+
+    if ((session.config?.tipoImpresionMovil ?? 'COFFE') == 'BLUETOOTH_BLE') {
+      await _handlePrintBle();
+      return;
+    }
+
     final printer = session.saleStation?.impresoraComprobante;
     final escPos = session.config?.imprimeTicketsEscPos ?? false;
     final officeCode = session.office?.codigo ?? '';
@@ -648,7 +687,7 @@ class _PrintButtonState extends ConsumerState<_PrintButton> {
 
     setState(() => _isPrinting = true);
     try {
-      await _printService.printComprobante(
+      final result = await _printService.printComprobante(
         ticketId: widget.ticket.id ?? 0,
         pdfUrl: _buildPdfUrl(tipoImpresion),
         printer: printer,
@@ -656,7 +695,47 @@ class _PrintButtonState extends ConsumerState<_PrintButton> {
         officeCode: officeCode,
         idCompany: idCompany,
       );
+      if (result.printed) {
+        successNotification('Comprobante impreso correctamente.');
+      } else {
+        warningNotification(
+          result.message ?? 'No se pudo confirmar la impresión.',
+          duration: const Duration(seconds: 4),
+        );
+      }
     } on PrintCoffeException catch (e) {
+      errorNotification(e.message);
+    } finally {
+      if (mounted) setState(() => _isPrinting = false);
+    }
+  }
+
+  /// Impresión local por Bluetooth BLE (tipoImpresionMovil = BLUETOOTH_BLE):
+  /// el ESC/POS se genera en la app y se envía a la térmica configurada.
+  Future<void> _handlePrintBle() async {
+    final blePrinter = ref.read(blePrinterProvider).savedPrinter;
+    if (blePrinter == null) {
+      warningNotification('Configure una impresora Bluetooth en Configuración → Impresoras.');
+      return;
+    }
+    if ((widget.ticket.id ?? 0) <= 0) return;
+
+    setState(() => _isPrinting = true);
+    try {
+      final result = await _printService.printComprobanteBle(
+        ticketId: widget.ticket.id!,
+        printerService: ref.read(printerServiceProvider),
+        blePrinter: blePrinter,
+      );
+      if (result.printed) {
+        successNotification('Comprobante impreso correctamente.');
+      } else {
+        warningNotification(
+          result.message ?? 'No se pudo confirmar la impresión.',
+          duration: const Duration(seconds: 4),
+        );
+      }
+    } on PrinterException catch (e) {
       errorNotification(e.message);
     } finally {
       if (mounted) setState(() => _isPrinting = false);
@@ -668,7 +747,10 @@ class _PrintButtonState extends ConsumerState<_PrintButton> {
     final session = ref.watch(sesionProvider);
     final clienteImpresion = session.config?.clienteImpresion;
     final printer = session.saleStation?.impresoraComprobante;
-    final canPrint = clienteImpresion == 'COFFE' && printer != null;
+    final isBle = (session.config?.tipoImpresionMovil ?? 'COFFE') == 'BLUETOOTH_BLE';
+    final canPrint = isBle
+        ? ref.watch(blePrinterProvider).hasPrinter
+        : clienteImpresion == 'COFFE' && printer != null;
 
     return _QuickActionTile(
       icon: Icons.print_rounded,
