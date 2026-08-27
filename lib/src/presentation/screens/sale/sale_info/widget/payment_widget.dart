@@ -15,6 +15,8 @@ import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/printer/ble_printer.dart';
+import 'package:teki_app/src/shared/services/printer/printer_service.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/credito_cuotas.dart';
@@ -173,9 +175,35 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     }
 
     final session = ref.read(sesionProvider);
-    final printer = session.saleStation?.impresoraComprobante;
     final config = session.config;
-    if (printer == null || config == null) return;
+    if (config == null) return;
+
+    // Empresas con impresión móvil BLE: el ESC/POS se genera y envía local.
+    // A diferencia de Coffe (que reintenta en el servidor), un fallo BLE se
+    // avisa con un toast para que el cajero imprima manualmente.
+    if ((config.tipoImpresionMovil ?? 'COFFE') == 'BLUETOOTH_BLE') {
+      final blePrinter = ref.read(blePrinterProvider).savedPrinter;
+      if (blePrinter == null) return;
+      unawaited(() async {
+        try {
+          await _printService.autoprintBle(
+            ticketId: ticket.id!,
+            printerService: ref.read(printerServiceProvider),
+            blePrinter: blePrinter,
+            config: config,
+          );
+        } on PrinterException catch (e) {
+          warningNotification(
+            'Impresión automática: ${e.message}',
+            duration: const Duration(seconds: 4),
+          );
+        } catch (_) {}
+      }());
+      return;
+    }
+
+    final printer = session.saleStation?.impresoraComprobante;
+    if (printer == null) return;
 
     final escPos = config.imprimeTicketsEscPos ?? false;
     final tipo = config.tipoImpresion ?? 'A4';

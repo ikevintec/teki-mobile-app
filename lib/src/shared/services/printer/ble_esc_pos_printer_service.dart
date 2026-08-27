@@ -138,7 +138,12 @@ class BleEscPosPrinterService implements PrinterService {
       throw PrinterException('La impresora no está conectada.');
     }
 
-    final withoutResponse = characteristic.properties.writeWithoutResponse;
+    // Se prefiere Write CON respuesta: el ACK por chunk da backpressure real.
+    // Write Without Response depende del callback "buffer listo" de la
+    // plataforma, que en iOS no siempre llega con estas impresoras y deja el
+    // write colgado hasta el timeout aunque los datos sí hayan salido.
+    final withoutResponse = !characteristic.properties.write &&
+        characteristic.properties.writeWithoutResponse;
     final chunkSize = _chunkSizeFor(device);
     final totalChunks = (bytes.length / chunkSize).ceil();
     _log('Sending ${bytes.length} bytes in $totalChunks chunks of $chunkSize (wwr=$withoutResponse)');
@@ -193,7 +198,8 @@ class BleEscPosPrinterService implements PrinterService {
     if (printer.serviceUuid != null && printer.characteristicUuid != null) {
       final saved = _findByUuids(services, Guid(printer.serviceUuid!), Guid(printer.characteristicUuid!));
       if (saved != null && _isWritable(saved)) {
-        _log('Writable characteristic found (saved): ${saved.characteristicUuid.str128}');
+        _log('Writable characteristic found (saved): ${saved.characteristicUuid.str128} '
+            '(write=${saved.properties.write}, wwr=${saved.properties.writeWithoutResponse})');
         return saved;
       }
     }

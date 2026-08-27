@@ -96,6 +96,34 @@ class ComprobantePrintService {
     return PrintCoffeResult(printed: true);
   }
 
+  /// Impresión automática post-venta por Bluetooth BLE, paridad de [autoprint]
+  /// para empresas con tipoImpresionMovil = BLUETOOTH_BLE. Imprime también la
+  /// versión lite si la empresa la tiene activada.
+  /// Lanza [PrinterException] si el transporte BLE falla.
+  Future<void> autoprintBle({
+    required int ticketId,
+    required PrinterService printerService,
+    required PrinterDevice blePrinter,
+    required ConfigCompany config,
+  }) async {
+    if (config.impresionAutomatica != true) return;
+
+    await printComprobanteBle(
+      ticketId: ticketId,
+      printerService: printerService,
+      blePrinter: blePrinter,
+    );
+
+    if (config.imprimirBoletaLite == true) {
+      await printComprobanteBle(
+        ticketId: ticketId,
+        printerService: printerService,
+        blePrinter: blePrinter,
+        esLite: true,
+      );
+    }
+  }
+
   /// Impresión automática post-venta. Evalúa [ConfigCompany] para decidir si
   /// imprimir, y si corresponde, imprime también la versión lite.
   ///

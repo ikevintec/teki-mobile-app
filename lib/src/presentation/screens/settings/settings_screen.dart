@@ -82,9 +82,13 @@ class SettingsScreen extends ConsumerWidget {
                 ref.read(sesionProvider.notifier).changeSaleStation(value!);
               },
             ),
-            const SizedBox(height: 20),
-            _buildSectionTitle('Impresoras'),
-            _buildPrinterEntry(ref),
+            // Solo aplica a empresas con impresión móvil Bluetooth BLE;
+            // con Coffe la impresora se administra desde la web.
+            if ((config.config?.tipoImpresionMovil ?? 'COFFE') == 'BLUETOOTH_BLE') ...[
+              const SizedBox(height: 20),
+              _buildSectionTitle('Impresoras'),
+              _buildPrinterEntry(ref),
+            ],
           ],
         ),
       ),
