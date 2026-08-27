@@ -12,6 +12,7 @@ import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
+import 'package:teki_app/src/utils/notifications.dart';
 
 class ClientSaleScreen extends ConsumerStatefulWidget {
   const ClientSaleScreen({super.key});
@@ -44,6 +45,15 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   };
 
   String? _selectedTipoDocumentoValue = '1';
+  bool _autovalidate = false;
+
+  /// Resuelve el codigo de tipo de documento de un cliente ya existente contra el
+  /// catalogo local. Si el backend manda un codigo fuera del catalogo (el caso
+  /// tipico es el cliente por defecto de la caja), se cae a '0' — que no tiene
+  /// regla de formato — en vez de dejar el selector en DNI, que exigiria 8
+  /// digitos a un documento que nunca los va a tener y bloquearia el formulario.
+  String _resolveTipoDocumento(String? codigo) =>
+      (codigo != null && tipoDocumentoMap.containsKey(codigo)) ? codigo : '0';
 
   Future<List<Customer>> onSearchChanged(String query) async {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -88,16 +98,15 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     }
 
     if ((customer.razonSocial ?? '').isNotEmpty) {
+      id = customer.id;
       _nombreController.text = customer.razonSocial ?? '';
       _direccionController.text = customer.direccion ?? '';
       _documentoController.text = customer.numeroDocumento ?? '';
       _emailController.text = customer.email ?? '';
       _telefonoController.text = customer.telefono ?? '';
-      final tipoDocCodigo = customer.tipoDocumento?.toString();
-      if (tipoDocCodigo != null &&
-          tipoDocumentoMap.containsKey(tipoDocCodigo)) {
-        _selectedTipoDocumentoValue = tipoDocCodigo;
-      }
+      _selectedTipoDocumentoValue = _resolveTipoDocumento(
+        customer.tipoDocumento,
+      );
     }
   }
 
@@ -127,12 +136,12 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     _emailController.text = customer.email ?? '';
     _telefonoController.text = customer.telefono ?? '';
 
-    final tipoDocCodigo = customer.tipoDocumento?.toString();
-    if (tipoDocCodigo != null && tipoDocumentoMap.containsKey(tipoDocCodigo)) {
-      setState(() {
-        _selectedTipoDocumentoValue = tipoDocCodigo;
-      });
-    }
+    setState(() {
+      id = customer.id;
+      _selectedTipoDocumentoValue = _resolveTipoDocumento(
+        customer.tipoDocumento,
+      );
+    });
   }
 
   @override
@@ -174,6 +183,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                         //From
                         child: Form(
                           key: _formKey,
+                          autovalidateMode: _autovalidate
+                              ? AutovalidateMode.onUserInteraction
+                              : AutovalidateMode.disabled,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -519,25 +531,30 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                clienteNotifier.setCustomer(
-                                  id: id,
-                                  nombre: _nombreController.text,
-                                  direccion: _direccionController.text,
-                                  documento: _documentoController.text,
-                                  email: _emailController.text,
-                                  telefono: _telefonoController.text,
-                                  tipoDocumento:
-                                      _selectedTipoDocumentoValue ?? '',
+                              if (!(_formKey.currentState?.validate() ??
+                                  false)) {
+                                setState(() => _autovalidate = true);
+                                errorNotification(
+                                  'Revisa los datos del cliente para continuar',
                                 );
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const SaleInfoScreen(),
-                                  ),
-                                );
+                                return;
                               }
+                              clienteNotifier.setCustomer(
+                                id: id,
+                                nombre: _nombreController.text,
+                                direccion: _direccionController.text,
+                                documento: _documentoController.text,
+                                email: _emailController.text,
+                                telefono: _telefonoController.text,
+                                tipoDocumento:
+                                    _selectedTipoDocumentoValue ?? '',
+                              );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SaleInfoScreen(),
+                                ),
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorSchema.primaryColor,
