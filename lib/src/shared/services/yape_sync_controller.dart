@@ -15,7 +15,7 @@ import 'package:teki_app/src/shared/services/yape_notification_service.dart';
 /// muestran la lista pueden escucharlo para refrescarse.
 final yapeSyncRevisionProvider = StateProvider<int>((ref) => 0);
 
-const _manageNotificationsPermission = 'PERMITIR_GESTIONAR_NOTIFICACIONES';
+const _manageNotificationsPermission = 'PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS';
 
 /// Registra en el backend los Yapes capturados por el servicio nativo, de forma
 /// global a la app: drena la cola al iniciar y al volver del fondo, y escucha

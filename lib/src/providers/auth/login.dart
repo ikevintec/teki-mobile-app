@@ -88,7 +88,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           .initialize(
             enabled:
                 configCompany.verNotificacionYape == true &&
-                roles.contains('PERMITIR_GESTIONAR_NOTIFICACIONES'),
+                roles.contains('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'),
           );
 
       // Ya con la sesión y el config seteados, inicializar el timestamp local
@@ -190,7 +190,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
             .initialize(
               enabled:
                   configCompany.verNotificacionYape == true &&
-                  session.hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES'),
+                  session.hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'),
             );
 
         final userId = login.user?.id;

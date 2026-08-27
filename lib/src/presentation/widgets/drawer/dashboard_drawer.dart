@@ -64,7 +64,7 @@ class _DashboardDrawerState extends ConsumerState<DashboardDrawer> {
         ref.watch(sesionProvider).config?.verNotificacionYape == true;
     final gestionarNotificaciones = ref
         .watch(sesionProvider)
-        .hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES');
+        .hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS');
     final visibleItems = items.where((item) {
       if (item['route'] == AppRoutes.pagosYape) return verNotificacionYape;
       if (item['route'] == AppRoutes.replicador) {

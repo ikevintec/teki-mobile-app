@@ -10,7 +10,7 @@ class ReplicadorFeatureMiddleware extends GetMiddleware {
     final session = globalContainer.read(sesionProvider);
     final enabled =
         session.config?.verNotificacionYape == true &&
-        session.hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES');
+        session.hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS');
     return enabled ? null : const RouteSettings(name: AppRoutes.dashboard);
   }
 }
