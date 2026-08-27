@@ -48,6 +48,9 @@ class CustomSwitch extends StatelessWidget {
               )
             : null,
         child: Row(
+          // Permite usar el componente como hijo no flexible de otro Row.
+          // En ese caso Flutter entrega ancho no acotado durante la medición.
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             if (rightAlign == false)
@@ -56,6 +59,8 @@ class CustomSwitch extends StatelessWidget {
               Flexible(
                 child: Text(
                   title ?? 'Switch',
+                  maxLines: 1,
+                  softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: small == true ? 12 : 14,
@@ -64,7 +69,7 @@ class CustomSwitch extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(width: small == true ? 8 : 12),
+            SizedBox(width: small == true ? 8 : 12),
             FlutterSwitch(
               activeColor: activeColor ?? ColorSchema.primaryColor,
               activeToggleColor: activeToggleColor ?? Colors.white,
