@@ -11,6 +11,7 @@ import 'package:teki_app/src/presentation/screens/product/product_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/presentation/screens/products/products_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/profile/profile_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/settings/printer_settings_screen.dart';
 import 'package:teki_app/src/presentation/screens/settings/settings_screen.dart';
 import 'package:teki_app/src/presentation/screens/splash_screen/splash_screen.dart';
 import 'package:teki_app/src/presentation/screens/accounts_receivable/accounts_receivable_main_screen.dart';
@@ -27,8 +28,12 @@ import 'package:teki_app/src/presentation/screens/restaurant/cobrador/cobrador_s
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/comanda_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/dividir/dividir_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/restaurant_mesas_screen.dart';
+import 'package:teki_app/src/presentation/screens/replicador/replicador_screen.dart';
 import 'package:teki_app/src/presentation/screens/push_notification_events/dish_desk_ready_screen.dart';
+import 'package:teki_app/src/presentation/screens/yape/pago_yape_screen.dart';
 import 'package:teki_app/src/routes/middleware/auth_middleware.dart';
+import 'package:teki_app/src/routes/middleware/replicador_feature_middleware.dart';
+import 'package:teki_app/src/routes/middleware/yape_feature_middleware.dart';
 
 class AppRoutes {
   static const String comprobantesVer = "/ver_comprobantes";
@@ -58,6 +63,7 @@ class AppRoutes {
   static const String addPurchaseInvoice = "/addPurchaseInvoice";
   static const String splashScreen = "/splashScreen";
   static const String settings = "/settingsScreen";
+  static const String printerSettings = "/printerSettingsScreen";
   // Productos
   static const String createProduct = "/product/create";
   static const String updateProduct = "/product/edit";
@@ -77,6 +83,9 @@ class AppRoutes {
   // Cuentas por cobrar / pagar
   static const String accountsReceivable = "/accounts-receivable";
   static const String accountsPayable = "/accounts-payable";
+  // Pagos Yape
+  static const String pagosYape = "/pagos-yape";
+  static const String replicador = "/replicador-notificaciones";
 
   static final List<GetPage> _rawPages = [
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
@@ -86,51 +95,21 @@ class AppRoutes {
     GetPage(name: forgotPassword, page: () => const ForgotPasswordScreen()),
 
     GetPage(name: analytics, page: () => const AnalyticsMainScreen()),
-//Route Comprobantes
+    //Route Comprobantes
     GetPage(name: comprobantesVer, page: () => const VerComprobanteScreen()),
     GetPage(name: quotationsVer, page: () => const VerQuotationsScreen()),
-    
-    
+
     GetPage(name: products, page: () => const ProductsMainScreen()),
-    
+
     GetPage(name: customer, page: () => const CustomerMainScreen()),
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     GetPage(name: profile, page: () => const ProfileMainScreen()),
-    
-    
-    
-    
-    
-    
-    
+
     GetPage(name: addCustomer, page: () => const AddCustomerSection()),
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     GetPage(name: splashScreen, page: () => const SplashScreen()),
     GetPage(name: settings, page: () => const SettingsScreen()),
+    GetPage(name: printerSettings, page: () => const PrinterSettingsScreen()),
     //Pages for products
     GetPage(name: createProduct, page: () => const ProductScreen()),
     GetPage(
@@ -211,22 +190,28 @@ class AppRoutes {
       name: accountsPayable,
       page: () => const AccountsReceivableMainScreen(tipoCuenta: 'CP'),
     ),
+    GetPage(name: pagosYape, page: () => const PagoYapeScreen()),
+    GetPage(name: replicador, page: () => const ReplicadorScreen()),
   ];
 
   /// Retorna todas las rutas con el middleware aplicado
   static List<GetPage> get pages => _rawPages.map((page) {
-        return GetPage(
-          name: page.name,
-          page: page.page,
-          binding: page.binding,
-          transition: page.transition,
-          transitionDuration: page.transitionDuration,
-          curve: page.curve,
-          children: page.children,
-          participatesInRootNavigator: page.participatesInRootNavigator,
-          preventDuplicates: page.preventDuplicates,
-          popGesture: page.popGesture,
-          middlewares: [AuthMiddleware()], // aquí lo aplicamos a todas
-        );
-      }).toList();
+    return GetPage(
+      name: page.name,
+      page: page.page,
+      binding: page.binding,
+      transition: page.transition,
+      transitionDuration: page.transitionDuration,
+      curve: page.curve,
+      children: page.children,
+      participatesInRootNavigator: page.participatesInRootNavigator,
+      preventDuplicates: page.preventDuplicates,
+      popGesture: page.popGesture,
+      middlewares: [
+        AuthMiddleware(),
+        if (page.name == pagosYape) YapeFeatureMiddleware(),
+        if (page.name == replicador) ReplicadorFeatureMiddleware(),
+      ],
+    );
+  }).toList();
 }

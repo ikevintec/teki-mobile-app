@@ -23,6 +23,9 @@ class ConfigCompany {
   bool? ocultarModalRegistroComanda;
   String? tipoImpresion;
   String? tipoImpresionGuia;
+
+  /// Cliente de impresión para la app móvil: 'COFFE' | 'BLUETOOTH_BLE'.
+  String? tipoImpresionMovil;
   String? tipoPedidoRestaurantePorDefecto;
   String? tiposDocumentosEnvioWhatsapp;
   int? cantDecimales;
@@ -51,6 +54,7 @@ class ConfigCompany {
   double? porcentajeRetencion;
   bool? motivoAnulacionPlato;
   bool? busquedaProductosLocalmente;
+  bool? verNotificacionYape;
 
   ConfigCompany({
     this.envioAutomaticoSunat,
@@ -73,6 +77,7 @@ class ConfigCompany {
     this.ocultarModalRegistroComanda,
     this.tipoImpresion,
     this.tipoImpresionGuia,
+    this.tipoImpresionMovil,
     this.tipoPedidoRestaurantePorDefecto,
     this.tiposDocumentosEnvioWhatsapp,
     this.cantDecimales,
@@ -100,6 +105,7 @@ class ConfigCompany {
     this.porcentajeRetencion,
     this.motivoAnulacionPlato,
     this.busquedaProductosLocalmente,
+    this.verNotificacionYape,
   });
 
   factory ConfigCompany.fromJson(Map<String, dynamic> json) {
@@ -124,6 +130,7 @@ class ConfigCompany {
       ocultarModalRegistroComanda: json['ocultarModalRegistroComanda'],
       tipoImpresion: json['tipoImpresion'],
       tipoImpresionGuia: json['tipoImpresionGuia'],
+      tipoImpresionMovil: json['tipoImpresionMovil'],
       tipoPedidoRestaurantePorDefecto: json['tipoPedidoRestaurantePorDefecto'],
       tiposDocumentosEnvioWhatsapp: json['tiposDocumentosEnvioWhatsapp'],
       cantDecimales: json['cantDecimales'],
@@ -157,6 +164,7 @@ class ConfigCompany {
       porcentajeRetencion: (json['porcentajeRetencion'] as num?)?.toDouble(),
       motivoAnulacionPlato: json['motivoAnulacionPlato'],
       busquedaProductosLocalmente: json['busquedaProductosLocalmente'],
+      verNotificacionYape: json['verNotificacionYape'] == true,
     );
   }
 
@@ -182,6 +190,7 @@ class ConfigCompany {
       'ocultarModalRegistroComanda': ocultarModalRegistroComanda,
       'tipoImpresion': tipoImpresion,
       'tipoImpresionGuia': tipoImpresionGuia,
+      'tipoImpresionMovil': tipoImpresionMovil,
       'tipoPedidoRestaurantePorDefecto': tipoPedidoRestaurantePorDefecto,
       'tiposDocumentosEnvioWhatsapp': tiposDocumentosEnvioWhatsapp,
       'cantDecimales': cantDecimales,
@@ -209,6 +218,7 @@ class ConfigCompany {
       'porcentajeRetencion': porcentajeRetencion,
       'motivoAnulacionPlato': motivoAnulacionPlato,
       'busquedaProductosLocalmente': busquedaProductosLocalmente,
+      'verNotificacionYape': verNotificacionYape,
     };
   }
 }

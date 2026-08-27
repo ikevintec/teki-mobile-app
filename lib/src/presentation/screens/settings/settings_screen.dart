@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/data/models/teki_model/company_summary.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/printer/ble_printer.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -79,7 +82,55 @@ class SettingsScreen extends ConsumerWidget {
                 ref.read(sesionProvider.notifier).changeSaleStation(value!);
               },
             ),
+            // Solo aplica a empresas con impresión móvil Bluetooth BLE;
+            // con Coffe la impresora se administra desde la web.
+            if ((config.config?.tipoImpresionMovil ?? 'COFFE') == 'BLUETOOTH_BLE') ...[
+              const SizedBox(height: 20),
+              _buildSectionTitle('Impresoras'),
+              _buildPrinterEntry(ref),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Acceso a la configuración de la impresora térmica Bluetooth (BLE).
+  Widget _buildPrinterEntry(WidgetRef ref) {
+    final printerState = ref.watch(blePrinterProvider);
+    final printer = printerState.savedPrinter;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => Get.toNamed(AppRoutes.printerSettings),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(color: Colors.black12, blurRadius: 3, offset: Offset(0, 1)),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.print_rounded, size: 20, color: Colors.black54),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  printer != null
+                      ? '${printer.name} · Bluetooth BLE'
+                      : 'Configurar impresora Bluetooth',
+                  style: const TextStyle(fontSize: 14, color: Colors.black87),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: Colors.black38),
+            ],
+          ),
         ),
       ),
     );

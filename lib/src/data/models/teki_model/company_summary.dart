@@ -10,6 +10,7 @@ class Companysummary {
   final String? direccion;
   final bool? esProduccion;
   final bool? integracionApi;
+  final bool? verNotificacionYape;
 
   Companysummary({
     this.id,
@@ -23,6 +24,7 @@ class Companysummary {
     this.direccion,
     this.esProduccion,
     this.integracionApi,
+    this.verNotificacionYape,
   });
 
   factory Companysummary.fromJson(Map<String, dynamic> json) => Companysummary(
@@ -37,6 +39,7 @@ class Companysummary {
         direccion: json['direccion'].toString(),
         esProduccion: json['esProduccion'],
         integracionApi: json['integracionApi'],
+        verNotificacionYape: json['verNotificacionYape'] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -51,5 +54,6 @@ class Companysummary {
         'direccion': direccion,
         'esProduccion': esProduccion,
         'integracionApi': integracionApi,
+        'verNotificacionYape': verNotificacionYape,
       };
 }

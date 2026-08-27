@@ -17,6 +17,7 @@ import 'package:teki_app/src/domain/repositories/auth_repository.dart';
 import 'package:teki_app/src/domain/repositories/config_repository.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/replicador/replicador_app_provider.dart';
 import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/shared/services/key_values_storage_impl.dart';
 import 'package:teki_app/src/shared/services/token_storage.dart';
@@ -82,6 +83,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
       ConfigCompany configCompany = await setConfigCompanies(ref, configRepository);
       await keyvalueStorage.setKeyValue(StorageKeys.configCompany, jsonEncode(configCompany.toJson()));
+      await ref
+          .read(replicadorAppProvider.notifier)
+          .initialize(
+            enabled:
+                configCompany.verNotificacionYape == true &&
+                roles.contains('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'),
+          );
 
       // Ya con la sesión y el config seteados, inicializar el timestamp local
       // si el flag está activo (asíncrono, no bloquea el login).
@@ -176,6 +184,14 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
               .read(sesionProvider.notifier)
               .setRoles(List<String>.from(jsonDecode(rolesJson)));
         }
+        final session = ref.read(sesionProvider);
+        await ref
+            .read(replicadorAppProvider.notifier)
+            .initialize(
+              enabled:
+                  configCompany.verNotificacionYape == true &&
+                  session.hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'),
+            );
 
         final userId = login.user?.id;
         if (userId != null) {
@@ -197,6 +213,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   void logout() async {
     NotificationService.instance.dispose();
+    ref.read(replicadorAppProvider.notifier).clear();
     await ref.read(localProductsProvider.notifier).clearCache();
     await TokenStorage.deleteToken();
     await keyvalueStorage.removeKey(StorageKeys.login);
