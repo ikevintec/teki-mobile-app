@@ -188,6 +188,60 @@ class YapeNotificationService {
     }
   }
 
+  /// Espeja token y baseUrl en las preferencias nativas: el worker de Android
+  /// no puede leer `flutter_secure_storage` ni el `.env`, y los necesita para
+  /// enviar los pagos con la app cerrada.
+  Future<void> setSyncCredentials({
+    required String token,
+    required String baseUrl,
+  }) async {
+    if (!_isSupported) return;
+    try {
+      await _method.invokeMethod('setSyncCredentials', {
+        'token': token,
+        'baseUrl': baseUrl,
+      });
+    } catch (e) {
+      debugPrint('[Yape] setSyncCredentials error: $e');
+    }
+  }
+
+  Future<void> clearSyncCredentials() async {
+    if (!_isSupported) return;
+    try {
+      await _method.invokeMethod('clearSyncCredentials');
+    } catch (e) {
+      debugPrint('[Yape] clearSyncCredentials error: $e');
+    }
+  }
+
+  Future<bool> isIgnoringBatteryOptimizations() async {
+    if (!_isSupported) return true;
+    try {
+      return await _method.invokeMethod<bool>(
+            'isIgnoringBatteryOptimizations',
+          ) ??
+          true;
+    } catch (e) {
+      debugPrint('[Yape] isIgnoringBatteryOptimizations error: $e');
+      return true;
+    }
+  }
+
+  /// Devuelve `true` si ya estaba excluida (en ese caso no abre nada).
+  Future<bool> requestIgnoreBatteryOptimizations() async {
+    if (!_isSupported) return true;
+    try {
+      return await _method.invokeMethod<bool>(
+            'requestIgnoreBatteryOptimizations',
+          ) ??
+          false;
+    } catch (e) {
+      debugPrint('[Yape] requestIgnoreBatteryOptimizations error: $e');
+      return false;
+    }
+  }
+
   /// Stream de capturas en vivo mientras la app está abierta.
   Stream<YapeCapture> get onCapture {
     if (!_isSupported) return const Stream.empty();

@@ -17,22 +17,34 @@ class _ReplicadorScreenState extends ConsumerState<ReplicadorScreen>
     with WidgetsBindingObserver {
   final _notificationService = YapeNotificationService.instance;
   bool _notificationAccess = false;
+  bool _batteryOptimized = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _refreshNotificationAccess();
+    _refreshNativeState();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _refreshNotificationAccess();
+    if (state == AppLifecycleState.resumed) _refreshNativeState();
   }
 
-  Future<void> _refreshNotificationAccess() async {
+  Future<void> _refreshNativeState() async {
     final granted = await _notificationService.isPermissionGranted();
-    if (mounted) setState(() => _notificationAccess = granted);
+    final exempt = await _notificationService.isIgnoringBatteryOptimizations();
+    if (!mounted) return;
+    setState(() {
+      _notificationAccess = granted;
+      _batteryOptimized = !exempt;
+    });
+  }
+
+  Future<void> _requestBatteryExemption() async {
+    final alreadyExempt = await _notificationService
+        .requestIgnoreBatteryOptimizations();
+    if (alreadyExempt && mounted) setState(() => _batteryOptimized = false);
   }
 
   Future<void> _toggle(NotificationAppType type, bool selected) async {
@@ -65,6 +77,10 @@ class _ReplicadorScreenState extends ConsumerState<ReplicadorScreen>
         padding: const EdgeInsets.all(16),
         children: [
           _notificationAccessCard(),
+          if (_notificationAccess && _batteryOptimized) ...[
+            const SizedBox(height: 8),
+            _batteryOptimizationCard(),
+          ],
           const SizedBox(height: 16),
           const Text(
             'Aplicaciones',
@@ -117,6 +133,24 @@ class _ReplicadorScreenState extends ConsumerState<ReplicadorScreen>
         ),
         subtitle: const Text('Toca para abrir la configuración del celular'),
         trailing: const Icon(Icons.chevron_right),
+      ),
+    );
+  }
+
+  /// Sin la exención, Android puede retrasar el envío de los pagos capturados
+  /// mientras la app está cerrada.
+  Widget _batteryOptimizationCard() {
+    return Card(
+      child: ListTile(
+        onTap: _requestBatteryExemption,
+        leading: const Icon(Icons.battery_alert, color: Colors.orange),
+        title: const Text('Optimización de batería activa'),
+        subtitle: const Text(
+          'Permite que Teki funcione sin restricciones para registrar los '
+          'pagos aunque la app esté cerrada.',
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        isThreeLine: true,
       ),
     );
   }

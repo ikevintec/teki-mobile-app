@@ -10,6 +10,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/replicador/replicador_app_provider.dart';
 import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/shared/services/yape_notification_service.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 /// Se incrementa cada vez que se registra un Yape nuevo; las pantallas que
 /// muestran la lista pueden escucharlo para refrescarse.
@@ -87,6 +88,7 @@ class YapeSyncController with WidgetsBindingObserver {
         ? container.read(replicadorAppProvider).selectedTypes
         : <NotificationAppType>{};
     final enabled = enabledApps.isNotEmpty;
+    await _syncNativeCredentials(enabled);
     if (!_listenerStateSynced || !_sameApps(_enabledApps, enabledApps)) {
       _enabled = enabled;
       _enabledApps = Set.unmodifiable(enabledApps);
@@ -100,6 +102,21 @@ class YapeSyncController with WidgetsBindingObserver {
       }
     }
     if (enabled) await drainNow();
+  }
+
+  /// Espeja las credenciales para el worker nativo (registra los pagos con la
+  /// app cerrada). Corre en cada cambio de sesión, así el token nuevo pisa al
+  /// anterior; al desloguear o apagar el replicador se borran.
+  Future<void> _syncNativeCredentials(bool enabled) async {
+    final token = enabled ? await TokenStorage.getToken() : null;
+    if (token == null) {
+      await _service.clearSyncCredentials();
+      return;
+    }
+    await _service.setSyncCredentials(
+      token: token,
+      baseUrl: Environment.apiUrl,
+    );
   }
 
   /// Drena la cola nativa y registra cada pago pendiente. Reentrante-seguro.
