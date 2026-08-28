@@ -59,7 +59,18 @@ class YapeSyncWorker(
             }
         }
 
-        fun schedulePeriodic(context: Context) {
+        fun cancelAll(context: Context) {
+            try {
+                WorkManager.getInstance(context).apply {
+                    cancelUniqueWork(UNIQUE_WORK)
+                    cancelUniqueWork(UNIQUE_PERIODIC_WORK)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "No se pudo cancelar el trabajo pendiente: ${e.message}")
+            }
+        }
+
+        private fun schedulePeriodic(context: Context) {
             val request = PeriodicWorkRequestBuilder<YapeSyncWorker>(15, TimeUnit.MINUTES)
                 .setConstraints(networkConstraints())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
@@ -74,6 +85,14 @@ class YapeSyncWorker(
                 Log.w(TAG, "No se pudo encolar el respaldo periódico: ${e.message}")
             }
         }
+
+        private fun cancelPeriodic(context: Context) {
+            try {
+                WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_PERIODIC_WORK)
+            } catch (e: Exception) {
+                Log.w(TAG, "No se pudo cancelar el respaldo periódico: ${e.message}")
+            }
+        }
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -86,6 +105,7 @@ class YapeSyncWorker(
         val baseUrl = prefs.getString(BASE_URL_KEY, null)?.takeIf { it.isNotBlank() }
         if (token == null || baseUrl == null) {
             Log.d(TAG, "Sin credenciales espejadas, la app enviará la cola al abrirse")
+            cancelPeriodic(applicationContext)
             return@withContext Result.success()
         }
 
@@ -98,7 +118,10 @@ class YapeSyncWorker(
         val queue = synchronized(YapeNotificationListenerService.QUEUE_LOCK) {
             JSONArray(prefs.getString(YapeNotificationListenerService.QUEUE_KEY, "[]") ?: "[]")
         }
-        if (queue.length() == 0) return@withContext Result.success()
+        if (queue.length() == 0) {
+            cancelPeriodic(applicationContext)
+            return@withContext Result.success()
+        }
 
         val ackIds = mutableListOf<String>()
         var needsRetry = false
@@ -151,9 +174,16 @@ class YapeSyncWorker(
         }
         if (unauthorized) {
             prefs.edit().remove(TOKEN_KEY).apply()
+            cancelPeriodic(applicationContext)
             return@withContext Result.success()
         }
-        if (needsRetry) Result.retry() else Result.success()
+        if (needsRetry) {
+            schedulePeriodic(applicationContext)
+            Result.retry()
+        } else {
+            cancelPeriodic(applicationContext)
+            Result.success()
+        }
     }
 
     private fun post(

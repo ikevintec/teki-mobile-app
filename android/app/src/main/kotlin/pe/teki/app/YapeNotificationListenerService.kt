@@ -87,9 +87,9 @@ class YapeNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val notification = sbn ?: return
         val typeApp = APP_PACKAGES[notification.packageName] ?: return
+        val prefs = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val enabled = prefs.getString(ENABLED_APPS_KEY, "")
             ?.split(",")
             ?.filter { it.isNotBlank() }

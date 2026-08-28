@@ -35,6 +35,8 @@ class YapeSyncController with WidgetsBindingObserver {
   bool _draining = false;
   bool _enabled = false;
   bool _listenerStateSynced = false;
+  bool _credentialsSynced = false;
+  String? _mirroredCredentials;
   Set<NotificationAppType> _enabledApps = const {};
 
   /// Permite inyectar dependencias en tests.
@@ -105,18 +107,20 @@ class YapeSyncController with WidgetsBindingObserver {
   }
 
   /// Espeja las credenciales para el worker nativo (registra los pagos con la
-  /// app cerrada). Corre en cada cambio de sesión, así el token nuevo pisa al
-  /// anterior; al desloguear o apagar el replicador se borran.
+  /// app cerrada). Solo cruza el canal cuando cambian: `_syncEnabledState` corre
+  /// en cada resume y no vale la pena reescribir prefs por eso.
   Future<void> _syncNativeCredentials(bool enabled) async {
     final token = enabled ? await TokenStorage.getToken() : null;
+    final baseUrl = Environment.apiUrl;
+    final fingerprint = token == null ? null : '$token@$baseUrl';
+    if (_credentialsSynced && fingerprint == _mirroredCredentials) return;
+    _credentialsSynced = true;
+    _mirroredCredentials = fingerprint;
     if (token == null) {
       await _service.clearSyncCredentials();
       return;
     }
-    await _service.setSyncCredentials(
-      token: token,
-      baseUrl: Environment.apiUrl,
-    );
+    await _service.setSyncCredentials(token: token, baseUrl: baseUrl);
   }
 
   /// Drena la cola nativa y registra cada pago pendiente. Reentrante-seguro.

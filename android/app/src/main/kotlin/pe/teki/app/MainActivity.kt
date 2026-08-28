@@ -21,8 +21,6 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
-        YapeSyncWorker.schedulePeriodic(applicationContext)
-
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, methodChannelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -101,6 +99,7 @@ class MainActivity : FlutterActivity() {
             .remove(YapeSyncWorker.TOKEN_KEY)
             .remove(YapeSyncWorker.BASE_URL_KEY)
             .apply()
+        YapeSyncWorker.cancelAll(applicationContext)
     }
 
     private fun isNotificationAccessGranted(): Boolean {

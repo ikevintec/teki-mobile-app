@@ -77,8 +77,9 @@ El worker nativo no puede leer `flutter_secure_storage` (token) ni el `.env`
 | `sync_base_url` | `Environment.apiUrl` |
 
 `YapeSyncController._syncNativeCredentials()` los escribe vía
-`setSyncCredentials` en cada cambio de sesión (así el token nuevo pisa al
-anterior) y los borra con `clearSyncCredentials` al desloguear o apagar el
+`setSyncCredentials` cuando cambian (así el token nuevo pisa al anterior; se
+compara antes de cruzar el canal porque `_syncEnabledState` corre en cada
+resume) y los borra con `clearSyncCredentials` al desloguear o apagar el
 replicador. Sin credenciales, el worker termina en `success()` sin tocar la cola:
 la app enviará el backlog al abrirse.
 
@@ -122,13 +123,61 @@ estaba muerto).
   trabajo expedited como foreground service y exige `getForegroundInfo()` más
   una notificación; sin eso el worker fallaría en runtime. En API < 31 el
   one-time igual se ejecuta apenas se cumplen las constraints.
-- `MainActivity.configureFlutterEngine` registra además un `PeriodicWorkRequest`
-  de respaldo cada 15 min (`"yape-sync-periodic"`, `KEEP`) que recupera el
-  backlog si un one-time se perdió al morir el proceso.
+- El `PeriodicWorkRequest` de respaldo **no** está siempre activo: ver
+  [Consumo de batería](#consumo-de-batería).
 
 WorkManager se inicializa solo vía `androidx.startup.InitializationProvider`
 (viene en el manifiesto de `work-runtime`); no hace falta un `Application`
 propio.
+
+## Consumo de batería
+
+En reposo el flujo **no despierta el proceso**: no hay polling, timers ni
+servicios en primer plano. El coste se concentra en tres puntos, todos acotados:
+
+1. **Por notificación del sistema.** `onNotificationPosted` corre para cada
+   notificación del teléfono, pero descarta las ajenas con un lookup de mapa
+   sobre el paquete *antes* de tocar preferencias. Coste despreciable, y el
+   proceso ya está vivo porque el sistema acaba de enlazar el listener.
+2. **Por pago capturado.** Un `OneTimeWorkRequest` expedited: unos cientos de ms
+   de CPU más una petición HTTP. Ocurre tantas veces al día como pagos reciba el
+   negocio.
+3. **Reintentos.** Backoff exponencial de WorkManager, con constraint de red: no
+   se ejecuta nada mientras el equipo está sin conexión, el sistema avisa cuando
+   vuelve.
+
+### El respaldo periódico es bajo demanda
+
+El `PeriodicWorkRequest` de 15 min (`"yape-sync-periodic"`, `KEEP`) **solo existe
+mientras hay backlog atascado**, es decir cuando un barrido terminó en
+`Result.retry()`. En cuanto la cola se vacía —o no hay credenciales, o llegó un
+401— el propio worker se cancela con `cancelUniqueWork`.
+
+Esto importa porque un periódico permanente despierta el proceso 96 veces al
+día, y cuando la app está deslizada de recientes cada despertar implica arrancar
+el proceso entero (`Application.onCreate`, `androidx.startup`, WorkManager),
+casi siempre para descubrir que no hay nada que enviar. En estado estable ahora
+son **cero** despertares.
+
+Se conserva porque el backoff de WorkManager llega a topar en 5 h: durante una
+caída del backend, el periódico acota la espera de un pago atascado a 15 min.
+
+### Cero trabajo con la función apagada
+
+`clearSyncCredentials` (logout, permiso revocado o replicador apagado) llama a
+`YapeSyncWorker.cancelAll`, que cancela el one-time y el periódico. Con la
+función desactivada no queda absolutamente nada agendado. Un periódico huérfano
+de una versión anterior se autocancela en su primera ejecución al encontrar la
+cola vacía.
+
+### Qué NO se hizo
+
+- `APPEND_OR_REPLACE` encadena un worker por notificación, así que una ráfaga de
+  N pagos produce N ejecuciones. Se mantiene porque `KEEP` podría perder un item
+  encolado después de que el worker en curso tomó su snapshot de la cola. Los
+  workers sobrantes salen de inmediato al ver la cola vacía.
+- No se sube el intervalo del periódico por encima de 15 min: cuando existe, es
+  justamente porque hay un pago sin entregar.
 
 ## Manejo de respuestas del POST
 
