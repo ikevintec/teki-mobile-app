@@ -150,6 +150,56 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
         );
   }
 
+  // Abreviaturas de mes usadas en Perú (SET, no SEP).
+  static const _meses = [
+    'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
+    'JUL', 'AGO', 'SET', 'OCT', 'NOV', 'DIC',
+  ];
+
+  /// Fecha de emisión al estilo de un icono (día grande + mes), en lugar del
+  /// icono genérico de comprobante. Si la fecha no parsea, cae al icono.
+  Widget _buildFechaTile(String? fechaEmision) {
+    final fecha = DateTime.tryParse(fechaEmision ?? '');
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: ColorSchema.primaryColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: fecha == null
+          ? const Icon(
+              Icons.receipt_long_rounded,
+              size: 26,
+              color: ColorSchema.primaryColor,
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${fecha.day}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                    color: ColorSchema.primaryColor,
+                  ),
+                ),
+                Text(
+                  _meses[fecha.month - 1],
+                  style: GoogleFonts.poppins(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.6,
+                    height: 1.1,
+                    color: ColorSchema.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = ref.watch(comprobantesSaleProvider);
@@ -231,11 +281,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                   Container(
                     color: Colors.white,
                     child: ListTile(
-                      leading: const Icon(
-                        Icons.receipt_long_rounded,
-                        size: 35,
-                        color: ColorSchema.primaryColor,
-                      ),
+                      leading: _buildFechaTile(ticket.fechaEmision),
                       title: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -262,8 +308,15 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                         children: [
                           SizedBox(height: 4),
                           Text(
-                            'Fecha de emisión: ${ticket.fechaEmision?.toString() ?? "--"}',
-                            style: GoogleFonts.roboto(fontSize: 11),
+                            (ticket.denominacionReceptor ?? '').isNotEmpty
+                                ? ticket.denominacionReceptor!
+                                : 'Sin cliente',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.roboto(
+                              fontSize: 11,
+                              color: Colors.grey.shade700,
+                            ),
                           ),
                           // La línea de estado solo existe cuando hay algo
                           // que decir: Anulado (domina) o un estado SUNAT
