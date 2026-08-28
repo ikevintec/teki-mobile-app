@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja/historial_item.dart';
 import 'package:teki_app/src/providers/cash_register/caja_resumen_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -74,20 +75,39 @@ class _RangoMovimientosSheetState extends ConsumerState<RangoMovimientosSheet> {
               const SizedBox(height: 14),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Movimientos del periodo',
-                        style: GoogleFonts.roboto(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
+                    Text(
+                      'Movimientos del periodo',
+                      style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    _filtroChip('Todos', null, state.tipo),
-                    const SizedBox(width: 6),
-                    _filtroChip('Ingresos', 'INGRESO', state.tipo),
-                    const SizedBox(width: 6),
-                    _filtroChip('Egresos', 'EGRESO', state.tipo),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today_rounded,
+                            size: 12, color: Colors.grey.shade500),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            _formatRange(widget.range),
+                            style: GoogleFonts.roboto(
+                                fontSize: 12, color: Colors.grey.shade600),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _filtroChip('Todos', null, state.tipo),
+                        const SizedBox(width: 6),
+                        _filtroChip('Ingresos', 'INGRESO', state.tipo),
+                        const SizedBox(width: 6),
+                        _filtroChip('Egresos', 'EGRESO', state.tipo),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -101,6 +121,23 @@ class _RangoMovimientosSheetState extends ConsumerState<RangoMovimientosSheet> {
         );
       },
     );
+  }
+
+  /// Rango legible: un solo día -> "27 ago 2026"; rango -> "20 ago – 27 ago 2026"
+  /// (omite el año en el inicio si ambos extremos comparten año).
+  String _formatRange(DateTimeRange range) {
+    final ini = range.start;
+    final fin = range.end;
+    final mismoDia =
+        ini.year == fin.year && ini.month == fin.month && ini.day == fin.day;
+    if (mismoDia) {
+      return DateFormat("d MMM y", 'es').format(ini);
+    }
+    final iniFmt = ini.year == fin.year
+        ? DateFormat('d MMM', 'es').format(ini)
+        : DateFormat('d MMM y', 'es').format(ini);
+    final finFmt = DateFormat('d MMM y', 'es').format(fin);
+    return '$iniFmt – $finFmt';
   }
 
   Widget _filtroChip(String label, String? tipo, String? actual) {

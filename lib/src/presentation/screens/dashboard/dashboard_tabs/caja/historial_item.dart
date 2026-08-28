@@ -15,6 +15,17 @@ class HistorialItem extends StatelessWidget {
 
   const HistorialItem({super.key, required this.item, required this.tipo});
 
+  /// Hora si el movimiento es de hoy; 'dd MMM, HH:mm' si es de otro día.
+  static String _formatFechaHora(DateTime? fecha) {
+    if (fecha == null) return '';
+    final now = DateTime.now();
+    final esHoy =
+        fecha.year == now.year && fecha.month == now.month && fecha.day == now.day;
+    return esHoy
+        ? DateFormat('HH:mm', 'es').format(fecha)
+        : DateFormat('dd MMM, HH:mm', 'es').format(fecha);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isIngreso = tipo == 'INGRESO';
@@ -25,9 +36,9 @@ class HistorialItem extends StatelessWidget {
         : const Color(0xFFDC2626).withValues(alpha: 0.1);
     final symbol = formatExchange(moneda: item.monedaMovimientoCaja ?? 'PEN');
     final monto = item.monto ?? 0.0;
-    final hora = item.fechaMovimiento != null
-        ? DateFormat('HH:mm', 'es').format(item.fechaMovimiento!)
-        : '';
+    // De hoy: solo la hora. De otro día (rangos amplios): fecha + hora,
+    // para no confundir movimientos de distintas jornadas.
+    final hora = _formatFechaHora(item.fechaMovimiento);
     final usuario = item.usuario?.nombreCompleto ?? '';
 
     return GestureDetector(
