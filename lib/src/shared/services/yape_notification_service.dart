@@ -127,11 +127,14 @@ class YapeNotificationService {
 
   Stream<YapeCapture>? _stream;
 
-  bool get _isSupported => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  /// El replicador solo existe en Android: iOS no deja leer notificaciones de
+  /// otras apps, así que allí no hay nada que capturar ni que configurar.
+  bool get isSupported =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   /// ¿El usuario habilitó el acceso a notificaciones para Teki?
   Future<bool> isPermissionGranted() async {
-    if (!_isSupported) return false;
+    if (!isSupported) return false;
     try {
       return await _method.invokeMethod<bool>('isPermissionGranted') ?? false;
     } catch (e) {
@@ -142,7 +145,7 @@ class YapeNotificationService {
 
   /// Abre la pantalla de sistema para conceder el acceso a notificaciones.
   Future<void> openSettings() async {
-    if (!_isSupported) return;
+    if (!isSupported) return;
     try {
       await _method.invokeMethod('openSettings');
     } catch (e) {
@@ -151,7 +154,7 @@ class YapeNotificationService {
   }
 
   Future<void> setEnabledApps(Set<NotificationAppType> types) async {
-    if (!_isSupported) return;
+    if (!isSupported) return;
     try {
       await _method.invokeMethod(
         'setEnabledApps',
@@ -164,7 +167,7 @@ class YapeNotificationService {
 
   /// Lee (sin borrar) las notificaciones de Yape encoladas por el nativo.
   Future<List<YapeCapture>> peekQueue() async {
-    if (!_isSupported) return const [];
+    if (!isSupported) return const [];
     try {
       final raw = await _method.invokeMethod<String>('peekQueue') ?? '[]';
       final list = jsonDecode(raw) as List;
@@ -180,7 +183,7 @@ class YapeNotificationService {
 
   /// Confirma (elimina de la cola) los items ya registrados en el backend.
   Future<void> ackItems(List<String> ids) async {
-    if (!_isSupported || ids.isEmpty) return;
+    if (!isSupported || ids.isEmpty) return;
     try {
       await _method.invokeMethod('ackItems', ids);
     } catch (e) {
@@ -195,7 +198,7 @@ class YapeNotificationService {
     required String token,
     required String baseUrl,
   }) async {
-    if (!_isSupported) return;
+    if (!isSupported) return;
     try {
       await _method.invokeMethod('setSyncCredentials', {
         'token': token,
@@ -207,7 +210,7 @@ class YapeNotificationService {
   }
 
   Future<void> clearSyncCredentials() async {
-    if (!_isSupported) return;
+    if (!isSupported) return;
     try {
       await _method.invokeMethod('clearSyncCredentials');
     } catch (e) {
@@ -216,7 +219,7 @@ class YapeNotificationService {
   }
 
   Future<bool> isIgnoringBatteryOptimizations() async {
-    if (!_isSupported) return true;
+    if (!isSupported) return true;
     try {
       return await _method.invokeMethod<bool>(
             'isIgnoringBatteryOptimizations',
@@ -230,7 +233,7 @@ class YapeNotificationService {
 
   /// Devuelve `true` si ya estaba excluida (en ese caso no abre nada).
   Future<bool> requestIgnoreBatteryOptimizations() async {
-    if (!_isSupported) return true;
+    if (!isSupported) return true;
     try {
       return await _method.invokeMethod<bool>(
             'requestIgnoreBatteryOptimizations',
@@ -244,7 +247,7 @@ class YapeNotificationService {
 
   /// Stream de capturas en vivo mientras la app está abierta.
   Stream<YapeCapture> get onCapture {
-    if (!_isSupported) return const Stream.empty();
+    if (!isSupported) return const Stream.empty();
     _stream ??= _events.receiveBroadcastStream().map((event) {
       final map = jsonDecode(event as String) as Map;
       return YapeCapture.fromMap(Map<String, dynamic>.from(map));
