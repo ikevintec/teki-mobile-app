@@ -10,6 +10,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/replicador/replicador_app_provider.dart';
 import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/shared/services/yape_notification_service.dart';
+import 'package:teki_app/src/utils/constants.dart';
 
 /// Se incrementa cada vez que se registra un Yape nuevo; las pantallas que
 /// muestran la lista pueden escucharlo para refrescarse.
@@ -34,6 +35,8 @@ class YapeSyncController with WidgetsBindingObserver {
   bool _draining = false;
   bool _enabled = false;
   bool _listenerStateSynced = false;
+  bool _credentialsSynced = false;
+  String? _mirroredCredentials;
   Set<NotificationAppType> _enabledApps = const {};
 
   /// Permite inyectar dependencias en tests.
@@ -87,6 +90,7 @@ class YapeSyncController with WidgetsBindingObserver {
         ? container.read(replicadorAppProvider).selectedTypes
         : <NotificationAppType>{};
     final enabled = enabledApps.isNotEmpty;
+    await _syncNativeCredentials(enabled);
     if (!_listenerStateSynced || !_sameApps(_enabledApps, enabledApps)) {
       _enabled = enabled;
       _enabledApps = Set.unmodifiable(enabledApps);
@@ -100,6 +104,23 @@ class YapeSyncController with WidgetsBindingObserver {
       }
     }
     if (enabled) await drainNow();
+  }
+
+  /// Espeja las credenciales para el worker nativo (registra los pagos con la
+  /// app cerrada). Solo cruza el canal cuando cambian: `_syncEnabledState` corre
+  /// en cada resume y no vale la pena reescribir prefs por eso.
+  Future<void> _syncNativeCredentials(bool enabled) async {
+    final token = enabled ? await TokenStorage.getToken() : null;
+    final baseUrl = Environment.apiUrl;
+    final fingerprint = token == null ? null : '$token@$baseUrl';
+    if (_credentialsSynced && fingerprint == _mirroredCredentials) return;
+    _credentialsSynced = true;
+    _mirroredCredentials = fingerprint;
+    if (token == null) {
+      await _service.clearSyncCredentials();
+      return;
+    }
+    await _service.setSyncCredentials(token: token, baseUrl: baseUrl);
   }
 
   /// Drena la cola nativa y registra cada pago pendiente. Reentrante-seguro.

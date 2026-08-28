@@ -7,7 +7,6 @@ import 'package:teki_app/main.dart';
 import 'package:teki_app/src/data/models/route_item_model/dashboar_route_model.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
-import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:sidebarx/sidebarx.dart';
 
@@ -60,18 +59,6 @@ class _DashboardDrawerState extends ConsumerState<DashboardDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final verNotificacionYape =
-        ref.watch(sesionProvider).config?.verNotificacionYape == true;
-    final gestionarNotificaciones = ref
-        .watch(sesionProvider)
-        .hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS');
-    final visibleItems = items.where((item) {
-      if (item['route'] == AppRoutes.pagosYape) return verNotificacionYape;
-      if (item['route'] == AppRoutes.replicador) {
-        return verNotificacionYape && gestionarNotificaciones;
-      }
-      return true;
-    }).toList();
     User? user = globalContainer.read(authStateProvider).user;
     String name = user?.name ?? "";
     String cargo = user?.cargo ?? "";
@@ -162,7 +149,7 @@ class _DashboardDrawerState extends ConsumerState<DashboardDrawer> {
           );
         }
       },
-      items: visibleItems.map((item) {
+      items: items.map((item) {
         return SidebarXItem(
           iconBuilder: (context, selected) {
             return SvgPicture.asset(

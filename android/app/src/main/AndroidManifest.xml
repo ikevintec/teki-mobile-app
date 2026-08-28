@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Requerido para mostrar notificaciones en Android 13+ (API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Permite ofrecer al usuario excluir a Teki de las optimizaciones de batería,
+         para que el envío de pagos Yape en segundo plano no se retrase. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
     <!-- Impresoras térmicas Bluetooth LE (la app funciona sin BLE) -->
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />

@@ -48,6 +48,7 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
     }
 
     defaultConfig {
@@ -85,4 +86,8 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    // Envío en segundo plano de los pagos capturados (YapeSyncWorker).
+    implementation "androidx.work:work-runtime-ktx:2.9.1"
+    // Paridad del parseo nativo con el de Dart (YapePaymentParserTest).
+    testImplementation 'junit:junit:4.13.2'
 }

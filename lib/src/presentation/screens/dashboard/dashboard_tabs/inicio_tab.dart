@@ -11,6 +11,7 @@ import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/shared/services/yape_notification_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
 class InicioTab extends ConsumerStatefulWidget {
@@ -298,6 +299,26 @@ class _InicioTabState extends ConsumerState<InicioTab> {
         },
       ];
 
+  /// Requiere el flag `verNotificacionYape` de la empresa. El replicador pide
+  /// además el permiso y solo existe en Android: iOS no deja leer las
+  /// notificaciones de otras apps, así que no hay nada que configurar.
+  List<Map<String, dynamic>> get _pagosServices => [
+        {
+          'title': 'Pagos Yape',
+          'icon': 'assets/icons/icon_svg/view_payment.svg',
+          'action': () => Get.toNamed(AppRoutes.pagosYape),
+        },
+        if (YapeNotificationService.instance.isSupported &&
+            ref
+                .watch(sesionProvider)
+                .hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'))
+          {
+            'title': 'Replicador',
+            'icon': 'assets/icons/icon_svg/payment_status.svg',
+            'action': () => Get.toNamed(AppRoutes.replicador),
+          },
+      ];
+
   List<Map<String, dynamic>> get _cuentasServices => [
         if (ref.watch(sesionProvider).hasPermission('INVENTARIO_TRASLADO_RAPIDOS'))
           {
@@ -511,6 +532,13 @@ class _InicioTabState extends ConsumerState<InicioTab> {
                 _buildSectionLabel('General'),
                 const SizedBox(height: 12),
                 _buildServicesGrid(_generalServices),
+                if (ref.watch(sesionProvider).config?.verNotificacionYape ==
+                    true) ...[
+                  const SizedBox(height: 24),
+                  _buildSectionLabel('Pagos'),
+                  const SizedBox(height: 12),
+                  _buildServicesGrid(_pagosServices),
+                ],
                 const SizedBox(height: 120),
               ],
             ),
