@@ -264,7 +264,8 @@ class NotificationService {
   // ---------------------------------------------------------------------------
 
   void handleNotificationTap(Map<String, dynamic> data) {
-    final type = data['type'] as String?;
+    // El backend manda el enum en mayusculas (PAGO_YAPE); los tipos legados van en minusculas.
+    final type = (data['type'] as String?)?.toLowerCase();
     debugPrint('[FCM] Navegando por tipo: $type');
 
     switch (type) {
@@ -324,6 +325,12 @@ class NotificationService {
             'typeOrder': typeOrder,
             'paid': false,
           });
+        }
+      case 'pago_yape':
+        if (Get.currentRoute == AppRoutes.pagosYape) {
+          Get.offAndToNamed(AppRoutes.pagosYape);
+        } else {
+          Get.toNamed(AppRoutes.pagosYape);
         }
       case 'sale_update':
         // La pantalla /sales era plantilla (eliminada): una venta actualizada

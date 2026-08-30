@@ -199,13 +199,6 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
   }
 
   Widget _paymentCard(PagoYape payment) {
-    final statusColor = payment.validado
-        ? const Color(0xFF26864A)
-        : const Color(0xFF9A6700);
-    final statusBackground = payment.validado
-        ? const Color(0xFFE7F6EC)
-        : const Color(0xFFFFF4CE);
-
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -271,39 +264,14 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 7),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Operación: ${payment.codigoOperacion.isEmpty ? '-' : payment.codigoOperacion}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusBackground,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        payment.validado ? 'Validado' : 'Pendiente',
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  'Operación: ${payment.codigoOperacion.isEmpty ? '-' : payment.codigoOperacion}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade700,
+                  ),
                 ),
               ],
             ),
