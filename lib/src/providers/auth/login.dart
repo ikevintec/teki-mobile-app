@@ -212,6 +212,8 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   void logout() async {
+    // Antes de borrar la sesion: la llamada necesita el access_token vigente.
+    await NotificationService.instance.unregisterToken();
     NotificationService.instance.dispose();
     ref.read(replicadorAppProvider.notifier).clear();
     await ref.read(localProductsProvider.notifier).clearCache();

@@ -69,13 +69,16 @@ class YapeCapture {
 
     String codigo = '-';
     if (typeApp == NotificationAppType.yape) {
-      codigo = '';
       final codigoMatch = RegExp(
         r'(?:operaci[oó]n|seguridad)\D*(\d+)',
         caseSensitive: false,
       ).firstMatch(source);
       if (codigoMatch != null) {
         codigo = codigoMatch.group(1)!.trim();
+      } else if (nombreMatch == null) {
+        // Sin código y sin la frase "te envió un pago": promoción u otro
+        // aviso de Yape con monto, no un pago recibido.
+        return null;
       }
     }
 

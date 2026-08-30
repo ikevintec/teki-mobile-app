@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
+import 'package:teki_app/src/domain/repositories/pago_yape_repository.dart';
 import 'package:teki_app/src/data/models/yape/pago_yape.dart';
 import 'package:teki_app/src/domain/datasource/pago_yape_datasource.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
@@ -77,8 +78,14 @@ class RemotePagoYape extends PagoYapeDatasource {
       if (e.response == null) {
         throw Exception('Sin conexión a internet');
       }
+      final status = e.response?.statusCode ?? 0;
       final data = e.response?.data;
       final message = data is Map ? data['mensaje'] ?? data['message'] : null;
+      if (status >= 400 && status < 500 && status != 401) {
+        throw PagoYapeRechazadoException(
+          '${message ?? 'El servidor rechazó el pago ($status)'}',
+        );
+      }
       throw Exception(
         message ?? e.message ?? 'No se pudo registrar el Yape',
       );

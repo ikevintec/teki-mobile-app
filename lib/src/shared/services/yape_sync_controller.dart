@@ -160,6 +160,10 @@ class YapeSyncController with WidgetsBindingObserver {
           );
           ackIds.add(capture.id);
           posted++;
+        } on PagoYapeRechazadoException catch (e) {
+          // Rechazo permanente del backend: reintentar no lo arregla, fuera de la cola.
+          debugPrint('[Yape] Rechazado por el servidor, se descarta: $e');
+          ackIds.add(capture.id);
         } catch (e) {
           // Falla de red: se deja en la cola para reintentar luego.
           debugPrint('[Yape] Error registrando, se reintentará: $e');

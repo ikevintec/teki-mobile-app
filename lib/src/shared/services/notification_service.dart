@@ -30,6 +30,12 @@ class NotificationService {
   static const _channelId = 'teki_high_importance';
   static const _channelName = 'Teki Notificaciones';
 
+  // Migracion unica: la identidad FCM persiste en el keychain de iOS y sobrevive
+  // reinstalaciones; dispositivos que corrieron builds del proyecto Firebase
+  // anterior quedaron con un token ligado a un mapeo APNs invalido (FCM acepta
+  // el envio pero nunca llega). Rotar el token una vez lo cura.
+  static const _tokenRotationFlagKey = 'fcm_token_rotation_v1';
+
   StreamSubscription<RemoteMessage>? _foregroundSub;
   StreamSubscription<RemoteMessage>? _backgroundTapSub;
   StreamSubscription<String>? _tokenRefreshSub;
@@ -49,6 +55,23 @@ class NotificationService {
     _setupForegroundHandler();
     _setupBackgroundTapHandler();
     await _setupTerminatedTapHandler();
+  }
+
+  /// Desactiva el token de este dispositivo en el backend (best-effort).
+  /// Llamar en el logout ANTES de borrar el access_token: la llamada lo necesita.
+  Future<void> unregisterToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_tokenKey);
+      if (token == null) return;
+      await ApiClient.dio
+          .post('/notifications/unregister-token', data: {'token': token})
+          .timeout(const Duration(seconds: 5));
+      debugPrint('[FCM] Token desactivado en el backend (logout)');
+    } catch (e) {
+      // Best-effort: sin red o backend viejo, el logout no debe bloquearse.
+      debugPrint('[FCM] No se pudo desactivar el token en logout: $e');
+    }
   }
 
   /// Cancela todos los listeners activos. Llamar al hacer logout.
@@ -146,10 +169,20 @@ class NotificationService {
         }
       }
 
+      final prefs = await SharedPreferences.getInstance();
+      if (!(prefs.getBool(_tokenRotationFlagKey) ?? false)) {
+        try {
+          await _messaging.deleteToken();
+          debugPrint('[FCM] Token rotado (migración de proyecto Firebase)');
+        } catch (e) {
+          debugPrint('[FCM] No se pudo rotar el token: $e');
+        }
+        await prefs.setBool(_tokenRotationFlagKey, true);
+      }
+
       final token = await _messaging.getToken();
       if (token == null) return;
 
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, token);
 
       await _registerTokenWithBackend(token, userId);
@@ -264,12 +297,14 @@ class NotificationService {
   // ---------------------------------------------------------------------------
 
   void handleNotificationTap(Map<String, dynamic> data) {
-    // El backend manda el enum en mayusculas (PAGO_YAPE); los tipos legados van en minusculas.
-    final type = (data['type'] as String?)?.toLowerCase();
+    // Los codigos del modulo de notificaciones llegan como el enum del backend (PAGO_YAPE);
+    // los tipos legados de restaurante/venta viajan en minusculas tal como se emiten.
+    final type = data['type'] as String?;
     debugPrint('[FCM] Navegando por tipo: $type');
 
     switch (type) {
-      case 'dish_desk_ready':
+      // Tipos legados en minusculas: se aceptan ambos casings mientras el backend migra a mayusculas.
+      case 'dish_desk_ready' || 'DISH_DESK_READY':
         final commandId = int.tryParse(data['commandId'] as String? ?? '');
         final itemId = int.tryParse(data['itemId'] as String? ?? '');
         if (commandId == null || itemId == null) break;
@@ -300,7 +335,7 @@ class NotificationService {
           // screen desde su initState al recibir los args).
           Get.toNamed(AppRoutes.restaurantMesas, arguments: dishArgs);
         }
-      case 'order_ready':
+      case 'order_ready' || 'ORDER_READY':
         final orderNumber = data['orderNumber'] as String? ?? '';
         final typeOrder = data['typeOrder'] as String? ?? '';
         // Si el pay screen está visible, lo cerramos primero para no apilar.
@@ -326,16 +361,12 @@ class NotificationService {
             'paid': false,
           });
         }
-      case 'pago_yape':
+      case 'PAGO_YAPE':
         if (Get.currentRoute == AppRoutes.pagosYape) {
           Get.offAndToNamed(AppRoutes.pagosYape);
         } else {
           Get.toNamed(AppRoutes.pagosYape);
         }
-      case 'sale_update':
-        // La pantalla /sales era plantilla (eliminada): una venta actualizada
-        // se consulta en el listado real de comprobantes.
-        Get.toNamed('/ver_comprobantes');
       default:
         Get.toNamed('/dashboard');
     }
