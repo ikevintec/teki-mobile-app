@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -40,6 +41,7 @@ class KitchenNotifier extends StateNotifier<KitchenState> {
     required this.storage,
   }) : super(KitchenState.initial());
 
+  final AudioPlayer _audioPlayer = AudioPlayer();
   Timer? _clockTimer;
   Timer? _refreshTimer;
   Timer? _socketDebounce;
@@ -633,29 +635,34 @@ class KitchenNotifier extends StateNotifier<KitchenState> {
 
   void _playPrimaryAlert() {
     if (!state.filters.soundEnabled) return;
-    switch (state.filters.alertTone) {
-      case KitchenAlertTone.classic:
-        unawaited(SystemSound.play(SystemSoundType.alert));
-        unawaited(HapticFeedback.mediumImpact());
-      case KitchenAlertTone.bell:
-        unawaited(_playBellPattern());
-        unawaited(HapticFeedback.mediumImpact());
-      case KitchenAlertTone.soft:
-        unawaited(SystemSound.play(SystemSoundType.click));
-        unawaited(HapticFeedback.lightImpact());
-    }
-  }
-
-  Future<void> _playBellPattern() async {
-    await SystemSound.play(SystemSoundType.alert);
-    await Future<void>.delayed(const Duration(milliseconds: 180));
-    await SystemSound.play(SystemSoundType.alert);
+    final file = switch (state.filters.alertTone) {
+      KitchenAlertTone.classic => 'swiftly.mp3',
+      KitchenAlertTone.bell => 'new_order_bell.wav',
+      KitchenAlertTone.soft => 'new_order_soft.wav',
+    };
+    unawaited(_playAsset(file));
+    unawaited(
+      state.filters.alertTone == KitchenAlertTone.soft
+          ? HapticFeedback.lightImpact()
+          : HapticFeedback.mediumImpact(),
+    );
   }
 
   void _playSecondaryAlert() {
     if (!state.filters.soundEnabled) return;
-    unawaited(SystemSound.play(SystemSoundType.click));
+    unawaited(_playAsset('new_order_soft.wav', volume: 0.6));
     unawaited(HapticFeedback.lightImpact());
+  }
+
+  /// Reproduce un chime desde assets. Usa un reproductor real (audioplayers)
+  /// porque `SystemSound` no emite audio en Android y va al stream de UI.
+  Future<void> _playAsset(String file, {double volume = 1.0}) async {
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.play(AssetSource('audio/$file'), volume: volume);
+    } catch (_) {
+      // Si el audio falla (formato/permiso), la cocina sigue operando.
+    }
   }
 
   String _messageFrom(Object error) {
@@ -673,6 +680,7 @@ class KitchenNotifier extends StateNotifier<KitchenState> {
     }
     _commandSubscription?.cancel();
     _orderSubscription?.cancel();
+    unawaited(_audioPlayer.dispose());
     if (_socketRequested) socketService.disconnect();
     super.dispose();
   }

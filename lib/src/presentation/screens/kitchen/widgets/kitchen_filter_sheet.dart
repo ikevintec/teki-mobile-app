@@ -109,10 +109,11 @@ class _KitchenFilterSheetState extends State<KitchenFilterSheet> {
                     ),
                   ),
                 ),
-                TextButton(
-                  onPressed: () => setState(_selectedAreas.clear),
-                  child: const Text('Limpiar zonas'),
-                ),
+                if (_selectedAreas.isNotEmpty)
+                  TextButton(
+                    onPressed: () => setState(_selectedAreas.clear),
+                    child: Text('Limpiar zonas (${_selectedAreas.length})'),
+                  ),
               ],
             ),
             const Divider(height: 22),
@@ -169,14 +170,23 @@ class _KitchenFilterSheetState extends State<KitchenFilterSheet> {
                         ),
                       ],
                     ),
-                    Slider(
-                      value: _preparationMinutes.toDouble(),
-                      min: 5,
-                      max: 60,
-                      divisions: 11,
-                      label: '$_preparationMinutes min',
-                      onChanged: (value) =>
-                          setState(() => _preparationMinutes = value.round()),
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        valueIndicatorColor: ColorSchema.primaryColor,
+                      ),
+                      child: Slider(
+                        value: _preparationMinutes.toDouble(),
+                        min: 5,
+                        max: 60,
+                        divisions: 11,
+                        label: '$_preparationMinutes min',
+                        activeColor: ColorSchema.primaryColor,
+                        inactiveColor: ColorSchema.primaryColor.withValues(
+                          alpha: 0.18,
+                        ),
+                        onChanged: (value) =>
+                            setState(() => _preparationMinutes = value.round()),
+                      ),
                     ),
                     Text(
                       'La tarjeta se vuelve ámbar a los $_preparationMinutes min '
@@ -213,6 +223,11 @@ class _KitchenFilterSheetState extends State<KitchenFilterSheet> {
                           ],
                           selected: {_alertTone},
                           showSelectedIcon: false,
+                          style: SegmentedButton.styleFrom(
+                            foregroundColor: ColorSchema.primaryColor,
+                            selectedForegroundColor: Colors.white,
+                            selectedBackgroundColor: ColorSchema.primaryColor,
+                          ),
                           onSelectionChanged: (selection) =>
                               setState(() => _alertTone = selection.first),
                         ),
@@ -286,6 +301,8 @@ class _SettingsSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return SwitchListTile.adaptive(
       contentPadding: EdgeInsets.zero,
+      activeThumbColor: Colors.white,
+      activeTrackColor: ColorSchema.primaryColor,
       secondary: Icon(icon, color: ColorSchema.primaryColor, size: 21),
       title: Text(
         title,

@@ -96,19 +96,12 @@ class _StatusTabs extends StatelessWidget {
 
   const _StatusTabs({required this.state, required this.onChanged});
 
-  IconData _icon(KitchenView view) => switch (view) {
-    KitchenView.pending => Icons.schedule_rounded,
-    KitchenView.ready => Icons.check_circle_outline_rounded,
-    KitchenView.served => Icons.send_rounded,
-    KitchenView.cancelled => Icons.block_rounded,
-  };
-
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
         child: Row(
           children: [
             for (final view in KitchenView.values)
@@ -119,7 +112,7 @@ class _StatusTabs extends StatelessWidget {
                   ),
                   child: _StatusTab(
                     label: view.label,
-                    icon: _icon(view),
+                    color: kitchenViewColor(view),
                     count: kitchenCountForView(state, view),
                     selected: state.filters.view == view,
                     onTap: () => onChanged(view),
@@ -135,14 +128,14 @@ class _StatusTabs extends StatelessWidget {
 
 class _StatusTab extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final Color color;
   final int count;
   final bool selected;
   final VoidCallback onTap;
 
   const _StatusTab({
     required this.label,
-    required this.icon,
+    required this.color,
     required this.count,
     required this.selected,
     required this.onTap,
@@ -150,69 +143,67 @@ class _StatusTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? Colors.white : ColorSchema.primaryColor;
+    // Sin seleccionar: todos neutros (menos ruido). Seleccionado: su color.
+    const neutral = Color(0xFF64748B);
+    final foreground = selected ? Colors.white : neutral;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          height: 62,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+          duration: const Duration(milliseconds: 160),
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
-            color: selected
-                ? ColorSchema.primaryColor
-                : ColorSchema.primaryColor.withValues(alpha: 0.06),
+            color: selected ? color : const Color(0xFFF1F3F5),
             border: Border.all(
-              color: selected
-                  ? ColorSchema.primaryColor
-                  : ColorSchema.primaryColor.withValues(alpha: 0.2),
+              color: selected ? color : const Color(0xFFE3E6EB),
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Column(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 16, color: foreground),
-                  const SizedBox(width: 4),
-                  Container(
-                    constraints: const BoxConstraints(minWidth: 20),
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : ColorSchema.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: foreground,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
-                    child: Text(
-                      '$count',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: foreground,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: foreground,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
+              if (count > 0) ...[
+                const SizedBox(width: 5),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 17),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.22)
+                        : neutral.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$count',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: foreground,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -235,51 +226,25 @@ class _QuickFilters extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasAreas = state.filters.productionAreaIds.isNotEmpty;
+    final canClear = hasAreas || state.filters.mode != KitchenOrderMode.all;
     return Container(
       width: double.infinity,
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          Row(
-            children: [
-              for (final mode in KitchenOrderMode.values)
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      right: mode == KitchenOrderMode.values.last ? 0 : 7,
-                    ),
-                    child: _ModeButton(
-                      label: mode.label,
-                      selected: state.filters.mode == mode,
-                      onTap: () => onModeChanged(mode),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          if (hasAreas || state.filters.mode != KitchenOrderMode.all) ...[
-            const SizedBox(height: 8),
+          if (canClear)
             TextButton.icon(
               onPressed: onClear,
-              icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+              icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
               label: Text(
                 hasAreas
-                    ? 'Limpiar filtros (${state.filters.productionAreaIds.length})'
-                    : 'Limpiar filtros',
+                    ? 'Limpiar (${state.filters.productionAreaIds.length})'
+                    : 'Limpiar',
               ),
               style: TextButton.styleFrom(
                 foregroundColor: ColorSchema.primaryColor,
-                backgroundColor: ColorSchema.primaryColor.withValues(
-                  alpha: 0.08,
-                ),
-                side: BorderSide(
-                  color: ColorSchema.primaryColor.withValues(alpha: 0.2),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 textStyle: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -287,57 +252,64 @@ class _QuickFilters extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ),
-          ],
+          const Spacer(),
+          _ModeSelector(mode: state.filters.mode, onChanged: onModeChanged),
         ],
       ),
     );
   }
 }
 
-class _ModeButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+class _ModeSelector extends StatelessWidget {
+  final KitchenOrderMode mode;
+  final ValueChanged<KitchenOrderMode> onChanged;
 
-  const _ModeButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  const _ModeSelector({required this.mode, required this.onChanged});
+
+  static const _neutral = Color(0xFF64748B);
+
+  String _shortLabel(KitchenOrderMode mode) => switch (mode) {
+    KitchenOrderMode.all => 'Todos',
+    KitchenOrderMode.dineIn => 'Aquí',
+    KitchenOrderMode.takeaway => 'Llevar',
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F3F5),
+        border: Border.all(color: const Color(0xFFE3E6EB)),
         borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final option in KitchenOrderMode.values)
+            _segment(option),
+        ],
+      ),
+    );
+  }
+
+  Widget _segment(KitchenOrderMode option) {
+    final selected = option == mode;
+    return Material(
+      color: selected ? ColorSchema.primaryColor : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: () => onChanged(option),
+        borderRadius: BorderRadius.circular(8),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          height: 40,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: selected
-                ? ColorSchema.primaryColor
-                : ColorSchema.primaryColor.withValues(alpha: 0.06),
-            border: Border.all(
-              color: selected
-                  ? ColorSchema.primaryColor
-                  : ColorSchema.primaryColor.withValues(alpha: 0.2),
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              maxLines: 1,
-              style: TextStyle(
-                color: selected ? Colors.white : ColorSchema.primaryColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+          child: Text(
+            _shortLabel(option),
+            style: TextStyle(
+              color: selected ? Colors.white : _neutral,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),

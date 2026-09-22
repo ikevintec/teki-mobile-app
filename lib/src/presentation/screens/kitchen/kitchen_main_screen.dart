@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/presentation/screens/kitchen/widgets/kitchen_board.dart';
@@ -72,7 +73,7 @@ class _KitchenMainScreenState extends ConsumerState<KitchenMainScreen> {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: const Color(0xFFE7EAF0),
       appBar: AppBar(
         elevation: 0,
         surfaceTintColor: ColorSchema.primaryColor,
@@ -85,10 +86,14 @@ class _KitchenMainScreenState extends ConsumerState<KitchenMainScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            const Icon(
-              Icons.soup_kitchen_rounded,
-              color: Colors.white,
-              size: 22,
+            SvgPicture.asset(
+              'assets/icons/icon_svg/soup_kitchen.svg',
+              width: 22,
+              height: 22,
+              colorFilter: const ColorFilter.mode(
+                Colors.white,
+                BlendMode.srcIn,
+              ),
             ),
             const SizedBox(width: 8),
             Text(

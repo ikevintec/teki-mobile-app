@@ -482,7 +482,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
         ref.watch(sesionProvider).hasPermission('RESTAURANTE_COCINA_VER'))
       {
         'title': 'Cocina',
-        'icon': 'assets/icons/icon_image/dinner-table.png',
+        'icon': 'assets/icons/icon_svg/soup_kitchen.svg',
         'action': () => Get.toNamed(AppRoutes.restaurantKitchen),
       },
     {

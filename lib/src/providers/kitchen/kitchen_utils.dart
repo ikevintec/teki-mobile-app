@@ -1,8 +1,19 @@
+import 'package:flutter/material.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/providers/kitchen/kitchen_state.dart';
+
+/// Color de identidad por vista: pendiente=gris, listos=verde,
+/// servidos=azul, anulados=rojo. Se usa en las barras laterales de las
+/// comandas y en las pestañas de filtro para que sea evidente qué se ve.
+Color kitchenViewColor(KitchenView view) => switch (view) {
+  KitchenView.pending => const Color(0xFF64748B),
+  KitchenView.ready => const Color(0xFF16A34A),
+  KitchenView.served => const Color(0xFF2B83DC),
+  KitchenView.cancelled => const Color(0xFFDC2626),
+};
 
 const kitchenNextStatus = <String, String>{
   'PENDIENTE': 'PREPARACION',

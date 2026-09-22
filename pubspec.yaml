@@ -57,6 +57,7 @@ dependencies:
   flutter_file_dialog: ^3.0.3
   flutter_blue_plus: ">=1.35.0 <2.0.0"
   esc_pos_utils_plus: ^2.0.4
+  audioplayers: ^6.7.1
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.3
@@ -84,5 +85,6 @@ flutter:
     - assets/images/other/
     - assets/images/payment/
     - assets/images/logo/icon.png
+    - assets/audio/
     - .env
     - .env.production

@@ -77,18 +77,18 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
     if (highlight?.type == KitchenHighlightType.newOrder) {
       return const Color(0xFF2B83DC);
     }
-    final band = _view == KitchenView.served || _view == KitchenView.cancelled
-        ? 'ok'
-        : kitchenTimeBand(
-            widget.command,
-            widget.state.filters.preparationMinutes,
-            widget.state.now,
-          );
-    return switch (band) {
-      'warn' => const Color(0xFFF59E0B),
-      'late' => const Color(0xFFDC2626),
-      _ => const Color(0xFF94A3B8),
-    };
+    // La barra lateral toma el color de la vista filtrada. Solo las comandas
+    // pendientes escalan por tiempo (ámbar/rojo) porque ahí importa la urgencia.
+    if (_view == KitchenView.pending) {
+      final band = kitchenTimeBand(
+        widget.command,
+        widget.state.filters.preparationMinutes,
+        widget.state.now,
+      );
+      if (band == 'late') return const Color(0xFFDC2626);
+      if (band == 'warn') return const Color(0xFFF59E0B);
+    }
+    return kitchenViewColor(_view);
   }
 
   Color get _headerColor {
@@ -96,23 +96,32 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
     if (accent == const Color(0xFFF59E0B)) return const Color(0xFFFFF7E6);
     if (accent == const Color(0xFFDC2626)) return const Color(0xFFFEE2E2);
     if (accent == const Color(0xFF2B83DC)) return const Color(0xFFEFF6FF);
+    if (accent == const Color(0xFF16A34A)) return const Color(0xFFF0FDF4);
     return const Color(0xFFF8FAFC);
   }
 
   @override
   Widget build(BuildContext context) {
     final visibleItems = _visibleItems;
+    final accent = _accentColor;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDFE3E8)),
-        boxShadow: const [
+        border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.2),
+        boxShadow: [
+          // Elevación neutra: despega la card del fondo.
+          const BoxShadow(
+            color: Color(0x16000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+          // Halo tenue con el color de estado para separar cards vecinas.
           BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
+            color: accent.withValues(alpha: 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -160,7 +169,7 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
             bottom: 0,
             child: IgnorePointer(
               child: ColoredBox(
-                color: _accentColor,
+                color: accent,
                 child: const SizedBox(width: 5),
               ),
             ),
@@ -178,11 +187,11 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
     );
     return Container(
       color: _headerColor,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 9),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: Row(
         children: [
-          Icon(_orderIcon, color: _accentColor, size: 23),
-          const SizedBox(width: 9),
+          Icon(_orderIcon, color: _accentColor, size: 20),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,8 +201,8 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
                     color: Color(0xFF1F2937),
                   ),
                 ),
@@ -202,7 +211,7 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     color: Color(0xFF6B7280),
                   ),
                 ),
@@ -216,8 +225,8 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
               Text(
                 _timeLabel,
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
                   fontFeatures: const [FontFeature.tabularFigures()],
                   color:
                       _view == KitchenView.served ||
@@ -255,7 +264,7 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
     return Container(
       width: double.infinity,
       color: const Color(0xFFFAFAFA),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       child: Wrap(
         spacing: 12,
         runSpacing: 4,
@@ -344,7 +353,7 @@ class _KitchenOrderCardState extends State<KitchenOrderCard> {
   Widget _buildFooter() {
     final progress = _progress;
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
       decoration: const BoxDecoration(
         color: Color(0xFFFAFAFA),
         border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
@@ -506,20 +515,20 @@ class KitchenItemTile extends StatelessWidget {
         child: InkWell(
           onTap: canAdvance ? onTap : null,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 11, 10, 11),
+            padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: 42,
+                  width: 36,
                   child: Text.rich(
                     TextSpan(
                       children: [
                         TextSpan(
                           text: kitchenQuantity(item.cantidad),
                           style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
                             color: Color(0xFF1F2937),
                           ),
                         ),
@@ -545,8 +554,8 @@ class KitchenItemTile extends StatelessWidget {
                             child: Text(
                               '${mainVisible ? '' : 'de '}${item.producto?.nombre ?? 'Producto'}',
                               style: TextStyle(
-                                fontSize: mainVisible ? 15 : 13,
-                                fontWeight: FontWeight.w800,
+                                fontSize: mainVisible ? 14 : 12.5,
+                                fontWeight: FontWeight.w700,
                                 color: status == 'CANCELADO'
                                     ? const Color(0xFF6B7280)
                                     : const Color(0xFF1F2937),
@@ -705,12 +714,8 @@ class _OrderNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(10, 8, 10, 0),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: danger ? const Color(0xFFFFF1F2) : const Color(0xFFFEF9C3),
-        borderRadius: BorderRadius.circular(7),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      color: danger ? const Color(0xFFFFF1F2) : const Color(0xFFFEF9C3),
       child: Row(
         children: [
           Icon(
