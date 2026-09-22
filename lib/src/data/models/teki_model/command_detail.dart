@@ -27,6 +27,10 @@ class CommandDetail {
   final DateTime? updatedOn;
   final int? deleteBy;
   final DateTime? deletedOn;
+  final DateTime? fechaPreparacion;
+  final DateTime? fechaPreparado;
+  final DateTime? fechaDespachado;
+  final DateTime? fechaAnulacion;
   final String? motivoAnulacion;
 
   CommandDetail({
@@ -51,60 +55,92 @@ class CommandDetail {
     this.updatedOn,
     this.deleteBy,
     this.deletedOn,
+    this.fechaPreparacion,
+    this.fechaPreparado,
+    this.fechaDespachado,
+    this.fechaAnulacion,
     this.motivoAnulacion,
   });
 
   factory CommandDetail.fromJson(Map<String, dynamic> json) => CommandDetail(
-        id: json['id'],
-        cantidad: json['cantidad'],
-        precioVenta: json['precioVenta'],
-        producto: json['producto'] != null ? Product.fromJson(json['producto']) : null,
-        fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
-        cuenta: json['cuenta'] != null ? Check.fromJson(json['cuenta']) : null,
-        grupoProductoOpciones: json['grupoProductoOpciones'] != null
-            ? List<CommandDetailGroupOption>.from(json['grupoProductoOpciones'].map((x) => CommandDetailGroupOption.fromJson(x)))
-            : null,
-        preparacionProductoOpciones: json['preparacionProductoOpciones'] != null
-            ? List<CommandDetailPreparationOption>.from(json['preparacionProductoOpciones'].map((x) => CommandDetailPreparationOption.fromJson(x)))
-            : null,
-        estadoComandaDetalle: json['estadoComandaDetalle'],
-        nota: json['nota'],
-        paraLlevar: json['paraLlevar'],
-        pagado: json['pagado'],
-        comanda: json['comanda'] != null ? Command.fromJson(json['comanda']) : null,
-        eliminado: json['eliminado'],
-        modificado: json['modificado'],
-        createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
-        createdBy: json['createdBy'],
-        updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
-        deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
-        motivoAnulacion: json['motivoAnulacion'],
-      );
+    id: json['id'],
+    cantidad: json['cantidad'],
+    precioVenta: json['precioVenta'],
+    producto: json['producto'] != null
+        ? Product.fromJson(json['producto'])
+        : null,
+    fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
+    cuenta: json['cuenta'] != null ? Check.fromJson(json['cuenta']) : null,
+    grupoProductoOpciones: json['grupoProductoOpciones'] != null
+        ? List<CommandDetailGroupOption>.from(
+            json['grupoProductoOpciones'].map(
+              (x) => CommandDetailGroupOption.fromJson(x),
+            ),
+          )
+        : null,
+    preparacionProductoOpciones: json['preparacionProductoOpciones'] != null
+        ? List<CommandDetailPreparationOption>.from(
+            json['preparacionProductoOpciones'].map(
+              (x) => CommandDetailPreparationOption.fromJson(x),
+            ),
+          )
+        : null,
+    estadoComandaDetalle: json['estadoComandaDetalle'],
+    nota: json['nota'],
+    paraLlevar: json['paraLlevar'],
+    pagado: json['pagado'],
+    comanda: json['comanda'] != null ? Command.fromJson(json['comanda']) : null,
+    eliminado: json['eliminado'],
+    modificado: json['modificado'],
+    createdOn: json['createdOn'] != null
+        ? parseDateTimeFlexible(json['createdOn'])
+        : null,
+    createdBy: json['createdBy'],
+    updatedBy: json['updatedBy'],
+    updatedOn: json['updatedOn'] != null
+        ? parseDateTimeFlexible(json['updatedOn'])
+        : null,
+    deleteBy: json['deleteBy'],
+    deletedOn: json['deletedOn'] != null
+        ? parseDateTimeFlexible(json['deletedOn'])
+        : null,
+    fechaPreparacion: parseDateTimeFlexible(json['fechaPreparacion']),
+    fechaPreparado: parseDateTimeFlexible(json['fechaPreparado']),
+    fechaDespachado: parseDateTimeFlexible(json['fechaDespachado']),
+    fechaAnulacion: parseDateTimeFlexible(json['fechaAnulacion']),
+    motivoAnulacion: json['motivoAnulacion'],
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'cantidad': cantidad,
-        'precioVenta': precioVenta,
-        'producto': producto?.toJson(),
-        'fecha': fecha?.toIso8601String(),
-        'cuenta': cuenta?.toJson(),
-        'grupoProductoOpciones': grupoProductoOpciones?.map((x) => x.toJson()).toList(),
-        'preparacionProductoOpciones': preparacionProductoOpciones?.map((x) => x.toJson()).toList(),
-        'estadoComandaDetalle': estadoComandaDetalle,
-        'nota': nota,
-        'paraLlevar': paraLlevar,
-        'pagado': pagado,
-        'comanda': comanda?.toJson(),
-        'eliminado': eliminado,
-        'modificado': modificado,
-        'createdOn': createdOn?.toIso8601String(),
-        'createdBy': createdBy,
-        'updatedBy': updatedBy,
-        'updatedOn': updatedOn?.toIso8601String(),
-        'deleteBy': deleteBy,
-        'deletedOn': deletedOn?.toIso8601String(),
-        'motivoAnulacion': motivoAnulacion,
-      };
+    'id': id,
+    'cantidad': cantidad,
+    'precioVenta': precioVenta,
+    'producto': producto?.toJson(),
+    'fecha': fecha?.toIso8601String(),
+    'cuenta': cuenta?.toJson(),
+    'grupoProductoOpciones': grupoProductoOpciones
+        ?.map((x) => x.toJson())
+        .toList(),
+    'preparacionProductoOpciones': preparacionProductoOpciones
+        ?.map((x) => x.toJson())
+        .toList(),
+    'estadoComandaDetalle': estadoComandaDetalle,
+    'nota': nota,
+    'paraLlevar': paraLlevar,
+    'pagado': pagado,
+    'comanda': comanda?.toJson(),
+    'eliminado': eliminado,
+    'modificado': modificado,
+    'createdOn': createdOn?.toIso8601String(),
+    'createdBy': createdBy,
+    'updatedBy': updatedBy,
+    'updatedOn': updatedOn?.toIso8601String(),
+    'deleteBy': deleteBy,
+    'deletedOn': deletedOn?.toIso8601String(),
+    'fechaPreparacion': fechaPreparacion?.toIso8601String(),
+    'fechaPreparado': fechaPreparado?.toIso8601String(),
+    'fechaDespachado': fechaDespachado?.toIso8601String(),
+    'fechaAnulacion': fechaAnulacion?.toIso8601String(),
+    'motivoAnulacion': motivoAnulacion,
+  };
 }

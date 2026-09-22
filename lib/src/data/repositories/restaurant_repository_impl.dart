@@ -4,6 +4,7 @@ import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/lounge.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant_change_status_items.dart';
+import 'package:teki_app/src/data/models/teki_model/production_area.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/domain/datasource/restaurant_datasource.dart';
 import 'package:teki_app/src/domain/repositories/restaurant_repository.dart';
@@ -12,7 +13,7 @@ class RestaurantRepositoryImpl extends RestaurantRepository {
   final RestaurantDatasource restaurantDatasource;
 
   RestaurantRepositoryImpl({RestaurantDatasource? restaurantDatasource})
-      : restaurantDatasource = restaurantDatasource ?? RemoteRestaurant();
+    : restaurantDatasource = restaurantDatasource ?? RemoteRestaurant();
 
   @override
   Future<List<Lounge>> getLounges(Map<String, dynamic> params) =>
@@ -25,6 +26,14 @@ class RestaurantRepositoryImpl extends RestaurantRepository {
   @override
   Future<List<OrderRestaurant>> getOrders(Map<String, dynamic> params) =>
       restaurantDatasource.getOrders(params);
+
+  @override
+  Future<List<Command>> getCommands(Map<String, dynamic> params) =>
+      restaurantDatasource.getCommands(params);
+
+  @override
+  Future<List<ProductionArea>> getProductionAreas() =>
+      restaurantDatasource.getProductionAreas();
 
   @override
   Future<OrderRestaurant> createOrder(OrderRestaurant order) =>
@@ -43,24 +52,51 @@ class RestaurantRepositoryImpl extends RestaurantRepository {
       restaurantDatasource.deleteOrderChecks(orderId);
 
   @override
-  Future<List<OrderRestaurantChangeStatusItems>> updateOrderStatus(int orderId, String estado, {bool updateInventory = true, String? observacion}) =>
-      restaurantDatasource.updateOrderStatus(orderId, estado, updateInventory: updateInventory, observacion: observacion);
+  Future<List<OrderRestaurantChangeStatusItems>> updateOrderStatus(
+    int orderId,
+    String estado, {
+    bool updateInventory = true,
+    String? observacion,
+  }) => restaurantDatasource.updateOrderStatus(
+    orderId,
+    estado,
+    updateInventory: updateInventory,
+    observacion: observacion,
+  );
 
   @override
   Future<List<Check>> getChecks(Map<String, dynamic> params) =>
       restaurantDatasource.getChecks(params);
 
   @override
-  Future<Check> getCheckById(int id) =>
-      restaurantDatasource.getCheckById(id);
+  Future<Check> getCheckById(int id) => restaurantDatasource.getCheckById(id);
 
   @override
   Future<Check> updateCheck(int id, Check check) =>
       restaurantDatasource.updateCheck(id, check);
 
   @override
-  Future<void> updateCommandItemStatus(int commandId, int itemId, String status, {String? motivoAnulacion, double? cantidad}) =>
-      restaurantDatasource.updateCommandItemStatus(commandId, itemId, status, motivoAnulacion: motivoAnulacion, cantidad: cantidad);
+  Future<void> updateCommandItemStatus(
+    int commandId,
+    int itemId,
+    String status, {
+    String? motivoAnulacion,
+    double? cantidad,
+  }) => restaurantDatasource.updateCommandItemStatus(
+    commandId,
+    itemId,
+    status,
+    motivoAnulacion: motivoAnulacion,
+    cantidad: cantidad,
+  );
+
+  @override
+  Future<void> updateCommandItemsStatus(
+    int commandId,
+    List<int> itemIds,
+    String status,
+  ) =>
+      restaurantDatasource.updateCommandItemsStatus(commandId, itemIds, status);
 
   @override
   Future<void> expandCommandItem(int itemId) =>

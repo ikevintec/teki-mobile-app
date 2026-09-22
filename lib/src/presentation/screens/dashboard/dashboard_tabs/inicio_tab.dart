@@ -37,7 +37,6 @@ class InicioTab extends ConsumerStatefulWidget {
 }
 
 class _InicioTabState extends ConsumerState<InicioTab> {
-
   /// Crear una venta requiere permiso (paridad web: VENTAS_CREAR).
   void _irANuevaVenta() {
     if (!ref.read(sesionProvider).hasPermission('VENTAS_CREAR')) {
@@ -46,6 +45,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
     }
     Get.toNamed(AppRoutes.productsSales);
   }
+
   Key _todayReportKey = UniqueKey();
   bool _hasConnectionError = false;
   bool _isRetrying = false;
@@ -97,12 +97,14 @@ class _InicioTabState extends ConsumerState<InicioTab> {
     final productState = ref.read(productSaleProvider);
     final customerState = ref.read(customerSaleProvider);
 
-    final hasData = (ticket.items?.isNotEmpty ?? false) ||
+    final hasData =
+        (ticket.items?.isNotEmpty ?? false) ||
         ticketState.isEdit ||
         productState.productsSales.isNotEmpty ||
         (customerState.customer.razonSocial?.isNotEmpty ?? false);
 
-    final fromOrder = ticket.pedidoRestaurante != null ||
+    final fromOrder =
+        ticket.pedidoRestaurante != null ||
         productState.productsSales.any((td) => td.comandaDetalle != null);
 
     void resetAndNavigate() {
@@ -161,7 +163,9 @@ class _InicioTabState extends ConsumerState<InicioTab> {
             style: ElevatedButton.styleFrom(
               backgroundColor: ColorSchema.primaryColor,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Continuar'),
@@ -183,7 +187,8 @@ class _InicioTabState extends ConsumerState<InicioTab> {
     final productState = ref.read(productSaleProvider);
     final customerState = ref.read(customerSaleProvider);
 
-    final hasData = (ticket.items?.isNotEmpty ?? false) ||
+    final hasData =
+        (ticket.items?.isNotEmpty ?? false) ||
         ticketState.isEdit ||
         productState.productsSales.isNotEmpty ||
         (customerState.customer.razonSocial?.isNotEmpty ?? false);
@@ -235,7 +240,9 @@ class _InicioTabState extends ConsumerState<InicioTab> {
             style: ElevatedButton.styleFrom(
               backgroundColor: ColorSchema.primaryColor,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Continuar'),
@@ -252,98 +259,98 @@ class _InicioTabState extends ConsumerState<InicioTab> {
   }
 
   List<Map<String, dynamic>> get _ventaServices => [
-        {
-          'title': 'Nueva\nVenta',
-          'icon': 'assets/icons/icon_svg/purchase_service_icon.svg',
-          'action': () => _openNewSale(),
-        },
-        {
-          'title': 'Comprobantes',
-          'icon': 'assets/icons/icon_image/voucher_list.png',
-          'action': () => Get.toNamed(AppRoutes.comprobantesVer),
-        },
-        {
-          'title': 'Productos',
-          'icon': 'assets/icons/icon_image/products_basket.png',
-          'action': () => Get.toNamed(AppRoutes.products),
-        },
-        {
-          'title': 'Crear\nCotización',
-          'icon': 'assets/icons/icon_svg/generate_invoice.svg',
-          'action': () => _openNewQuotation(),
-        },
-        {
-          'title': 'Cotizaciones',
-          'icon': 'assets/icons/icon_svg/invoice_icon.svg',
-          'action': () => Get.toNamed(AppRoutes.quotationsVer),
-        },
-        {
-          'title': 'Más\nOpciones',
-          'icon': 'assets/icons/icon_svg/dots-three.svg',
-          'action': () => _showMoreOptionsSheet(),
-        },
-      ];
+    {
+      'title': 'Nueva\nVenta',
+      'icon': 'assets/icons/icon_svg/purchase_service_icon.svg',
+      'action': () => _openNewSale(),
+    },
+    {
+      'title': 'Comprobantes',
+      'icon': 'assets/icons/icon_image/voucher_list.png',
+      'action': () => Get.toNamed(AppRoutes.comprobantesVer),
+    },
+    {
+      'title': 'Productos',
+      'icon': 'assets/icons/icon_image/products_basket.png',
+      'action': () => Get.toNamed(AppRoutes.products),
+    },
+    {
+      'title': 'Crear\nCotización',
+      'icon': 'assets/icons/icon_svg/generate_invoice.svg',
+      'action': () => _openNewQuotation(),
+    },
+    {
+      'title': 'Cotizaciones',
+      'icon': 'assets/icons/icon_svg/invoice_icon.svg',
+      'action': () => Get.toNamed(AppRoutes.quotationsVer),
+    },
+    {
+      'title': 'Más\nOpciones',
+      'icon': 'assets/icons/icon_svg/dots-three.svg',
+      'action': () => _showMoreOptionsSheet(),
+    },
+  ];
 
   /// Accesos de gestión ocasional: viven en el sheet de "Más Opciones"
   /// (Inventario además ya está en la barra inferior).
   List<Map<String, dynamic>> get _gestionServices => [
-        {
-          'title': 'Clientes',
-          'icon': 'assets/icons/icon_svg/customer.svg',
-          'action': () => Get.toNamed(AppRoutes.customer),
-        },
-        {
-          'title': 'Inventario',
-          'icon': 'assets/icons/icon_image/inventory_list.png',
-          'action': () => Get.toNamed(AppRoutes.inventory),
-        },
-      ];
+    {
+      'title': 'Clientes',
+      'icon': 'assets/icons/icon_svg/customer.svg',
+      'action': () => Get.toNamed(AppRoutes.customer),
+    },
+    {
+      'title': 'Inventario',
+      'icon': 'assets/icons/icon_image/inventory_list.png',
+      'action': () => Get.toNamed(AppRoutes.inventory),
+    },
+  ];
 
   /// Requiere el flag `verNotificacionYape` de la empresa. El replicador pide
   /// además el permiso y solo existe en Android: iOS no deja leer las
   /// notificaciones de otras apps, así que no hay nada que configurar.
   List<Map<String, dynamic>> get _pagosServices => [
-        {
-          'title': 'Pagos Yape',
-          'icon': 'assets/icons/icon_svg/view_payment.svg',
-          'action': () => Get.toNamed(AppRoutes.pagosYape),
-        },
-        if (YapeNotificationService.instance.isSupported &&
-            ref
-                .watch(sesionProvider)
-                .hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'))
-          {
-            'title': 'Replicador',
-            'icon': 'assets/icons/icon_svg/payment_status.svg',
-            'action': () => Get.toNamed(AppRoutes.replicador),
-          },
-      ];
+    {
+      'title': 'Pagos Yape',
+      'icon': 'assets/icons/icon_svg/view_payment.svg',
+      'action': () => Get.toNamed(AppRoutes.pagosYape),
+    },
+    if (YapeNotificationService.instance.isSupported &&
+        ref
+            .watch(sesionProvider)
+            .hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'))
+      {
+        'title': 'Replicador',
+        'icon': 'assets/icons/icon_svg/payment_status.svg',
+        'action': () => Get.toNamed(AppRoutes.replicador),
+      },
+  ];
 
   List<Map<String, dynamic>> get _cuentasServices => [
-        if (ref.watch(sesionProvider).hasPermission('INVENTARIO_TRASLADO_RAPIDOS'))
-          {
-            'title': 'Traslados',
-            'icon': 'assets/icons/icon_image/inventory_list.png',
-            'action': () => Get.toNamed(AppRoutes.inventoryTransfers),
-          },
-        {
-          'title': 'Cuentas por Cobrar',
-          'icon': 'assets/icons/icon_svg/add_payment.svg',
-          'action': () => Get.toNamed(AppRoutes.accountsReceivable),
-        },
-        {
-          'title': 'Cuentas por Pagar',
-          'icon': 'assets/icons/icon_svg/expense_payment.svg',
-          'action': () => Get.toNamed(AppRoutes.accountsPayable),
-        },
-        {
-          'title': 'Compras',
-          'icon': 'assets/icons/icon_svg/purchase.svg',
-          'action': () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PurchasesMainScreen()),
-              ),
-        },
-      ];
+    if (ref.watch(sesionProvider).hasPermission('INVENTARIO_TRASLADO_RAPIDOS'))
+      {
+        'title': 'Traslados',
+        'icon': 'assets/icons/icon_image/inventory_list.png',
+        'action': () => Get.toNamed(AppRoutes.inventoryTransfers),
+      },
+    {
+      'title': 'Cuentas por Cobrar',
+      'icon': 'assets/icons/icon_svg/add_payment.svg',
+      'action': () => Get.toNamed(AppRoutes.accountsReceivable),
+    },
+    {
+      'title': 'Cuentas por Pagar',
+      'icon': 'assets/icons/icon_svg/expense_payment.svg',
+      'action': () => Get.toNamed(AppRoutes.accountsPayable),
+    },
+    {
+      'title': 'Compras',
+      'icon': 'assets/icons/icon_svg/purchase.svg',
+      'action': () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const PurchasesMainScreen())),
+    },
+  ];
 
   void _showMoreOptionsSheet() {
     showModalBottomSheet(
@@ -371,7 +378,10 @@ class _InicioTabState extends ConsumerState<InicioTab> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
                   'Más opciones',
-                  style: GoogleFonts.raleway(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: GoogleFonts.raleway(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -455,38 +465,45 @@ class _InicioTabState extends ConsumerState<InicioTab> {
   }
 
   List<Map<String, dynamic>> get _generalServices => [
-        {
-          'title': 'Estadísticas',
-          'icon': 'assets/icons/icon_image/stats.png',
-          'action': () => Get.toNamed(AppRoutes.analytics),
-        },
-        {
-          'title': 'Ajustes',
-          'icon': 'assets/icons/icon_image/settings.png',
-          'action': () => Get.toNamed(AppRoutes.settings),
-        },
-      ];
+    {
+      'title': 'Estadísticas',
+      'icon': 'assets/icons/icon_image/stats.png',
+      'action': () => Get.toNamed(AppRoutes.analytics),
+    },
+    {
+      'title': 'Ajustes',
+      'icon': 'assets/icons/icon_image/settings.png',
+      'action': () => Get.toNamed(AppRoutes.settings),
+    },
+  ];
 
   List<Map<String, dynamic>> get _restauranteServices => [
-        {
-          'title': 'Mesas',
-          'icon': 'assets/icons/icon_image/dinner-table.png',
-          'action': () => Get.toNamed(AppRoutes.restaurantMesas),
-        },
-        {
-          'title': 'Cobrador',
-          'icon': 'assets/icons/icon_image/bill_restaurant.png',
-          'action': () {
-            final pvId = ref.read(sesionProvider).office?.id ?? 0;
-            Get.toNamed(AppRoutes.restaurantCobrador, arguments: {'pvId': pvId});
-          },
-        },
-        {
-          'title': 'Pedidos',
-          'icon': 'assets/icons/icon_image/pedido_add.png',
-          'action': () => Get.toNamed(AppRoutes.ordersRestaurant),
-        },
-      ];
+    if (ref.watch(sesionProvider).hasPermission('SUPER_USUARIO') ||
+        ref.watch(sesionProvider).hasPermission('RESTAURANTE_COCINA_VER'))
+      {
+        'title': 'Cocina',
+        'icon': 'assets/icons/icon_image/dinner-table.png',
+        'action': () => Get.toNamed(AppRoutes.restaurantKitchen),
+      },
+    {
+      'title': 'Mesas',
+      'icon': 'assets/icons/icon_image/dinner-table.png',
+      'action': () => Get.toNamed(AppRoutes.restaurantMesas),
+    },
+    {
+      'title': 'Cobrador',
+      'icon': 'assets/icons/icon_image/bill_restaurant.png',
+      'action': () {
+        final pvId = ref.read(sesionProvider).office?.id ?? 0;
+        Get.toNamed(AppRoutes.restaurantCobrador, arguments: {'pvId': pvId});
+      },
+    },
+    {
+      'title': 'Pedidos',
+      'icon': 'assets/icons/icon_image/pedido_add.png',
+      'action': () => Get.toNamed(AppRoutes.ordersRestaurant),
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -519,7 +536,8 @@ class _InicioTabState extends ConsumerState<InicioTab> {
                 _buildServicesGrid(_ventaServices),
                 const SizedBox(height: 24),
                 // Solo negocios de rubro restaurante ven Mesas/Cobrador/Pedidos.
-                if (ref.watch(sesionProvider).config?.esRestaurante == true) ...[
+                if (ref.watch(sesionProvider).config?.esRestaurante ==
+                    true) ...[
                   _buildSectionLabel('Restaurante'),
                   const SizedBox(height: 12),
                   _buildServicesGrid(_restauranteServices),
@@ -573,11 +591,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.wifi_off_rounded,
-              size: 80,
-              color: Colors.grey.shade300,
-            ),
+            Icon(Icons.wifi_off_rounded, size: 80, color: Colors.grey.shade300),
             const SizedBox(height: 20),
             Text(
               'Sin conexión a internet',
@@ -610,8 +624,13 @@ class _InicioTabState extends ConsumerState<InicioTab> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColorSchema.primaryColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
             ),

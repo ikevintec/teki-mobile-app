@@ -24,6 +24,7 @@ import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/inventory/inventory_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/inventory_adjustment/inventory_adjustment_screen.dart';
 import 'package:teki_app/src/presentation/screens/inventory_transfer/inventory_transfer_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/kitchen/kitchen_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/cobrador/cobrador_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/comanda_screen.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/dividir/dividir_screen.dart';
@@ -71,7 +72,8 @@ class AppRoutes {
   static const String productsSales = "/products_sale";
   // Inventario
   static const String inventory = "/inventory";
-  static const String inventoryAdjustmentCreate = "/inventory-adjustment/create";
+  static const String inventoryAdjustmentCreate =
+      "/inventory-adjustment/create";
   static const String inventoryTransfers = "/inventory-transfers";
   // Restaurante
   static const String restaurantMesas = "/restaurant/mesas";
@@ -79,6 +81,7 @@ class AppRoutes {
   static const String restaurantDividir = "/restaurant/dividir";
   static const String restaurantCobrador = "/restaurant/cobrador";
   static const String ordersRestaurant = "/restaurant/orders";
+  static const String restaurantKitchen = "/restaurant/kitchen";
   static const String restaurantDishReady = "/restaurant/dish-ready";
   // Cuentas por cobrar / pagar
   static const String accountsReceivable = "/accounts-receivable";
@@ -171,6 +174,7 @@ class AppRoutes {
       name: ordersRestaurant,
       page: () => const OrdersRestaurantMainScreen(),
     ),
+    GetPage(name: restaurantKitchen, page: () => const KitchenMainScreen()),
     GetPage(
       name: restaurantDishReady,
       page: () {

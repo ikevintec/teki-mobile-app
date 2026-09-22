@@ -10,6 +10,7 @@ class Command {
   final String? estadoComanda;
   final List<CommandDetail>? items;
   final OrderRestaurant? pedido;
+  final String? usuario;
   final DateTime? createdOn;
   final int? createdBy;
   final int? updatedBy;
@@ -25,6 +26,7 @@ class Command {
     this.estadoComanda,
     this.items,
     this.pedido,
+    this.usuario,
     this.createdOn,
     this.createdBy,
     this.updatedBy,
@@ -34,36 +36,48 @@ class Command {
   });
 
   factory Command.fromJson(Map<String, dynamic> json) => Command(
-        id: json['id'],
-        fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
-        orden: json['orden'],
-        numeroComanda: json['numeroComanda'],
-        estadoComanda: json['estadoComanda'],
-        items: json['items'] != null
-            ? List<CommandDetail>.from(json['items'].map((x) => CommandDetail.fromJson(x)))
-            : null,
-        pedido: json['pedido'] != null ? OrderRestaurant.fromJson(json['pedido']) : null,
-        createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
-        createdBy: json['createdBy'],
-        updatedBy: json['updatedBy'],
-        updatedOn: json['updatedOn'] != null ? parseDateTimeFlexible(json['updatedOn']) : null,
-        deleteBy: json['deleteBy'],
-        deletedOn: json['deletedOn'] != null ? parseDateTimeFlexible(json['deletedOn']) : null,
-      );
+    id: json['id'],
+    fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
+    orden: json['orden'],
+    numeroComanda: json['numeroComanda'],
+    estadoComanda: json['estadoComanda'],
+    items: json['items'] != null
+        ? List<CommandDetail>.from(
+            json['items'].map((x) => CommandDetail.fromJson(x)),
+          )
+        : null,
+    pedido: json['pedido'] != null
+        ? OrderRestaurant.fromJson(json['pedido'])
+        : null,
+    usuario: json['usuario']?.toString(),
+    createdOn: json['createdOn'] != null
+        ? parseDateTimeFlexible(json['createdOn'])
+        : null,
+    createdBy: json['createdBy'],
+    updatedBy: json['updatedBy'],
+    updatedOn: json['updatedOn'] != null
+        ? parseDateTimeFlexible(json['updatedOn'])
+        : null,
+    deleteBy: json['deleteBy'],
+    deletedOn: json['deletedOn'] != null
+        ? parseDateTimeFlexible(json['deletedOn'])
+        : null,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'fecha': fecha?.toIso8601String(),
-        'orden': orden,
-        'numeroComanda': numeroComanda,
-        'estadoComanda': estadoComanda,
-        'items': items?.map((x) => x.toJson()).toList(),
-        'pedido': pedido?.toJson(),
-        'createdOn': createdOn?.toIso8601String(),
-        'createdBy': createdBy,
-        'updatedBy': updatedBy,
-        'updatedOn': updatedOn?.toIso8601String(),
-        'deleteBy': deleteBy,
-        'deletedOn': deletedOn?.toIso8601String(),
-      };
+    'id': id,
+    'fecha': fecha?.toIso8601String(),
+    'orden': orden,
+    'numeroComanda': numeroComanda,
+    'estadoComanda': estadoComanda,
+    'items': items?.map((x) => x.toJson()).toList(),
+    'pedido': pedido?.toJson(),
+    'usuario': usuario,
+    'createdOn': createdOn?.toIso8601String(),
+    'createdBy': createdBy,
+    'updatedBy': updatedBy,
+    'updatedOn': updatedOn?.toIso8601String(),
+    'deleteBy': deleteBy,
+    'deletedOn': deletedOn?.toIso8601String(),
+  };
 }
