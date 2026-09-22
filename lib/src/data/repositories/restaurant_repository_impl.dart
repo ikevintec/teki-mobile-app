@@ -32,6 +32,21 @@ class RestaurantRepositoryImpl extends RestaurantRepository {
       restaurantDatasource.getCommands(params);
 
   @override
+  Future<List<Command>> getPendingQrCommands(int officeId) =>
+      restaurantDatasource.getPendingQrCommands(officeId);
+
+  @override
+  Future<void> reviewQrCommands(
+    List<int> commandIds,
+    String status, {
+    bool attend = false,
+  }) => restaurantDatasource.reviewQrCommands(
+    commandIds,
+    status,
+    attend: attend,
+  );
+
+  @override
   Future<List<ProductionArea>> getProductionAreas() =>
       restaurantDatasource.getProductionAreas();
 

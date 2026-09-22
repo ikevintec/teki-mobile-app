@@ -13,6 +13,7 @@ import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_optio
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options/order_info_cards.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/restaurant/qr_command_review_provider.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/shared/services/command_print_service.dart';
@@ -259,7 +260,41 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
     );
   }
 
-  Widget _buildComandasView(List<Command> comandas, {bool orderPagado = false}) {
+  Widget _commandBadge({
+    required IconData icon,
+    required String label,
+    required Color foreground,
+    required Color background,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: foreground),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: foreground,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComandasView(
+    List<Command> comandas, {
+    bool orderPagado = false,
+    bool orderWithoutWaiter = false,
+  }) {
     if (comandas.isEmpty) {
       return const Center(
         child: Padding(
@@ -268,13 +303,31 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
         ),
       );
     }
+    final session = ref.watch(sesionProvider);
+    final processingCommandId = ref.watch(
+      qrCommandReviewProvider.select(
+        (state) => state.processingCommandId,
+      ),
+    );
     return ListView.builder(
       shrinkWrap: true,
       padding: const EdgeInsets.only(bottom: 8),
       itemCount: comandas.length,
       itemBuilder: (context, index) {
         final comanda = comandas[index];
-        const statusOrder = {'PREPARADO': 0, 'PENDIENTE': 1, 'DESPACHADO': 2, 'CANCELADO': 3};
+        final approvalPending = comanda.estadoAprobacion == 'PENDIENTE';
+        final approvalRejected = comanda.estadoAprobacion == 'RECHAZADA';
+        final canOperateItems = !approvalPending && !approvalRejected;
+        final busyReview = processingCommandId != null;
+        final processingThis = processingCommandId == comanda.id;
+        const statusOrder = {
+          'PREPARADO': 0,
+          'PENDIENTE': 1,
+          'POR_CONFIRMAR': 1,
+          'DESPACHADO': 2,
+          'CANCELADO': 3,
+          'RECHAZADO': 3,
+        };
         final items = <CommandDetail>[...(comanda.items ?? [])]..sort((a, b) {
             final aO = statusOrder[a.estadoComandaDetalle?.toUpperCase()] ?? 1;
             final bO = statusOrder[b.estadoComandaDetalle?.toUpperCase()] ?? 1;
@@ -330,15 +383,123 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                     ],
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 9, 12, 5),
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _commandBadge(
+                        icon: comanda.esPorQr == true
+                            ? Icons.qr_code_rounded
+                            : Icons.person_outline_rounded,
+                        label: comanda.esPorQr == true ? 'Por QR' : 'Mozo',
+                        foreground: comanda.esPorQr == true
+                            ? const Color(0xFF1D4ED8)
+                            : const Color(0xFF4B5563),
+                        background: comanda.esPorQr == true
+                            ? const Color(0xFFDBEAFE)
+                            : const Color(0xFFF3F4F6),
+                      ),
+                      if (approvalPending)
+                        _commandBadge(
+                          icon: Icons.schedule_rounded,
+                          label: 'Por aprobar',
+                          foreground: const Color(0xFF92400E),
+                          background: const Color(0xFFFEF3C7),
+                        ),
+                      if (approvalRejected)
+                        _commandBadge(
+                          icon: Icons.block_rounded,
+                          label: 'Rechazada',
+                          foreground: const Color(0xFF991B1B),
+                          background: const Color(0xFFFEE2E2),
+                        ),
+                      if (comanda.estadoImpresion == 'PENDIENTE' &&
+                          !approvalPending)
+                        _commandBadge(
+                          icon: Icons.print_disabled_rounded,
+                          label: 'Sin imprimir',
+                          foreground: const Color(0xFF6B21A8),
+                          background: const Color(0xFFF3E8FF),
+                        ),
+                    ],
+                  ),
+                ),
+                if (approvalPending)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
+                    child: Wrap(
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: busyReview
+                              ? null
+                              : () => ref
+                                  .read(qrCommandReviewProvider.notifier)
+                                  .approve(comanda),
+                          icon: processingThis
+                              ? const SizedBox.square(
+                                  dimension: 15,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.check_rounded, size: 16),
+                          label: const Text('Aprobar'),
+                        ),
+                        if (orderWithoutWaiter)
+                          FilledButton.icon(
+                            onPressed: busyReview
+                                ? null
+                                : () => ref
+                                    .read(qrCommandReviewProvider.notifier)
+                                    .approve(comanda, attend: true),
+                            icon: const Icon(
+                              Icons.person_add_alt_1_rounded,
+                              size: 16,
+                            ),
+                            label: const Text('Aprobar y atender'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: ColorSchema.primaryColor,
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                else if (!approvalRejected &&
+                    session.config?.clienteImpresion == 'COFFE')
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 5),
+                    child: TextButton.icon(
+                      onPressed: comanda.id == null || session.office?.id == null
+                          ? null
+                          : () => CommandPrintService().processCommand(
+                              commandId: comanda.id!,
+                              puntoVenta: session.office!,
+                              escPos:
+                                  session.config?.imprimeTicketsEscPos ?? false,
+                              clientPrinter: session.config?.clienteImpresion,
+                              idCompany: session.companySelected?.id ??
+                                  session.company?.id,
+                            ),
+                      icon: const Icon(Icons.print_rounded, size: 16),
+                      label: const Text('Reimprimir en cocina'),
+                    ),
+                  ),
                 ...items.where((i) => !ComandaDetailStatus.isCancelledItem(i)).map((item) => CommandaItemRow(
                       item: item,
                       orderPagado: orderPagado,
-                      onServir: (comanda.id != null && item.id != null)
+                      onServir: (canOperateItems &&
+                              comanda.id != null &&
+                              item.id != null)
                           ? (cantidad) => ref
                                 .read(restaurantProvider.notifier)
                                 .updateCommandItemStatus(comanda.id!, item.id!, 'DESPACHADO', cantidad: cantidad)
                           : null,
-                      onAnular: (comanda.id != null &&
+                      onAnular: (canOperateItems &&
+                              comanda.id != null &&
                               item.id != null &&
                               ref.read(sesionProvider).hasPermission(
                                   'RESTAURANTE_PEDIDOS_CANCELAR_PLATILLO'))
@@ -714,7 +875,11 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
               controller: _tabController,
               children: [
                 _buildOrdenView(order, hasItemPreparado, isPendiente),
-                _buildComandasView(comandas, orderPagado: order.pagado == true),
+                _buildComandasView(
+                  comandas,
+                  orderPagado: order.pagado == true,
+                  orderWithoutWaiter: order.sinMozoAsignado == true,
+                ),
                 _buildCuentasView(order),
               ],
             ),

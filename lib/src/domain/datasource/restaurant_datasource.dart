@@ -11,6 +11,12 @@ abstract class RestaurantDatasource {
   Future<List<Table>> getTables(Map<String, dynamic> params);
   Future<List<OrderRestaurant>> getOrders(Map<String, dynamic> params);
   Future<List<Command>> getCommands(Map<String, dynamic> params);
+  Future<List<Command>> getPendingQrCommands(int officeId);
+  Future<void> reviewQrCommands(
+    List<int> commandIds,
+    String status, {
+    bool attend = false,
+  });
   Future<List<ProductionArea>> getProductionAreas();
   Future<OrderRestaurant> createOrder(OrderRestaurant order);
   Future<Command> addCommand(int orderId, Command command);

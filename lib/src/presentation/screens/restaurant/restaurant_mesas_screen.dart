@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options_sheet.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/qr_command_review/qr_command_review_area.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/restaurant_table_palette.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/table_card.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
@@ -102,7 +104,9 @@ class _RestaurantMesasScreenState
       final todosCancelados = allItems.every(
         (item) =>
             item.eliminado == true ||
-            item.estadoComandaDetalle?.toUpperCase() == 'CANCELADO',
+            const {'CANCELADO', 'RECHAZADO'}.contains(
+              item.estadoComandaDetalle?.toUpperCase(),
+            ),
       );
       if (todosCancelados) {
         final numero = order.mesa?.numero?.toString() ??
@@ -118,7 +122,13 @@ class _RestaurantMesasScreenState
     for (final order in orders) {
       if (order.estado != 'PRECUENTA') continue;
       final hasSinCuenta = (order.comandas ?? []).any(
-        (c) => (c.items ?? []).any((item) => item.cuenta == null),
+        (c) => (c.items ?? []).any(
+          (item) =>
+              item.cuenta == null &&
+              !const {'CANCELADO', 'RECHAZADO'}.contains(
+                item.estadoComandaDetalle?.toUpperCase(),
+              ),
+        ),
       );
       if (hasSinCuenta) {
         final numero = order.mesa?.numero?.toString() ?? order.mesa?.id?.toString();
@@ -163,6 +173,7 @@ class _RestaurantMesasScreenState
       bottomNavigationBar: const SafeArea(
         child: _StatusLegend(),
       ),
+      floatingActionButton: const QrCommandReviewArea(),
       body: state.isLoading && state.lounges.isEmpty
           ? const Center(
               child: CircularProgressIndicator(color: ColorSchema.primaryColor),
@@ -241,15 +252,29 @@ class _StatusLegend extends StatelessWidget {
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Paleta canónica de la web: pendiente ámbar, preparado verde,
-          // precuenta morado.
-          _LegendItem(color: Color(0xFFE8E8E8), textColor: Colors.grey, label: 'Libre'),
+          _LegendItem(
+            color: RestaurantTablePalette.free,
+            textColor: RestaurantTablePalette.legendText,
+            label: 'Libre',
+          ),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFFEEDAF), textColor: Color(0xFF8A5340), label: 'Pendiente'),
+          _LegendItem(
+            color: RestaurantTablePalette.order,
+            textColor: RestaurantTablePalette.legendText,
+            label: 'Pedido',
+          ),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFE8F5E9), textColor: Color(0xFF256029), label: 'Preparado'),
+          _LegendItem(
+            color: RestaurantTablePalette.prepared,
+            textColor: RestaurantTablePalette.legendText,
+            label: 'Preparado',
+          ),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFECCFFF), textColor: Color(0xFF694382), label: 'Precuenta'),
+          _LegendItem(
+            color: RestaurantTablePalette.paying,
+            textColor: RestaurantTablePalette.legendText,
+            label: 'Pagando',
+          ),
         ],
       ),
     );
@@ -278,7 +303,7 @@ class _LegendItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(3),
-            border: Border.all(color: textColor.withValues(alpha: 0.9)),
+            border: Border.all(color: color),
           ),
         ),
         const SizedBox(width: 5),

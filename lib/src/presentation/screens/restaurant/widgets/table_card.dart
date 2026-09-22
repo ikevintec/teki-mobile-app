@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart' hide Table;
 import 'package:teki_app/src/data/models/teki_model/table.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/restaurant_table_palette.dart';
 
 class TableCard extends StatefulWidget {
   final Table table;
@@ -70,27 +71,25 @@ class _TableCardState extends State<TableCard> {
     String statusLabel;
     IconData statusIcon;
 
-    // Paleta canónica de la WEB (los usuarios ya la conocen):
-    // items preparados = verde (listo), PENDIENTE = ámbar,
-    // PRECUENTA = morado (status-renewal), libre = gris.
+    // Misma semántica y colores del mapa de mesas web.
     if (hasItemPreparado) {
-      cardColor = const Color(0xFFE8F5E9);
-      textColor = const Color(0xFF256029);
+      cardColor = RestaurantTablePalette.prepared;
+      textColor = RestaurantTablePalette.foreground;
       statusLabel = 'Preparado';
       statusIcon = Icons.room_service_rounded;
     } else if (estado == 'PENDIENTE') {
-      cardColor = const Color(0xFFFEEDAF);
-      textColor = const Color(0xFF8A5340);
-      statusLabel = 'Pendiente';
+      cardColor = RestaurantTablePalette.order;
+      textColor = RestaurantTablePalette.foreground;
+      statusLabel = 'Pedido';
       statusIcon = Icons.receipt_long;
     } else if (estado == 'PRECUENTA') {
-      cardColor = const Color(0xFFECCFFF);
-      textColor = const Color(0xFF694382);
-      statusLabel = 'Precuenta';
+      cardColor = RestaurantTablePalette.paying;
+      textColor = RestaurantTablePalette.foreground;
+      statusLabel = 'Pagando';
       statusIcon = Icons.payment;
     } else {
-      cardColor = Colors.grey.shade100;
-      textColor = Colors.grey.shade600;
+      cardColor = RestaurantTablePalette.free;
+      textColor = RestaurantTablePalette.foreground;
       statusLabel = 'Libre';
       statusIcon = Icons.chair;
     }
@@ -103,10 +102,10 @@ class _TableCardState extends State<TableCard> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: textColor.withValues(alpha: 0.25), width: 3),
+          border: Border.all(color: RestaurantTablePalette.border),
           boxShadow: [
             BoxShadow(
-              color: textColor.withValues(alpha: 0.15),
+              color: Colors.black.withValues(alpha: 0.10),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -257,7 +256,14 @@ class _TableCardState extends State<TableCard> {
   int _totalItems(dynamic order) {
     int total = 0;
     for (final comanda in (order.comandas ?? [])) {
-      total += (comanda.items?.length ?? 0) as int;
+      for (final item in (comanda.items ?? [])) {
+        final status = item.estadoComandaDetalle?.toUpperCase();
+        if (item.eliminado == true ||
+            const {'CANCELADO', 'RECHAZADO'}.contains(status)) {
+          continue;
+        }
+        total++;
+      }
     }
     return total;
   }
@@ -267,7 +273,9 @@ class _TableCardState extends State<TableCard> {
     for (final comanda in (order.comandas ?? [])) {
       for (final item in (comanda.items ?? [])) {
         if (item.eliminado == true ||
-            item.estadoComandaDetalle?.toUpperCase() == 'CANCELADO') {
+            const {'CANCELADO', 'RECHAZADO'}.contains(
+              item.estadoComandaDetalle?.toUpperCase(),
+            )) {
           continue;
         }
         total += ((item.precioVenta ?? 0) * (item.cantidad ?? 1)) as double;

@@ -11,6 +11,12 @@ class Command {
   final List<CommandDetail>? items;
   final OrderRestaurant? pedido;
   final String? usuario;
+  final bool? esPorQr;
+  final String? estadoImpresion;
+  final String? estadoAprobacion;
+  final int? revisadaPor;
+  final DateTime? revisadaEn;
+  final bool? pedidoSinMozo;
   final DateTime? createdOn;
   final int? createdBy;
   final int? updatedBy;
@@ -27,6 +33,12 @@ class Command {
     this.items,
     this.pedido,
     this.usuario,
+    this.esPorQr,
+    this.estadoImpresion,
+    this.estadoAprobacion,
+    this.revisadaPor,
+    this.revisadaEn,
+    this.pedidoSinMozo,
     this.createdOn,
     this.createdBy,
     this.updatedBy,
@@ -50,6 +62,12 @@ class Command {
         ? OrderRestaurant.fromJson(json['pedido'])
         : null,
     usuario: json['usuario']?.toString(),
+    esPorQr: json['esPorQr'],
+    estadoImpresion: json['estadoImpresion'],
+    estadoAprobacion: json['estadoAprobacion'],
+    revisadaPor: (json['revisadaPor'] as num?)?.toInt(),
+    revisadaEn: parseDateTimeFlexible(json['revisadaEn']),
+    pedidoSinMozo: json['pedidoSinMozo'],
     createdOn: json['createdOn'] != null
         ? parseDateTimeFlexible(json['createdOn'])
         : null,
@@ -73,6 +91,12 @@ class Command {
     'items': items?.map((x) => x.toJson()).toList(),
     'pedido': pedido?.toJson(),
     'usuario': usuario,
+    'esPorQr': esPorQr,
+    'estadoImpresion': estadoImpresion,
+    'estadoAprobacion': estadoAprobacion,
+    'revisadaPor': revisadaPor,
+    'revisadaEn': revisadaEn?.toIso8601String(),
+    'pedidoSinMozo': pedidoSinMozo,
     'createdOn': createdOn?.toIso8601String(),
     'createdBy': createdBy,
     'updatedBy': updatedBy,

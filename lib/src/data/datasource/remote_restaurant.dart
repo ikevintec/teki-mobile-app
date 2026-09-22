@@ -113,6 +113,62 @@ class RemoteRestaurant extends RestaurantDatasource {
   }
 
   @override
+  Future<List<Command>> getPendingQrCommands(int officeId) async {
+    try {
+      final response = await dio.get(
+        '/commands/qr-pendientes',
+        queryParameters: {'idPuntoVenta': officeId},
+      );
+      final data = response.data;
+      final List list = data is List
+          ? data
+          : data is Map
+          ? (data['content'] as List? ?? const [])
+          : const [];
+      return list.map((entry) => Command.fromJson(entry)).toList();
+    } on DioException catch (error) {
+      if (error.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      final responseData = error.response?.data;
+      final message =
+          (responseData is Map
+              ? (responseData['mensaje'] ?? responseData['message'])
+              : null) ??
+          error.message ??
+          'No se pudieron cargar las comandas QR';
+      throw Exception(message);
+    }
+  }
+
+  @override
+  Future<void> reviewQrCommands(
+    List<int> commandIds,
+    String status, {
+    bool attend = false,
+  }) async {
+    try {
+      await dio.patch(
+        '/commands/aprobacion',
+        queryParameters: {'estado': status, 'atender': attend},
+        data: commandIds,
+      );
+    } on DioException catch (error) {
+      if (error.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      final responseData = error.response?.data;
+      final message =
+          (responseData is Map
+              ? (responseData['mensaje'] ?? responseData['message'])
+              : null) ??
+          error.message ??
+          'No se pudo revisar la comanda QR';
+      throw Exception(message);
+    }
+  }
+
+  @override
   Future<List<ProductionArea>> getProductionAreas() async {
     try {
       final response = await dio.get(
