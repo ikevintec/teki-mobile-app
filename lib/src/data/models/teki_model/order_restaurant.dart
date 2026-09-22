@@ -63,6 +63,7 @@ class OrderRestaurant {
   final String? observacion;
   final bool? pagado;
   final bool? esBorrador;
+  final bool? esPedidoQr;
   final bool? generarComprobante;
   final DateTime? createdOn;
   final int? createdBy;
@@ -125,6 +126,7 @@ class OrderRestaurant {
     this.observacion,
     this.pagado,
     this.esBorrador,
+    this.esPedidoQr,
     this.generarComprobante,
     this.createdOn,
     this.createdBy,
@@ -188,6 +190,7 @@ class OrderRestaurant {
     observacion: json['observacion'],
     pagado: json['pagado'],
     esBorrador: json['esBorrador'],
+    esPedidoQr: json['esPedidoQr'],
     generarComprobante: json['generarComprobante'],
     createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
     createdBy: json['createdBy'],
@@ -251,6 +254,7 @@ class OrderRestaurant {
     'observacion': observacion,
     'pagado': pagado,
     'esBorrador': esBorrador,
+    'esPedidoQr': esPedidoQr,
     // generarComprobante no se envía al backend (uso interno para flujo UI)
     'createdOn': createdOn?.toIso8601String(),
     'createdBy': createdBy,

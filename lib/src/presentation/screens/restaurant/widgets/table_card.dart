@@ -66,35 +66,36 @@ class _TableCardState extends State<TableCard> {
           ),
         );
 
-    Color cardColor;
-    Color textColor;
+    Color baseColor;
     String statusLabel;
     IconData statusIcon;
 
-    // Misma semántica y colores del mapa de mesas web.
+    // Misma semántica y colores del mapa de mesas web (paleta canónica).
     if (hasItemPreparado) {
-      cardColor = RestaurantTablePalette.prepared;
-      textColor = RestaurantTablePalette.foreground;
+      baseColor = RestaurantTablePalette.prepared;
       statusLabel = 'Preparado';
       statusIcon = Icons.room_service_rounded;
     } else if (estado == 'PENDIENTE') {
-      cardColor = RestaurantTablePalette.order;
-      textColor = RestaurantTablePalette.foreground;
+      baseColor = RestaurantTablePalette.order;
       statusLabel = 'Pedido';
       statusIcon = Icons.receipt_long;
     } else if (estado == 'PRECUENTA') {
-      cardColor = RestaurantTablePalette.paying;
-      textColor = RestaurantTablePalette.foreground;
+      baseColor = RestaurantTablePalette.paying;
       statusLabel = 'Pagando';
       statusIcon = Icons.payment;
     } else {
-      cardColor = RestaurantTablePalette.free;
-      textColor = RestaurantTablePalette.foreground;
+      baseColor = RestaurantTablePalette.free;
       statusLabel = 'Libre';
       statusIcon = Icons.chair;
     }
 
+    // Entonación previa: fondo tenue + texto oscuro derivados del color
+    // semántico, para conservar contraste y legibilidad de las tarjetas.
+    final cardColor = Color.lerp(baseColor, Colors.white, 0.85)!;
+    final textColor = Color.lerp(baseColor, Colors.black, 0.45)!;
+
     final hasOrder = order != null && order.id != null;
+    final isQrOrigin = _isQrOrigin(order);
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -102,10 +103,10 @@ class _TableCardState extends State<TableCard> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: RestaurantTablePalette.border),
+          border: Border.all(color: textColor.withValues(alpha: 0.25), width: 3),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
+              color: textColor.withValues(alpha: 0.15),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -124,11 +125,43 @@ class _TableCardState extends State<TableCard> {
                 Expanded(
                   child: Stack(
                     children: [
-                      // Ícono independiente — esquina superior derecha
+                      // Ícono de estado (+ marca QR) — esquina superior derecha.
+                      // Se mantiene en horizontal para no ocupar alto.
                       Positioned(
                         top: 10,
                         right: 12,
-                        child: Icon(statusIcon, color: textColor, size: 24),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isQrOrigin) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: textColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.qr_code_rounded, size: 11, color: textColor),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'QR',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        color: textColor,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            Icon(statusIcon, color: textColor, size: 24),
+                          ],
+                        ),
                       ),
                       // Total independiente — esquina inferior derecha
                       if (hasOrder)
@@ -251,6 +284,33 @@ class _TableCardState extends State<TableCard> {
         ),
       ],
     );
+  }
+
+  /// ¿El pedido se originó por QR? Reforzado para datos incompletos:
+  /// 1) usa el flag del pedido `esPedidoQr` cuando llega (true/false),
+  /// 2) si el campo no llega (null), lo deriva de la comanda original
+  ///    (`esPorQr` de la comanda con menor `orden`),
+  /// 3) ante ausencia total de datos, devuelve false (no marca la mesa).
+  bool _isQrOrigin(dynamic order) {
+    if (order == null || order.id == null) return false;
+
+    final flag = order.esPedidoQr;
+    if (flag is bool) return flag;
+
+    final List comandas = order.comandas ?? const [];
+    if (comandas.isEmpty) return false;
+
+    dynamic original;
+    for (final c in comandas) {
+      if (original == null) {
+        original = c;
+        continue;
+      }
+      final ordenC = (c.orden as int?) ?? 1 << 30;
+      final ordenOriginal = (original.orden as int?) ?? 1 << 30;
+      if (ordenC < ordenOriginal) original = c;
+    }
+    return original?.esPorQr == true;
   }
 
   int _totalItems(dynamic order) {

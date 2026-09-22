@@ -152,6 +152,9 @@ class RemoteRestaurant extends RestaurantDatasource {
         '/commands/aprobacion',
         queryParameters: {'estado': status, 'atender': attend},
         data: commandIds,
+        // Dio no puede inferir el content-type de un List<int> (lo enviaría
+        // como application/octet-stream → 415). Forzar JSON.
+        options: Options(contentType: Headers.jsonContentType),
       );
     } on DioException catch (error) {
       if (error.message == 'SESSION_EXPIRED') {

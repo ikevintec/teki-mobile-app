@@ -103,7 +103,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
   }
 
 
-  Widget _buildSubtotalRow(double subtotal) {
+  Widget _buildSubtotalRow(double subtotal, {Widget? leading}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
@@ -111,8 +111,10 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
         border: Border(top: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment:
+            leading != null ? MainAxisAlignment.spaceBetween : MainAxisAlignment.end,
         children: [
+          if (leading != null) leading,
           Text(
             'Subtotal: S/. ${subtotal.toStringAsFixed(2)}',
             style: TextStyle(
@@ -383,49 +385,40 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 9, 12, 5),
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      _commandBadge(
-                        icon: comanda.esPorQr == true
-                            ? Icons.qr_code_rounded
-                            : Icons.person_outline_rounded,
-                        label: comanda.esPorQr == true ? 'Por QR' : 'Mozo',
-                        foreground: comanda.esPorQr == true
-                            ? const Color(0xFF1D4ED8)
-                            : const Color(0xFF4B5563),
-                        background: comanda.esPorQr == true
-                            ? const Color(0xFFDBEAFE)
-                            : const Color(0xFFF3F4F6),
-                      ),
-                      if (approvalPending)
-                        _commandBadge(
-                          icon: Icons.schedule_rounded,
-                          label: 'Por aprobar',
-                          foreground: const Color(0xFF92400E),
-                          background: const Color(0xFFFEF3C7),
-                        ),
-                      if (approvalRejected)
-                        _commandBadge(
-                          icon: Icons.block_rounded,
-                          label: 'Rechazada',
-                          foreground: const Color(0xFF991B1B),
-                          background: const Color(0xFFFEE2E2),
-                        ),
-                      if (comanda.estadoImpresion == 'PENDIENTE' &&
-                          !approvalPending)
-                        _commandBadge(
-                          icon: Icons.print_disabled_rounded,
-                          label: 'Sin imprimir',
-                          foreground: const Color(0xFF6B21A8),
-                          background: const Color(0xFFF3E8FF),
-                        ),
-                    ],
+                if (approvalPending ||
+                    approvalRejected ||
+                    (comanda.estadoImpresion == 'PENDIENTE'))
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 9, 12, 5),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (approvalPending)
+                          _commandBadge(
+                            icon: Icons.schedule_rounded,
+                            label: 'Por aprobar',
+                            foreground: const Color(0xFF92400E),
+                            background: const Color(0xFFFEF3C7),
+                          ),
+                        if (approvalRejected)
+                          _commandBadge(
+                            icon: Icons.block_rounded,
+                            label: 'Rechazada',
+                            foreground: const Color(0xFF991B1B),
+                            background: const Color(0xFFFEE2E2),
+                          ),
+                        if (comanda.estadoImpresion == 'PENDIENTE' &&
+                            !approvalPending)
+                          _commandBadge(
+                            icon: Icons.print_disabled_rounded,
+                            label: 'Sin imprimir',
+                            foreground: const Color(0xFF6B21A8),
+                            background: const Color(0xFFF3E8FF),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
                 if (approvalPending)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
@@ -530,7 +523,21 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                   CancelledItemsBar(
                     items: items.where(ComandaDetailStatus.isCancelledItem).toList(),
                   ),
-                _buildSubtotalRow(subtotal),
+                _buildSubtotalRow(
+                  subtotal,
+                  leading: _commandBadge(
+                    icon: comanda.esPorQr == true
+                        ? Icons.qr_code_rounded
+                        : Icons.person_outline_rounded,
+                    label: comanda.esPorQr == true ? 'Por QR' : 'Mozo',
+                    foreground: comanda.esPorQr == true
+                        ? const Color(0xFF1D4ED8)
+                        : const Color(0xFF4B5563),
+                    background: comanda.esPorQr == true
+                        ? const Color(0xFFDBEAFE)
+                        : const Color(0xFFF3F4F6),
+                  ),
+                ),
               ],
             ),
           ),
