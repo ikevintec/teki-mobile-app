@@ -21,6 +21,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/quotation/quotation_view_provider.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/products_sale_notifier_setters.dart';
+import 'package:teki_app/src/providers/sale/products/helpers/edit_sale_series_availability.dart';
 import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -267,8 +268,13 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         Ticket comprobante = await comprobanteNotifier.fetchComprobanteById(id);
         ticketSaleNotifier.updateTicket(comprobante);
         customerNotifier.setCustomerEntity(comprobante.cliente ?? Customer());
+        final items = restoreEditSaleSeriesAvailability(
+          items: comprobante.items ?? [],
+          officeId: ref.read(sesionProvider).office?.id,
+          documentType: comprobante.tipoComprobante,
+        );
         productsSaleNotifier.setProductsSaleEntity(
-          comprobante.items ?? [],
+          items,
           monedaOrigen: comprobante.codigoMoneda,
         );
         productsSaleNotifier.setIncIgv(comprobante.incIgv ?? true);
