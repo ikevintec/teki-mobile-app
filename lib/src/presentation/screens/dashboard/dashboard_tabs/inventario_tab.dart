@@ -290,7 +290,11 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
                           ],
                         ),
                       )
-                    : InventoryListSection(items: state.items),
+                    : InventoryListSection(
+                        items: state.items,
+                        idPuntoVenta: widget.idPuntoVenta,
+                        syncButtonBottomOffset: 84,
+                      ),
           ),
         ),
       ],

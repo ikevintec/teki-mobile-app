@@ -261,7 +261,12 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
                             ],
                           ),
                         )
-                      : InventoryListSection(items: state.items),
+                      : InventoryListSection(
+                          items: state.items,
+                          idPuntoVenta: state.idPuntoVenta ??
+                              ref.read(sesionProvider).office?.id ??
+                              0,
+                        ),
             ),
           ),
         ],

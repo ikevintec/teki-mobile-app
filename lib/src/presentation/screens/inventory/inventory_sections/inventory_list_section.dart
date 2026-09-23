@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/presentation/screens/inventory/widgets/inventory_movements_sheet.dart';
+import 'package:teki_app/src/presentation/screens/inventory/widgets/inventory_sync_action.dart';
 import 'package:teki_app/src/providers/inventory/inventory_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -26,8 +27,15 @@ _EstadoStock _estadoDe(Inventory inv) {
 
 class InventoryListSection extends ConsumerStatefulWidget {
   final List<Inventory> items;
+  final int idPuntoVenta;
+  final double syncButtonBottomOffset;
 
-  const InventoryListSection({super.key, required this.items});
+  const InventoryListSection({
+    super.key,
+    required this.items,
+    required this.idPuntoVenta,
+    this.syncButtonBottomOffset = 16,
+  });
 
   @override
   ConsumerState<InventoryListSection> createState() =>
@@ -285,7 +293,7 @@ class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
     final isLast = ref.watch(inventoryProvider).last;
 
     if (widget.items.isEmpty) {
-      return ListView(
+      return _withSyncAction(ListView(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
@@ -308,12 +316,12 @@ class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
             ),
           ),
         ],
-      );
+      ));
     }
 
     final items = _filtrados;
 
-    return ListView.builder(
+    return _withSyncAction(ListView.builder(
       controller: _scrollController,
       padding: EdgeInsets.zero,
       itemCount: items.length + 2,
@@ -355,6 +363,19 @@ class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
           onTap: () => _openAccionesSheet(item),
         );
       },
+    ));
+  }
+
+  Widget _withSyncAction(Widget content) {
+    return Stack(
+      children: [
+        Positioned.fill(child: content),
+        Positioned(
+          right: 16,
+          bottom: widget.syncButtonBottomOffset,
+          child: InventorySyncAction(idPuntoVenta: widget.idPuntoVenta),
+        ),
+      ],
     );
   }
 }
