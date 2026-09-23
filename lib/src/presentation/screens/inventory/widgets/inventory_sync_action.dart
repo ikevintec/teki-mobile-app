@@ -27,28 +27,45 @@ class InventorySyncAction extends ConsumerWidget {
     final total = state.badgeSummary.total;
     if (!state.badgeLoaded || total <= 0) return const SizedBox.shrink();
 
-    return FloatingActionButton.extended(
-      heroTag: 'inventory-sync-$idPuntoVenta',
-      backgroundColor: const Color(0xFFF57C00),
-      foregroundColor: Colors.white,
-      elevation: 5,
-      icon: const Icon(Icons.sync_problem_rounded, size: 21),
-      label: Text(
-        'Corregir ($total)',
-        style: const TextStyle(fontWeight: FontWeight.w700),
-      ),
-      onPressed: () {
-        showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          backgroundColor: Colors.white,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    // Barra compacta alineada a la derecha, bajo el buscador. Se colapsa sola
+    // (SizedBox.shrink) cuando no hay diferencias, así no ocupa espacio.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: ElevatedButton.icon(
+          onPressed: () => _openSheet(context),
+          icon: const Icon(Icons.sync_problem_rounded, size: 18),
+          label: Text(
+            'Corregir ($total)',
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
-          builder: (_) => InventorySyncSheet(idPuntoVenta: idPuntoVenta),
-        );
-      },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFF57C00),
+            foregroundColor: Colors.white,
+            elevation: 2,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            visualDensity: VisualDensity.compact,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => InventorySyncSheet(idPuntoVenta: idPuntoVenta),
     );
   }
 }
@@ -141,19 +158,71 @@ class _InventorySyncSheetState extends ConsumerState<InventorySyncSheet> {
     final accepted = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Regularizar inventario'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 10),
+        contentPadding: const EdgeInsets.fromLTRB(22, 0, 22, 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(
+                Icons.sync_problem_rounded,
+                color: Colors.orange.shade800,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Regularizar inventario',
+                style: GoogleFonts.raleway(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: ColorSchema.titleTextColor,
+                ),
+              ),
+            ),
+          ],
+        ),
         content: Text(
           'El stock quedará igual al conteo de series/lotes en '
           '${batch.ids.length} ${batch.ids.length == 1 ? 'producto' : 'productos'}. '
           'El cambio quedará registrado en el kardex.$zeroWarning$batchWarning',
+          style: GoogleFonts.roboto(
+            fontSize: 13,
+            height: 1.4,
+            color: Colors.black87,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black54,
+              textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w600),
+            ),
             child: const Text('Cancelar'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: ColorSchema.primaryColor,
+              foregroundColor: Colors.white,
+              textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w700),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             child: const Text('Regularizar'),
           ),
         ],
@@ -294,18 +363,18 @@ class _InventorySyncSheetState extends ConsumerState<InventorySyncSheet> {
               children: [
                 Row(
                   children: [
-                    ChoiceChip(
-                      label: Text(officeName),
+                    _segmentChip(
+                      label: officeName,
                       selected: state.currentOfficeOnly,
-                      onSelected: (_) => ref
+                      onTap: () => ref
                           .read(provider.notifier)
                           .setCurrentOfficeOnly(true),
                     ),
                     const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('Todas las sedes'),
+                    _segmentChip(
+                      label: 'Todas las sedes',
                       selected: !state.currentOfficeOnly,
-                      onSelected: (_) => ref
+                      onTap: () => ref
                           .read(provider.notifier)
                           .setCurrentOfficeOnly(false),
                     ),
@@ -352,7 +421,12 @@ class _InventorySyncSheetState extends ConsumerState<InventorySyncSheet> {
                 style: const TextStyle(color: Colors.red, fontSize: 12),
               ),
             ),
-          Expanded(child: _buildIssues(state, canAdjust)),
+          Expanded(
+            child: ColoredBox(
+              color: Colors.grey.shade100,
+              child: _buildIssues(state, canAdjust),
+            ),
+          ),
           if (canAdjust && state.totalRecords > 0)
             SafeArea(
               top: false,
@@ -383,6 +457,35 @@ class _InventorySyncSheetState extends ConsumerState<InventorySyncSheet> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Chip de segmento con el estilo del sistema (ver `_buildFiltros`).
+  Widget _segmentChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? ColorSchema.primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? ColorSchema.primaryColor : Colors.grey.shade300,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.roboto(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : Colors.grey.shade700,
+          ),
+        ),
       ),
     );
   }
@@ -494,11 +597,15 @@ class _SummaryItem extends StatelessWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              style: GoogleFonts.raleway(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: ColorSchema.primaryColor,
+              ),
             ),
             Text(
               label,
-              style: const TextStyle(fontSize: 10, color: Colors.black54),
+              style: GoogleFonts.roboto(fontSize: 10, color: Colors.black54),
             ),
           ],
         ),
@@ -529,8 +636,10 @@ class _IssueCard extends StatelessWidget {
     final missing = issue.diferencia > 0;
     final amount = formatDouble(issue.diferencia.abs());
     return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(vertical: 5),
+      elevation: 1.5,
+      shadowColor: Colors.black.withValues(alpha: 0.15),
+      color: selected ? const Color(0xFFF4F7FE) : Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
@@ -552,6 +661,10 @@ class _IssueCard extends StatelessWidget {
                       value: selected,
                       onChanged: (_) => onSelected(),
                       visualDensity: VisualDensity.compact,
+                      activeColor: ColorSchema.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
                     ),
                   Expanded(
                     child: Column(
@@ -561,11 +674,13 @@ class _IssueCard extends StatelessWidget {
                           issue.producto,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: GoogleFonts.raleway(
                             fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           [
                             if (issue.codigoProducto?.isNotEmpty == true)
@@ -574,9 +689,9 @@ class _IssueCard extends StatelessWidget {
                               issue.puntoVenta!,
                             issue.tipoLote == 'SERIE' ? 'Series' : 'Lotes',
                           ].join(' · '),
-                          style: const TextStyle(
+                          style: GoogleFonts.roboto(
                             fontSize: 11,
-                            color: Colors.black54,
+                            color: Colors.black45,
                           ),
                         ),
                       ],
@@ -585,11 +700,21 @@ class _IssueCard extends StatelessWidget {
                   if (canAdjust)
                     TextButton(
                       onPressed: opening ? null : onAdjust,
+                      style: TextButton.styleFrom(
+                        foregroundColor: ColorSchema.primaryColor,
+                        textStyle: GoogleFonts.roboto(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       child: opening
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: ColorSchema.primaryColor,
+                              ),
                             )
                           : Text(
                               issue.tipoLote == 'SERIE'
@@ -658,13 +783,14 @@ class _ValueColumn extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: Colors.black45),
+          style: GoogleFonts.roboto(fontSize: 10, color: Colors.black45),
         ),
+        const SizedBox(height: 1),
         Text(
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
+          style: GoogleFonts.roboto(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: color ?? Colors.black87,

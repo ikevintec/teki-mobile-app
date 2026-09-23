@@ -11,7 +11,7 @@ import 'package:teki_app/src/providers/inventory_adjustment/inventory_adjustment
 void main() {
   group('InventorySyncNotifier', () {
     test(
-      'consulta el resumen una sola vez aunque se carguen varias páginas',
+      'refresca el resumen al abrir el panel pero no al paginar',
       () async {
         final repository = _FakeSyncRepository();
         final notifier = InventorySyncNotifier(
@@ -20,18 +20,18 @@ void main() {
         );
 
         await notifier.loadBadgeOnce();
-        await notifier.loadBadgeOnce();
-        await notifier.openPanel();
-        await notifier.loadIssues(reset: false);
+        await notifier.loadBadgeOnce(); // memoizado: no vuelve a consultar
+        await notifier.openPanel(); // opción A: fuerza un resumen fresco
+        await notifier.loadIssues(reset: false); // paginar no toca el resumen
 
-        expect(repository.summaryCalls, 1);
-        expect(repository.summaryOfficeIds, [8]);
+        expect(repository.summaryCalls, 2);
+        expect(repository.summaryOfficeIds, [8, 8]);
         expect(repository.issueCalls, 2);
         expect(notifier.state.badgeSummary.total, 2);
       },
     );
 
-    test('solo vuelve a consultar el resumen después de corregir', () async {
+    test('refreshBadge vuelve a consultar el resumen (opción B)', () async {
       final repository = _FakeSyncRepository();
       final notifier = InventorySyncNotifier(
         officeId: 8,
@@ -39,10 +39,23 @@ void main() {
       );
 
       await notifier.loadBadgeOnce();
-      await notifier.openPanel();
-      await notifier.fixBatch([1]);
+      await notifier.refreshBadge();
 
       expect(repository.summaryCalls, 2);
+    });
+
+    test('el resumen se refresca al abrir y tras corregir', () async {
+      final repository = _FakeSyncRepository();
+      final notifier = InventorySyncNotifier(
+        officeId: 8,
+        repository: repository,
+      );
+
+      await notifier.loadBadgeOnce(); // 1
+      await notifier.openPanel(); // 2 (opción A)
+      await notifier.fixBatch([1]); // 3 (refreshAfterCorrection)
+
+      expect(repository.summaryCalls, 3);
       expect(repository.fixedIds, [1]);
     });
   });

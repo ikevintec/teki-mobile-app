@@ -68,8 +68,16 @@ class InventorySyncNotifier extends StateNotifier<InventorySyncState> {
     }
   }
 
+  /// Fuerza recargar solo el resumen/badge. Se usa al abrir el sheet (opción A)
+  /// y desde el pull-to-refresh del inventario (opción B), por si se regularizó
+  /// desde la web u otro dispositivo mientras la app estaba abierta.
+  Future<void> refreshBadge() async {
+    _badgeRequest = _loadBadge(force: true);
+    await _badgeRequest;
+  }
+
   Future<void> openPanel() async {
-    await loadBadgeOnce();
+    await refreshBadge();
     if (!mounted) return;
     state = state.copyWith(
       currentOfficeOnly: true,

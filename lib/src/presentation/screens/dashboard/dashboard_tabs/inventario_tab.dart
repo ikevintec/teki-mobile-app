@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/presentation/screens/inventory/inventory_sections/inventory_list_section.dart';
+import 'package:teki_app/src/presentation/screens/inventory/widgets/inventory_sync_action.dart';
 import 'package:teki_app/src/presentation/screens/inventory_production/inventory_production_screen.dart';
 import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
 import 'package:teki_app/src/providers/inventory/inventory_provider.dart';
+import 'package:teki_app/src/providers/inventory/inventory_sync_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
 class InventarioTab extends ConsumerStatefulWidget {
@@ -114,6 +116,10 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
       } else {
         await ref.read(inventoryProvider.notifier).loadInventory(idPuntoVenta);
       }
+      // Opción B: aprovecha el gesto para refrescar el badge de sincronización.
+      await ref
+          .read(inventorySyncProvider(idPuntoVenta).notifier)
+          .refreshBadge();
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
     }
@@ -233,6 +239,8 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
             ],
           ),
         ),
+        // Barra fija de sincronización (solo aparece si hay diferencias)
+        InventorySyncAction(idPuntoVenta: widget.idPuntoVenta),
         // Lista con RefreshIndicator
         Expanded(
           child: RefreshIndicator(
@@ -293,7 +301,6 @@ class _InventarioTabState extends ConsumerState<InventarioTab> {
                     : InventoryListSection(
                         items: state.items,
                         idPuntoVenta: widget.idPuntoVenta,
-                        syncButtonBottomOffset: 84,
                       ),
           ),
         ),
