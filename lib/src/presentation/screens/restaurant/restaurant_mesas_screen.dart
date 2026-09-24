@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide Table;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/restaurant_event.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options_sheet.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/qr_command_review/qr_command_review_area.dart';
@@ -11,6 +12,7 @@ import 'package:teki_app/src/presentation/screens/restaurant/widgets/table_card.
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/shared/services/restaurant_events_service.dart';
 import 'package:teki_app/src/shared/services/socket_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
@@ -25,15 +27,21 @@ class RestaurantMesasScreen extends ConsumerStatefulWidget {
 class _RestaurantMesasScreenState
     extends ConsumerState<RestaurantMesasScreen> {
   final _socketService = SocketService();
-  StreamSubscription<dynamic>? _socketSub;
+  late final RestaurantEventsService _restaurantEvents;
 
   @override
   void initState() {
     super.initState();
 
-    _socketSub = _socketService
-        .on(SocketEvent.commandRestaurant)
-        .listen((_) { if (mounted) _reload(); });
+    _restaurantEvents = RestaurantEventsService(socketService: _socketService);
+    _restaurantEvents.listen((event) {
+      if (!mounted ||
+          !event.belongsToOffice(ref.read(sesionProvider).office?.id) ||
+          event.type == RestaurantEventType.onlineOrder) {
+        return;
+      }
+      _reload();
+    });
 
     Future.microtask(() {
       if (!mounted) return;
@@ -61,7 +69,7 @@ class _RestaurantMesasScreenState
 
   @override
   void dispose() {
-    _socketSub?.cancel();
+    unawaited(_restaurantEvents.dispose());
     _socketService.disconnect();
     super.dispose();
   }

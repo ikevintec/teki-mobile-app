@@ -15,17 +15,47 @@ class TableCard extends StatefulWidget {
   State<TableCard> createState() => _TableCardState();
 }
 
-class _TableCardState extends State<TableCard> {
+class _TableCardState extends State<TableCard> with SingleTickerProviderStateMixin {
   late Timer _timer;
+  late final AnimationController _alertController;
+  late final Animation<double> _alertPulse;
   Duration _elapsed = Duration.zero;
 
   @override
   void initState() {
     super.initState();
+    _alertController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _alertPulse = CurvedAnimation(parent: _alertController, curve: Curves.easeInOut);
+    _syncAlertAnimation();
     _updateElapsed();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) _updateElapsed();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant TableCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncAlertAnimation();
+  }
+
+  bool get _isCalling => widget.table.llamadaEn != null;
+
+  bool get _isAccountRequested {
+    final order = widget.table.pedidoActual;
+    return order?.cuentaSolicitadaEn != null && order?.estado != 'PRECUENTA';
+  }
+
+  void _syncAlertAnimation() {
+    if (_isCalling || _isAccountRequested) {
+      if (!_alertController.isAnimating) _alertController.repeat(reverse: true);
+    } else {
+      _alertController.stop();
+      _alertController.value = 0;
+    }
   }
 
   void _updateElapsed() {
@@ -38,6 +68,7 @@ class _TableCardState extends State<TableCard> {
   @override
   void dispose() {
     _timer.cancel();
+    _alertController.dispose();
     super.dispose();
   }
 
@@ -96,23 +127,44 @@ class _TableCardState extends State<TableCard> {
 
     final hasOrder = order != null && order.id != null;
     final isQrOrigin = _isQrOrigin(order);
+    final isCalling = _isCalling;
+    final isAccountRequested = _isAccountRequested;
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: textColor.withValues(alpha: 0.25), width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: textColor.withValues(alpha: 0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+    return AnimatedBuilder(
+      animation: _alertController,
+      builder: (context, _) {
+        final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+        final pulse = reduceMotion ? 0.0 : _alertPulse.value;
+        const accountColor = Color(0xFF047857);
+
+        return GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            key: const Key('table-card-container'),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isAccountRequested
+                    ? Color.lerp(textColor.withValues(alpha: 0.25), accountColor, 0.45 + (pulse * 0.55))!
+                    : textColor.withValues(alpha: 0.25),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: textColor.withValues(alpha: 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+                if (isAccountRequested)
+                  BoxShadow(
+                    color: accountColor.withValues(alpha: 0.18 + (pulse * 0.24)),
+                    blurRadius: 4 + (pulse * 7),
+                    spreadRadius: 1 + (pulse * 3),
+                  ),
+              ],
             ),
-          ],
-        ),
-        child: ClipRRect(
+            child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: Container(
             color: cardColor,
@@ -133,6 +185,13 @@ class _TableCardState extends State<TableCard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (isAccountRequested) ...[
+                              Transform.scale(
+                                scale: 1 + (pulse * 0.14),
+                                child: _accountRequestedBadge(accountColor),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
                             if (isQrOrigin) ...[
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -196,6 +255,14 @@ class _TableCardState extends State<TableCard> {
                               'Mesa ${table.numero ?? table.id}',
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26, color: textColor),
                             ),
+                            if (isCalling) ...[
+                              const SizedBox(height: 3),
+                              Transform.scale(
+                                alignment: Alignment.centerLeft,
+                                scale: 1 + (pulse * 0.06),
+                                child: _callingBadge(),
+                              ),
+                            ],
                             const Spacer(),
                             // Info inferior izquierda
                             if (!hasOrder)
@@ -261,7 +328,57 @@ class _TableCardState extends State<TableCard> {
               ],
             ),
           ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _callingBadge() {
+    return Semantics(
+      label: 'El comensal llama al camarero',
+      child: Container(
+        key: const Key('table-call-alert'),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [BoxShadow(color: Color(0x24000000), blurRadius: 4)],
         ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.notifications_active_rounded, size: 12, color: Color(0xFFB91C1C)),
+            SizedBox(width: 4),
+            Text(
+              'LLAMANDO',
+              style: TextStyle(
+                color: Color(0xFFB91C1C),
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _accountRequestedBadge(Color color) {
+    return Tooltip(
+      message: 'El comensal pidiÃ³ la cuenta',
+      child: Container(
+        key: const Key('table-account-alert'),
+        width: 23,
+        height: 23,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: Color(0x30000000), blurRadius: 4)],
+        ),
+        child: Icon(Icons.receipt_long_rounded, size: 14, color: color),
       ),
     );
   }

@@ -199,6 +199,7 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
           mesasUnidas: table.mesasUnidas,
           mesasUnidasHistorico: table.mesasUnidasHistorico,
           estado: table.estado,
+          llamadaEn: table.llamadaEn,
           pedidoActual: order,
           createdOn: table.createdOn,
           createdBy: table.createdBy,

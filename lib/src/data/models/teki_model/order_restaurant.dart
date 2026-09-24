@@ -41,6 +41,7 @@ class OrderRestaurant {
   final String? nombreCliente;
   final User? usuario;
   final bool? sinMozoAsignado;
+  final DateTime? cuentaSolicitadaEn;
   final Table? mesa;
   final Company? empresa;
   final AttachedCompany? empresaAdjunta;
@@ -104,6 +105,7 @@ class OrderRestaurant {
     this.nombreCliente,
     this.usuario,
     this.sinMozoAsignado,
+    this.cuentaSolicitadaEn,
     this.mesa,
     this.empresa,
     this.empresaAdjunta,
@@ -168,6 +170,7 @@ class OrderRestaurant {
     nombreCliente: json['nombreCliente'],
     usuario: json['usuario'] != null ? User.fromJson(json['usuario']) : null,
     sinMozoAsignado: json['sinMozoAsignado'],
+    cuentaSolicitadaEn: parseDateTimeFlexible(json['cuentaSolicitadaEn']),
     mesa: json['mesa'] != null ? Table.fromJson(json['mesa']) : null,
     empresa: json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
     empresaAdjunta: json['empresaAdjunta'] != null ? AttachedCompany.fromJson(json['empresaAdjunta']) : null,
@@ -232,6 +235,7 @@ class OrderRestaurant {
     'nombreCliente': nombreCliente,
     'usuario': usuario?.toJson(),
     'sinMozoAsignado': sinMozoAsignado,
+    'cuentaSolicitadaEn': cuentaSolicitadaEn?.toIso8601String(),
     'mesa': mesa?.toJson(),
     'empresa': empresa?.toJson(),
     'empresaAdjunta': empresaAdjunta?.toJson(),
