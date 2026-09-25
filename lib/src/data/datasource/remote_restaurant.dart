@@ -66,6 +66,36 @@ class RemoteRestaurant extends RestaurantDatasource {
   }
 
   @override
+  Future<void> attendTableCall(int tableId) async {
+    try {
+      await dio.post('/tables/$tableId/atender-llamada');
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final data = e.response?.data;
+      final message =
+          (data is Map ? (data['mensaje'] ?? data['message']) : null) ??
+          e.message ??
+          'No se pudo atender la llamada';
+      throw Exception(message);
+    }
+  }
+
+  @override
+  Future<void> attendTable(int tableId) async {
+    try {
+      await dio.post('/tables/$tableId/atender');
+    } on DioException catch (e) {
+      if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
+      final data = e.response?.data;
+      final message =
+          (data is Map ? (data['mensaje'] ?? data['message']) : null) ??
+          e.message ??
+          'No se pudo asignar la mesa';
+      throw Exception(message);
+    }
+  }
+
+  @override
   Future<List<OrderRestaurant>> getOrders(Map<String, dynamic> params) async {
     try {
       final response = await dio.get(

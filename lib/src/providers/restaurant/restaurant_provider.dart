@@ -119,6 +119,48 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
     }
   }
 
+  /// Marca la llamada como atendida. Si el pedido tampoco tiene mozo,
+  /// [takeOwnership] usa la operación transaccional que resuelve ambos estados.
+  Future<bool> atenderLlamada(
+    int tableId, {
+    required bool takeOwnership,
+  }) async {
+    try {
+      if (takeOwnership) {
+        await repository.attendTable(tableId);
+      } else {
+        await repository.attendTableCall(tableId);
+      }
+      successNotification(
+        takeOwnership
+            ? 'Llamada atendida. Quedaste como responsable de la mesa.'
+            : 'Llamada atendida.',
+      );
+      final pvId = state.pvId;
+      if (pvId != null) await reload(pvId);
+      return true;
+    } catch (error) {
+      errorNotification(error.toString().replaceFirst('Exception: ', ''));
+      return false;
+    }
+  }
+
+  /// Asigna al usuario actual como responsable de una mesa nacida del QR.
+  Future<bool> atenderMesa(int tableId) async {
+    try {
+      await repository.attendTable(tableId);
+      successNotification(
+        'Quedaste como responsable. Te avisaremos cuando pidan la cuenta.',
+      );
+      final pvId = state.pvId;
+      if (pvId != null) await reload(pvId);
+      return true;
+    } catch (error) {
+      errorNotification(error.toString().replaceFirst('Exception: ', ''));
+      return false;
+    }
+  }
+
   /// Genera una cuenta única para la orden y recarga las mesas.
   /// Devuelve true si la operación fue exitosa.
   Future<bool> finalizarCuenta(int orderId, int? pvId) async {

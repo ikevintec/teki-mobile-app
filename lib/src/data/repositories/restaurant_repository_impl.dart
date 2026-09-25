@@ -24,6 +24,14 @@ class RestaurantRepositoryImpl extends RestaurantRepository {
       restaurantDatasource.getTables(params);
 
   @override
+  Future<void> attendTableCall(int tableId) =>
+      restaurantDatasource.attendTableCall(tableId);
+
+  @override
+  Future<void> attendTable(int tableId) =>
+      restaurantDatasource.attendTable(tableId);
+
+  @override
   Future<List<OrderRestaurant>> getOrders(Map<String, dynamic> params) =>
       restaurantDatasource.getOrders(params);
 

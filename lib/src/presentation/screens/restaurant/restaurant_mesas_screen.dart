@@ -90,8 +90,22 @@ class _RestaurantMesasScreenState
     }
   }
 
-  void _onTableTap(Table table) {
+  Future<void> _onTableTap(Table table) async {
     final order = table.pedidoActual;
+    final tableId = table.id;
+
+    // La llamada tiene prioridad. Si la mesa tampoco tiene mozo, el endpoint
+    // de atender mesa resuelve ambos estados en una sola operación.
+    if (tableId != null && table.llamadaEn != null) {
+      await _offerAttendCall(table, order);
+      return;
+    }
+
+    if (tableId != null && order?.sinMozoAsignado == true) {
+      await _offerTakeTable(table);
+      return;
+    }
+
     if (order != null && order.id != null) {
       OrderOptionsSheet.show(context, order);
     } else {
@@ -100,6 +114,76 @@ class _RestaurantMesasScreenState
         arguments: {'table': table},
       )?.then((_) => _reload());
     }
+  }
+
+  Future<void> _offerAttendCall(
+    Table table,
+    OrderRestaurant? order,
+  ) async {
+    final alsoTakesOwnership = order?.sinMozoAsignado == true;
+    final confirmed = await _confirmTableAttention(
+      title: 'Mesa ${table.numero ?? table.id} está llamando',
+      message: alsoTakesOwnership
+          ? 'El comensal llamó al camarero y este pedido entró por el QR sin que nadie lo atienda. '
+              '¿Vas tú? Quedarás como responsable de la mesa.'
+          : 'El comensal llamó al camarero. ¿Vas tú a atenderla?',
+      icon: Icons.notifications_active_rounded,
+      iconColor: const Color(0xFFB91C1C),
+      acceptLabel: 'Voy yo',
+    );
+    if (!confirmed || !mounted || table.id == null) return;
+
+    await ref.read(restaurantProvider.notifier).atenderLlamada(
+          table.id!,
+          takeOwnership: alsoTakesOwnership,
+        );
+  }
+
+  Future<void> _offerTakeTable(Table table) async {
+    final confirmed = await _confirmTableAttention(
+      title: 'Mesa ${table.numero ?? table.id}',
+      message: 'Este pedido entró por el QR y todavía no lo atiende nadie. '
+          '¿Quieres hacerte responsable de la mesa?',
+      icon: Icons.person_add_alt_1_rounded,
+      iconColor: const Color(0xFF1D4ED8),
+      acceptLabel: 'Sí, la atiendo',
+    );
+    if (!confirmed || !mounted || table.id == null) return;
+
+    await ref.read(restaurantProvider.notifier).atenderMesa(table.id!);
+  }
+
+  Future<bool> _confirmTableAttention({
+    required String title,
+    required String message,
+    required IconData icon,
+    required Color iconColor,
+    required String acceptLabel,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(icon, color: iconColor),
+            const SizedBox(width: 10),
+            Expanded(child: Text(title)),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Ahora no'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(acceptLabel),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
   }
 
   List<String> _mesasConTodosItemsAnulados(List<OrderRestaurant> orders) {
@@ -238,7 +322,7 @@ class _RestaurantMesasScreenState
                                 itemCount: tables.length,
                                 itemBuilder: (_, i) => TableCard(
                                   table: tables[i],
-                                  onTap: () => _onTableTap(tables[i]),
+                                  onTap: () => unawaited(_onTableTap(tables[i])),
                                   showLounge: state.selectedLoungeId == RestaurantState.kAllSelected,
                                 ),
                               ),

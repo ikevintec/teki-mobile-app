@@ -9,6 +9,8 @@ import 'package:teki_app/src/data/models/teki_model/table.dart';
 abstract class RestaurantRepository {
   Future<List<Lounge>> getLounges(Map<String, dynamic> params);
   Future<List<Table>> getTables(Map<String, dynamic> params);
+  Future<void> attendTableCall(int tableId);
+  Future<void> attendTable(int tableId);
   Future<List<OrderRestaurant>> getOrders(Map<String, dynamic> params);
   Future<List<Command>> getCommands(Map<String, dynamic> params);
   Future<List<Command>> getPendingQrCommands(int officeId);
