@@ -27,28 +27,93 @@ class InventorySyncAction extends ConsumerWidget {
     final total = state.badgeSummary.total;
     if (!state.badgeLoaded || total <= 0) return const SizedBox.shrink();
 
-    // Barra compacta alineada a la derecha, bajo el buscador. Se colapsa sola
+    // Aviso a todo el ancho, bajo el buscador. Se colapsa solo
     // (SizedBox.shrink) cuando no hay diferencias, así no ocupa espacio.
+    const amber = Color(0xFFF57C00);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: ElevatedButton.icon(
-          onPressed: () => _openSheet(context),
-          icon: const Icon(Icons.sync_problem_rounded, size: 18),
-          label: Text(
-            'Corregir ($total)',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF57C00),
-            foregroundColor: Colors.white,
-            elevation: 2,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            visualDensity: VisualDensity.compact,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Material(
+        color: const Color(0xFFFFF4E5),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: () => _openSheet(context),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: amber.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: amber.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: const Icon(
+                    Icons.sync_problem_rounded,
+                    color: amber,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Stock por corregir',
+                        style: GoogleFonts.raleway(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF8A4B00),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$total ${total == 1 ? 'diferencia' : 'diferencias'} con sus series o lotes',
+                        style: GoogleFonts.roboto(
+                          fontSize: 12,
+                          color: const Color(0xFF8A4B00),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: amber,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Corregir',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),

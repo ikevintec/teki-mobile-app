@@ -156,23 +156,25 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
-                if (isAccountRequested)
-                  BoxShadow(
-                    color: accountColor.withValues(alpha: 0.18 + (pulse * 0.24)),
-                    blurRadius: 4 + (pulse * 7),
-                    spreadRadius: 1 + (pulse * 3),
-                  ),
               ],
             ),
             child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+          // Radio interno = radio externo (14) - grosor del borde (3), para
+          // que el contenido (franja/acento) quede al ras del borde y no deje
+          // el pequeño espacio en las esquinas.
+          borderRadius: BorderRadius.circular(11),
           child: Container(
             color: cardColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Línea de acento superior
-                Container(height: 4, color: textColor),
+                // Línea de acento superior — se convierte en franja
+                // "LLAMANDO" cuando el comensal llama al camarero, para no
+                // empujar la data del cuerpo (evita el overflow anterior).
+                if (isCalling)
+                  _callingStrip(pulse)
+                else
+                  Container(height: 4, color: textColor),
                 // Cuerpo
                 Expanded(
                   child: Stack(
@@ -185,13 +187,6 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (isAccountRequested) ...[
-                              Transform.scale(
-                                scale: 1 + (pulse * 0.14),
-                                child: _accountRequestedBadge(accountColor),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
                             if (isQrOrigin) ...[
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -218,7 +213,44 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                               ),
                               const SizedBox(width: 6),
                             ],
-                            Icon(statusIcon, color: textColor, size: 24),
+                            // Cuando el comensal pidió la cuenta, el propio
+                            // icono de estado pasa a ser el recibo verde
+                            // pulsante (una sola señal, sin badge extra).
+                            if (isAccountRequested)
+                              Tooltip(
+                                message: 'El comensal pidió la cuenta',
+                                child: SizedBox(
+                                  width: 34,
+                                  height: 34,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      // Halo que late detrás del icono para
+                                      // que la señal resalte más.
+                                      Container(
+                                        width: 20 + (pulse * 14),
+                                        height: 20 + (pulse * 14),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: accountColor.withValues(
+                                            alpha: 0.28 * (1 - pulse),
+                                          ),
+                                        ),
+                                      ),
+                                      Transform.scale(
+                                        scale: 1 + (pulse * 0.22),
+                                        child: Icon(
+                                          Icons.receipt_long_rounded,
+                                          color: accountColor,
+                                          size: 24,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              Icon(statusIcon, color: textColor, size: 24),
                           ],
                         ),
                       ),
@@ -255,14 +287,6 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                               'Mesa ${table.numero ?? table.id}',
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26, color: textColor),
                             ),
-                            if (isCalling) ...[
-                              const SizedBox(height: 3),
-                              Transform.scale(
-                                alignment: Alignment.centerLeft,
-                                scale: 1 + (pulse * 0.06),
-                                child: _callingBadge(),
-                              ),
-                            ],
                             const Spacer(),
                             // Info inferior izquierda
                             if (!hasOrder)
@@ -335,50 +359,39 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _callingBadge() {
+  /// Franja superior animada que reemplaza la línea de acento cuando el
+  /// comensal llama al camarero. Vive fuera del flujo vertical del cuerpo,
+  /// por lo que no empuja la data ni provoca overflow. El color pulsa entre
+  /// dos rojos según [pulse] (0 = sin animación, respeta "reduce motion").
+  Widget _callingStrip(double pulse) {
     return Semantics(
       label: 'El comensal llama al camarero',
       child: Container(
         key: const Key('table-call-alert'),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [BoxShadow(color: Color(0x24000000), blurRadius: 4)],
+        height: 20,
+        width: double.infinity,
+        color: Color.lerp(
+          const Color(0xFFB91C1C),
+          const Color(0xFFEF4444),
+          pulse,
         ),
+        alignment: Alignment.center,
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.notifications_active_rounded, size: 12, color: Color(0xFFB91C1C)),
-            SizedBox(width: 4),
+            Icon(Icons.notifications_active_rounded, size: 12, color: Colors.white),
+            SizedBox(width: 5),
             Text(
               'LLAMANDO',
               style: TextStyle(
-                color: Color(0xFFB91C1C),
+                color: Colors.white,
                 fontSize: 9,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 0.3,
+                letterSpacing: 0.5,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _accountRequestedBadge(Color color) {
-    return Tooltip(
-      message: 'El comensal pidiÃ³ la cuenta',
-      child: Container(
-        key: const Key('table-account-alert'),
-        width: 23,
-        height: 23,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Color(0x30000000), blurRadius: 4)],
-        ),
-        child: Icon(Icons.receipt_long_rounded, size: 14, color: color),
       ),
     );
   }
