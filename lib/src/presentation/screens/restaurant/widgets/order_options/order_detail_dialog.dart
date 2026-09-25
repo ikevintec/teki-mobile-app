@@ -390,95 +390,155 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                     (comanda.estadoImpresion == 'PENDIENTE'))
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 9, 12, 5),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                    child: Row(
                       children: [
-                        if (approvalPending)
-                          _commandBadge(
-                            icon: Icons.schedule_rounded,
-                            label: 'Por aprobar',
-                            foreground: const Color(0xFF92400E),
-                            background: const Color(0xFFFEF3C7),
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              if (approvalPending)
+                                _commandBadge(
+                                  icon: Icons.schedule_rounded,
+                                  label: 'Por aprobar',
+                                  foreground: const Color(0xFF92400E),
+                                  background: const Color(0xFFFEF3C7),
+                                ),
+                              if (approvalRejected)
+                                _commandBadge(
+                                  icon: Icons.block_rounded,
+                                  label: 'Rechazada',
+                                  foreground: const Color(0xFF991B1B),
+                                  background: const Color(0xFFFEE2E2),
+                                ),
+                              if (comanda.estadoImpresion == 'PENDIENTE' &&
+                                  !approvalPending)
+                                _commandBadge(
+                                  icon: Icons.print_disabled_rounded,
+                                  label: 'Sin imprimir',
+                                  foreground: const Color(0xFF6B21A8),
+                                  background: const Color(0xFFF3E8FF),
+                                ),
+                            ],
                           ),
-                        if (approvalRejected)
-                          _commandBadge(
-                            icon: Icons.block_rounded,
-                            label: 'Rechazada',
-                            foreground: const Color(0xFF991B1B),
-                            background: const Color(0xFFFEE2E2),
-                          ),
-                        if (comanda.estadoImpresion == 'PENDIENTE' &&
-                            !approvalPending)
-                          _commandBadge(
-                            icon: Icons.print_disabled_rounded,
-                            label: 'Sin imprimir',
-                            foreground: const Color(0xFF6B21A8),
-                            background: const Color(0xFFF3E8FF),
-                          ),
-                      ],
-                    ),
-                  ),
-                if (approvalPending)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
-                    child: Wrap(
-                      spacing: 7,
-                      runSpacing: 7,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: busyReview
-                              ? null
-                              : () => ref
-                                  .read(qrCommandReviewProvider.notifier)
-                                  .approve(comanda),
-                          icon: processingThis
-                              ? const SizedBox.square(
-                                  dimension: 15,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.check_rounded, size: 16),
-                          label: const Text('Aprobar'),
                         ),
-                        if (orderWithoutWaiter)
+                        if (approvalPending) ...[
+                          const SizedBox(width: 8),
                           FilledButton.icon(
                             onPressed: busyReview
                                 ? null
                                 : () => ref
                                     .read(qrCommandReviewProvider.notifier)
-                                    .approve(comanda, attend: true),
-                            icon: const Icon(
-                              Icons.person_add_alt_1_rounded,
-                              size: 16,
-                            ),
-                            label: const Text('Aprobar y atender'),
+                                    .approve(comanda),
+                            icon: processingThis
+                                ? const SizedBox.square(
+                                    dimension: 13,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.check_rounded, size: 15),
+                            label: const Text('Aprobar'),
                             style: FilledButton.styleFrom(
-                              backgroundColor: ColorSchema.primaryColor,
+                              backgroundColor: const Color(0xFF047857),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 9,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(9),
+                              ),
                             ),
                           ),
+                        ],
                       ],
                     ),
-                  )
+                  ),
+                if (approvalPending)
+                  (orderWithoutWaiter
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: FilledButton.icon(
+                              onPressed: busyReview
+                                  ? null
+                                  : () => ref
+                                      .read(qrCommandReviewProvider.notifier)
+                                      .approve(comanda, attend: true),
+                              icon: const Icon(
+                                Icons.person_add_alt_1_rounded,
+                                size: 16,
+                              ),
+                              label: const Text('Aprobar y atender'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: ColorSchema.primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink())
                 else if (!approvalRejected &&
                     session.config?.clienteImpresion == 'COFFE')
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 5),
-                    child: TextButton.icon(
-                      onPressed: comanda.id == null || session.office?.id == null
-                          ? null
-                          : () => CommandPrintService().processCommand(
-                              commandId: comanda.id!,
-                              puntoVenta: session.office!,
-                              escPos:
-                                  session.config?.imprimeTicketsEscPos ?? false,
-                              clientPrinter: session.config?.clienteImpresion,
-                              idCompany: session.companySelected?.id ??
-                                  session.company?.id,
-                            ),
-                      icon: const Icon(Icons.print_rounded, size: 16),
-                      label: const Text('Reimprimir en cocina'),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilledButton.tonalIcon(
+                        onPressed:
+                            comanda.id == null || session.office?.id == null
+                                ? null
+                                : () => CommandPrintService().processCommand(
+                                    commandId: comanda.id!,
+                                    puntoVenta: session.office!,
+                                    escPos: session.config?.imprimeTicketsEscPos ??
+                                        false,
+                                    clientPrinter:
+                                        session.config?.clienteImpresion,
+                                    idCompany: session.companySelected?.id ??
+                                        session.company?.id,
+                                  ),
+                        icon: const Icon(Icons.print_rounded, size: 16),
+                        label: const Text('Reimprimir en cocina'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor:
+                              ColorSchema.primaryColor.withValues(alpha: 0.10),
+                          foregroundColor: ColorSchema.primaryColor,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ...items.where((i) => !ComandaDetailStatus.isCancelledItem(i)).map((item) => CommandaItemRow(

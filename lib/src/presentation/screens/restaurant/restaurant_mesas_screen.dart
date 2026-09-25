@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart' hide Table;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/restaurant_event.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
@@ -165,21 +166,65 @@ class _RestaurantMesasScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 10),
+        contentPadding: const EdgeInsets.fromLTRB(22, 0, 22, 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
         title: Row(
           children: [
-            Icon(icon, color: iconColor),
-            const SizedBox(width: 10),
-            Expanded(child: Text(title)),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.raleway(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: ColorSchema.titleTextColor,
+                ),
+              ),
+            ),
           ],
         ),
-        content: Text(message),
+        content: Text(
+          message,
+          style: GoogleFonts.roboto(
+            fontSize: 13,
+            height: 1.4,
+            color: Colors.black87,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black54,
+              textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w600),
+            ),
             child: const Text('Ahora no'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: iconColor,
+              foregroundColor: Colors.white,
+              textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w700),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             child: Text(acceptLabel),
           ),
         ],
