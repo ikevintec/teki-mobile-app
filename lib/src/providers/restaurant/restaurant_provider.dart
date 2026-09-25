@@ -110,13 +110,48 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
     );
   }
 
-  Future<void> reload(int pvId) async {
+  Future<void> reload(int pvId, {bool silent = false}) async {
     if (state.pvId != pvId) state = state.copyWith(pvId: pvId);
+
+    if (silent) {
+      await _reloadSilently(pvId);
+      return;
+    }
+
     if (state.selectedLoungeId == RestaurantState.kAllSelected) {
       await selectAll();
     } else {
       await selectLounge(state.selectedLoungeId);
     }
+  }
+
+  /// Actualiza mesas y órdenes sin limpiar la vista ni activar el loader.
+  Future<void> _reloadSilently(int pvId) async {
+    final selectedLoungeId = state.selectedLoungeId;
+    final tableParams = selectedLoungeId == RestaurantState.kAllSelected
+        ? <String, dynamic>{'idPuntoVenta': pvId}
+        : <String, dynamic>{'idSalon': selectedLoungeId};
+
+    final results = await Future.wait([
+      repository.getTables(tableParams),
+      repository.getOrders({
+        'idPuntoVenta': pvId,
+        'tipo': 'LOCAL',
+        'estado': ['PENDIENTE', 'PRECUENTA'],
+      }),
+    ]);
+
+    // Si el usuario cambió de salón o punto de venta durante la consulta,
+    // ignoramos esta respuesta para no reemplazar la selección actual.
+    if (state.pvId != pvId ||
+        state.selectedLoungeId != selectedLoungeId) {
+      return;
+    }
+
+    state = state.copyWith(
+      tables: results[0] as List<Table>,
+      orders: results[1] as List<OrderRestaurant>,
+    );
   }
 
   /// Marca la llamada como atendida. Si el pedido tampoco tiene mozo,

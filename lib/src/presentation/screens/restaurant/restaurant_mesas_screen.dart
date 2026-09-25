@@ -40,7 +40,7 @@ class _RestaurantMesasScreenState
           event.type == RestaurantEventType.onlineOrder) {
         return;
       }
-      _reload();
+      unawaited(_reload(silent: true));
     });
 
     Future.microtask(() {
@@ -75,10 +75,12 @@ class _RestaurantMesasScreenState
   }
 
   /// Recarga rápida (socket): solo mesas + órdenes, conserva salones.
-  void _reload() {
+  Future<void> _reload({bool silent = false}) async {
     final pvId = ref.read(sesionProvider).office?.id;
     if (pvId != null) {
-      ref.read(restaurantProvider.notifier).reload(pvId);
+      await ref
+          .read(restaurantProvider.notifier)
+          .reload(pvId, silent: silent);
     }
   }
 
