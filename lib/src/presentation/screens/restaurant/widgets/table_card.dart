@@ -44,13 +44,18 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
 
   bool get _isCalling => widget.table.llamadaEn != null;
 
+  /// Pedido creado desde QR que todavÃ­a no tiene un mozo responsable.
+  /// Es la misma condiciÃ³n que usa el comandero web.
+  bool get _isUnassignedQrOrder =>
+      widget.table.pedidoActual?.sinMozoAsignado == true;
+
   bool get _isAccountRequested {
     final order = widget.table.pedidoActual;
     return order?.cuentaSolicitadaEn != null && order?.estado != 'PRECUENTA';
   }
 
   void _syncAlertAnimation() {
-    if (_isCalling || _isAccountRequested) {
+    if (_isCalling || _isUnassignedQrOrder || _isAccountRequested) {
       if (!_alertController.isAnimating) _alertController.repeat(reverse: true);
     } else {
       _alertController.stop();
@@ -128,6 +133,7 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
     final hasOrder = order != null && order.id != null;
     final isQrOrigin = _isQrOrigin(order);
     final isCalling = _isCalling;
+    final isUnassignedQrOrder = _isUnassignedQrOrder;
     final isAccountRequested = _isAccountRequested;
 
     return AnimatedBuilder(
@@ -173,6 +179,8 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                 // empujar la data del cuerpo (evita el overflow anterior).
                 if (isCalling)
                   _callingStrip(pulse)
+                else if (isUnassignedQrOrder)
+                  _unassignedQrOrderStrip(pulse)
                 else
                   Container(height: 4, color: textColor),
                 // Cuerpo
@@ -220,6 +228,7 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                               Tooltip(
                                 message: 'El comensal pidió la cuenta',
                                 child: SizedBox(
+                                  key: const Key('table-account-alert'),
                                   width: 34,
                                   height: 34,
                                   child: Stack(
@@ -364,26 +373,56 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
   /// por lo que no empuja la data ni provoca overflow. El color pulsa entre
   /// dos rojos según [pulse] (0 = sin animación, respeta "reduce motion").
   Widget _callingStrip(double pulse) {
+    // Rojo: exclusivo para "LLAMANDO".
+    return _attentionStrip(
+      pulse: pulse,
+      key: const Key('table-call-alert'),
+      semanticLabel: 'El comensal llama al camarero',
+      icon: Icons.notifications_active_rounded,
+      label: 'LLAMANDO',
+      baseColor: const Color(0xFFB91C1C),
+      pulseColor: const Color(0xFFEF4444),
+    );
+  }
+
+  Widget _unassignedQrOrderStrip(double pulse) {
+    // Azul: pedido QR sin mozo, se diferencia del rojo de "LLAMANDO".
+    return _attentionStrip(
+      pulse: pulse,
+      key: const Key('table-unassigned-alert'),
+      semanticLabel: 'Pedido QR sin mozo asignado',
+      icon: Icons.touch_app_rounded,
+      label: 'TOCA PARA ATENDER',
+      baseColor: const Color(0xFF1D4ED8),
+      pulseColor: const Color(0xFF3B82F6),
+    );
+  }
+
+  Widget _attentionStrip({
+    required double pulse,
+    required Key key,
+    required String semanticLabel,
+    required IconData icon,
+    required String label,
+    required Color baseColor,
+    required Color pulseColor,
+  }) {
     return Semantics(
-      label: 'El comensal llama al camarero',
+      label: semanticLabel,
       child: Container(
-        key: const Key('table-call-alert'),
+        key: key,
         height: 20,
         width: double.infinity,
-        color: Color.lerp(
-          const Color(0xFFB91C1C),
-          const Color(0xFFEF4444),
-          pulse,
-        ),
+        color: Color.lerp(baseColor, pulseColor, pulse),
         alignment: Alignment.center,
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.notifications_active_rounded, size: 12, color: Colors.white),
-            SizedBox(width: 5),
+            Icon(icon, size: 12, color: Colors.white),
+            const SizedBox(width: 5),
             Text(
-              'LLAMANDO',
-              style: TextStyle(
+              label,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 9,
                 fontWeight: FontWeight.w800,

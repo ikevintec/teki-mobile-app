@@ -90,6 +90,30 @@ void main() {
     expect(find.byKey(const Key('table-account-alert')), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('muestra toca para atender cuando el pedido no tiene mozo', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _tableCard(
+        Table(
+          id: 1,
+          numero: 4,
+          pedidoActual: OrderRestaurant(
+            id: 10,
+            estado: 'PENDIENTE',
+            fecha: DateTime.now(),
+            sinMozoAsignado: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 325));
+
+    expect(find.byKey(const Key('table-unassigned-alert')), findsOneWidget);
+    expect(find.text('TOCA PARA ATENDER'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Widget _tableCard(Table table) {
