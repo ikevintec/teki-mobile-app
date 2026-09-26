@@ -40,6 +40,8 @@ class OrderRestaurant {
   final Customer? cliente;
   final String? nombreCliente;
   final User? usuario;
+  final bool? sinMozoAsignado;
+  final DateTime? cuentaSolicitadaEn;
   final Table? mesa;
   final Company? empresa;
   final AttachedCompany? empresaAdjunta;
@@ -62,6 +64,7 @@ class OrderRestaurant {
   final String? observacion;
   final bool? pagado;
   final bool? esBorrador;
+  final bool? esPedidoQr;
   final bool? generarComprobante;
   final DateTime? createdOn;
   final int? createdBy;
@@ -101,6 +104,8 @@ class OrderRestaurant {
     this.cliente,
     this.nombreCliente,
     this.usuario,
+    this.sinMozoAsignado,
+    this.cuentaSolicitadaEn,
     this.mesa,
     this.empresa,
     this.empresaAdjunta,
@@ -123,6 +128,7 @@ class OrderRestaurant {
     this.observacion,
     this.pagado,
     this.esBorrador,
+    this.esPedidoQr,
     this.generarComprobante,
     this.createdOn,
     this.createdBy,
@@ -163,6 +169,8 @@ class OrderRestaurant {
     cliente: json['cliente'] != null ? Customer.fromJson(json['cliente']) : null,
     nombreCliente: json['nombreCliente'],
     usuario: json['usuario'] != null ? User.fromJson(json['usuario']) : null,
+    sinMozoAsignado: json['sinMozoAsignado'],
+    cuentaSolicitadaEn: parseDateTimeFlexible(json['cuentaSolicitadaEn']),
     mesa: json['mesa'] != null ? Table.fromJson(json['mesa']) : null,
     empresa: json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
     empresaAdjunta: json['empresaAdjunta'] != null ? AttachedCompany.fromJson(json['empresaAdjunta']) : null,
@@ -185,6 +193,7 @@ class OrderRestaurant {
     observacion: json['observacion'],
     pagado: json['pagado'],
     esBorrador: json['esBorrador'],
+    esPedidoQr: json['esPedidoQr'],
     generarComprobante: json['generarComprobante'],
     createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
     createdBy: json['createdBy'],
@@ -225,6 +234,8 @@ class OrderRestaurant {
     'cliente': cliente?.toJson(),
     'nombreCliente': nombreCliente,
     'usuario': usuario?.toJson(),
+    'sinMozoAsignado': sinMozoAsignado,
+    'cuentaSolicitadaEn': cuentaSolicitadaEn?.toIso8601String(),
     'mesa': mesa?.toJson(),
     'empresa': empresa?.toJson(),
     'empresaAdjunta': empresaAdjunta?.toJson(),
@@ -247,6 +258,7 @@ class OrderRestaurant {
     'observacion': observacion,
     'pagado': pagado,
     'esBorrador': esBorrador,
+    'esPedidoQr': esPedidoQr,
     // generarComprobante no se envía al backend (uso interno para flujo UI)
     'createdOn': createdOn?.toIso8601String(),
     'createdBy': createdBy,

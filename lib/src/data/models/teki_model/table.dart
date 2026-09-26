@@ -19,6 +19,7 @@ class Table {
   final List<Table>? mesasUnidas;
   final String? mesasUnidasHistorico;
   final bool? estado;
+  final DateTime? llamadaEn;
   final OrderRestaurant? pedidoActual;
   final DateTime? createdOn;
   final int? createdBy;
@@ -42,6 +43,7 @@ class Table {
     this.mesasUnidas,
     this.mesasUnidasHistorico,
     this.estado,
+    this.llamadaEn,
     this.pedidoActual,
     this.createdOn,
     this.createdBy,
@@ -68,6 +70,7 @@ class Table {
             : null,
         mesasUnidasHistorico: json['mesasUnidasHistorico'],
         estado: json['estado'],
+        llamadaEn: parseDateTimeFlexible(json['llamadaEn']),
         pedidoActual: json['pedidoActual'] != null ? OrderRestaurant.fromJson(json['pedidoActual']) : null,
         createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
         createdBy: json['createdBy'],
@@ -92,6 +95,7 @@ class Table {
         'mesasUnidas': mesasUnidas?.map((x) => x.toJson()).toList(),
         'mesasUnidasHistorico': mesasUnidasHistorico,
         'estado': estado,
+        'llamadaEn': llamadaEn?.toIso8601String(),
         'pedidoActual': pedidoActual?.toJson(),
         'createdOn': createdOn?.toIso8601String(),
         'createdBy': createdBy,

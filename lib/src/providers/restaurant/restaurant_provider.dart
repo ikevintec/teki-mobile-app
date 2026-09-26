@@ -110,12 +110,89 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
     );
   }
 
-  Future<void> reload(int pvId) async {
+  Future<void> reload(int pvId, {bool silent = false}) async {
     if (state.pvId != pvId) state = state.copyWith(pvId: pvId);
+
+    if (silent) {
+      await _reloadSilently(pvId);
+      return;
+    }
+
     if (state.selectedLoungeId == RestaurantState.kAllSelected) {
       await selectAll();
     } else {
       await selectLounge(state.selectedLoungeId);
+    }
+  }
+
+  /// Actualiza mesas y órdenes sin limpiar la vista ni activar el loader.
+  Future<void> _reloadSilently(int pvId) async {
+    final selectedLoungeId = state.selectedLoungeId;
+    final tableParams = selectedLoungeId == RestaurantState.kAllSelected
+        ? <String, dynamic>{'idPuntoVenta': pvId}
+        : <String, dynamic>{'idSalon': selectedLoungeId};
+
+    final results = await Future.wait([
+      repository.getTables(tableParams),
+      repository.getOrders({
+        'idPuntoVenta': pvId,
+        'tipo': 'LOCAL',
+        'estado': ['PENDIENTE', 'PRECUENTA'],
+      }),
+    ]);
+
+    // Si el usuario cambió de salón o punto de venta durante la consulta,
+    // ignoramos esta respuesta para no reemplazar la selección actual.
+    if (state.pvId != pvId ||
+        state.selectedLoungeId != selectedLoungeId) {
+      return;
+    }
+
+    state = state.copyWith(
+      tables: results[0] as List<Table>,
+      orders: results[1] as List<OrderRestaurant>,
+    );
+  }
+
+  /// Marca la llamada como atendida. Si el pedido tampoco tiene mozo,
+  /// [takeOwnership] usa la operación transaccional que resuelve ambos estados.
+  Future<bool> atenderLlamada(
+    int tableId, {
+    required bool takeOwnership,
+  }) async {
+    try {
+      if (takeOwnership) {
+        await repository.attendTable(tableId);
+      } else {
+        await repository.attendTableCall(tableId);
+      }
+      successNotification(
+        takeOwnership
+            ? 'Llamada atendida. Quedaste como responsable de la mesa.'
+            : 'Llamada atendida.',
+      );
+      final pvId = state.pvId;
+      if (pvId != null) await reload(pvId);
+      return true;
+    } catch (error) {
+      errorNotification(error.toString().replaceFirst('Exception: ', ''));
+      return false;
+    }
+  }
+
+  /// Asigna al usuario actual como responsable de una mesa nacida del QR.
+  Future<bool> atenderMesa(int tableId) async {
+    try {
+      await repository.attendTable(tableId);
+      successNotification(
+        'Quedaste como responsable. Te avisaremos cuando pidan la cuenta.',
+      );
+      final pvId = state.pvId;
+      if (pvId != null) await reload(pvId);
+      return true;
+    } catch (error) {
+      errorNotification(error.toString().replaceFirst('Exception: ', ''));
+      return false;
     }
   }
 
@@ -199,6 +276,7 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
           mesasUnidas: table.mesasUnidas,
           mesasUnidasHistorico: table.mesasUnidasHistorico,
           estado: table.estado,
+          llamadaEn: table.llamadaEn,
           pedidoActual: order,
           createdOn: table.createdOn,
           createdBy: table.createdBy,

@@ -15,8 +15,13 @@ import 'package:teki_app/src/utils/formats.dart';
 
 class InventoryAdjustmentScreen extends ConsumerStatefulWidget {
   final Inventory? preSelectedInventory;
+  final bool allowUnchangedStockWithLotes;
 
-  const InventoryAdjustmentScreen({super.key, this.preSelectedInventory});
+  const InventoryAdjustmentScreen({
+    super.key,
+    this.preSelectedInventory,
+    this.allowUnchangedStockWithLotes = false,
+  });
 
   @override
   ConsumerState<InventoryAdjustmentScreen> createState() =>
@@ -46,6 +51,11 @@ class _InventoryAdjustmentScreenState
           existingLotes: inventory.lotes ?? [],
           stockActual: inventory.stock ?? 0,
         );
+      }
+      if (widget.allowUnchangedStockWithLotes) {
+        const reason = 'Corrección de series/lotes';
+        _motivoController.text = reason;
+        notifier.setMotivo(reason);
       }
     });
   }
@@ -91,9 +101,14 @@ class _InventoryAdjustmentScreenState
   Widget build(BuildContext context) {
     final adjustmentState = ref.watch(inventoryAdjustmentProvider);
     final productsState = ref.watch(productsProvider);
-    final idPuntoVenta = ref.read(sesionProvider).office?.id;
+    final idPuntoVenta = widget.preSelectedInventory?.puntoVenta?.id ??
+        ref.read(sesionProvider).office?.id;
 
-    final appBarTitle = _isSingleProductMode ? 'Ajuste de inventario' : 'Nuevo Ajuste';
+    final appBarTitle = widget.allowUnchangedStockWithLotes
+        ? 'Corregir series/lotes'
+        : _isSingleProductMode
+            ? 'Ajuste de inventario'
+            : 'Nuevo Ajuste';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -244,7 +259,7 @@ class _InventoryAdjustmentScreenState
                                         productsState.products.length > 6
                                             ? 6
                                             : productsState.products.length,
-                                    separatorBuilder: (_, __) => Divider(
+                                    separatorBuilder: (_, _) => Divider(
                                         height: 1,
                                         color: Colors.grey.shade100),
                                     itemBuilder: (context, i) {
@@ -344,6 +359,8 @@ class _InventoryAdjustmentScreenState
                         item: adjustmentState.items[i],
                         showRemove: !_isSingleProductMode,
                         showValidation: adjustmentState.showValidation,
+                        allowUnchangedStockWithLotes:
+                            widget.allowUnchangedStockWithLotes,
                       ),
                     ),
 
@@ -387,7 +404,11 @@ class _InventoryAdjustmentScreenState
                       adjustmentState.items.isNotEmpty &&
                       adjustmentState.items.first.product.validacionLote == true) ...[
                     const SizedBox(height: 16),
-                    LotesSummaryChip(itemIndex: 0),
+                    LotesSummaryChip(
+                      itemIndex: 0,
+                      allowUnchangedStockWithLotes:
+                          widget.allowUnchangedStockWithLotes,
+                    ),
                   ],
 
                   const SizedBox(height: 80), // espacio para el botón
@@ -411,7 +432,11 @@ class _InventoryAdjustmentScreenState
                     FocusScope.of(context).unfocus();
                     ref
                         .read(inventoryAdjustmentProvider.notifier)
-                        .submit(idPuntoVenta);
+                        .submit(
+                          idPuntoVenta,
+                          allowUnchangedStockWithLotes:
+                              widget.allowUnchangedStockWithLotes,
+                        );
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: ColorSchema.primaryColor,
@@ -470,6 +495,7 @@ class _AdjustmentItemWidget extends ConsumerStatefulWidget {
   final AdjustmentFormItem item;
   final bool showRemove;
   final bool showValidation;
+  final bool allowUnchangedStockWithLotes;
 
   const _AdjustmentItemWidget({
     super.key,
@@ -477,6 +503,7 @@ class _AdjustmentItemWidget extends ConsumerStatefulWidget {
     required this.item,
     this.showRemove = true,
     this.showValidation = false,
+    this.allowUnchangedStockWithLotes = false,
   });
 
   @override
@@ -719,7 +746,11 @@ class _AdjustmentItemWidgetState
                         Builder(builder: (context) {
                           final error = ref
                               .read(inventoryAdjustmentProvider.notifier)
-                              .loteValidationError(widget.item);
+                              .loteValidationError(
+                                widget.item,
+                                allowUnchangedStockWithLotes:
+                                    widget.allowUnchangedStockWithLotes,
+                              );
                           if (error == null) return const SizedBox.shrink();
                           return Row(
                             children: [

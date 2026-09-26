@@ -2,13 +2,18 @@ import 'dart:async';
 import 'package:flutter/material.dart' hide Table;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/restaurant_event.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options_sheet.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/qr_command_review/qr_command_review_area.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/restaurant_table_palette.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/table_card.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/shared/services/restaurant_events_service.dart';
 import 'package:teki_app/src/shared/services/socket_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
@@ -23,15 +28,21 @@ class RestaurantMesasScreen extends ConsumerStatefulWidget {
 class _RestaurantMesasScreenState
     extends ConsumerState<RestaurantMesasScreen> {
   final _socketService = SocketService();
-  StreamSubscription<dynamic>? _socketSub;
+  late final RestaurantEventsService _restaurantEvents;
 
   @override
   void initState() {
     super.initState();
 
-    _socketSub = _socketService
-        .on(SocketEvent.commandRestaurant)
-        .listen((_) { if (mounted) _reload(); });
+    _restaurantEvents = RestaurantEventsService(socketService: _socketService);
+    _restaurantEvents.listen((event) {
+      if (!mounted ||
+          !event.belongsToOffice(ref.read(sesionProvider).office?.id) ||
+          event.type == RestaurantEventType.onlineOrder) {
+        return;
+      }
+      unawaited(_reload(silent: true));
+    });
 
     Future.microtask(() {
       if (!mounted) return;
@@ -59,16 +70,18 @@ class _RestaurantMesasScreenState
 
   @override
   void dispose() {
-    _socketSub?.cancel();
+    unawaited(_restaurantEvents.dispose());
     _socketService.disconnect();
     super.dispose();
   }
 
   /// Recarga rápida (socket): solo mesas + órdenes, conserva salones.
-  void _reload() {
+  Future<void> _reload({bool silent = false}) async {
     final pvId = ref.read(sesionProvider).office?.id;
     if (pvId != null) {
-      ref.read(restaurantProvider.notifier).reload(pvId);
+      await ref
+          .read(restaurantProvider.notifier)
+          .reload(pvId, silent: silent);
     }
   }
 
@@ -80,8 +93,22 @@ class _RestaurantMesasScreenState
     }
   }
 
-  void _onTableTap(Table table) {
+  Future<void> _onTableTap(Table table) async {
     final order = table.pedidoActual;
+    final tableId = table.id;
+
+    // La llamada tiene prioridad. Si la mesa tampoco tiene mozo, el endpoint
+    // de atender mesa resuelve ambos estados en una sola operación.
+    if (tableId != null && table.llamadaEn != null) {
+      await _offerAttendCall(table, order);
+      return;
+    }
+
+    if (tableId != null && order?.sinMozoAsignado == true) {
+      await _offerTakeTable(table);
+      return;
+    }
+
     if (order != null && order.id != null) {
       OrderOptionsSheet.show(context, order);
     } else {
@@ -90,6 +117,120 @@ class _RestaurantMesasScreenState
         arguments: {'table': table},
       )?.then((_) => _reload());
     }
+  }
+
+  Future<void> _offerAttendCall(
+    Table table,
+    OrderRestaurant? order,
+  ) async {
+    final alsoTakesOwnership = order?.sinMozoAsignado == true;
+    final confirmed = await _confirmTableAttention(
+      title: 'Mesa ${table.numero ?? table.id} está llamando',
+      message: alsoTakesOwnership
+          ? 'El comensal llamó al camarero y este pedido entró por el QR sin que nadie lo atienda. '
+              '¿Vas tú? Quedarás como responsable de la mesa.'
+          : 'El comensal llamó al camarero. ¿Vas tú a atenderla?',
+      icon: Icons.notifications_active_rounded,
+      iconColor: const Color(0xFFB91C1C),
+      acceptLabel: 'Voy yo',
+    );
+    if (!confirmed || !mounted || table.id == null) return;
+
+    await ref.read(restaurantProvider.notifier).atenderLlamada(
+          table.id!,
+          takeOwnership: alsoTakesOwnership,
+        );
+  }
+
+  Future<void> _offerTakeTable(Table table) async {
+    final confirmed = await _confirmTableAttention(
+      title: 'Mesa ${table.numero ?? table.id}',
+      message: 'Este pedido entró por el QR y todavía no lo atiende nadie. '
+          '¿Quieres hacerte responsable de la mesa?',
+      icon: Icons.person_add_alt_1_rounded,
+      iconColor: const Color(0xFF1D4ED8),
+      acceptLabel: 'Sí, la atiendo',
+    );
+    if (!confirmed || !mounted || table.id == null) return;
+
+    await ref.read(restaurantProvider.notifier).atenderMesa(table.id!);
+  }
+
+  Future<bool> _confirmTableAttention({
+    required String title,
+    required String message,
+    required IconData icon,
+    required Color iconColor,
+    required String acceptLabel,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 10),
+        contentPadding: const EdgeInsets.fromLTRB(22, 0, 22, 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.raleway(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: ColorSchema.titleTextColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.roboto(
+            fontSize: 13,
+            height: 1.4,
+            color: Colors.black87,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black54,
+              textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w600),
+            ),
+            child: const Text('Ahora no'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: iconColor,
+              foregroundColor: Colors.white,
+              textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w700),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(acceptLabel),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
   }
 
   List<String> _mesasConTodosItemsAnulados(List<OrderRestaurant> orders) {
@@ -102,7 +243,9 @@ class _RestaurantMesasScreenState
       final todosCancelados = allItems.every(
         (item) =>
             item.eliminado == true ||
-            item.estadoComandaDetalle?.toUpperCase() == 'CANCELADO',
+            const {'CANCELADO', 'RECHAZADO'}.contains(
+              item.estadoComandaDetalle?.toUpperCase(),
+            ),
       );
       if (todosCancelados) {
         final numero = order.mesa?.numero?.toString() ??
@@ -118,7 +261,13 @@ class _RestaurantMesasScreenState
     for (final order in orders) {
       if (order.estado != 'PRECUENTA') continue;
       final hasSinCuenta = (order.comandas ?? []).any(
-        (c) => (c.items ?? []).any((item) => item.cuenta == null),
+        (c) => (c.items ?? []).any(
+          (item) =>
+              item.cuenta == null &&
+              !const {'CANCELADO', 'RECHAZADO'}.contains(
+                item.estadoComandaDetalle?.toUpperCase(),
+              ),
+        ),
       );
       if (hasSinCuenta) {
         final numero = order.mesa?.numero?.toString() ?? order.mesa?.id?.toString();
@@ -163,6 +312,7 @@ class _RestaurantMesasScreenState
       bottomNavigationBar: const SafeArea(
         child: _StatusLegend(),
       ),
+      floatingActionButton: const QrCommandReviewArea(),
       body: state.isLoading && state.lounges.isEmpty
           ? const Center(
               child: CircularProgressIndicator(color: ColorSchema.primaryColor),
@@ -219,7 +369,7 @@ class _RestaurantMesasScreenState
                                 itemCount: tables.length,
                                 itemBuilder: (_, i) => TableCard(
                                   table: tables[i],
-                                  onTap: () => _onTableTap(tables[i]),
+                                  onTap: () => unawaited(_onTableTap(tables[i])),
                                   showLounge: state.selectedLoungeId == RestaurantState.kAllSelected,
                                 ),
                               ),
@@ -241,15 +391,29 @@ class _StatusLegend extends StatelessWidget {
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Paleta canónica de la web: pendiente ámbar, preparado verde,
-          // precuenta morado.
-          _LegendItem(color: Color(0xFFE8E8E8), textColor: Colors.grey, label: 'Libre'),
+          _LegendItem(
+            color: RestaurantTablePalette.free,
+            textColor: RestaurantTablePalette.legendText,
+            label: 'Libre',
+          ),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFFEEDAF), textColor: Color(0xFF8A5340), label: 'Pendiente'),
+          _LegendItem(
+            color: RestaurantTablePalette.order,
+            textColor: RestaurantTablePalette.legendText,
+            label: 'Pedido',
+          ),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFE8F5E9), textColor: Color(0xFF256029), label: 'Preparado'),
+          _LegendItem(
+            color: RestaurantTablePalette.prepared,
+            textColor: RestaurantTablePalette.legendText,
+            label: 'Preparado',
+          ),
           SizedBox(width: 20),
-          _LegendItem(color: Color(0xFFECCFFF), textColor: Color(0xFF694382), label: 'Precuenta'),
+          _LegendItem(
+            color: RestaurantTablePalette.paying,
+            textColor: RestaurantTablePalette.legendText,
+            label: 'Pagando',
+          ),
         ],
       ),
     );
@@ -278,7 +442,7 @@ class _LegendItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(3),
-            border: Border.all(color: textColor.withValues(alpha: 0.9)),
+            border: Border.all(color: color),
           ),
         ),
         const SizedBox(width: 5),

@@ -2,10 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/presentation/screens/inventory/inventory_sections/inventory_list_section.dart';
+import 'package:teki_app/src/presentation/screens/inventory/widgets/inventory_sync_action.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/inventory/inventory_provider.dart';
+import 'package:teki_app/src/providers/inventory/inventory_sync_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
 class InventoryMainScreen extends ConsumerStatefulWidget {
@@ -182,6 +184,12 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
               ],
             ),
           ),
+          // Barra fija de sincronización (solo aparece si hay diferencias)
+          InventorySyncAction(
+            idPuntoVenta: state.idPuntoVenta ??
+                ref.read(sesionProvider).office?.id ??
+                0,
+          ),
           // Lista con RefreshIndicator solo en esta área
           Expanded(
             child: RefreshIndicator(
@@ -205,6 +213,10 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
                         .read(inventoryProvider.notifier)
                         .loadInventory(idPuntoVenta);
                   }
+                  // Opción B: refresca el badge de sincronización con el gesto.
+                  await ref
+                      .read(inventorySyncProvider(idPuntoVenta).notifier)
+                      .refreshBadge();
                 } finally {
                   if (mounted) setState(() => _isRefreshing = false);
                 }
@@ -261,7 +273,12 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
                             ],
                           ),
                         )
-                      : InventoryListSection(items: state.items),
+                      : InventoryListSection(
+                          items: state.items,
+                          idPuntoVenta: state.idPuntoVenta ??
+                              ref.read(sesionProvider).office?.id ??
+                              0,
+                        ),
             ),
           ),
         ],
