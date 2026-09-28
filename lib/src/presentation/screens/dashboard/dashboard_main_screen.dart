@@ -15,7 +15,14 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
 class DashboardMainScreen extends ConsumerStatefulWidget {
-  const DashboardMainScreen({super.key});
+  final int initialTab;
+  final DateTime? initialCashRegisterDate;
+
+  const DashboardMainScreen({
+    super.key,
+    this.initialTab = 0,
+    this.initialCashRegisterDate,
+  });
 
   @override
   ConsumerState<DashboardMainScreen> createState() =>
@@ -24,16 +31,15 @@ class DashboardMainScreen extends ConsumerStatefulWidget {
 
 class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
     with RouteAware {
-  final _sidebarController =
-      SidebarXController(selectedIndex: 0, extended: true);
+  late final SidebarXController _sidebarController;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  int _selectedTab = 0;
+  late int _selectedTab;
   bool _dashboardConnectionError = false;
 
   /// Tabs que ya han sido visitados al menos una vez.
   /// Solo se monta el widget real del tab cuando se visita por primera vez.
-  final _visitedTabs = <int>{0};
+  final _visitedTabs = <int>{};
 
   /// Un notifier por tab para disparar recargas aisladas sin recrear widgets.
   final _refreshNotifiers = [
@@ -41,6 +47,17 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
     ValueNotifier<int>(0),
     ValueNotifier<int>(0),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTab = widget.initialTab >= 0 && widget.initialTab <= 2
+        ? widget.initialTab
+        : 0;
+    _visitedTabs.add(_selectedTab);
+    _sidebarController =
+        SidebarXController(selectedIndex: _selectedTab, extended: true);
+  }
 
   @override
   void didChangeDependencies() {
@@ -200,6 +217,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
                 ),
                 CajaTab(
                   refreshNotifier: _refreshNotifiers[2],
+                  initialDate: widget.initialCashRegisterDate,
                 ),
               ],
             ),

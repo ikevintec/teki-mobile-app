@@ -94,7 +94,16 @@ class AppRoutes {
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
     GetPage(name: login, page: () => const LoginScreen()),
     GetPage(name: register, page: () => const RegisterScreen()),
-    GetPage(name: dashboard, page: () => const DashboardMainScreen()),
+    GetPage(
+      name: dashboard,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        return DashboardMainScreen(
+          initialTab: args?['initialTab'] as int? ?? 0,
+          initialCashRegisterDate: args?['cashRegisterDate'] as DateTime?,
+        );
+      },
+    ),
     GetPage(name: forgotPassword, page: () => const ForgotPasswordScreen()),
 
     GetPage(name: analytics, page: () => const AnalyticsMainScreen()),

@@ -1,10 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/caja_resumen.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
+import 'package:teki_app/src/data/models/response/cash_register_active_status.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 
 abstract class CashRegisterDatasource {
+  Future<CashRegisterActiveStatus> getActiveStatus({
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  });
+
   Future<List<CashRegisterResponse>> getCashRegister({
     required int idPuntoVenta,
     required int idEstacionVenta,

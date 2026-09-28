@@ -14,6 +14,8 @@ import 'package:teki_app/src/presentation/screens/comprobantes/widgets/clean_fil
 import 'package:teki_app/src/providers/accounts_receivable/seller_provider.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/cash_register/active_cash_register_status_provider.dart';
+import 'package:teki_app/src/presentation/widgets/cash_register/past_cash_register_banner.dart';
 
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -66,9 +68,18 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
     provider.loadFirstPage(desde: desde, hasta: hasta);
   }
 
+  void _goToActiveCashRegister(DateTime fecha) {
+    Get.toNamed(
+      AppRoutes.dashboard,
+      arguments: {'initialTab': 2, 'cashRegisterDate': fecha},
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
+    final activeCashRegisterStatus =
+        ref.watch(activeCashRegisterStatusProvider);
     ref.listen(sesionProvider, (prev, next) {
       if (next.office?.id != prev?.office?.id) _reloadWithCurrentDate();
     });
@@ -101,6 +112,15 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
                 _handleDateRangeChanged(range);
               },
             ),
+          ),
+          activeCashRegisterStatus.maybeWhen(
+            data: (status) => status.fechaPasada && status.fechaCaja != null
+                ? PastCashRegisterBanner(
+                    fecha: status.fechaCaja!,
+                    onTap: () => _goToActiveCashRegister(status.fechaCaja!),
+                  )
+                : const SizedBox.shrink(),
+            orElse: () => const SizedBox.shrink(),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),

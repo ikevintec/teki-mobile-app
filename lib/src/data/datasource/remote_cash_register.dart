@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/caja_resumen.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
+import 'package:teki_app/src/data/models/response/cash_register_active_status.dart';
 import 'package:teki_app/src/data/models/teki_model/caja_metodo_pago_balance.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 import 'package:teki_app/src/domain/datasource/cash_register_datasource.dart';
@@ -9,6 +10,23 @@ import 'package:teki_app/src/utils/notifications.dart';
 
 class RemoteCashRegister extends CashRegisterDatasource {
   final Dio dio = ApiClient.dio;
+
+  @override
+  Future<CashRegisterActiveStatus> getActiveStatus({
+    required int idPuntoVenta,
+    required int idEstacionVenta,
+  }) async {
+    final response = await dio.get(
+      '/cash-register/active-status',
+      queryParameters: {
+        'idPuntoVenta': idPuntoVenta,
+        'idEstacionVenta': idEstacionVenta,
+      },
+    );
+    return CashRegisterActiveStatus.fromJson(
+      response.data as Map<String, dynamic>,
+    );
+  }
 
   @override
   Future<List<CashRegisterResponse>> getCashRegister({

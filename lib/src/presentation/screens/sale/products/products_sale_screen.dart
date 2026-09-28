@@ -18,6 +18,8 @@ import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:teki_app/src/providers/cash_register/active_cash_register_status_provider.dart';
+import 'package:teki_app/src/presentation/widgets/cash_register/past_cash_register_banner.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -156,6 +158,8 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final isBarcodeSearching = provider.isBarcodeSearching;
     final products = provider.productsSales;
     final ticketP = ref.watch(ticketProvider);
+    final activeCashRegisterStatus =
+        ref.watch(activeCashRegisterStatusProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncFormArrayWithProvider(products, form, provider.incIgv, () {
         _scrollController.animateTo(
@@ -186,6 +190,22 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                 color: ColorSchema.primaryColor,
                 child: Column(
                   children: [
+                    activeCashRegisterStatus.maybeWhen(
+                      data: (status) =>
+                          status.fechaPasada && status.fechaCaja != null
+                              ? PastCashRegisterBanner(
+                                  fecha: status.fechaCaja!,
+                                  onTap: () => Get.toNamed(
+                                    AppRoutes.dashboard,
+                                    arguments: {
+                                      'initialTab': 2,
+                                      'cashRegisterDate': status.fechaCaja,
+                                    },
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                      orElse: () => const SizedBox.shrink(),
+                    ),
                     SearchProducts(form: form),
                     // add row with 2 buttons add product and add service
                     Padding(

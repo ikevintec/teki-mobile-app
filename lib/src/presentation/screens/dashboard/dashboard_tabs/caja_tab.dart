@@ -27,8 +27,13 @@ import 'package:teki_app/src/utils/notifications.dart';
 
 class CajaTab extends ConsumerStatefulWidget {
   final ValueNotifier<int> refreshNotifier;
+  final DateTime? initialDate;
 
-  const CajaTab({super.key, required this.refreshNotifier});
+  const CajaTab({
+    super.key,
+    required this.refreshNotifier,
+    this.initialDate,
+  });
 
   @override
   ConsumerState<CajaTab> createState() => _CajaTabState();
@@ -36,7 +41,7 @@ class CajaTab extends ConsumerStatefulWidget {
 
 class _CajaTabState extends ConsumerState<CajaTab> {
   String? _selectedMoneda;
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
 
   /// Rango seleccionado en el picker. Un solo día = modo operativo (caja);
   /// más de un día = modo reporte (resumen agregado).
@@ -51,6 +56,12 @@ class _CajaTabState extends ConsumerState<CajaTab> {
   @override
   void initState() {
     super.initState();
+    final initialDate = widget.initialDate ?? DateTime.now();
+    _selectedDate = DateTime(
+      initialDate.year,
+      initialDate.month,
+      initialDate.day,
+    );
     _scrollController = ScrollController()..addListener(_onScroll);
     widget.refreshNotifier.addListener(_onRefresh);
     // La carga inicial la dispara CustomDatePicker vía onDateSelected al montarse.
