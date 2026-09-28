@@ -136,6 +136,13 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
     final isUnassignedQrOrder = _isUnassignedQrOrder;
     final isAccountRequested = _isAccountRequested;
 
+    // En el estado "Pedido" (PENDIENTE sin items preparados) no se muestra el
+    // icono de estado estático: así, cuando el comensal pide la cuenta, el
+    // recibo verde pulsante queda como la única señal y diferencia ese proceso
+    // de un pedido activo normal. En los demás estados se conserva su icono.
+    final isPlainPedido = estado == 'PENDIENTE' && !hasItemPreparado;
+    final showStatusIcon = !isPlainPedido;
+
     return AnimatedBuilder(
       animation: _alertController,
       builder: (context, _) {
@@ -258,7 +265,7 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                                   ),
                                 ),
                               )
-                            else
+                            else if (showStatusIcon)
                               Icon(statusIcon, color: textColor, size: 24),
                           ],
                         ),
