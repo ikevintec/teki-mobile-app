@@ -385,6 +385,12 @@ class _TipEditorSheetState extends State<TipEditorSheet> {
                     child: OutlinedButton(
                       onPressed: () =>
                           Navigator.pop(context, const TipEditorResult.empty()),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ColorSchema.primaryColor,
+                        side: const BorderSide(
+                          color: ColorSchema.primaryColor,
+                        ),
+                      ),
                       child: const Text('Quitar propina'),
                     ),
                   ),

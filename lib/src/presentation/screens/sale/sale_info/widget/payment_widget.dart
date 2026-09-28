@@ -629,6 +629,9 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                           ),
                           TextButton(
                             onPressed: _manageTip,
+                            style: TextButton.styleFrom(
+                              foregroundColor: ColorSchema.primaryColor,
+                            ),
                             child: Text(tip > 0 ? 'Editar' : 'Gestionar'),
                           ),
                         ],

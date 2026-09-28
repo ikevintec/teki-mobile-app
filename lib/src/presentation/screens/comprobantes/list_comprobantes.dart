@@ -149,6 +149,10 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: const Text('Convertir nota de venta'),
         content: Text(
           'Se generará una factura o boleta desde '
@@ -158,10 +162,16 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: ColorSchema.subTitleTextColor),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: ColorSchema.primaryColor,
+            ),
             child: const Text('Continuar'),
           ),
         ],
