@@ -43,6 +43,26 @@ final puedeAnularProvider = Provider<bool>((ref) {
   return roles.contains(kRoleAnular);
 });
 
+/// Determina si un comprobante está anulado, unificando todas las variantes en
+/// que el backend puede representarlo. Antes la lista solo miraba la bandera
+/// `anulado`, por lo que los anulados por comunicación de baja (que conservan
+/// `estadoSunat == 'ACEPT'` o vacío) aparecían sin ningún indicador.
+///
+/// Se considera anulado cuando:
+/// - La bandera `anulado` es `true`.
+/// - El estado SUNAT es de comunicación de baja (`ANULA`).
+/// - El estado interno es de baja/anulación (`07`, `09`).
+/// - Es una nota de venta (`NV`) con estado anulado (`08`).
+bool isComprobanteAnulado(Ticket comprobante) {
+  if (comprobante.anulado == true) return true;
+  if (comprobante.estadoSunat == 'ANULA') return true;
+  if (comprobante.estado == '07' || comprobante.estado == '09') return true;
+  if (comprobante.tipoComprobante == 'NV' && comprobante.estado == '08') {
+    return true;
+  }
+  return false;
+}
+
 /// Determina si un comprobante puede anularse según su tipo y estado.
 bool canAnular(Ticket comprobante) {
   // SI ESTA ANULADO YA NO MUESTRA LA OPCION

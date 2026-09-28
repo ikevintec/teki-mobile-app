@@ -302,6 +302,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
           }
 
           final ticket = tickets[index];
+          final anulado = isComprobanteAnulado(ticket);
 
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -312,7 +313,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                         canConvertSalesNote(ticket))
                     ? () => _handleConvert(ticket)
                     : null,
-                onEdit: (ticket.anulado == true || !puedeEditar)
+                onEdit: (anulado || !puedeEditar)
                     ? null
                     : () => _handleEdit(ticket),
                 onAnular: (puedeAnular && canAnular(ticket))
@@ -371,19 +372,26 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                               color: Colors.grey.shade700,
                             ),
                           ),
-                          // La línea de estado solo existe cuando hay algo
-                          // que decir: Anulado (domina) o un estado SUNAT
-                          // pendiente/rechazado. Lo aceptado lleva su sello
-                          // junto al monto y lo demás no necesita etiqueta.
+                          // Columna izquierda = mensajes del comprobante:
+                          // "Reemplazada por..." o un estado SUNAT
+                          // pendiente/rechazado. El estado "Anulado" NO se
+                          // pinta aquí: vive en la columna derecha para no
+                          // repetirse. Lo aceptado lleva su sello junto al
+                          // monto y lo demás no necesita etiqueta.
                           Builder(builder: (_) {
                             final String label;
                             final Color color;
-                            if (ticket.comprobanteSustituto?.isNotEmpty == true) {
-                              label = 'Reemplazada por ${ticket.comprobanteSustituto}';
+                            if (ticket.comprobanteSustituto?.isNotEmpty ==
+                                true) {
+                              // Dos líneas para no desbordar: rótulo arriba y
+                              // el comprobante sustituto debajo.
+                              label =
+                                  'Reemplazada por:\n${ticket.comprobanteSustituto}';
                               color = Colors.blueGrey;
-                            } else if (ticket.anulado == true) {
-                              label = 'Anulado';
-                              color = Colors.red;
+                            } else if (anulado) {
+                              // El sello "Anulado" se muestra a la derecha; sin
+                              // mensaje de reemplazo, aquí no repetimos nada.
+                              return const SizedBox.shrink();
                             } else if (ticket.tipoComprobante == 'NV' ||
                                 ticket.estadoSunat == 'ACEPT' ||
                                 (ticket.estadoSunat ?? '').isEmpty) {
@@ -398,11 +406,23 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                                   'SUNAT: ${formatEstadoSunat(ticket.estadoSunat)}';
                               color = Colors.orange.shade800;
                             }
-                            return Text(
-                              label,
-                              style: GoogleFonts.roboto(
-                                fontSize: 11,
-                                color: color,
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 3),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: color.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  label,
+                                  style: GoogleFonts.roboto(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: color,
+                                  ),
+                                ),
                               ),
                             );
                           }),
@@ -413,8 +433,9 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           // Sello sutil de aceptación SUNAT, sobre el monto.
-                          if (ticket.estadoSunat == 'ACEPT' &&
-                              ticket.anulado != true) ...[
+                          // No se muestra si el comprobante está anulado, para
+                          // no dar la falsa impresión de que sigue vigente.
+                          if (ticket.estadoSunat == 'ACEPT' && !anulado) ...[
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
@@ -450,8 +471,15 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                             '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalVenta?.toStringAsFixed(2) ?? "--"}',
                             style: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: ColorSchema.primaryColor,
+                              // Anulado: monto atenuado y tachado para leerse
+                              // de un vistazo como comprobante sin efecto.
+                              color: anulado
+                                  ? Colors.grey
+                                  : ColorSchema.primaryColor,
                               fontWeight: FontWeight.w600,
+                              decoration: anulado
+                                  ? TextDecoration.lineThrough
+                                  : null,
                             ),
                           ),
                           if (ticket.totalValorVentaGratuita != null &&
@@ -471,6 +499,29 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                                 : 'Al crédito',
                             style: GoogleFonts.roboto(fontSize: 11),
                           ),
+                          // Estado "Anulado" en la columna derecha, debajo del
+                          // tipo de venta. Convive con el mensaje "Reemplazada
+                          // por..." que queda en la columna izquierda.
+                          if (anulado) ...[
+                            const SizedBox(height: 2),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Anulado',
+                                style: GoogleFonts.roboto(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       onTap: () {
