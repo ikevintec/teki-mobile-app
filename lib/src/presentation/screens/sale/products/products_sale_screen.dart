@@ -16,6 +16,7 @@ import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/cash_register/active_cash_register_status_provider.dart';
@@ -30,11 +31,13 @@ class ProductsSaleScreen extends ConsumerStatefulWidget {
   final int? id;
   final int? quotationId;
   final int? quotationIdForSale;
+  final int? salesNoteIdToConvert;
   const ProductsSaleScreen({
     super.key,
     this.id,
     this.quotationId,
     this.quotationIdForSale,
+    this.salesNoteIdToConvert,
   });
 
   @override
@@ -94,6 +97,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
         widget.id,
         quotationId: widget.quotationId,
         quotationIdForSale: widget.quotationIdForSale,
+        salesNoteIdToConvert: widget.salesNoteIdToConvert,
       );
     });
 
@@ -158,6 +162,9 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final isBarcodeSearching = provider.isBarcodeSearching;
     final products = provider.productsSales;
     final ticketP = ref.watch(ticketProvider);
+    final conversionLocked = ticketP.isSalesNoteConversion &&
+        !ref.watch(sesionProvider).hasPermission(
+          'PERMITIR_ALTERAR_CONVERSION_NOTA_VENTA');
     final activeCashRegisterStatus =
         ref.watch(activeCashRegisterStatusProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -206,6 +213,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                               : const SizedBox.shrink(),
                       orElse: () => const SizedBox.shrink(),
                     ),
+                    if (!conversionLocked) ...[
                     SearchProducts(form: form),
                     // add row with 2 buttons add product and add service
                     Padding(
@@ -283,6 +291,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                         ],
                       ),
                     ),
+                    ],
 
                     Container(
                       padding: const EdgeInsets.only(
@@ -404,7 +413,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                       ),
                                                     if (_requiresSeriesValidation(
                                                       products[index].producto,
-                                                    ))
+                                                    ) && !conversionLocked)
                                                       DismissibleActionData(
                                                         type:
                                                             DismissibleActionType
@@ -426,7 +435,8 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                           );
                                                         },
                                                       ),
-                                                    if (products[index]
+                                                    if (!conversionLocked &&
+                                                        products[index]
                                                             .comandaDetalle ==
                                                         null)
                                                       DismissibleActionData(
@@ -462,6 +472,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                         products[index],
                                                     index: index,
                                                     formGroup: formGroup,
+                                                    readOnly: conversionLocked,
                                                     onQuantityChanged:
                                                         _syncAllProductsToProvider,
                                                   ),

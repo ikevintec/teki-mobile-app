@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-enum DismissibleActionType { edit, remision, guia, anular, generarVenta }
+enum DismissibleActionType {
+  edit,
+  remision,
+  guia,
+  anular,
+  generarVenta,
+  convertirNotaVenta,
+}
 
 class DismissibleActionData {
   final DismissibleActionType type;
@@ -72,6 +79,7 @@ List<DismissibleActionData> createComprobanteActions({
   required VoidCallback onRemision,
   required VoidCallback onGuia,
   VoidCallback? onAnular,
+  VoidCallback? onConvertir,
 }) {
   return [
     if (onEdit != null)
@@ -81,6 +89,14 @@ List<DismissibleActionData> createComprobanteActions({
         icon: Icons.edit,
         backgroundColor: Colors.orange.shade600,
         onTap: onEdit,
+      ),
+    if (onConvertir != null)
+      DismissibleActionData(
+        type: DismissibleActionType.convertirNotaVenta,
+        label: 'Convertir',
+        icon: Icons.receipt_long,
+        backgroundColor: Colors.blue.shade700,
+        onTap: onConvertir,
       ),
     if (onAnular != null)
       DismissibleActionData(

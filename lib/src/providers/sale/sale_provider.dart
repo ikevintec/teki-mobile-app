@@ -642,11 +642,16 @@ class TicketProvider {
   bool get isQuotation =>
       mode == SaleMode.createCotizacion || mode == SaleMode.editCotizacion;
   bool get isSaleFromQuotation => ticket.cotizacion != null;
+  bool get isSalesNoteConversion =>
+      ticket.idNotaVentaAnulada?.trim().isNotEmpty == true;
 
   /// Subtítulo a mostrar en el AppBar a lo largo de todo el flujo de venta
   /// (Cliente, Productos, Resumen) cuando se está creando/editando una
   /// cotización, o cuando se está generando una venta a partir de una.
   String? get subtitleLabel {
+    if (isSalesNoteConversion) {
+      return 'Convirtiendo ${ticket.idNotaVentaAnulada}';
+    }
     if (isQuotation) return 'Cotización';
     if (isSaleFromQuotation) {
       return 'Venta cotizada de ${ticket.cotizacion?.serie ?? '--'}-${ticket.cotizacion?.numero ?? '--'}';
@@ -654,7 +659,8 @@ class TicketProvider {
     return null;
   }
 
-  bool get subtitleEmphasis => isQuotation || isSaleFromQuotation;
+  bool get subtitleEmphasis =>
+      isQuotation || isSalesNoteConversion || isSaleFromQuotation;
 
   String get continueButtonLabel {
     switch (mode) {

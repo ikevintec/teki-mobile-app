@@ -277,7 +277,11 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                         )
                                       : CustomSegmentedSelectorMapped(
                                           label: "Tipo de comprobante (*)",
-                                          dataSource: tipoComprobantesVenta,
+                                          dataSource: provider.isSalesNoteConversion
+                                              ? tipoComprobantesVenta
+                                                  .where((item) => item['value'] != 'NV')
+                                                  .toList()
+                                              : tipoComprobantesVenta,
                                           labelKey: "label",
                                           valueKey: "value",
                                           initialValue:

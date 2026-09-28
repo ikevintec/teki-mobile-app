@@ -20,6 +20,7 @@ import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/quotation/quotation_view_provider.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/helpers/sales_note_conversion.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/products_sale_notifier_setters.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/edit_sale_series_availability.dart';
 import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
@@ -206,6 +207,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     int? id, {
     int? quotationId,
     int? quotationIdForSale,
+    int? salesNoteIdToConvert,
   }) async {
     setLoading(true);
     try {
@@ -261,6 +263,40 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
           ticketFromQuotation.codigoMoneda ?? 'PEN',
         );
         ticketSaleNotifier.setEdited(true);
+      } else if (salesNoteIdToConvert != null) {
+        final comprobanteNotifier = ref.read(comprobanteProvider.notifier);
+        final source = await comprobanteNotifier.fetchComprobanteById(
+          salesNoteIdToConvert,
+        );
+        if (!canConvertSalesNote(source)) {
+          throw StateError(
+            'La nota de venta ya fue anulada o reemplazada.',
+          );
+        }
+
+        final session = ref.read(sesionProvider);
+        final conversion = buildTicketFromSalesNote(
+          source: source,
+          now: DateTime.now(),
+          pointOfSale: session.office,
+          saleStation: session.saleStation,
+          seller: session.login.user,
+        );
+        final items = restoreEditSaleSeriesAvailability(
+          items: conversion.items ?? [],
+          officeId: session.office?.id,
+          documentType: source.tipoComprobante,
+        );
+
+        ticketSaleNotifier.updateTicket(conversion);
+        customerNotifier.setCustomerEntity(source.cliente ?? Customer());
+        productsSaleNotifier.setProductsSaleEntity(
+          items,
+          monedaOrigen: source.codigoMoneda,
+        );
+        productsSaleNotifier.setIncIgv(source.incIgv ?? true);
+        productsSaleNotifier.setCurrency(source.codigoMoneda ?? 'PEN');
+        ticketSaleNotifier.setEdited(false);
       } else if (id != null) {
         // Cargar datos de edición de comprobante
         final comprobanteNotifier = ref.read(comprobanteProvider.notifier);

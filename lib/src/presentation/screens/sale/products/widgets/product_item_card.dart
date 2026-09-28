@@ -17,6 +17,7 @@ class ProductItemCard extends ConsumerStatefulWidget {
   final int index;
   final FormGroup formGroup;
   final VoidCallback? onQuantityChanged;
+  final bool readOnly;
 
   const ProductItemCard({
     super.key,
@@ -24,6 +25,7 @@ class ProductItemCard extends ConsumerStatefulWidget {
     required this.index,
     required this.formGroup,
     this.onQuantityChanged,
+    this.readOnly = false,
   });
 
   @override
@@ -184,7 +186,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
       padding: const EdgeInsets.only(top: 6),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: _showAfectacionSheet,
+        onTap: widget.readOnly ? null : _showAfectacionSheet,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -213,9 +215,11 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
       padding: const EdgeInsets.only(top: 6),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => ref
-            .read(productSaleProvider.notifier)
-            .setDevolvioEnvase(widget.index, !devolvio),
+        onTap: widget.readOnly
+            ? null
+            : () => ref
+                .read(productSaleProvider.notifier)
+                .setDevolvioEnvase(widget.index, !devolvio),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -397,6 +401,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                           if (widget.productTicketDetail.producto == null)
                             ReactiveTextField<String>(
                               formControlName: 'description',
+                              readOnly: widget.readOnly,
                               keyboardType: TextInputType.name,
                               textInputAction: TextInputAction.next,
                               focusNode: _descriptionFocusNode,
@@ -461,6 +466,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                   : GestureDetector(
                                       behavior: HitTestBehavior.opaque,
                                       onTap: () {
+                                        if (widget.readOnly) return;
                                         // Editar el precio del item requiere permiso (paridad web)
                                         if (!ref
                                             .read(sesionProvider)
@@ -494,14 +500,16 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                                     color: hasError ? Colors.red : ColorSchema.primaryColor,
                                                   ),
                                                 ),
-                                                const SizedBox(width: 4),
-                                                Icon(
-                                                  Icons.edit_outlined,
-                                                  size: 11,
-                                                  color: hasError
-                                                      ? Colors.red
-                                                      : ColorSchema.primaryColor.withValues(alpha: 0.5),
-                                                ),
+                                                if (!widget.readOnly) ...[
+                                                  const SizedBox(width: 4),
+                                                  Icon(
+                                                    Icons.edit_outlined,
+                                                    size: 11,
+                                                    color: hasError
+                                                        ? Colors.red
+                                                        : ColorSchema.primaryColor.withValues(alpha: 0.5),
+                                                  ),
+                                                ],
                                               ],
                                             ),
                                           );
@@ -511,7 +519,9 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                               QuantityControl(
                                 formGroup: widget.formGroup,
                                 onQuantityChanged: widget.onQuantityChanged ?? () {},
-                                locked: widget.productTicketDetail.comandaDetalle != null,
+                                locked: widget.readOnly ||
+                                    widget.productTicketDetail.comandaDetalle !=
+                                        null,
                               ),
                             ],
                           ),
@@ -523,11 +533,13 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                               return Padding(
                                 padding: const EdgeInsets.only(top: 6),
                                 child: GestureDetector(
-                                  onTap: () => showSeriesConfigSheet(
-                                    context,
-                                    ticketDetail: widget.productTicketDetail,
-                                    index: widget.index,
-                                  ),
+                                  onTap: widget.readOnly
+                                      ? null
+                                      : () => showSeriesConfigSheet(
+                                          context,
+                                          ticketDetail: widget.productTicketDetail,
+                                          index: widget.index,
+                                        ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [

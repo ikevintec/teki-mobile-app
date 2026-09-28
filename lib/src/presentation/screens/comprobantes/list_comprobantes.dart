@@ -9,6 +9,11 @@ import 'package:teki_app/src/presentation/screens/sale/products/products_sale_sc
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobante.dart';
 import 'package:teki_app/src/providers/comprobantes/comprobantes_notifier.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/helpers/sales_note_conversion.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -135,6 +140,48 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
     );
   }
 
+  Future<void> _handleConvert(Ticket ticket) async {
+    if (!ref.read(sesionProvider).hasPermission('VENTAS_CREAR')) {
+      warningNotification('No tienes permiso para crear ventas');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Convertir nota de venta'),
+        content: Text(
+          'Se generará una factura o boleta desde '
+          '${ticket.serie ?? 'la nota'}-${ticket.numero ?? ''}. '
+          'La nota quedará reemplazada al confirmar la emisión.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    ref.invalidate(ticketProvider);
+    ref.invalidate(productSaleProvider);
+    ref.invalidate(customerSaleProvider);
+
+    final navigation = Get.to<void>(
+      () => ProductsSaleScreen(salesNoteIdToConvert: ticket.id),
+    );
+    if (navigation != null) {
+      await navigation;
+      if (mounted) await _onRefresh();
+    }
+  }
+
   Future<void> _onRefresh() async {
     final state = ref.read(comprobantesSaleProvider);
     await ref
@@ -205,6 +252,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
     final provider = ref.watch(comprobantesSaleProvider);
     final puedeAnular = ref.watch(puedeAnularProvider);
     final puedeEditar = ref.watch(puedeEditarProvider);
+    final puedeCrear = ref.watch(sesionProvider).hasPermission('VENTAS_CREAR');
     final tickets = provider.tickets;
     final hasMore = provider.hasMore;
     final isLoading = provider.isLoading;
@@ -259,6 +307,11 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: DismissibleActionWidget(
               actions: createComprobanteActions(
+                onConvertir: (puedeCrear &&
+                        ticket.id != null &&
+                        canConvertSalesNote(ticket))
+                    ? () => _handleConvert(ticket)
+                    : null,
                 onEdit: (ticket.anulado == true || !puedeEditar)
                     ? null
                     : () => _handleEdit(ticket),
@@ -325,7 +378,10 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                           Builder(builder: (_) {
                             final String label;
                             final Color color;
-                            if (ticket.anulado == true) {
+                            if (ticket.comprobanteSustituto?.isNotEmpty == true) {
+                              label = 'Reemplazada por ${ticket.comprobanteSustituto}';
+                              color = Colors.blueGrey;
+                            } else if (ticket.anulado == true) {
                               label = 'Anulado';
                               color = Colors.red;
                             } else if (ticket.tipoComprobante == 'NV' ||
