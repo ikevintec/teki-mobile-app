@@ -184,11 +184,18 @@ class QrCommandReviewNotifier extends StateNotifier<QrCommandReviewState> {
     if (!event.belongsToOffice(_office?.id)) return;
     switch (event.type) {
       case RestaurantEventType.qrPendingApproval:
+        // Comanda QR nueva: refresca revelando la novedad (puede auto-abrir).
         unawaited(refresh());
       case RestaurantEventType.qrReviewed:
+        // Revisada: además pide a las mesas que se recarguen.
         state = state.copyWith(
           tablesRefreshRequest: state.tablesRefreshRequest + 1,
         );
+        unawaited(refresh(revealNewCommands: false));
+      default:
+        // Cualquier otro evento de socket (cambio de mesa, etc.) también
+        // refresca la lista de QR por aprobar para que no quede desfasada,
+        // sin auto-abrir el sheet ni marcar novedades.
         unawaited(refresh(revealNewCommands: false));
     }
   }
