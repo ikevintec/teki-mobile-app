@@ -69,7 +69,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
   }
 
   void _goToActiveCashRegister(DateTime fecha) {
-    Get.toNamed(
+    Get.offAllNamed(
       AppRoutes.dashboard,
       arguments: {'initialTab': 2, 'cashRegisterDate': fecha},
     );

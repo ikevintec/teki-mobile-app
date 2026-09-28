@@ -56,7 +56,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   }) : super(
          ProductsSaleState(
            tipoComprobante:
-               ref.watch(sesionProvider).config!.tipoComprobantePorDefecto ??
+               ref.watch(sesionProvider).config?.tipoComprobantePorDefecto ??
                'NV', // Factura
            productsSales: [],
            currencies: [],
@@ -76,7 +76,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
            porcentajeDescuentoGlobal: null,
            flagRetencion: false,
            porcentajeRetencion:
-               ref.watch(sesionProvider).config!.porcentajeRetencion ?? 0.0,
+               ref.watch(sesionProvider).config?.porcentajeRetencion ?? 0.0,
            codigoTipoOperacion: '0101',
          ),
        );

@@ -195,7 +195,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                           status.fechaPasada && status.fechaCaja != null
                               ? PastCashRegisterBanner(
                                   fecha: status.fechaCaja!,
-                                  onTap: () => Get.toNamed(
+                                  onTap: () => Get.offAllNamed(
                                     AppRoutes.dashboard,
                                     arguments: {
                                       'initialTab': 2,
