@@ -76,8 +76,13 @@ class CobradorNotifier extends StateNotifier<CobradorState> {
     await _load(pvId);
   }
 
-  Future<void> _load(int pvId) async {
-    state = state.copyWith(isLoading: true);
+  /// Recarga disparada por eventos sin cubrir la lista con un estado de carga.
+  Future<void> reload(int pvId) async {
+    await _load(pvId, showLoading: false);
+  }
+
+  Future<void> _load(int pvId, {bool showLoading = true}) async {
+    if (showLoading) state = state.copyWith(isLoading: true);
     final d = state.selectedDate;
     final dateStr =
         '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}';

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:teki_app/src/data/models/teki_model/restaurant_event.dart';
 import 'package:teki_app/src/providers/restaurant/check_totals.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
@@ -8,6 +11,8 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/cobrador_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/shared/services/restaurant_events_service.dart';
+import 'package:teki_app/src/shared/services/socket_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -24,20 +29,64 @@ class CobradorScreen extends ConsumerStatefulWidget {
 }
 
 class _CobradorScreenState extends ConsumerState<CobradorScreen> {
+  static const _reloadEventTypes = {
+    'CUENTA_CAMBIO',
+    'PEDIDO_ESTADO',
+    RestaurantEventType.legacy,
+  };
+
+  final _socketService = SocketService();
+  late final RestaurantEventsService _restaurantEvents;
   late int _currentPvId;
+  Timer? _socketReloadDebounce;
+  bool _socketLeaseAcquired = false;
 
   @override
   void initState() {
     super.initState();
     _currentPvId = widget.pvId;
+    _restaurantEvents = RestaurantEventsService(socketService: _socketService);
+    _restaurantEvents.listen((event) {
+      if (!mounted ||
+          !event.belongsToOffice(_currentPvId) ||
+          !_reloadEventTypes.contains(event.type)) {
+        return;
+      }
+      _socketReloadDebounce?.cancel();
+      _socketReloadDebounce = Timer(const Duration(milliseconds: 400), () {
+        if (mounted) unawaited(_reloadFromSocket());
+      });
+    });
     Future.microtask(() {
       if (!mounted) return;
       ref.read(cobradorProvider.notifier).init(_currentPvId);
+      _socketLeaseAcquired = true;
+      unawaited(
+        _socketService.connect(
+          officeCode: ref.read(sesionProvider).office?.codigo ?? '',
+        ),
+      );
     });
+  }
+
+  @override
+  void dispose() {
+    _socketReloadDebounce?.cancel();
+    unawaited(_restaurantEvents.dispose());
+    if (_socketLeaseAcquired) _socketService.disconnect();
+    super.dispose();
   }
 
   void _reload() {
     ref.read(cobradorProvider.notifier).init(_currentPvId);
+  }
+
+  Future<void> _reloadFromSocket() async {
+    try {
+      await ref.read(cobradorProvider.notifier).reload(_currentPvId);
+    } catch (_) {
+      // Conserva la última lista; el próximo evento o gesto de actualizar reintenta.
+    }
   }
 
   @override
