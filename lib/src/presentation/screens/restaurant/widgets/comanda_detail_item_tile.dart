@@ -7,13 +7,17 @@ import 'package:teki_app/src/presentation/screens/restaurant/widgets/item_action
 
 class ComandaDetailStatus {
   static const String pendiente = 'PENDIENTE';
+  static const String porConfirmar = 'POR_CONFIRMAR';
   static const String preparado = 'PREPARADO';
   static const String cancelado = 'CANCELADO';
+  static const String rechazado = 'RECHAZADO';
   static const String despachado = 'DESPACHADO';
 
   static bool isCancelledItem(CommandDetail item) =>
       item.eliminado == true ||
-      item.estadoComandaDetalle?.toUpperCase() == cancelado;
+      const {cancelado, rechazado}.contains(
+        item.estadoComandaDetalle?.toUpperCase(),
+      );
 }
 
 // ─── Status style helpers ─────────────────────────────────────────────────────
@@ -26,7 +30,10 @@ Color statusBgColor(String? status) {
     case ComandaDetailStatus.preparado:
       return const Color(0xFFE6FFEB);
     case ComandaDetailStatus.cancelado:
+    case ComandaDetailStatus.rechazado:
       return const Color(0xFFFFF5F5);
+    case ComandaDetailStatus.porConfirmar:
+      return const Color(0xFFF1F5F9);
     case ComandaDetailStatus.despachado:
       return const Color(0xFFE4EAFF);
     default:
@@ -39,7 +46,10 @@ Color statusBorderColor(String? status) {
     case ComandaDetailStatus.preparado:
       return const Color(0xFF2E7D32);
     case ComandaDetailStatus.cancelado:
+    case ComandaDetailStatus.rechazado:
       return const Color(0xFFE53935);
+    case ComandaDetailStatus.porConfirmar:
+      return const Color(0xFF64748B);
     case ComandaDetailStatus.despachado:
       return const Color(0xFF1E88E5);
     default:

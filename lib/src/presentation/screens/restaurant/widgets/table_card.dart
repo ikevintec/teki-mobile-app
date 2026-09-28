@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart' hide Table;
 import 'package:teki_app/src/data/models/teki_model/table.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/restaurant_table_palette.dart';
 
 class TableCard extends StatefulWidget {
   final Table table;
@@ -14,17 +15,52 @@ class TableCard extends StatefulWidget {
   State<TableCard> createState() => _TableCardState();
 }
 
-class _TableCardState extends State<TableCard> {
+class _TableCardState extends State<TableCard> with SingleTickerProviderStateMixin {
   late Timer _timer;
+  late final AnimationController _alertController;
+  late final Animation<double> _alertPulse;
   Duration _elapsed = Duration.zero;
 
   @override
   void initState() {
     super.initState();
+    _alertController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _alertPulse = CurvedAnimation(parent: _alertController, curve: Curves.easeInOut);
+    _syncAlertAnimation();
     _updateElapsed();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) _updateElapsed();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant TableCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncAlertAnimation();
+  }
+
+  bool get _isCalling => widget.table.llamadaEn != null;
+
+  /// Pedido creado desde QR que todavÃ­a no tiene un mozo responsable.
+  /// Es la misma condiciÃ³n que usa el comandero web.
+  bool get _isUnassignedQrOrder =>
+      widget.table.pedidoActual?.sinMozoAsignado == true;
+
+  bool get _isAccountRequested {
+    final order = widget.table.pedidoActual;
+    return order?.cuentaSolicitadaEn != null && order?.estado != 'PRECUENTA';
+  }
+
+  void _syncAlertAnimation() {
+    if (_isCalling || _isUnassignedQrOrder || _isAccountRequested) {
+      if (!_alertController.isAnimating) _alertController.repeat(reverse: true);
+    } else {
+      _alertController.stop();
+      _alertController.value = 0;
+    }
   }
 
   void _updateElapsed() {
@@ -37,6 +73,7 @@ class _TableCardState extends State<TableCard> {
   @override
   void dispose() {
     _timer.cancel();
+    _alertController.dispose();
     super.dispose();
   }
 
@@ -65,71 +102,166 @@ class _TableCardState extends State<TableCard> {
           ),
         );
 
-    Color cardColor;
-    Color textColor;
+    Color baseColor;
     String statusLabel;
     IconData statusIcon;
 
-    // Paleta canónica de la WEB (los usuarios ya la conocen):
-    // items preparados = verde (listo), PENDIENTE = ámbar,
-    // PRECUENTA = morado (status-renewal), libre = gris.
+    // Misma semántica y colores del mapa de mesas web (paleta canónica).
     if (hasItemPreparado) {
-      cardColor = const Color(0xFFE8F5E9);
-      textColor = const Color(0xFF256029);
+      baseColor = RestaurantTablePalette.prepared;
       statusLabel = 'Preparado';
       statusIcon = Icons.room_service_rounded;
     } else if (estado == 'PENDIENTE') {
-      cardColor = const Color(0xFFFEEDAF);
-      textColor = const Color(0xFF8A5340);
-      statusLabel = 'Pendiente';
+      baseColor = RestaurantTablePalette.order;
+      statusLabel = 'Pedido';
       statusIcon = Icons.receipt_long;
     } else if (estado == 'PRECUENTA') {
-      cardColor = const Color(0xFFECCFFF);
-      textColor = const Color(0xFF694382);
-      statusLabel = 'Precuenta';
+      baseColor = RestaurantTablePalette.paying;
+      statusLabel = 'Pagando';
       statusIcon = Icons.payment;
     } else {
-      cardColor = Colors.grey.shade100;
-      textColor = Colors.grey.shade600;
+      baseColor = RestaurantTablePalette.free;
       statusLabel = 'Libre';
       statusIcon = Icons.chair;
     }
 
-    final hasOrder = order != null && order.id != null;
+    // Entonación previa: fondo tenue + texto oscuro derivados del color
+    // semántico, para conservar contraste y legibilidad de las tarjetas.
+    final cardColor = Color.lerp(baseColor, Colors.white, 0.85)!;
+    final textColor = Color.lerp(baseColor, Colors.black, 0.45)!;
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: textColor.withValues(alpha: 0.25), width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: textColor.withValues(alpha: 0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+    final hasOrder = order != null && order.id != null;
+    final isQrOrigin = _isQrOrigin(order);
+    final isCalling = _isCalling;
+    final isUnassignedQrOrder = _isUnassignedQrOrder;
+    final isAccountRequested = _isAccountRequested;
+
+    return AnimatedBuilder(
+      animation: _alertController,
+      builder: (context, _) {
+        final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+        final pulse = reduceMotion ? 0.0 : _alertPulse.value;
+        const accountColor = Color(0xFF047857);
+
+        return GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            key: const Key('table-card-container'),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isAccountRequested
+                    ? Color.lerp(textColor.withValues(alpha: 0.25), accountColor, 0.45 + (pulse * 0.55))!
+                    : textColor.withValues(alpha: 0.25),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: textColor.withValues(alpha: 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+            child: ClipRRect(
+          // Radio interno = radio externo (14) - grosor del borde (3), para
+          // que el contenido (franja/acento) quede al ras del borde y no deje
+          // el pequeño espacio en las esquinas.
+          borderRadius: BorderRadius.circular(11),
           child: Container(
             color: cardColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Línea de acento superior
-                Container(height: 4, color: textColor),
+                // Línea de acento superior — se convierte en franja
+                // "LLAMANDO" cuando el comensal llama al camarero, para no
+                // empujar la data del cuerpo (evita el overflow anterior).
+                if (isCalling)
+                  _callingStrip(pulse)
+                else if (isUnassignedQrOrder)
+                  _unassignedQrOrderStrip(pulse)
+                else
+                  Container(height: 4, color: textColor),
                 // Cuerpo
                 Expanded(
                   child: Stack(
                     children: [
-                      // Ícono independiente — esquina superior derecha
+                      // Ícono de estado (+ marca QR) — esquina superior derecha.
+                      // Se mantiene en horizontal para no ocupar alto.
                       Positioned(
                         top: 10,
                         right: 12,
-                        child: Icon(statusIcon, color: textColor, size: 24),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isQrOrigin) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: textColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.qr_code_rounded, size: 11, color: textColor),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'QR',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        color: textColor,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            // Cuando el comensal pidió la cuenta, el propio
+                            // icono de estado pasa a ser el recibo verde
+                            // pulsante (una sola señal, sin badge extra).
+                            if (isAccountRequested)
+                              Tooltip(
+                                message: 'El comensal pidió la cuenta',
+                                child: SizedBox(
+                                  key: const Key('table-account-alert'),
+                                  width: 34,
+                                  height: 34,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      // Halo que late detrás del icono para
+                                      // que la señal resalte más.
+                                      Container(
+                                        width: 20 + (pulse * 14),
+                                        height: 20 + (pulse * 14),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: accountColor.withValues(
+                                            alpha: 0.28 * (1 - pulse),
+                                          ),
+                                        ),
+                                      ),
+                                      Transform.scale(
+                                        scale: 1 + (pulse * 0.22),
+                                        child: Icon(
+                                          Icons.receipt_long_rounded,
+                                          color: accountColor,
+                                          size: 24,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              Icon(statusIcon, color: textColor, size: 24),
+                          ],
+                        ),
                       ),
                       // Total independiente — esquina inferior derecha
                       if (hasOrder)
@@ -229,6 +361,75 @@ class _TableCardState extends State<TableCard> {
               ],
             ),
           ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Franja superior animada que reemplaza la línea de acento cuando el
+  /// comensal llama al camarero. Vive fuera del flujo vertical del cuerpo,
+  /// por lo que no empuja la data ni provoca overflow. El color pulsa entre
+  /// dos rojos según [pulse] (0 = sin animación, respeta "reduce motion").
+  Widget _callingStrip(double pulse) {
+    // Rojo: exclusivo para "LLAMANDO".
+    return _attentionStrip(
+      pulse: pulse,
+      key: const Key('table-call-alert'),
+      semanticLabel: 'El comensal llama al camarero',
+      icon: Icons.notifications_active_rounded,
+      label: 'LLAMANDO',
+      baseColor: const Color(0xFFB91C1C),
+      pulseColor: const Color(0xFFEF4444),
+    );
+  }
+
+  Widget _unassignedQrOrderStrip(double pulse) {
+    // Azul: pedido QR sin mozo, se diferencia del rojo de "LLAMANDO".
+    return _attentionStrip(
+      pulse: pulse,
+      key: const Key('table-unassigned-alert'),
+      semanticLabel: 'Pedido QR sin mozo asignado',
+      icon: Icons.touch_app_rounded,
+      label: 'TOCA PARA ATENDER',
+      baseColor: const Color(0xFF1D4ED8),
+      pulseColor: const Color(0xFF3B82F6),
+    );
+  }
+
+  Widget _attentionStrip({
+    required double pulse,
+    required Key key,
+    required String semanticLabel,
+    required IconData icon,
+    required String label,
+    required Color baseColor,
+    required Color pulseColor,
+  }) {
+    return Semantics(
+      label: semanticLabel,
+      child: Container(
+        key: key,
+        height: 20,
+        width: double.infinity,
+        color: Color.lerp(baseColor, pulseColor, pulse),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -254,10 +455,44 @@ class _TableCardState extends State<TableCard> {
     );
   }
 
+  /// ¿El pedido se originó por QR? Reforzado para datos incompletos:
+  /// 1) usa el flag del pedido `esPedidoQr` cuando llega (true/false),
+  /// 2) si el campo no llega (null), lo deriva de la comanda original
+  ///    (`esPorQr` de la comanda con menor `orden`),
+  /// 3) ante ausencia total de datos, devuelve false (no marca la mesa).
+  bool _isQrOrigin(dynamic order) {
+    if (order == null || order.id == null) return false;
+
+    final flag = order.esPedidoQr;
+    if (flag is bool) return flag;
+
+    final List comandas = order.comandas ?? const [];
+    if (comandas.isEmpty) return false;
+
+    dynamic original;
+    for (final c in comandas) {
+      if (original == null) {
+        original = c;
+        continue;
+      }
+      final ordenC = (c.orden as int?) ?? 1 << 30;
+      final ordenOriginal = (original.orden as int?) ?? 1 << 30;
+      if (ordenC < ordenOriginal) original = c;
+    }
+    return original?.esPorQr == true;
+  }
+
   int _totalItems(dynamic order) {
     int total = 0;
     for (final comanda in (order.comandas ?? [])) {
-      total += (comanda.items?.length ?? 0) as int;
+      for (final item in (comanda.items ?? [])) {
+        final status = item.estadoComandaDetalle?.toUpperCase();
+        if (item.eliminado == true ||
+            const {'CANCELADO', 'RECHAZADO'}.contains(status)) {
+          continue;
+        }
+        total++;
+      }
     }
     return total;
   }
@@ -267,7 +502,9 @@ class _TableCardState extends State<TableCard> {
     for (final comanda in (order.comandas ?? [])) {
       for (final item in (comanda.items ?? [])) {
         if (item.eliminado == true ||
-            item.estadoComandaDetalle?.toUpperCase() == 'CANCELADO') {
+            const {'CANCELADO', 'RECHAZADO'}.contains(
+              item.estadoComandaDetalle?.toUpperCase(),
+            )) {
           continue;
         }
         total += ((item.precioVenta ?? 0) * (item.cantidad ?? 1)) as double;

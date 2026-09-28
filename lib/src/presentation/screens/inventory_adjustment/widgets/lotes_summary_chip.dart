@@ -10,8 +10,13 @@ import 'package:teki_app/src/utils/constants.dart';
 /// Al tocarlo abre el bottom sheet de gestión de lotes/series.
 class LotesSummaryChip extends ConsumerWidget {
   final int itemIndex;
+  final bool allowUnchangedStockWithLotes;
 
-  const LotesSummaryChip({super.key, required this.itemIndex});
+  const LotesSummaryChip({
+    super.key,
+    required this.itemIndex,
+    this.allowUnchangedStockWithLotes = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,8 +25,12 @@ class LotesSummaryChip extends ConsumerWidget {
 
     final item = state.items[itemIndex];
     final notifier = ref.read(inventoryAdjustmentProvider.notifier);
-    final loteError =
-        state.showValidation ? notifier.loteValidationError(item) : null;
+    final loteError = state.showValidation
+        ? notifier.loteValidationError(
+            item,
+            allowUnchangedStockWithLotes: allowUnchangedStockWithLotes,
+          )
+        : null;
 
     final isSerie = item.product.tipoLote == 'SERIE';
     final loteCount = item.lotes.length;

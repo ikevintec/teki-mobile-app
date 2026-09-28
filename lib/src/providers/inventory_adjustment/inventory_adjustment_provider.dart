@@ -233,7 +233,10 @@ class InventoryAdjustmentNotifier
   void setMotivo(String motivo) => state = state.copyWith(motivo: motivo);
   void setObservacion(String obs) => state = state.copyWith(observacion: obs);
 
-  Future<void> submit(int idPuntoVenta) async {
+  Future<void> submit(
+    int idPuntoVenta, {
+    bool allowUnchangedStockWithLotes = false,
+  }) async {
     if (state.items.isEmpty) {
       warningNotification('Agregue al menos un producto');
       return;
@@ -247,7 +250,11 @@ class InventoryAdjustmentNotifier
         return;
       }
       if (item.product.validacionLote == true) {
-        if (loteValidationError(item) != null) {
+        if (loteValidationError(
+              item,
+              allowUnchangedStockWithLotes: allowUnchangedStockWithLotes,
+            ) !=
+            null) {
           hasLoteError = true;
         }
       } else {
@@ -320,10 +327,13 @@ class InventoryAdjustmentNotifier
 
   /// Retorna el mensaje de error de validación de lotes para un ítem, o null si es válido.
   /// Solo aplica cuando validacionLote == true.
-  String? loteValidationError(AdjustmentFormItem item) {
+  String? loteValidationError(
+    AdjustmentFormItem item, {
+    bool allowUnchangedStockWithLotes = false,
+  }) {
     if (item.product.validacionLote != true) return null;
     if (item.nuevoStock < 0) return 'El nuevo stock no puede ser negativo';
-    if (item.cantidad == 0) {
+    if (item.cantidad == 0 && !allowUnchangedStockWithLotes) {
       return 'El nuevo stock debe ser diferente al stock actual';
     }
     if (item.lotes.any((l) => l.cantidad < 0)) {

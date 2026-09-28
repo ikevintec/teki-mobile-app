@@ -18,6 +18,24 @@ import 'package:teki_app/main.dart' show globalContainer;
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/storage_keys.dart';
 
+int _restaurantNavigationGeneration = 0;
+
+/// Reconstruye la pila para que un push de la carta termine siempre en
+/// Dashboard > Mesas, sin conservar pantallas anteriores ni apilar Mesas.
+@visibleForTesting
+void resetToRestaurantMesasFromNotification() {
+  final generation = ++_restaurantNavigationGeneration;
+  Get.offAllNamed(AppRoutes.dashboard);
+  Future<void>.delayed(Duration.zero, () {
+    // Si llegaron varios taps juntos, solo el ultimo completa la navegacion.
+    if (generation != _restaurantNavigationGeneration ||
+        Get.currentRoute != AppRoutes.dashboard) {
+      return;
+    }
+    Get.toNamed(AppRoutes.restaurantMesas);
+  });
+}
+
 class NotificationService {
   NotificationService._();
 
@@ -111,8 +129,9 @@ class NotificationService {
   Future<void> _initLocalNotifications() async {
     if (_localNotificationsReady) return;
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -139,7 +158,8 @@ class NotificationService {
       );
       await _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(channel);
     }
 
@@ -205,8 +225,7 @@ class NotificationService {
       debugPrint('[FCM] Registro fallido, reintentando en 3 s... ($e)');
       Future.delayed(const Duration(seconds: 3), () async {
         try {
-          await ApiClient.dio
-              .post('/notifications/register-token', data: body);
+          await ApiClient.dio.post('/notifications/register-token', data: body);
           debugPrint('[FCM] Token registrado en el reintento');
         } catch (retryError) {
           debugPrint('[FCM] Reintento fallido: $retryError');
@@ -303,6 +322,9 @@ class NotificationService {
     debugPrint('[FCM] Navegando por tipo: $type');
 
     switch (type) {
+      case 'LLAMADA_MESA' || 'CUENTA_SOLICITADA' || 'COMANDA_QR_NUEVA':
+        resetToRestaurantMesasFromNotification();
+
       // Tipos legados en minusculas: se aceptan ambos casings mientras el backend migra a mayusculas.
       case 'dish_desk_ready' || 'DISH_DESK_READY':
         final commandId = int.tryParse(data['commandId'] as String? ?? '');
@@ -355,11 +377,14 @@ class NotificationService {
                 paid: false,
               );
         } else {
-          Get.toNamed(AppRoutes.ordersRestaurant, arguments: {
-            'orderNumber': orderNumber,
-            'typeOrder': typeOrder,
-            'paid': false,
-          });
+          Get.toNamed(
+            AppRoutes.ordersRestaurant,
+            arguments: {
+              'orderNumber': orderNumber,
+              'typeOrder': typeOrder,
+              'paid': false,
+            },
+          );
         }
       case 'PAGO_YAPE':
         if (Get.currentRoute == AppRoutes.pagosYape) {
@@ -368,7 +393,7 @@ class NotificationService {
           Get.toNamed(AppRoutes.pagosYape);
         }
       default:
-        Get.toNamed('/dashboard');
+        Get.toNamed(AppRoutes.dashboard);
     }
   }
 

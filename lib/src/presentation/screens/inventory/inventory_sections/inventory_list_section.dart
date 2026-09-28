@@ -26,8 +26,13 @@ _EstadoStock _estadoDe(Inventory inv) {
 
 class InventoryListSection extends ConsumerStatefulWidget {
   final List<Inventory> items;
+  final int idPuntoVenta;
 
-  const InventoryListSection({super.key, required this.items});
+  const InventoryListSection({
+    super.key,
+    required this.items,
+    required this.idPuntoVenta,
+  });
 
   @override
   ConsumerState<InventoryListSection> createState() =>
