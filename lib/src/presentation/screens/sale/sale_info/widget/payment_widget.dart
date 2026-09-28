@@ -12,9 +12,11 @@ import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_scree
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/credito_tab.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/payment_entry.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/payment_method_row.dart';
+import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/tip_editor_sheet.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
 import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/accounts_receivable/seller_provider.dart';
 import 'package:teki_app/src/providers/printer/ble_printer.dart';
 import 'package:teki_app/src/shared/services/printer/printer_service.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
@@ -25,6 +27,7 @@ import 'package:teki_app/src/utils/constants.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
 import 'package:teki_app/src/shared/services/print_coffe_service.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 // ─── Widget principal ─────────────────────────────────────────────────────────
@@ -147,6 +150,9 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       currency = ticket.codigoMoneda ?? 'PEN';
       final sesion = ref.read(sesionProvider);
       paymentMethods = sesion.config?.formasPago ?? [];
+      if (ticket.cuentaRestaurante != null) {
+        unawaited(ref.read(sellersProvider.notifier).loadOnce());
+      }
 
       if (isEdit) {
         _loadExistingPaymentData(ticket);
@@ -422,6 +428,30 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     );
   }
 
+  Future<void> _manageTip() async {
+    await ref.read(sellersProvider.notifier).loadOnce();
+    if (!mounted) return;
+    final ticket = ref.read(ticketProvider).ticket;
+    final result = await TipEditorSheet.show(
+      context,
+      currency: ticket.codigoMoneda ?? 'PEN',
+      sellers: ref.read(sellersProvider),
+      paymentMethods: paymentMethods,
+      initialAmount: ticket.propina ?? 0,
+      initialResponsibleId: ticket.mozoResponsable?.id ??
+          ticket.pedidoRestaurante?.usuario?.id ??
+          ticket.vendedor?.id,
+      initialPayments: ticket.pagosPropina ?? const [],
+    );
+    if (result == null || !mounted) return;
+    ref.read(ticketProvider.notifier).setPropina(
+          amount: result.amount,
+          responsible: result.responsible,
+          payments: result.payments,
+        );
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final visiblePaymentMethods = getFilteredPaymentMethods();
@@ -429,6 +459,8 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     final notifier = ref.read(ticketProvider.notifier);
     final ticketP = ref.watch(ticketProvider);
     final canAgrupar = ref.read(sesionProvider).config?.agruparItemsVenta ?? false;
+    final isRestaurantPayment = ticket.cuentaRestaurante != null;
+    final tip = ticket.propina ?? 0;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
@@ -564,6 +596,64 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                   ),
                 );
               }),
+            if (isRestaurantPayment && _tabController.index == 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: ColorSchema.primaryColor.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.volunteer_activism_rounded,
+                            color: ColorSchema.primaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              tip > 0
+                                  ? 'Propina: ${formatExchange(moneda: currency)} ${tip.toStringAsFixed(2)}'
+                                  : 'Agregar propina',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _manageTip,
+                            child: Text(tip > 0 ? 'Editar' : 'Gestionar'),
+                          ),
+                        ],
+                      ),
+                      if (tip > 0)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total con propina',
+                              style: TextStyle(color: Colors.black54),
+                            ),
+                            Text(
+                              '${formatExchange(moneda: currency)} ${(total + tip).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             // ── Total ────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

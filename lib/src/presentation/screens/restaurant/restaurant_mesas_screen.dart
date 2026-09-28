@@ -8,9 +8,11 @@ import 'package:teki_app/src/data/models/teki_model/restaurant_event.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/order_options_sheet.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/qr_command_review/qr_command_review_area.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/ready_to_serve_sheet.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/restaurant_table_palette.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/table_card.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/restaurant/ready_to_serve_provider.dart';
 import 'package:teki_app/src/providers/restaurant/restaurant_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/services/restaurant_events_service.dart';
@@ -29,6 +31,7 @@ class _RestaurantMesasScreenState
     extends ConsumerState<RestaurantMesasScreen> {
   final _socketService = SocketService();
   late final RestaurantEventsService _restaurantEvents;
+  Timer? _readyRefreshTimer;
 
   @override
   void initState() {
@@ -48,8 +51,17 @@ class _RestaurantMesasScreenState
       if (!mounted) return;
       final session = ref.read(sesionProvider);
       final pvId = session.office?.id;
-      if (pvId != null) ref.read(restaurantProvider.notifier).loadData(pvId);
+      if (pvId != null) {
+        ref.read(restaurantProvider.notifier).loadData(pvId);
+        ref.read(readyToServeProvider.notifier).refresh(pvId);
+      }
       _socketService.connect(officeCode: session.office?.codigo ?? 'PV001');
+    });
+    _readyRefreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      final pvId = ref.read(sesionProvider).office?.id;
+      if (mounted && pvId != null) {
+        ref.read(readyToServeProvider.notifier).refresh(pvId, silent: true);
+      }
     });
 
     // If opened from a dish_desk_ready notification, navigate to the ready screen
@@ -70,6 +82,7 @@ class _RestaurantMesasScreenState
 
   @override
   void dispose() {
+    _readyRefreshTimer?.cancel();
     unawaited(_restaurantEvents.dispose());
     _socketService.disconnect();
     super.dispose();
@@ -79,9 +92,12 @@ class _RestaurantMesasScreenState
   Future<void> _reload({bool silent = false}) async {
     final pvId = ref.read(sesionProvider).office?.id;
     if (pvId != null) {
-      await ref
-          .read(restaurantProvider.notifier)
-          .reload(pvId, silent: silent);
+      await Future.wait([
+        ref.read(restaurantProvider.notifier).reload(pvId, silent: silent),
+        ref
+            .read(readyToServeProvider.notifier)
+            .refresh(pvId, silent: silent),
+      ]);
     }
   }
 
@@ -90,6 +106,7 @@ class _RestaurantMesasScreenState
     final pvId = ref.read(sesionProvider).office?.id;
     if (pvId != null) {
       ref.read(restaurantProvider.notifier).loadData(pvId);
+      ref.read(readyToServeProvider.notifier).refresh(pvId);
     }
   }
 
@@ -284,6 +301,7 @@ class _RestaurantMesasScreenState
     });
 
     final state = ref.watch(restaurantProvider);
+    final readyState = ref.watch(readyToServeProvider);
     final notifier = ref.read(restaurantProvider.notifier);
     final tables = notifier.tablesWithOrders;
     final mesasSinCuenta = _mesasConItemsSinCuenta(state.orders);
@@ -299,6 +317,49 @@ class _RestaurantMesasScreenState
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Por servir',
+            onPressed: () {
+              final pvId = ref.read(sesionProvider).office?.id;
+              if (pvId != null) ReadyToServeSheet.show(context, pvId);
+            },
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  Icons.room_service_rounded,
+                  color: Colors.white,
+                  size: 23,
+                ),
+                if (readyState.total > 0)
+                  Positioned(
+                    right: -8,
+                    top: -8,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 17),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade600,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                      child: Text(
+                        '${readyState.total}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
           IconButton(
             tooltip: 'Ajustes',
             onPressed: () async {

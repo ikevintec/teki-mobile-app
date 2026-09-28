@@ -170,8 +170,23 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     Ticket ticketToUpdate = state.ticket.copyWith(
       movimientoCaja: null,
       cuotas: cuotas,
+      propina: 0,
+      pagosPropina: const [],
       tipoVenta: "CREDITO",
       diasCredito: diasCredito,
+    );
+    state = state.copyWith(ticket: ticketToUpdate);
+  }
+
+  void setPropina({
+    required double amount,
+    required User? responsible,
+    required List<PaymentDetail> payments,
+  }) {
+    final ticketToUpdate = state.ticket.copyWith(
+      propina: amount,
+      mozoResponsable: responsible,
+      pagosPropina: payments,
     );
     state = state.copyWith(ticket: ticketToUpdate);
   }
@@ -370,6 +385,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       movimientoCaja: state.isQuotation
           ? CashRegisterDetail(pagos: [])
           : state.ticket.movimientoCaja,
+      propina: state.isQuotation ? null : state.ticket.propina,
+      mozoResponsable: state.isQuotation ? null : state.ticket.mozoResponsable,
+      pagosPropina: state.isQuotation ? const [] : state.ticket.pagosPropina,
       intentosSendSummary: state.ticket.intentosSendSummary,
       createdOn: state.ticket.createdOn,
       adelanto: state.ticket.adelanto,

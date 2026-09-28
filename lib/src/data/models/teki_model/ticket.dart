@@ -9,6 +9,7 @@ import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/quotation.dart';
 import 'package:teki_app/src/data/models/teki_model/sale_station.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/sunat_response.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket_fee.dart';
@@ -131,6 +132,9 @@ class Ticket {
   final String? canal;
   final String? comprobanteAnterior;
   final CashRegisterDetail? movimientoCaja;
+  final double? propina;
+  final User? mozoResponsable;
+  final List<PaymentDetail>? pagosPropina;
   final int? intentosSendSummary;
   final DateTime? createdOn;
   final double? adelanto;
@@ -260,6 +264,9 @@ class Ticket {
     this.canal,
     this.comprobanteAnterior,
     this.movimientoCaja,
+    this.propina,
+    this.mozoResponsable,
+    this.pagosPropina,
     this.intentosSendSummary,
     this.createdOn,
     this.adelanto,
@@ -428,6 +435,13 @@ class Ticket {
         movimientoCaja: json['movimientoCaja'] != null
             ? CashRegisterDetail.fromJson(json['movimientoCaja'])
             : null,
+        propina: (json['propina'] as num?)?.toDouble(),
+        mozoResponsable: json['mozoResponsable'] != null
+            ? User.fromJson(json['mozoResponsable'])
+            : null,
+        pagosPropina: (json['pagosPropina'] as List?)
+            ?.map((payment) => PaymentDetail.fromJson(payment))
+            .toList(),
         intentosSendSummary: json['intentosSendSummary'],
         createdOn: parseDateTimeFlexible(json['createdOn']),
         adelanto: json['adelanto'],
@@ -560,6 +574,9 @@ class Ticket {
         'canal': canal,
         'comprobanteAnterior': comprobanteAnterior,
         'movimientoCaja': movimientoCaja?.toJson(),
+        'propina': propina,
+        'mozoResponsable': mozoResponsable?.toJson(),
+        'pagosPropina': pagosPropina?.map((payment) => payment.toJson()).toList(),
         'intentosSendSummary': intentosSendSummary,
         'createdOn': createdOn?.toIso8601String(),
         'adelanto': adelanto,
@@ -690,6 +707,9 @@ class Ticket {
     String? canal,
     String? comprobanteAnterior,
     CashRegisterDetail? movimientoCaja,
+    double? propina,
+    User? mozoResponsable,
+    List<PaymentDetail>? pagosPropina,
     int? intentosSendSummary,
     DateTime? createdOn,
     double? adelanto,
@@ -840,6 +860,9 @@ class Ticket {
       canal: canal ?? this.canal,
       comprobanteAnterior: comprobanteAnterior ?? this.comprobanteAnterior,
       movimientoCaja: movimientoCaja ?? this.movimientoCaja,
+      propina: propina ?? this.propina,
+      mozoResponsable: mozoResponsable ?? this.mozoResponsable,
+      pagosPropina: pagosPropina ?? this.pagosPropina,
       intentosSendSummary: intentosSendSummary ?? this.intentosSendSummary,
       createdOn: createdOn ?? this.createdOn,
       adelanto: adelanto ?? this.adelanto,
