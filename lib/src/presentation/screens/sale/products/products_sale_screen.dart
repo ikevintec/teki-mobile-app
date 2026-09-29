@@ -24,7 +24,6 @@ import 'package:teki_app/src/presentation/widgets/cash_register/past_cash_regist
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
 import 'package:teki_app/src/utils/constants.dart';
-import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class ProductsSaleScreen extends ConsumerStatefulWidget {
@@ -179,14 +178,12 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(
-          ticketP.ticket.pedidoRestaurante != null ? 72 : 60,
+          ticketP.hasTallHeader ? 72 : 60,
         ),
         child: CustomAppBar(
           navigateName: "Escoge los productos",
-          subtitle: ticketP.ticket.pedidoRestaurante != null
-              ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : ticketP.subtitleLabel,
-          subtitleEmphasis: ticketP.subtitleEmphasis,
+          subtitle: ticketP.headerSubtitle,
+          subtitleEmphasis: ticketP.headerSubtitleEmphasis,
         ),
       ),
       body: isLoading

@@ -159,10 +159,12 @@ class AppRoutes {
         final table = args?['table'] as Table?;
         final existingOrderId = args?['existingOrderId'] as int?;
         final isPedidoSinMesa = args?['isPedidoSinMesa'] as bool? ?? false;
+        final onlineOrderId = args?['onlineOrderId'] as int?;
         return ComandaScreen(
           table: table,
           existingOrderId: existingOrderId,
           isPedidoSinMesa: isPedidoSinMesa,
+          onlineOrderId: onlineOrderId,
         );
       },
     ),

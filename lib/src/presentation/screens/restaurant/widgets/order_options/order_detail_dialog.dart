@@ -21,20 +21,29 @@ import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
-void showOrderDetailDialog(BuildContext context, OrderRestaurant order) {
+void showOrderDetailDialog(
+  BuildContext context,
+  OrderRestaurant order, {
+  bool readOnly = false,
+}) {
   showDialog(
     context: context,
     builder: (ctx) => MediaQuery(
       data: MediaQuery.of(ctx).copyWith(viewInsets: EdgeInsets.zero),
-      child: OrderDetailDialog(order: order),
+      child: OrderDetailDialog(order: order, readOnly: readOnly),
     ),
   );
 }
 
 class OrderDetailDialog extends ConsumerStatefulWidget {
   final OrderRestaurant order;
+  final bool readOnly;
 
-  const OrderDetailDialog({super.key, required this.order});
+  const OrderDetailDialog({
+    super.key,
+    required this.order,
+    this.readOnly = false,
+  });
 
   @override
   ConsumerState<OrderDetailDialog> createState() => OrderDetailDialogState();
@@ -319,7 +328,8 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
         final comanda = comandas[index];
         final approvalPending = comanda.estadoAprobacion == 'PENDIENTE';
         final approvalRejected = comanda.estadoAprobacion == 'RECHAZADA';
-        final canOperateItems = !approvalPending && !approvalRejected;
+        final canOperateItems =
+            !widget.readOnly && !approvalPending && !approvalRejected;
         final busyReview = processingCommandId != null;
         final processingThis = processingCommandId == comanda.id;
         const statusOrder = {
@@ -422,7 +432,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                             ],
                           ),
                         ),
-                        if (approvalPending) ...[
+                        if (!widget.readOnly && approvalPending) ...[
                           const SizedBox(width: 8),
                           FilledButton.icon(
                             onPressed: busyReview
@@ -462,7 +472,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                       ],
                     ),
                   ),
-                if (approvalPending)
+                if (!widget.readOnly && approvalPending)
                   (orderWithoutWaiter
                       ? Padding(
                           padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
@@ -498,7 +508,8 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                           ),
                         )
                       : const SizedBox.shrink())
-                else if (!approvalRejected &&
+                else if (!widget.readOnly &&
+                    !approvalRejected &&
                     session.config?.clienteImpresion == 'COFFE')
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
@@ -640,7 +651,9 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
         final headerBg = accentColor.withValues(alpha: 0.13);
         final borderColor = accentColor;
         return GestureDetector(
-          onTap: isPagado ? null : () => _showCuentaSheet(context, cuenta, index),
+          onTap: widget.readOnly || isPagado
+              ? null
+              : () => _showCuentaSheet(context, cuenta, index),
           child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
           child: Container(

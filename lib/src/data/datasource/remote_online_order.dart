@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/online_order_response.dart';
 import 'package:teki_app/src/data/models/teki_model/online_order.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/domain/datasource/online_order_datasource.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 
@@ -33,6 +34,16 @@ class RemoteOnlineOrder implements OnlineOrderDatasource {
       );
     } on DioException catch (error) {
       throw _mapError(error, 'No se pudo cargar el detalle del pedido');
+    }
+  }
+
+  @override
+  Future<Ticket> getSaleDraft(int id) async {
+    try {
+      final response = await dio.get('/pedidos-tienda-online/$id/venta-draft');
+      return Ticket.fromJson(Map<String, dynamic>.from(response.data as Map));
+    } on DioException catch (error) {
+      throw _mapError(error, 'No se pudo preparar la venta del pedido');
     }
   }
 

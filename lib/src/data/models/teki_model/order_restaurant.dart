@@ -66,6 +66,7 @@ class OrderRestaurant {
   final bool? esBorrador;
   final bool? esPedidoQr;
   final bool? generarComprobante;
+  final int? idPedidoTiendaOnline;
   final DateTime? createdOn;
   final int? createdBy;
   final int? updatedBy;
@@ -130,6 +131,7 @@ class OrderRestaurant {
     this.esBorrador,
     this.esPedidoQr,
     this.generarComprobante,
+    this.idPedidoTiendaOnline,
     this.createdOn,
     this.createdBy,
     this.updatedBy,
@@ -195,6 +197,7 @@ class OrderRestaurant {
     esBorrador: json['esBorrador'],
     esPedidoQr: json['esPedidoQr'],
     generarComprobante: json['generarComprobante'],
+    idPedidoTiendaOnline: (json['idPedidoTiendaOnline'] as num?)?.toInt(),
     createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
     createdBy: json['createdBy'],
     updatedBy: json['updatedBy'],
@@ -258,6 +261,7 @@ class OrderRestaurant {
     'observacion': observacion,
     'pagado': pagado,
     'esBorrador': esBorrador,
+    'idPedidoTiendaOnline': idPedidoTiendaOnline,
     'esPedidoQr': esPedidoQr,
     // generarComprobante no se envía al backend (uso interno para flujo UI)
     'createdOn': createdOn?.toIso8601String(),

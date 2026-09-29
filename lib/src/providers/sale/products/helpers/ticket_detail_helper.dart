@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/general/exchange.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
@@ -83,17 +82,27 @@ double exchange(Exchance model, List<Currency> currencies) {
       monto: 0,
     );
   }
-  final Currency monedaOrigen = currencies.firstWhere((c) =>
-      c.codigoMoneda == model.codigoMonedaOrigen && c.tipoCambio != null);
-  if (monedaOrigen.isNull) {
+  // Misma moneda origen/destino: no hay conversión que hacer. Evita el crash
+  // "Bad state: No element" cuando la moneda nacional (PEN) viene sin
+  // tipoCambio, que es lo normal en el backend.
+  if (model.codigoMonedaOrigen == model.codigoMonedaDestino) {
+    return (model.montoOrigen ?? 0).toDouble();
+  }
+  final Currency monedaOrigen = currencies.firstWhere(
+    (c) => c.codigoMoneda == model.codigoMonedaOrigen && c.tipoCambio != null,
+    orElse: () => Currency(),
+  );
+  if (monedaOrigen.codigoMoneda == null) {
     final messageError =
-        'Debe registrar el tipo de cambio para la moneda ${model.codigoMonedaDestino}';
+        'Debe registrar el tipo de cambio para la moneda ${model.codigoMonedaOrigen}';
     errorNotification(messageError);
     throw Exception(messageError);
   }
-  final Currency monedaDestino = currencies.firstWhere((c) =>
-      c.codigoMoneda == model.codigoMonedaDestino && c.tipoCambio != null);
-  if (monedaDestino.isNull) {
+  final Currency monedaDestino = currencies.firstWhere(
+    (c) => c.codigoMoneda == model.codigoMonedaDestino && c.tipoCambio != null,
+    orElse: () => Currency(),
+  );
+  if (monedaDestino.codigoMoneda == null) {
     final messageError =
         'Debe registrar el tipo de cambio para la moneda ${model.codigoMonedaDestino}';
     errorNotification(messageError);

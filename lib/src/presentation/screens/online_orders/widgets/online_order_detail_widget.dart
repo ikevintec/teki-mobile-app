@@ -2,23 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/online_order.dart';
+import 'package:teki_app/src/presentation/screens/online_orders/widgets/order_action_button.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/price_formatter.dart';
 
 class OnlineOrderDetailWidget extends StatelessWidget {
   final OnlineOrder order;
-  final bool actionLoading;
-  final VoidCallback? onAccept;
-  final VoidCallback? onCancel;
 
-  const OnlineOrderDetailWidget({
-    super.key,
-    required this.order,
-    this.actionLoading = false,
-    this.onAccept,
-    this.onCancel,
-  });
+  const OnlineOrderDetailWidget({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +65,15 @@ class OnlineOrderDetailWidget extends StatelessWidget {
             if ((order.montoDelivery ?? 0) > 0)
               _row('Delivery', _money(order.montoDelivery)),
             _row('Total', _money(order.total), emphasized: true),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _section(
+          icon: Icons.badge_outlined,
+          title: 'Atención',
+          children: [
+            _row('Responsable', order.responsable?.displayName ?? '-'),
+            _row('Fecha de atención', _attentionDate(order.tiempoAtencion)),
           ],
         ),
         if (order.imagenYape?.isNotEmpty == true) ...[
@@ -145,9 +146,6 @@ class OnlineOrderDetailWidget extends StatelessWidget {
           )
         else
           ...order.items.map(_itemCard),
-        const SizedBox(height: 12),
-        _buildActions(),
-        const SizedBox(height: 12),
       ],
     );
   }
@@ -191,13 +189,6 @@ class OnlineOrderDetailWidget extends StatelessWidget {
                 '${order.tipo == 'MENU' ? 'Menú' : 'Catálogo'} · $date',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
-              if (order.responsable != null) ...[
-                const SizedBox(height: 3),
-                Text(
-                  'Atendido por ${order.responsable!.displayName}',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                ),
-              ],
             ],
           ),
         ),
@@ -216,7 +207,14 @@ class OnlineOrderDetailWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE6EAF2)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F263238),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -277,9 +275,16 @@ class OnlineOrderDetailWidget extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE6EAF2)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A263238),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,52 +372,6 @@ class OnlineOrderDetailWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildActions() {
-    final canAccept = order.estado == 'PENDIENTE' && onAccept != null;
-    final canCancel =
-        !const ['ANULADO', 'ATENDIDO', 'FINALIZADO'].contains(order.estado) &&
-        onCancel != null;
-    if (!canAccept && !canCancel) return const SizedBox.shrink();
-
-    return Row(
-      children: [
-        if (canAccept)
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: actionLoading ? null : onAccept,
-              icon: actionLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check_rounded),
-              label: const Text('Aceptar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF16A34A),
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(45),
-              ),
-            ),
-          ),
-        if (canAccept && canCancel) const SizedBox(width: 10),
-        if (canCancel)
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: actionLoading ? null : onCancel,
-              icon: const Icon(Icons.block_rounded),
-              label: const Text('Anular'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFDC2626),
-                side: const BorderSide(color: Color(0xFFFCA5A5)),
-                minimumSize: const Size.fromHeight(45),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
   Widget _statusChip(String? status) {
     final color = switch (status) {
       'PENDIENTE' => const Color(0xFFD97706),
@@ -441,6 +400,10 @@ class OnlineOrderDetailWidget extends StatelessWidget {
       '${formatExchange(moneda: currency ?? order.moneda ?? 'PEN')}'
       '${(amount ?? 0).toStringAsFixed(2)}';
 
+  String _attentionDate(DateTime? value) => value == null
+      ? '-'
+      : DateFormat('dd/MM/yyyy hh:mm a', 'es_PE').format(value);
+
   String _deliveryLabel(String? value) => value == 'DELIVERY'
       ? 'Delivery'
       : value == 'RECOJO'
@@ -460,4 +423,75 @@ class OnlineOrderDetailWidget extends StatelessWidget {
     'FACTURA' => 'Factura',
     _ => normalizeEnumLabel(value),
   };
+}
+
+/// Barra de acciones fija (Aceptar / Anular) que se ancla al pie del detalle,
+/// para no depender del scroll. Se oculta si el pedido no admite acciones.
+class OnlineOrderDetailActions extends StatelessWidget {
+  final OnlineOrder order;
+  final bool actionLoading;
+  final VoidCallback? onAccept;
+  final VoidCallback? onCancel;
+
+  const OnlineOrderDetailActions({
+    super.key,
+    required this.order,
+    this.actionLoading = false,
+    this.onAccept,
+    this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final canAccept = order.estado == 'PENDIENTE' && onAccept != null;
+    final canCancel =
+        !const ['ANULADO', 'ATENDIDO', 'FINALIZADO'].contains(order.estado) &&
+        onCancel != null;
+    if (!canAccept && !canCancel) return const SizedBox.shrink();
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        12 + MediaQuery.of(context).padding.bottom,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE6EAF2))),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x14263238),
+            blurRadius: 16,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          if (canAccept)
+            Expanded(
+              child: OrderActionButton(
+                icon: Icons.check_rounded,
+                label: 'Aceptar',
+                kind: OrderActionKind.primary,
+                loading: actionLoading,
+                onTap: actionLoading ? null : onAccept,
+              ),
+            ),
+          if (canAccept && canCancel) const SizedBox(width: 10),
+          if (canCancel)
+            Expanded(
+              child: OrderActionButton(
+                icon: Icons.close_rounded,
+                label: 'Anular',
+                kind: OrderActionKind.danger,
+                loading: actionLoading && !canAccept,
+                onTap: actionLoading ? null : onCancel,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

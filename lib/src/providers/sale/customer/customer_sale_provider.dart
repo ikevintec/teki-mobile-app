@@ -61,7 +61,7 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
     state = state.copyWith(customers: []);
   }
 
-  void setCustomer({required int? id, required String nombre, required  String documento, required  String direccion,required  String email, required String telefono, required String tipoDocumento}){
+  void setCustomer({required int? id, required String nombre, required String? documento, required  String direccion,required  String email, required String telefono, required String tipoDocumento}){
     Customer customerToSet = Customer(
       id: id,
       razonSocial: nombre,

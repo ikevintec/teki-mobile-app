@@ -20,7 +20,6 @@ import 'package:teki_app/src/providers/sale/products/products_sales_provider.dar
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/tickets_sale/tickets_sale_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
-import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class SaleInfoScreen extends ConsumerStatefulWidget {
@@ -192,14 +191,12 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(
-          ticketP.ticket.pedidoRestaurante != null ? 72 : 60,
+          ticketP.hasTallHeader ? 72 : 60,
         ),
         child: CustomAppBar(
           navigateName: "Comprobante",
-          subtitle: ticketP.ticket.pedidoRestaurante != null
-              ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : ticketP.subtitleLabel,
-          subtitleEmphasis: ticketP.subtitleEmphasis,
+          subtitle: ticketP.headerSubtitle,
+          subtitleEmphasis: ticketP.headerSubtitleEmphasis,
         ),
       ),
       body: Container(

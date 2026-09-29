@@ -25,6 +25,7 @@ import 'package:teki_app/src/providers/sale/products/helpers/products_sale_notif
 import 'package:teki_app/src/providers/sale/products/helpers/edit_sale_series_availability.dart';
 import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:teki_app/src/shared/services/online_order_workflow_service.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/price.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
@@ -332,6 +333,90 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
       productsSales: List.from(state.productsSales)..removeAt(index),
     );
     calculoTotal();
+  }
+
+  Future<void> initFromTicketDraft(Ticket draft) async {
+    setLoading(true);
+    try {
+      if (state.currencies.isEmpty) {
+        final response = await currencyRepository.getCurrencies();
+        if (response.isNotEmpty) {
+          state = state.copyWith(currencies: response, currency: response[0]);
+        }
+      }
+      final ticketNotifier = ref.read(ticketProvider.notifier);
+      ticketNotifier.resetTicket();
+      ticketNotifier.updateTicket(draft);
+      // Paridad web: si hay un cliente guardado (por documento o, sin
+      // documento, por celular) sus datos reemplazan a los del pedido.
+      final draftCustomer = _normalizeDraftCustomer(draft);
+      final savedCustomer = await OnlineOrderWorkflowService()
+          .findSavedCustomer(draftCustomer);
+      ref
+          .read(customerSaleProvider.notifier)
+          .setCustomerEntity(savedCustomer ?? draftCustomer);
+      setProductsSaleEntity(
+        (draft.items ?? const []).map(_normalizeDraftItem).toList(),
+        monedaOrigen: draft.codigoMoneda,
+      );
+      setIncIgv(draft.incIgv ?? true);
+      setCurrency(draft.codigoMoneda ?? 'PEN');
+      ticketNotifier.setEdited(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /// Paridad web (loadTicketFromPedidoTiendaOnline): el backend manda
+  /// tipoDocumento '0' cuando el pedido no tiene documento. Factura va con
+  /// RUC ('6'); boleta (simple o con DNI) con '1' y, si no hay número, null.
+  Customer _normalizeDraftCustomer(Ticket draft) {
+    final customer = draft.cliente ?? Customer();
+    final document = (customer.numeroDocumento ?? draft.numeroDocumentoReceptor)
+        ?.trim();
+    return Customer(
+      id: customer.id,
+      tipoDocumento: draft.tipoComprobante == '01' ? '6' : '1',
+      numeroDocumento: document?.isNotEmpty == true ? document : null,
+      razonSocial: customer.razonSocial ?? draft.denominacionReceptor,
+      telefono: customer.telefono ?? draft.telefonoReceptor,
+      email: customer.email ?? draft.emailReceptor,
+      direccionCompleta: customer.direccionCompleta ?? draft.direccionReceptor,
+      direccion: customer.direccion ?? draft.direccionReceptor,
+      referencia: customer.referencia,
+      codigoDepartamento: customer.codigoDepartamento,
+      codigoProvincia: customer.codigoProvincia,
+      codigoDistrito: customer.codigoDistrito,
+      latitud: customer.latitud,
+      longitud: customer.longitud,
+    );
+  }
+
+  /// El draft del pedido online (`/pedidos-tienda-online/{id}/venta-draft`)
+  /// trae solo producto, cantidad y precio. [calculoTotal] necesita el tipo de
+  /// afectación IGV (busca en catalogo07 sin orElse → "No element") y los
+  /// montos base, así que se completan desde el producto como en
+  /// [initFromCheck].
+  TicketDetail _normalizeDraftItem(TicketDetail item) {
+    final product = item.producto;
+    final price = item.precioVentaUnitario ?? 0;
+    return item.copyWith(
+      precioVentaUnitario: price,
+      montoOriginal: item.montoOriginal ?? price,
+      valorUnitario: item.valorUnitario ?? 0,
+      descuento: item.descuento ?? 0,
+      codigoTipoAfectacionIgv:
+          item.codigoTipoAfectacionIgv ?? product?.tipoAfectacion ?? '10',
+      codigoUnidadMedida:
+          item.codigoUnidadMedida ?? product?.unidad?.codigo ?? 'NIU',
+      codigoProducto: item.codigoProducto ?? product?.codigo,
+      tieneImpuestoBolsas:
+          item.tieneImpuestoBolsas ?? product?.tieneImpuestoBolsas ?? false,
+      // fromJson deja precioCompraUnitario en 0 cuando no viene.
+      precioCompraUnitario: (item.precioCompraUnitario ?? 0) > 0
+          ? item.precioCompraUnitario
+          : product?.precioCompra ?? 0,
+    );
   }
 
   Future<void> initFromCheck(Check check) async {

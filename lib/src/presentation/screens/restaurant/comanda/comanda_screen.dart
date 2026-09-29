@@ -16,18 +16,25 @@ import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/constants.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class ComandaScreen extends ConsumerStatefulWidget {
   final Table? table;
   final int? existingOrderId;
   final bool isPedidoSinMesa;
+  final int? onlineOrderId;
+
+  /// Número visible del pedido online (para el subtítulo del AppBar).
+  final int? onlineOrderNumber;
 
   const ComandaScreen({
     super.key,
     this.table,
     this.existingOrderId,
     this.isPedidoSinMesa = false,
+    this.onlineOrderId,
+    this.onlineOrderNumber,
   });
 
   @override
@@ -51,6 +58,7 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
       ref.read(comandaProvider.notifier).init(
             widget.table,
             existingOrderId: widget.existingOrderId,
+            onlineOrderId: widget.onlineOrderId,
           );
     });
   }
@@ -130,6 +138,14 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
     final notifier = ref.read(comandaProvider.notifier);
     if (notifier.totalItems == 0) {
       warningNotification('La canasta está vacía');
+      return;
+    }
+
+    if (widget.onlineOrderId != null) {
+      final created = await notifier.submitOnlineOrder(office);
+      if (created == null || !mounted) return;
+      successNotification('Comanda creada exitosamente');
+      Navigator.pop(context, true);
       return;
     }
 
@@ -342,6 +358,15 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
               style: const TextStyle(
                   fontWeight: FontWeight.bold, fontSize: 15),
             ),
+            if (widget.onlineOrderId != null)
+              Text(
+                'Pedido online #${formatOrderNumber(widget.onlineOrderNumber ?? widget.onlineOrderId)}',
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                    color: Colors.white),
+              ),
             if (!widget.isPedidoSinMesa && widget.table?.salon?.nombre != null)
               Text(
                 widget.table!.salon!.nombre!,

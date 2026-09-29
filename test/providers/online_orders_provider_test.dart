@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teki_app/src/data/models/response/online_order_response.dart';
 import 'package:teki_app/src/data/models/teki_model/online_order.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/domain/repositories/online_order_repository.dart';
 import 'package:teki_app/src/providers/online_orders/online_orders_provider.dart';
 
@@ -38,6 +39,9 @@ class _FakeOnlineOrderRepository implements OnlineOrderRepository {
 
   @override
   Future<OnlineOrder> getOrder(int id) async => OnlineOrder(id: id);
+
+  @override
+  Future<Ticket> getSaleDraft(int id) async => Ticket(id: id);
 
   @override
   Future<OnlineOrder> changeStatus(int id, String status) async =>

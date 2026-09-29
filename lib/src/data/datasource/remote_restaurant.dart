@@ -132,6 +132,24 @@ class RemoteRestaurant extends RestaurantDatasource {
   }
 
   @override
+  Future<OrderRestaurant> getOrderById(int id) async {
+    try {
+      final response = await dio.get('/orders-restaurant/$id');
+      return OrderRestaurant.fromJson(response.data);
+    } on DioException catch (error) {
+      if (error.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      final data = error.response?.data;
+      final message =
+          (data is Map ? (data['mensaje'] ?? data['message']) : null) ??
+          error.message ??
+          'No se pudo cargar la orden asociada';
+      throw Exception(message);
+    }
+  }
+
+  @override
   Future<List<Command>> getCommands(Map<String, dynamic> params) async {
     try {
       final response = await dio.get('/commands', queryParameters: params);

@@ -129,6 +129,8 @@ class Ticket {
   final User? vendedor;
   final OrderRestaurant? pedidoRestaurante;
   final int? cuentaRestaurante;
+  final int? idPedidoTiendaOnline;
+  final int? numeroPedidoOnline;
   final String? canal;
   final String? comprobanteAnterior;
   final CashRegisterDetail? movimientoCaja;
@@ -261,6 +263,8 @@ class Ticket {
     this.vendedor,
     this.pedidoRestaurante,
     this.cuentaRestaurante,
+    this.idPedidoTiendaOnline,
+    this.numeroPedidoOnline,
     this.canal,
     this.comprobanteAnterior,
     this.movimientoCaja,
@@ -430,6 +434,8 @@ class Ticket {
             ? OrderRestaurant.fromJson(json['pedidoRestaurante'])
             : null,
         cuentaRestaurante: json['cuentaRestaurante'],
+        idPedidoTiendaOnline: (json['idPedidoTiendaOnline'] as num?)?.toInt(),
+        numeroPedidoOnline: (json['numeroPedidoOnline'] as num?)?.toInt(),
         canal: json['canal'],
         comprobanteAnterior: json['comprobanteAnterior'],
         movimientoCaja: json['movimientoCaja'] != null
@@ -571,6 +577,8 @@ class Ticket {
         'vendedor': vendedor?.toJson(),
         'pedidoRestaurante': pedidoRestaurante?.toJson(),
         'cuentaRestaurante': cuentaRestaurante,
+        'idPedidoTiendaOnline': idPedidoTiendaOnline,
+        'numeroPedidoOnline': numeroPedidoOnline,
         'canal': canal,
         'comprobanteAnterior': comprobanteAnterior,
         'movimientoCaja': movimientoCaja?.toJson(),
@@ -704,6 +712,8 @@ class Ticket {
     User? vendedor,
     OrderRestaurant? pedidoRestaurante,
     int? cuentaRestaurante,
+    int? idPedidoTiendaOnline,
+    int? numeroPedidoOnline,
     String? canal,
     String? comprobanteAnterior,
     CashRegisterDetail? movimientoCaja,
@@ -857,6 +867,8 @@ class Ticket {
       vendedor: vendedor ?? this.vendedor,
       pedidoRestaurante: pedidoRestaurante ?? this.pedidoRestaurante,
       cuentaRestaurante: cuentaRestaurante ?? this.cuentaRestaurante,
+      idPedidoTiendaOnline: idPedidoTiendaOnline ?? this.idPedidoTiendaOnline,
+      numeroPedidoOnline: numeroPedidoOnline ?? this.numeroPedidoOnline,
       canal: canal ?? this.canal,
       comprobanteAnterior: comprobanteAnterior ?? this.comprobanteAnterior,
       movimientoCaja: movimientoCaja ?? this.movimientoCaja,

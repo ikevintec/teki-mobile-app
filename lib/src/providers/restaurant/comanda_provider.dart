@@ -23,6 +23,7 @@ import 'package:teki_app/src/domain/repositories/restaurant_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/shared/services/command_print_service.dart';
+import 'package:teki_app/src/shared/services/online_order_workflow_service.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 // ---------------------------------------------------------------------------
@@ -117,6 +118,7 @@ final comandaProvider =
     repository: RestaurantRepositoryImpl(),
     productsRepository: ProductsRepositoryImpl(),
     inventoryRepository: InventoryRepositoryImpl(),
+    onlineOrderWorkflow: OnlineOrderWorkflowService(),
   ),
 );
 
@@ -125,6 +127,7 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   final RestaurantRepository repository;
   final ProductsRepository productsRepository;
   final InventoryRepository inventoryRepository;
+  final OnlineOrderWorkflowService onlineOrderWorkflow;
   final CommandPrintService _printService = CommandPrintService();
 
   /// Mismo tope que el `size: 500` del endpoint que se usaba antes.
@@ -138,9 +141,11 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
     required this.repository,
     required this.productsRepository,
     required this.inventoryRepository,
+    required this.onlineOrderWorkflow,
   })  : super(ComandaState(
           table: null,
           existingOrderId: null,
+          onlineOrderDraft: null,
           cartItems: [],
           searchQuery: '',
           products: [],
@@ -154,10 +159,15 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   // Init / load
   // -------------------------------------------------------------------------
 
-  Future<void> init(Table? table, {int? existingOrderId}) async {
+  Future<void> init(
+    Table? table, {
+    int? existingOrderId,
+    int? onlineOrderId,
+  }) async {
     state = ComandaState(
       table: table,
       existingOrderId: existingOrderId ?? table?.pedidoActual?.id,
+      onlineOrderDraft: null,
       cartItems: [],
       searchQuery: '',
       products: [],
@@ -170,6 +180,52 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
       unawaited(ref.read(localProductsProvider.notifier).ensureCacheLoaded());
     }
     await loadProducts();
+    if (onlineOrderId != null) {
+      await _loadOnlineOrder(onlineOrderId);
+    }
+  }
+
+  Future<void> _loadOnlineOrder(int onlineOrderId) async {
+    final session = ref.read(sesionProvider);
+    final office = session.office;
+    if (office == null) {
+      errorNotification('Debe seleccionar un punto de venta.');
+      return;
+    }
+    state = state.copyWith(isLoadingProducts: true);
+    try {
+      final draft = await onlineOrderWorkflow.prepare(
+        onlineOrderId,
+        office,
+        session.config,
+      );
+      final cart = draft.details.map((detail) {
+        final quantity = detail.cantidad ?? 1;
+        if (quantity != quantity.roundToDouble()) {
+          throw StateError(
+            'Las comandas solo admiten cantidades enteras. Revise ${detail.producto?.nombre ?? 'el producto'}.',
+          );
+        }
+        return CartItem.create(
+          product: detail.producto!,
+          quantity: quantity.round(),
+          price: detail.precioVenta ?? 0,
+          nota: detail.nota,
+          paraLlevar: detail.paraLlevar ?? false,
+          grupoOpciones: detail.grupoProductoOpciones ?? const [],
+          preparacionOpciones:
+              detail.preparacionProductoOpciones ?? const [],
+        );
+      }).toList();
+      state = state.copyWith(
+        onlineOrderDraft: draft,
+        cartItems: cart,
+        isLoadingProducts: false,
+      );
+    } catch (error) {
+      errorNotification(error.toString().replaceFirst('Bad state: ', ''));
+      state = state.copyWith(isLoadingProducts: false);
+    }
   }
 
   bool get _useLocalSearch =>
@@ -447,6 +503,59 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   /// Crea la orden y retorna el [OrderRestaurant] creado por el backend.
   /// Retorna `null` si hay un error (ya notificado internamente).
   /// La navegación post-creación es responsabilidad del screen llamador.
+  Future<OrderRestaurant?> submitOnlineOrder(Office office) async {
+    final draft = state.onlineOrderDraft;
+    if (draft == null) {
+      errorNotification('No se pudo recuperar el pedido online.');
+      return null;
+    }
+    if (state.cartItems.isEmpty) {
+      warningNotification('Agregue al menos un producto');
+      return null;
+    }
+    state = state.copyWith(isSubmitting: true);
+    try {
+      final details = state.cartItems
+          .map(
+            (item) => CommandDetail(
+              producto: item.product,
+              cantidad: item.quantity.toDouble(),
+              precioVenta: item.price,
+              nota: item.nota,
+              paraLlevar: item.paraLlevar,
+              grupoProductoOpciones: item.grupoOpciones,
+              preparacionProductoOpciones: item.preparacionOpciones,
+            ),
+          )
+          .toList();
+      final created = await onlineOrderWorkflow.createFromDraft(
+        draft,
+        office,
+        details,
+      );
+      final session = ref.read(sesionProvider);
+      final commandId = created.comandas?.firstOrNull?.id;
+      if (session.config?.imprimirPedidoComandaSinComprobante == true &&
+          commandId != null) {
+        await _printService.processCommand(
+          commandId: commandId,
+          puntoVenta: office,
+          escPos: session.config?.imprimeTicketsEscPos ?? false,
+          clientPrinter: session.config?.clienteImpresion,
+          idCompany: session.company?.id,
+        );
+      }
+      if (!mounted) return null;
+      state = state.copyWith(isSubmitting: false);
+      return created;
+    } catch (error) {
+      if (!mounted) return null;
+      state = state.copyWith(isSubmitting: false);
+      errorNotification(error.toString().replaceFirst('Bad state: ', ''));
+      return null;
+    }
+  }
+
   Future<OrderRestaurant?> submitPedidoSinMesa({
     required Office puntoVenta,
     required String tipo,
@@ -523,6 +632,7 @@ class ComandaState {
 
   final Table? table;
   final int? existingOrderId;
+  final OnlineOrderCommandDraft? onlineOrderDraft;
   final List<CartItem> cartItems;
   final String searchQuery;
   final List<Product> products;
@@ -534,6 +644,7 @@ class ComandaState {
   ComandaState({
     required this.table,
     this.existingOrderId,
+    required this.onlineOrderDraft,
     required this.cartItems,
     required this.searchQuery,
     required this.products,
@@ -546,6 +657,7 @@ class ComandaState {
   ComandaState copyWith({
     Table? table,
     int? existingOrderId,
+    OnlineOrderCommandDraft? onlineOrderDraft,
     List<CartItem>? cartItems,
     String? searchQuery,
     List<Product>? products,
@@ -558,6 +670,7 @@ class ComandaState {
       ComandaState(
         table: table ?? this.table,
         existingOrderId: existingOrderId ?? this.existingOrderId,
+        onlineOrderDraft: onlineOrderDraft ?? this.onlineOrderDraft,
         cartItems: cartItems ?? this.cartItems,
         searchQuery: searchQuery ?? this.searchQuery,
         products: products ?? this.products,

@@ -12,6 +12,11 @@ void main() {
       'nombreCliente': 'Ana',
       'total': 29.5,
       'createdOn': 1760000000000,
+      'ticket': {
+        'id': 78,
+        'uuid': 'ticket-uuid',
+        'identificadorDocumento': 'B001-123',
+      },
       'responsable': {'nombreCompleto': 'Luis Pérez'},
       'items': [
         {
@@ -33,9 +38,19 @@ void main() {
 
     expect(order.id, 41);
     expect(order.createdOn, DateTime.fromMillisecondsSinceEpoch(1760000000000));
+    expect(order.facturado, isTrue);
+    expect(order.comprobante?.id, 78);
+    expect(order.comprobante?.uuid, 'ticket-uuid');
+    expect(order.comprobante?.identificadorDocumento, 'B001-123');
     expect(order.responsable?.displayName, 'Luis Pérez');
     expect(order.items.single.nombreProducto, 'Hamburguesa');
     expect(order.items.single.opciones.single.nombreOpcion, 'Mayonesa');
+  });
+
+  test('OnlineOrder queda como no facturado sin comprobante ni ticket', () {
+    final order = OnlineOrder.fromJson({'id': 42, 'estado': 'ATENDIDO'});
+
+    expect(order.facturado, isFalse);
   });
 
   test('OnlineOrderResponse interpreta la paginación', () {

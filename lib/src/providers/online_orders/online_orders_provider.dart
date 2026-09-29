@@ -22,16 +22,6 @@ final onlineOrdersProvider =
       );
     });
 
-class OnlineOrderActionResult {
-  final OnlineOrder order;
-  final WhatsappResponse notification;
-
-  const OnlineOrderActionResult({
-    required this.order,
-    required this.notification,
-  });
-}
-
 class OnlineOrdersNotifier extends StateNotifier<OnlineOrdersState> {
   final OnlineOrderRepository repository;
   final Ref ref;
@@ -129,10 +119,9 @@ class OnlineOrdersNotifier extends StateNotifier<OnlineOrdersState> {
     }
   }
 
-  Future<OnlineOrderActionResult> changeStatus(
-    OnlineOrder current,
-    String status,
-  ) async {
+  /// Cambia el estado del pedido. El aviso al cliente por WhatsApp es un
+  /// paso aparte ([notifyCustomer]) que la vista ofrece tras confirmar.
+  Future<OnlineOrder> changeStatus(OnlineOrder current, String status) async {
     if (current.id == null) {
       throw Exception('El pedido no tiene un identificador válido');
     }
@@ -145,31 +134,32 @@ class OnlineOrdersNotifier extends StateNotifier<OnlineOrdersState> {
       // aparecer inmediatamente si la vista está filtrada por PENDIENTE.
       await loadFirstPage(silent: true);
 
-      final session = ref.read(sesionProvider);
-      final message = buildOnlineOrderStatusMessage(
-        updated,
-        status,
-        session.companySelected?.nombreComercial ??
-            session.companySelected?.razonSocial ??
-            session.company?.nombreComercial ??
-            session.company?.razonSocial,
-      );
-      final notification = await ref
-          .read(whatsappProvider.notifier)
-          .sendOrderStatusMessage(
-            phoneNumber: updated.telefonoCliente ?? '',
-            message: message,
-          );
-
       state = state.copyWith(actionOrderId: null);
-      return OnlineOrderActionResult(
-        order: updated,
-        notification: notification,
-      );
+      return updated;
     } catch (error) {
       state = state.copyWith(actionOrderId: null, error: _cleanError(error));
       rethrow;
     }
+  }
+
+  /// Avisa al cliente del nuevo [status] por el flujo de WhatsApp configurado
+  /// (Evolution API o WhatsApp público como respaldo).
+  Future<WhatsappResponse> notifyCustomer(OnlineOrder order, String status) {
+    final session = ref.read(sesionProvider);
+    final message = buildOnlineOrderStatusMessage(
+      order,
+      status,
+      session.companySelected?.nombreComercial ??
+          session.companySelected?.razonSocial ??
+          session.company?.nombreComercial ??
+          session.company?.razonSocial,
+    );
+    return ref
+        .read(whatsappProvider.notifier)
+        .sendOrderStatusMessage(
+          phoneNumber: order.telefonoCliente ?? '',
+          message: message,
+        );
   }
 
   Map<String, dynamic> _buildParams(int pageNumber) {

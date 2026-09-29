@@ -17,4 +17,13 @@ abstract class CustomersDatasource {
 
   /// Actualiza un cliente existente
   Future<Customer> updateCustomer(Customer customer);
+
+  /// Cliente guardado con exactamente ese tipo y número de documento, o null.
+  Future<Customer?> findByDocument(
+    String tipoDocumento,
+    String numeroDocumento,
+  );
+
+  /// Último cliente de la empresa con ese celular (9 dígitos), o null.
+  Future<Customer?> findByPhone(String telefono);
 }

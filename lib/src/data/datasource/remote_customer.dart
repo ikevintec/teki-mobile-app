@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/data/models/response/customer.dart';
 import 'package:teki_app/src/domain/datasource/customer_datasource.dart';
@@ -151,6 +152,61 @@ class RemoteCustomers extends CustomersDatasource {
     } catch (e) {
       errorNotification(e.toString());
       return [];
+    }
+  }
+
+  /// Paridad web (CustomerService.findByDocumento): filtra por tipo y número
+  /// y se queda solo con la coincidencia exacta. Silencioso: se usa para
+  /// autocompletar, un fallo equivale a "no encontrado".
+  @override
+  Future<Customer?> findByDocument(
+    String tipoDocumento,
+    String numeroDocumento,
+  ) async {
+    try {
+      final response = await dio.get(
+        '/customers',
+        queryParameters: {
+          'paginacion': false,
+          'filtro': numeroDocumento,
+          'limit': 20,
+          'tipoDocumento': tipoDocumento,
+        },
+      );
+      final data = response.data;
+      final customers = data is List
+          ? data.map((x) => Customer.fromJson(x)).toList()
+          : CustomerResponse.fromJson(data).content;
+      return customers
+          .where(
+            (c) =>
+                c.tipoDocumento == tipoDocumento &&
+                c.numeroDocumento == numeroDocumento,
+          )
+          .firstOrNull;
+    } catch (e) {
+      if (kDebugMode) debugPrint('findByDocument: $e');
+      return null;
+    }
+  }
+
+  /// `GET /customers/operations/by-phone`: el backend exige 9 dígitos y
+  /// responde vacío cuando no hay cliente con ese celular.
+  @override
+  Future<Customer?> findByPhone(String telefono) async {
+    if (!RegExp(r'^\d{9}$').hasMatch(telefono)) return null;
+    try {
+      final response = await dio.get(
+        '/customers/operations/by-phone',
+        queryParameters: {'telefono': telefono},
+      );
+      final data = response.data;
+      return data is Map
+          ? Customer.fromJson(Map<String, dynamic>.from(data))
+          : null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('findByPhone: $e');
+      return null;
     }
   }
 }

@@ -36,6 +36,10 @@ class RestaurantRepositoryImpl extends RestaurantRepository {
       restaurantDatasource.getOrders(params);
 
   @override
+  Future<OrderRestaurant> getOrderById(int id) =>
+      restaurantDatasource.getOrderById(id);
+
+  @override
   Future<List<Command>> getCommands(Map<String, dynamic> params) =>
       restaurantDatasource.getCommands(params);
 

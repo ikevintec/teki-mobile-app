@@ -34,4 +34,17 @@ class CustomersRepositoryImpl extends CustomersRepository {
   Future<List<Customer>> searchCustomers(String query) async {
     return await customersDatasource.searchCustomers(query);
   }
+
+  @override
+  Future<Customer?> findByDocument(
+    String tipoDocumento,
+    String numeroDocumento,
+  ) {
+    return customersDatasource.findByDocument(tipoDocumento, numeroDocumento);
+  }
+
+  @override
+  Future<Customer?> findByPhone(String telefono) {
+    return customersDatasource.findByPhone(telefono);
+  }
 }

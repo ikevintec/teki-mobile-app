@@ -16,6 +16,7 @@ import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 enum SaleMode { createVenta, editVenta, createCotizacion, editCotizacion }
@@ -380,6 +381,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       vendedor: state.ticket.vendedor,
       pedidoRestaurante: state.ticket.pedidoRestaurante,
       cuentaRestaurante: state.ticket.cuentaRestaurante,
+      idPedidoTiendaOnline: state.ticket.idPedidoTiendaOnline,
       canal: state.ticket.canal,
       comprobanteAnterior: state.ticket.comprobanteAnterior,
       movimientoCaja: state.isQuotation
@@ -623,6 +625,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
         vendedor: state.ticket.vendedor,
         pedidoRestaurante: state.ticket.pedidoRestaurante,
         cuentaRestaurante: state.ticket.cuentaRestaurante,
+        idPedidoTiendaOnline: state.ticket.idPedidoTiendaOnline,
         canal: state.ticket.canal,
         comprobanteAnterior: state.ticket.comprobanteAnterior,
         movimientoCaja: state.ticket.movimientoCaja,
@@ -679,6 +682,35 @@ class TicketProvider {
 
   bool get subtitleEmphasis =>
       isQuotation || isSalesNoteConversion || isSaleFromQuotation;
+
+  /// Venta originada en un pedido de la tienda online: CATALOGO (draft del
+  /// backend, trae id y número) o MENU facturado directo (solo número, el
+  /// backend vincula el pedido desde la cuenta).
+  bool get isFromOnlineOrder =>
+      ticket.idPedidoTiendaOnline != null || ticket.numeroPedidoOnline != null;
+
+  String get _onlineOrderNumber => formatOrderNumber(
+    ticket.numeroPedidoOnline ?? ticket.idPedidoTiendaOnline,
+  );
+
+  /// Subtítulo del AppBar en Cliente, Productos y Comprobante: prioriza el
+  /// pedido restaurante y/o el pedido online sobre [subtitleLabel].
+  String? get headerSubtitle {
+    final restaurantOrder = ticket.pedidoRestaurante;
+    if (restaurantOrder != null) {
+      final label = 'Pedido #${formatOrderNumber(restaurantOrder.id)}';
+      return isFromOnlineOrder
+          ? '$label · Pedido online #$_onlineOrderNumber'
+          : label;
+    }
+    if (isFromOnlineOrder) return 'Venta de pedido online #$_onlineOrderNumber';
+    return subtitleLabel;
+  }
+
+  bool get headerSubtitleEmphasis => subtitleEmphasis || isFromOnlineOrder;
+
+  bool get hasTallHeader =>
+      ticket.pedidoRestaurante != null || isFromOnlineOrder;
 
   String get continueButtonLabel {
     switch (mode) {
