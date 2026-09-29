@@ -18,6 +18,7 @@ import 'package:teki_app/src/presentation/screens/accounts_receivable/accounts_r
 import 'package:teki_app/src/presentation/screens/comprobantes/ver_comprobantes.dart';
 import 'package:teki_app/src/presentation/screens/cotizaciones/ver_quotations_screen.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/orders_restaurant_main_screen.dart';
+import 'package:teki_app/src/presentation/screens/online_orders/online_orders_screen.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
@@ -70,6 +71,7 @@ class AppRoutes {
   static const String updateProduct = "/product/edit";
   //Ventas
   static const String productsSales = "/products_sale";
+  static const String onlineOrders = "/online-orders";
   // Inventario
   static const String inventory = "/inventory";
   static const String inventoryAdjustmentCreate =
@@ -110,6 +112,7 @@ class AppRoutes {
     //Route Comprobantes
     GetPage(name: comprobantesVer, page: () => const VerComprobanteScreen()),
     GetPage(name: quotationsVer, page: () => const VerQuotationsScreen()),
+    GetPage(name: onlineOrders, page: () => const OnlineOrdersScreen()),
 
     GetPage(name: products, page: () => const ProductsMainScreen()),
 

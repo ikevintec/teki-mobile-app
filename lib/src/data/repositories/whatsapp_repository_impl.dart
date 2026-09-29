@@ -4,6 +4,7 @@ import 'package:teki_app/src/domain/datasource/whatsapp_datasource.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_message_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_document_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_evolution_media_request.dart';
+import 'package:teki_app/src/data/models/whatsapp/whatsapp_evolution_message_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_socket_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_response.dart';
 import 'package:teki_app/src/domain/repositories/whatsapp_repository.dart';
@@ -12,7 +13,7 @@ class WhatsappRepositoryImpl implements WhatsappRepository {
   final WhatsappDataSource dataSource;
 
   WhatsappRepositoryImpl({WhatsappDataSource? dataSource})
-      : dataSource = dataSource ?? WhatsappDataSourceImpl();
+    : dataSource = dataSource ?? WhatsappDataSourceImpl();
 
   @override
   Future<WhatsappResponse> sendWhatsappMessage({
@@ -23,13 +24,10 @@ class WhatsappRepositoryImpl implements WhatsappRepository {
   }) async {
     try {
       final formattedNumber = formatPhoneNumber(number);
-      
+
       // Enviar mensaje de texto
       final messageResponse = await dataSource.sendMessage(
-        WhatsappMessageRequest(
-          number: formattedNumber,
-          message: message,
-        ),
+        WhatsappMessageRequest(number: formattedNumber, message: message),
       );
 
       if (!messageResponse.success) {
@@ -63,8 +61,8 @@ class WhatsappRepositoryImpl implements WhatsappRepository {
   }) async {
     try {
       final formattedNumber = formatPhoneNumber(number);
-      final evolutionNumber = formattedNumber.contains('+') 
-          ? formattedNumber 
+      final evolutionNumber = formattedNumber.contains('+')
+          ? formattedNumber
           : '+51$formattedNumber';
 
       final request = WhatsappEvolutionMediaRequest(
@@ -85,6 +83,26 @@ class WhatsappRepositoryImpl implements WhatsappRepository {
   }
 
   @override
+  Future<WhatsappResponse> sendEvolutionMessage({
+    required String number,
+    required String message,
+  }) async {
+    try {
+      return await dataSource.evolutionSendMessage(
+        WhatsappEvolutionMessageRequest(
+          number: formatPhoneNumber(number),
+          text: message,
+        ),
+      );
+    } catch (error) {
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al enviar por Evolution: $error',
+      );
+    }
+  }
+
+  @override
   Future<WhatsappResponse> sendSocketMessage({
     required int companyId,
     required String number,
@@ -94,7 +112,7 @@ class WhatsappRepositoryImpl implements WhatsappRepository {
   }) async {
     try {
       final formattedNumber = formatPhoneNumber(number);
-      
+
       final request = WhatsappSocketRequest(
         event: 'sendMessageWhatsapp',
         idCompany: companyId,
@@ -121,8 +139,9 @@ class WhatsappRepositoryImpl implements WhatsappRepository {
     try {
       final formattedNumber = formatPhoneNumber(number);
       final encodedMessage = Uri.encodeComponent(message);
-      final url = 'https://api.whatsapp.com/send?phone=$formattedNumber&text=$encodedMessage';
-      
+      final url =
+          'https://api.whatsapp.com/send?phone=$formattedNumber&text=$encodedMessage';
+
       final uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -145,7 +164,7 @@ class WhatsappRepositoryImpl implements WhatsappRepository {
   String formatPhoneNumber(String phoneNumber) {
     // Remover todos los caracteres no numéricos excepto el +
     String cleaned = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    
+
     // Si no tiene código de país, agregar +51 (Perú)
     if (!cleaned.startsWith('+')) {
       if (cleaned.startsWith('51')) {
@@ -154,18 +173,15 @@ class WhatsappRepositoryImpl implements WhatsappRepository {
         cleaned = '+51$cleaned';
       }
     }
-    
+
     return cleaned;
   }
 
   @override
   Future<WhatsappResponse> closeSessionWhatsapp(int companyId) async {
     try {
-      final data = {
-        'event': 'disconectFromWeb',
-        'idCompany': companyId,
-      };
-      
+      final data = {'event': 'disconectFromWeb', 'idCompany': companyId};
+
       return await dataSource.closeSessionWhatsapp(data);
     } catch (e) {
       return WhatsappResponse(

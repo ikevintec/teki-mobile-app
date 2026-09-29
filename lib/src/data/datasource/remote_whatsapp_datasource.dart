@@ -3,6 +3,7 @@ import 'package:teki_app/src/domain/datasource/whatsapp_datasource.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_message_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_document_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_evolution_media_request.dart';
+import 'package:teki_app/src/data/models/whatsapp/whatsapp_evolution_message_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_socket_request.dart';
 import 'package:teki_app/src/data/models/whatsapp/whatsapp_response.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -12,30 +13,25 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
   final Dio dio;
   late final Dio _whatsappClient;
   late final Dio _wsClient;
-  
-  WhatsappDataSourceImpl({Dio? dio}) 
-      : dio = dio ?? ApiClient.dio {
+
+  WhatsappDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio {
     _initializeWhatsappClients();
   }
 
   void _initializeWhatsappClients() {
-    _whatsappClient = Dio(BaseOptions(
-      baseUrl: Environment.apiUrl
-    ));
+    _whatsappClient = Dio(BaseOptions(baseUrl: Environment.apiUrl));
 
     // Cliente para WebSocket también sin timeouts
-    _wsClient = Dio(BaseOptions(
-      baseUrl: Environment.apiUrl.replaceAll('/api', '/ws'),
-    ));
+    _wsClient = Dio(
+      BaseOptions(baseUrl: Environment.apiUrl.replaceAll('/api', '/ws')),
+    );
 
     // Mismos interceptores que ApiClient.dio: auth, logout en 401 y logs solo en debug
     _whatsappClient.interceptors.addAll(ApiClient.defaultInterceptors());
     _wsClient.interceptors.addAll(ApiClient.defaultInterceptors());
   }
 
-  Map<String, String> get _headersWithHideLoader => {
-    'hideLoader': 'S',
-  };
+  Map<String, String> get _headersWithHideLoader => {'hideLoader': 'S'};
 
   Map<String, String> get _headersWithPrinting => {
     'hideLoader': 'S',
@@ -82,7 +78,7 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
 
       return WhatsappResponse(
         success: true,
-        message: 'Documento enviado correctamente'
+        message: 'Documento enviado correctamente',
       );
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
@@ -101,7 +97,9 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
   }
 
   @override
-  Future<WhatsappResponse> evolutionSendMedia(WhatsappEvolutionMediaRequest request) async {
+  Future<WhatsappResponse> evolutionSendMedia(
+    WhatsappEvolutionMediaRequest request,
+  ) async {
     try {
       await _whatsappClient.post(
         '/whatsapp/evolution/send-media',
@@ -130,7 +128,39 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
   }
 
   @override
-  Future<WhatsappResponse> sendMessageSocket(WhatsappSocketRequest request) async {
+  Future<WhatsappResponse> evolutionSendMessage(
+    WhatsappEvolutionMessageRequest request,
+  ) async {
+    try {
+      await _whatsappClient.post(
+        '/whatsapp/evolution/send-message',
+        data: request.toJson(),
+        options: Options(headers: _headersWithHideLoader),
+      );
+      return const WhatsappResponse(
+        success: true,
+        message: 'Mensaje enviado correctamente',
+      );
+    } on DioException catch (error) {
+      if (error.message == 'SESSION_EXPIRED') {
+        throw Exception('Sesión expirada');
+      }
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al enviar mensaje por Evolution: $error',
+      );
+    } catch (error) {
+      return WhatsappResponse(
+        success: false,
+        message: 'Error al enviar mensaje por Evolution: $error',
+      );
+    }
+  }
+
+  @override
+  Future<WhatsappResponse> sendMessageSocket(
+    WhatsappSocketRequest request,
+  ) async {
     try {
       final response = await _wsClient.post(
         '/send-message-whatsapp-socket',
@@ -141,7 +171,9 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
       final data = response.data;
       return WhatsappResponse(
         success: data['sended'] ?? false,
-        message: data['sended'] ? 'Mensaje enviado correctamente' : 'Error al enviar mensaje'
+        message: data['sended']
+            ? 'Mensaje enviado correctamente'
+            : 'Error al enviar mensaje',
       );
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
@@ -160,7 +192,9 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
   }
 
   @override
-  Future<WhatsappResponse> closeSessionWhatsapp(Map<String, dynamic> data) async {
+  Future<WhatsappResponse> closeSessionWhatsapp(
+    Map<String, dynamic> data,
+  ) async {
     try {
       await _wsClient.post(
         '/whatsapp-session-logout',
@@ -170,8 +204,8 @@ class WhatsappDataSourceImpl implements WhatsappDataSource {
 
       return WhatsappResponse(
         success: true,
-        message: 'Sesión cerrada correctamente'      
-        );
+        message: 'Sesión cerrada correctamente',
+      );
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');

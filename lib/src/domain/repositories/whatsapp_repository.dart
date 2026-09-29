@@ -8,7 +8,7 @@ abstract class WhatsappRepository {
     required String filename,
     required String documentUrl,
   });
-  
+
   /// Envía usando Evolution API
   Future<WhatsappResponse> sendEvolutionMedia({
     required String number,
@@ -16,7 +16,13 @@ abstract class WhatsappRepository {
     required String caption,
     required String fileName,
   });
-  
+
+  /// Envía solo texto usando Evolution API.
+  Future<WhatsappResponse> sendEvolutionMessage({
+    required String number,
+    required String message,
+  });
+
   /// Envía usando Socket
   Future<WhatsappResponse> sendSocketMessage({
     required int companyId,
@@ -25,25 +31,25 @@ abstract class WhatsappRepository {
     required String filename,
     required String documentUrl,
   });
-  
+
   /// Abre WhatsApp Web (fallback)
   Future<void> openWhatsappWeb({
     required String number,
     required String message,
   });
-  
+
   /// Valida si un número de teléfono es válido
   bool validatePhoneNumber(String phoneNumber);
-  
+
   /// Formatea un número de teléfono
   String formatPhoneNumber(String phoneNumber);
-  
+
   /// Cierra sesión de WhatsApp Socket
   Future<WhatsappResponse> closeSessionWhatsapp(int companyId);
-  
+
   /// Obtiene información de instancia Evolution
   Future<WhatsappResponse> getInstanceInfo();
-  
+
   /// Obtiene estado de instancia Evolution
   Future<WhatsappResponse> getInstanceStatus();
 }

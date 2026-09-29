@@ -284,6 +284,14 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       'icon': 'assets/icons/icon_svg/invoice_icon.svg',
       'action': () => Get.toNamed(AppRoutes.quotationsVer),
     },
+    if (ref.watch(sesionProvider).hasPermission('SUPER_USUARIO') ||
+        ref.watch(sesionProvider).hasPermission('CATALOGO_VER') ||
+        ref.watch(sesionProvider).hasPermission('MENU_CLIENTE_VER'))
+      {
+        'title': 'Pedidos\nOnline',
+        'icon': 'assets/icons/icon_image/pedido_add.png',
+        'action': () => Get.toNamed(AppRoutes.onlineOrders),
+      },
     {
       'title': 'Más\nOpciones',
       'icon': 'assets/icons/icon_svg/dots-three.svg',

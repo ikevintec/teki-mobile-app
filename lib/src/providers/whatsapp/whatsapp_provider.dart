@@ -6,12 +6,13 @@ import 'package:teki_app/src/data/models/teki_model/config.dart';
 import 'package:teki_app/src/domain/repositories/whatsapp_repository.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 
-
-final whatsappProvider = StateNotifierProvider<WhatsappNotifier, WhatsappState>((ref) {
-  final WhatsappRepository whatsappRepository = WhatsappRepositoryImpl();
-  final sesion = ref.watch(sesionProvider);
-  return WhatsappNotifier(repository: whatsappRepository, sesion: sesion);
-});
+final whatsappProvider = StateNotifierProvider<WhatsappNotifier, WhatsappState>(
+  (ref) {
+    final WhatsappRepository whatsappRepository = WhatsappRepositoryImpl();
+    final sesion = ref.watch(sesionProvider);
+    return WhatsappNotifier(repository: whatsappRepository, sesion: sesion);
+  },
+);
 
 class WhatsappState {
   final bool isLoading;
@@ -45,10 +46,59 @@ class WhatsappNotifier extends StateNotifier<WhatsappState> {
   final WhatsappRepository repository;
   final SesionState sesion;
 
-  WhatsappNotifier({
-    required this.repository,
-    required this.sesion,
-  }) : super(const WhatsappState());
+  WhatsappNotifier({required this.repository, required this.sesion})
+    : super(const WhatsappState());
+
+  /// Envía una notificación de pedido. Evolution es el canal automático y,
+  /// si no está disponible o falla, abre WhatsApp con el texto precargado.
+  Future<WhatsappResponse> sendOrderStatusMessage({
+    required String phoneNumber,
+    required String message,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    if (!repository.validatePhoneNumber(phoneNumber)) {
+      final response = WhatsappResponse(
+        success: false,
+        message: 'El pedido no tiene un número de teléfono válido.',
+      );
+      _updateStateFromResponse(response);
+      return response;
+    }
+
+    final config = sesion.config;
+    if (config?.usaWhatsappApi == true &&
+        config?.tipoClienteWhatsapp == 'EVOLUTION') {
+      final evolutionResponse = await repository.sendEvolutionMessage(
+        number: phoneNumber,
+        message: message,
+      );
+      if (evolutionResponse.success) {
+        _updateStateFromResponse(evolutionResponse);
+        return evolutionResponse;
+      }
+      debugPrint(
+        'Evolution no pudo notificar el pedido; se abrirá WhatsApp público.',
+      );
+    }
+
+    try {
+      await repository.openWhatsappWeb(number: phoneNumber, message: message);
+      final response = WhatsappResponse(
+        success: true,
+        message: 'Se abrió WhatsApp con el mensaje preparado.',
+      );
+      _updateStateFromResponse(response);
+      return response;
+    } catch (error) {
+      final response = WhatsappResponse(
+        success: false,
+        message: 'No se pudo abrir WhatsApp: $error',
+      );
+      _updateStateFromResponse(response);
+      return response;
+    }
+  }
 
   /// Método principal para enviar WhatsApp siguiendo la lógica del código TypeScript
   Future<WhatsappResponse> sendWhatsapp({
@@ -91,11 +141,8 @@ class WhatsappNotifier extends StateNotifier<WhatsappState> {
         );
       } else {
         // Fallback a WhatsApp Web
-        await repository.openWhatsappWeb(
-          number: phoneNumber,
-          message: message,
-        );
-        
+        await repository.openWhatsappWeb(number: phoneNumber, message: message);
+
         final successResponse = WhatsappResponse(
           success: true,
           message: 'Abriendo WhatsApp Web...',
