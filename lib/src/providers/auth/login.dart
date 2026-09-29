@@ -158,7 +158,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         await keyvalueStorage.getValue<String>(StorageKeys.configCompany);
     final rolesJson = await keyvalueStorage.getValue<String>(StorageKeys.roles);
 
-    if (token != null && loginJson != null && configCompanyJson != null) {
+    if (token != null && loginJson != null) {
       final login = LoginResponse.fromJson(jsonDecode(loginJson));
 
       state = state.copyWith(
@@ -169,21 +169,36 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       );
       try {
         await setConfigProvider(ref, login, saleStationRepository);
-        ConfigCompany configCompany =
-            ConfigCompany.fromJson(jsonDecode(configCompanyJson));
-        ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+
+        // Config: usa la persistida; si falta o está corrupta, se re-pide al
+        // backend (el token sigue siendo válido) en vez de cerrar la sesión.
+        ConfigCompany configCompany;
+        if (configCompanyJson != null) {
+          configCompany = ConfigCompany.fromJson(jsonDecode(configCompanyJson));
+          ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+        } else {
+          configCompany = await setConfigCompanies(ref, configRepository);
+          await keyvalueStorage.setKeyValue(
+              StorageKeys.configCompany, jsonEncode(configCompany.toJson()));
+        }
 
         // Sesión restaurada: inicializar el timestamp local si el flag está
         // activo (asíncrono, no bloquea el arranque de la app).
         // Luego dispara la descarga/refresco del JSON local y su timer de sync.
         _prefetchLocalProducts(configCompany);
 
-        // Restauramos los roles persistidos sin repetir la petición
+        // Roles: usa los persistidos; si faltan, se re-piden al backend en vez
+        // de dejar la sesión sin permisos.
+        final List<String> roles;
         if (rolesJson != null) {
-          ref
-              .read(sesionProvider.notifier)
-              .setRoles(List<String>.from(jsonDecode(rolesJson)));
+          roles = List<String>.from(jsonDecode(rolesJson));
+        } else {
+          roles = await authRepository.getRoles();
+          await keyvalueStorage.setKeyValue(
+              StorageKeys.roles, jsonEncode(roles));
         }
+        ref.read(sesionProvider.notifier).setRoles(roles);
+
         final session = ref.read(sesionProvider);
         await ref
             .read(replicadorAppProvider.notifier)

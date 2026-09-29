@@ -33,7 +33,7 @@ void main() async {
   runApp(
     UncontrolledProviderScope(
       container: globalContainer,
-      child: const ProviderScope(child: MyApp()),
+      child: const MyApp(),
     ),
   );
   // Registra los Yapes capturados por el nativo mientras la app esté viva.
