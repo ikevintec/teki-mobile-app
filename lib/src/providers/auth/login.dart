@@ -158,71 +158,103 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         await keyvalueStorage.getValue<String>(StorageKeys.configCompany);
     final rolesJson = await keyvalueStorage.getValue<String>(StorageKeys.roles);
 
-    if (token != null && loginJson != null) {
-      final login = LoginResponse.fromJson(jsonDecode(loginJson));
+    // Sin token o sin login persistido no hay sesión real: se cierra.
+    if (token == null || loginJson == null) {
+      logout();
+      return;
+    }
 
+    final login = LoginResponse.fromJson(jsonDecode(loginJson));
+
+    try {
+      // Config base (puntos de venta / estaciones). Con reintento ante fallos
+      // de red; un 401 se propaga para cerrar sesión.
+      await _retryAuthCall(
+        () => setConfigProvider(ref, login, saleStationRepository),
+      );
+
+      // Config de empresa: usa la persistida; si falta o está corrupta, se
+      // re-pide al backend (el token sigue siendo válido) en vez de cerrar
+      // sesión.
+      final ConfigCompany configCompany;
+      if (configCompanyJson != null) {
+        configCompany = ConfigCompany.fromJson(jsonDecode(configCompanyJson));
+        ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+      } else {
+        configCompany =
+            await _retryAuthCall(() => setConfigCompanies(ref, configRepository));
+        await keyvalueStorage.setKeyValue(
+            StorageKeys.configCompany, jsonEncode(configCompany.toJson()));
+      }
+
+      // Roles: usa los persistidos; si faltan, se re-piden al backend.
+      final List<String> roles;
+      if (rolesJson != null) {
+        roles = List<String>.from(jsonDecode(rolesJson));
+      } else {
+        roles = await _retryAuthCall(() => authRepository.getRoles());
+        await keyvalueStorage.setKeyValue(StorageKeys.roles, jsonEncode(roles));
+      }
+      ref.read(sesionProvider.notifier).setRoles(roles);
+
+      // Sesión COMPLETA: recién ahora se marca como logueada, para no entrar al
+      // dashboard con permisos/config a medias si algo de lo anterior falló.
       state = state.copyWith(
         isLoggedIn: true,
         token: token,
         user: login.user,
         isLoading: false,
       );
-      try {
-        await setConfigProvider(ref, login, saleStationRepository);
 
-        // Config: usa la persistida; si falta o está corrupta, se re-pide al
-        // backend (el token sigue siendo válido) en vez de cerrar la sesión.
-        ConfigCompany configCompany;
-        if (configCompanyJson != null) {
-          configCompany = ConfigCompany.fromJson(jsonDecode(configCompanyJson));
-          ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
-        } else {
-          configCompany = await setConfigCompanies(ref, configRepository);
-          await keyvalueStorage.setKeyValue(
-              StorageKeys.configCompany, jsonEncode(configCompany.toJson()));
-        }
+      // Servicios que dependen de la sesión ya cargada.
+      _prefetchLocalProducts(configCompany);
 
-        // Sesión restaurada: inicializar el timestamp local si el flag está
-        // activo (asíncrono, no bloquea el arranque de la app).
-        // Luego dispara la descarga/refresco del JSON local y su timer de sync.
-        _prefetchLocalProducts(configCompany);
+      final session = ref.read(sesionProvider);
+      await ref.read(replicadorAppProvider.notifier).initialize(
+            enabled: configCompany.verNotificacionYape == true &&
+                session.hasPermission(
+                    'PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'),
+          );
 
-        // Roles: usa los persistidos; si faltan, se re-piden al backend en vez
-        // de dejar la sesión sin permisos.
-        final List<String> roles;
-        if (rolesJson != null) {
-          roles = List<String>.from(jsonDecode(rolesJson));
-        } else {
-          roles = await authRepository.getRoles();
-          await keyvalueStorage.setKeyValue(
-              StorageKeys.roles, jsonEncode(roles));
-        }
-        ref.read(sesionProvider.notifier).setRoles(roles);
-
-        final session = ref.read(sesionProvider);
-        await ref
-            .read(replicadorAppProvider.notifier)
-            .initialize(
-              enabled:
-                  configCompany.verNotificacionYape == true &&
-                  session.hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'),
-            );
-
-        final userId = login.user?.id;
-        if (userId != null) {
-          NotificationService.instance.initialize(userId);
-        }
-      } on DioException catch (e) {
-        if (e.response?.statusCode == 401) {
-          logout();
-        } else {
-          errorNotification('Error de conexión al cargar la configuración.');
-        }
-      } catch (e) {
-        errorNotification(e.toString());
+      final userId = login.user?.id;
+      if (userId != null) {
+        NotificationService.instance.initialize(userId);
       }
-    } else {
-      logout();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        // Token inválido: se cierra la sesión.
+        logout();
+      } else {
+        // Red/servidor caído tras los reintentos: NO se entra a medias.
+        // isLoggedIn queda en false → el splash enviará a /login. La sesión
+        // persistida queda intacta para reintentar en el próximo arranque.
+        state = state.copyWith(isLoggedIn: false, isLoading: false);
+        errorNotification(
+            'No se pudo cargar tu sesión. Revisa tu conexión e intenta de nuevo.');
+      }
+    } catch (e) {
+      state = state.copyWith(isLoggedIn: false, isLoading: false);
+      errorNotification(e.toString());
+    }
+  }
+
+  /// Ejecuta una llamada de restauración de sesión reintentando ante fallos
+  /// transitorios (red/servidor). Un 401 se propaga de inmediato (no se
+  /// reintenta) para que el llamador cierre la sesión.
+  Future<T> _retryAuthCall<T>(
+    Future<T> Function() action, {
+    int attempts = 3,
+    Duration delay = const Duration(seconds: 2),
+  }) async {
+    for (var attempt = 1; ; attempt++) {
+      try {
+        return await action();
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 401 || attempt >= attempts) rethrow;
+      } catch (_) {
+        if (attempt >= attempts) rethrow;
+      }
+      await Future.delayed(delay);
     }
   }
 
