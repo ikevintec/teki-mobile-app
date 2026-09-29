@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:teki_app/main.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
+import 'package:teki_app/src/data/models/teki_model/restaurant_event.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/sections/orders_restaurant_list_section.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/more_filters_bottom_sheet.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/orders_filter_bar.dart';
@@ -53,9 +54,17 @@ class _OrdersRestaurantMainScreenState
     super.initState();
     _searchController = TextEditingController();
 
-    _orderSub = _socketService
-        .on(SocketEvent.orderRestaurant)
-        .listen((_) { if (mounted) _reload(); });
+    _orderSub = _socketService.on(SocketEvent.orderRestaurant).listen((raw) {
+      if (!mounted) return;
+      // El back difunde por empresa, no por punto de venta: se descartan los
+      // eventos de otras sucursales para no recargar de más.
+      final event = RestaurantEvent.fromSocket(raw, isOrderChannel: true);
+      if (event == null ||
+          !event.belongsToOffice(ref.read(sesionProvider).office?.id)) {
+        return;
+      }
+      _reload();
+    });
 
     final args = Get.arguments as Map<String, dynamic>?;
     _isNotificationNav = args != null && args.containsKey('orderNumber');

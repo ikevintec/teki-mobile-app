@@ -45,7 +45,14 @@ class RemoteRestaurant extends RestaurantDatasource {
       final response = await dio.get('/tables', queryParameters: params);
       final data = response.data;
       final List list = data is List ? data : (data['content'] ?? []);
-      return list.map((e) => Table.fromJson(e)).toList();
+      final tables = list.map((e) => Table.fromJson(e)).toList();
+      // El back no filtra por punto de venta: devuelve las mesas de todas las
+      // sucursales, así que se filtra aquí por el idPuntoVenta solicitado.
+      final idPuntoVenta = params['idPuntoVenta'];
+      if (idPuntoVenta == null) return tables;
+      return tables
+          .where((t) => t.salon?.puntoVenta?.id == idPuntoVenta)
+          .toList();
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {

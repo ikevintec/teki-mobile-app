@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/company_summary.dart';
 import 'package:teki_app/src/data/models/teki_model/config.dart';
@@ -7,6 +9,7 @@ import 'package:teki_app/src/data/models/teki_model/sale_station.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/repositories/sale_station_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/sale_station_repository.dart';
+import 'package:teki_app/src/shared/services/socket_service.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 final sesionProvider = StateNotifierProvider<SesionNotifier, SesionState>((ref) {
@@ -100,6 +103,11 @@ class SesionNotifier extends StateNotifier<SesionState> {
       saleStation: filtered.isNotEmpty ? filtered.first : SaleStation(),
       saleStations: filtered,
     );
+
+    // Re-vincula el socket activo (si lo hay) a la nueva sucursal.
+    if (office.codigo != null) {
+      unawaited(SocketService().reconnectOffice(office.codigo!));
+    }
 
     if (changeCompany) {
       Companysummary? company = state.companies?.firstWhere(

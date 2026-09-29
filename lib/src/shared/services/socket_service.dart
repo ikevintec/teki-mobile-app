@@ -19,6 +19,7 @@ class SocketService {
 
   io.Socket? _socket;
   int _connectionCount = 0;
+  String? _currentOfficeCode;
 
   final Map<SocketEvent, StreamController<dynamic>> _controllers = {
     for (final e in SocketEvent.values) e: StreamController<dynamic>.broadcast(),
@@ -30,11 +31,23 @@ class SocketService {
 
   Future<void> connect({required String officeCode}) async {
     _connectionCount++;
-    if (isConnected) return;
+    if (isConnected && _currentOfficeCode == officeCode) return;
+    await _openSocket(officeCode);
+  }
 
+  /// Re-vincula el socket a otra sucursal sin alterar el conteo de leases:
+  /// cierra la conexión anterior y abre una sola contra la nueva.
+  Future<void> reconnectOffice(String officeCode) async {
+    if (_connectionCount <= 0 && _socket == null) return;
+    if (isConnected && _currentOfficeCode == officeCode) return;
+    await _openSocket(officeCode);
+  }
+
+  Future<void> _openSocket(String officeCode) async {
     final token = await TokenStorage.getToken() ?? '';
 
-    _socket?.dispose();
+    _teardownSocket();
+    _currentOfficeCode = officeCode;
 
     _socket = io.io(
       Environment.wsUrl,
@@ -51,7 +64,7 @@ class SocketService {
           .build(),
     );
 
-    _socket!.onConnect((_) => debugPrint('[Socket] Conectado a ${Environment.wsUrl}'));
+    _socket!.onConnect((_) => debugPrint('[Socket] Conectado a ${Environment.wsUrl} (sucursal $officeCode)'));
     _socket!.onDisconnect((_) => debugPrint('[Socket] Desconectado'));
     _socket!.onConnectError((data) => debugPrint('[Socket] Error de conexión: $data'));
 
@@ -73,6 +86,14 @@ class SocketService {
     _socket!.connect();
   }
 
+  void _teardownSocket() {
+    if (_socket == null) return;
+    _socket!.clearListeners();
+    _socket!.disconnect();
+    _socket!.dispose();
+    _socket = null;
+  }
+
   Stream<dynamic> on(SocketEvent event) => _controllers[event]!.stream;
 
   void addListener(SocketEvent event, void Function(dynamic) callback) {
@@ -86,9 +107,8 @@ class SocketService {
   void disconnect() {
     _connectionCount = (_connectionCount - 1).clamp(0, 999);
     if (_connectionCount > 0) return;
-    _socket?.disconnect();
-    _socket?.dispose();
-    _socket = null;
+    _teardownSocket();
+    _currentOfficeCode = null;
     debugPrint('[Socket] Servicio desconectado');
   }
 }
