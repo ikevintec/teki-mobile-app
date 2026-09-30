@@ -55,7 +55,7 @@ class _RestaurantMesasScreenState
         ref.read(restaurantProvider.notifier).loadData(pvId);
         ref.read(readyToServeProvider.notifier).refresh(pvId);
       }
-      _socketService.connect(officeCode: session.office?.codigo ?? 'PV001');
+      _socketService.connect(officeCode: session.office?.codigo ?? '');
     });
     _readyRefreshTimer = Timer.periodic(const Duration(minutes: 2), (_) {
       final pvId = ref.read(sesionProvider).office?.id;

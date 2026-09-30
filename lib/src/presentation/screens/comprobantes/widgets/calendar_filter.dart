@@ -258,7 +258,15 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
         ? opciones
         : opciones.reversed.toList();
 
-    _selectedRange = dateOptions.isNotEmpty ? dateOptions.last : null;
+    // Si el padre ya trae una selección (p. ej. llegar a Caja con la fecha de
+    // una caja abierta), se respeta; si no, el último chip del filtro.
+    final ext = widget.selectedRange;
+    if (ext != null) {
+      if (!opciones.contains(ext)) _selectedFilter = CalendarFilter.custom;
+      _selectedRange = ext;
+    } else {
+      _selectedRange = dateOptions.isNotEmpty ? dateOptions.last : null;
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_selectedRange != null) {

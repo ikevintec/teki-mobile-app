@@ -33,6 +33,7 @@ class _OrdersRestaurantMainScreenState
   late final TextEditingController _searchController;
   Timer? _debounce;
   bool _subscribed = false;
+  bool _socketLeaseAcquired = false;
   final _socketService = SocketService();
   StreamSubscription<dynamic>? _orderSub;
 
@@ -88,7 +89,12 @@ class _OrdersRestaurantMainScreenState
       } else {
         _reload();
       }
-      _socketService.connect(officeCode: ref.read(sesionProvider).office?.codigo ?? '');
+      _socketLeaseAcquired = true;
+      unawaited(
+        _socketService.connect(
+          officeCode: ref.read(sesionProvider).office?.codigo ?? '',
+        ),
+      );
     });
   }
 
@@ -133,6 +139,7 @@ class _OrdersRestaurantMainScreenState
   void dispose() {
     routeObserver.unsubscribe(this);
     _orderSub?.cancel();
+    if (_socketLeaseAcquired) _socketService.disconnect();
     _debounce?.cancel();
     _searchController.dispose();
     super.dispose();

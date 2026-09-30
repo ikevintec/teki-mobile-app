@@ -27,24 +27,34 @@ class SocketService {
 
   final Map<String, List<void Function(dynamic)>> _listeners = {};
 
+  /// Se incrementa en cada apertura/cierre: una apertura que terminó de leer
+  /// el token después de otra más reciente (o de un cierre) se descarta.
+  int _generation = 0;
+
   bool get isConnected => _socket?.connected ?? false;
+
+  /// Conectado o en proceso de conexión/reconexión. Evita reabrir un socket
+  /// que todavía está en handshake.
+  bool get _isAlive => _socket?.active ?? false;
 
   Future<void> connect({required String officeCode}) async {
     _connectionCount++;
-    if (isConnected && _currentOfficeCode == officeCode) return;
+    if (_isAlive && _currentOfficeCode == officeCode) return;
     await _openSocket(officeCode);
   }
 
   /// Re-vincula el socket a otra sucursal sin alterar el conteo de leases:
   /// cierra la conexión anterior y abre una sola contra la nueva.
   Future<void> reconnectOffice(String officeCode) async {
-    if (_connectionCount <= 0 && _socket == null) return;
-    if (isConnected && _currentOfficeCode == officeCode) return;
+    if (_connectionCount <= 0) return;
+    if (_isAlive && _currentOfficeCode == officeCode) return;
     await _openSocket(officeCode);
   }
 
   Future<void> _openSocket(String officeCode) async {
+    final generation = ++_generation;
     final token = await TokenStorage.getToken() ?? '';
+    if (generation != _generation) return;
 
     _teardownSocket();
     _currentOfficeCode = officeCode;
@@ -107,8 +117,21 @@ class SocketService {
   void disconnect() {
     _connectionCount = (_connectionCount - 1).clamp(0, 999);
     if (_connectionCount > 0) return;
+    _closeAll();
+    debugPrint('[Socket] Servicio desconectado');
+  }
+
+  /// Cierre forzado (logout): descarta todos los leases para que un socket
+  /// con el token/sucursal de la sesión anterior no sobreviva.
+  void reset() {
+    _connectionCount = 0;
+    _closeAll();
+    debugPrint('[Socket] Servicio reiniciado');
+  }
+
+  void _closeAll() {
+    _generation++;
     _teardownSocket();
     _currentOfficeCode = null;
-    debugPrint('[Socket] Servicio desconectado');
   }
 }

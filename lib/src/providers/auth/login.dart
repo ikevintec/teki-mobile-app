@@ -20,6 +20,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/replicador/replicador_app_provider.dart';
 import 'package:teki_app/src/providers/sale/products/local_products_provider.dart';
 import 'package:teki_app/src/shared/services/key_values_storage_impl.dart';
+import 'package:teki_app/src/shared/services/socket_service.dart';
 import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -262,6 +263,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     // Antes de borrar la sesion: la llamada necesita el access_token vigente.
     await NotificationService.instance.unregisterToken();
     NotificationService.instance.dispose();
+    SocketService().reset();
     ref.read(replicadorAppProvider.notifier).clear();
     await ref.read(localProductsProvider.notifier).clearCache();
     await TokenStorage.deleteToken();
