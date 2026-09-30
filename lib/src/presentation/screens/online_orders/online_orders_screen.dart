@@ -27,7 +27,9 @@ import 'package:teki_app/src/utils/whatsapp_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class OnlineOrdersScreen extends ConsumerStatefulWidget {
-  const OnlineOrdersScreen({super.key});
+  final int? initialOrderId;
+
+  const OnlineOrdersScreen({super.key, this.initialOrderId});
 
   @override
   ConsumerState<OnlineOrdersScreen> createState() => _OnlineOrdersScreenState();
@@ -52,9 +54,15 @@ class _OnlineOrdersScreenState extends ConsumerState<OnlineOrdersScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (_canAccess) {
-        ref.read(onlineOrdersProvider.notifier).loadFirstPage();
+        final notifier = ref.read(onlineOrdersProvider.notifier);
+        await notifier.loadFirstPage();
+        if (!mounted) return;
+        final orderId = widget.initialOrderId;
+        if (orderId != null) {
+          await _openDetail(OnlineOrder(id: orderId));
+        }
       }
     });
   }

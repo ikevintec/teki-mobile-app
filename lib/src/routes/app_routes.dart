@@ -112,7 +112,17 @@ class AppRoutes {
     //Route Comprobantes
     GetPage(name: comprobantesVer, page: () => const VerComprobanteScreen()),
     GetPage(name: quotationsVer, page: () => const VerQuotationsScreen()),
-    GetPage(name: onlineOrders, page: () => const OnlineOrdersScreen()),
+    GetPage(
+      name: onlineOrders,
+      page: () {
+        final args = Get.arguments;
+        final rawId = args is Map ? args['onlineOrderId'] : null;
+        final orderId = rawId is num
+            ? rawId.toInt()
+            : int.tryParse(rawId?.toString() ?? '');
+        return OnlineOrdersScreen(initialOrderId: orderId);
+      },
+    ),
 
     GetPage(name: products, page: () => const ProductsMainScreen()),
 

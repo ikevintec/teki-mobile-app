@@ -18,22 +18,66 @@ import 'package:teki_app/main.dart' show globalContainer;
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/storage_keys.dart';
 
-int _restaurantNavigationGeneration = 0;
+int _dashboardNavigationGeneration = 0;
+
+void _resetToDashboardThen(String route, {Object? arguments}) {
+  final generation = ++_dashboardNavigationGeneration;
+  Get.offAllNamed(AppRoutes.dashboard);
+  Future<void>.delayed(Duration.zero, () {
+    // Si llegaron varios taps juntos, solo el ultimo completa la navegacion.
+    if (generation != _dashboardNavigationGeneration ||
+        Get.currentRoute != AppRoutes.dashboard) {
+      return;
+    }
+    Get.toNamed(route, arguments: arguments);
+  });
+}
 
 /// Reconstruye la pila para que un push de la carta termine siempre en
 /// Dashboard > Mesas, sin conservar pantallas anteriores ni apilar Mesas.
 @visibleForTesting
 void resetToRestaurantMesasFromNotification() {
-  final generation = ++_restaurantNavigationGeneration;
-  Get.offAllNamed(AppRoutes.dashboard);
-  Future<void>.delayed(Duration.zero, () {
-    // Si llegaron varios taps juntos, solo el ultimo completa la navegacion.
-    if (generation != _restaurantNavigationGeneration ||
-        Get.currentRoute != AppRoutes.dashboard) {
-      return;
-    }
-    Get.toNamed(AppRoutes.restaurantMesas);
-  });
+  _resetToDashboardThen(AppRoutes.restaurantMesas);
+}
+
+/// Reconstruye la pila para que un push de pedido termine siempre en
+/// Dashboard > Pedidos online y la pantalla pueda abrir su detalle.
+@visibleForTesting
+void resetToOnlineOrdersFromNotification(int? orderId) {
+  _resetToDashboardThen(
+    AppRoutes.onlineOrders,
+    arguments: orderId == null ? null : {'onlineOrderId': orderId},
+  );
+}
+
+@visibleForTesting
+int? onlineOrderIdFromNotificationData(Map<String, dynamic> data) {
+  final directId =
+      _notificationInt(data['idPedido']) ?? _notificationInt(data['relatedId']);
+  if (directId != null) return directId;
+
+  final rawPayload = data['payload'];
+  if (rawPayload is Map) {
+    return _notificationInt(rawPayload['idPedido']);
+  }
+  if (rawPayload is! String || rawPayload.trim().isEmpty) return null;
+
+  try {
+    final decoded = jsonDecode(rawPayload);
+    return decoded is Map ? _notificationInt(decoded['idPedido']) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+int? _notificationInt(Object? value) {
+  final parsed = switch (value) {
+    int number => number,
+    num number => number.toInt(),
+    String text => int.tryParse(text),
+    _ => null,
+  };
+  return parsed != null && parsed > 0 ? parsed : null;
 }
 
 class NotificationService {
@@ -324,6 +368,11 @@ class NotificationService {
     switch (type) {
       case 'LLAMADA_MESA' || 'CUENTA_SOLICITADA' || 'COMANDA_QR_NUEVA':
         resetToRestaurantMesasFromNotification();
+
+      case 'PEDIDO_MENU' || 'PEDIDO_CATALOGO':
+        resetToOnlineOrdersFromNotification(
+          onlineOrderIdFromNotificationData(data),
+        );
 
       // Tipos legados en minusculas: se aceptan ambos casings mientras el backend migra a mayusculas.
       case 'dish_desk_ready' || 'DISH_DESK_READY':
