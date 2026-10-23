@@ -7,7 +7,11 @@ import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 import 'package:teki_app/src/data/static/lists.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
 import 'package:teki_app/src/presentation/widgets/form/smart_price_value_accessor.dart';
+import 'package:teki_app/src/presentation/screens/container_loans/container_loans_main_screen.dart';
+import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helper.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -47,17 +51,19 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     super.initState();
     _priceFocusNode = FocusNode();
     _descriptionFocusNode = FocusNode();
-    
+
     // Inicializar el controller con el valor actual del precio
-    final priceControl = widget.formGroup.control('price') as FormControl<double>;
+    final priceControl =
+        widget.formGroup.control('price') as FormControl<double>;
     final initialPrice = priceControl.value ?? 0.0;
     _priceController = TextEditingController(text: initialPrice.toString());
-    
+
     // Inicializar el controller con el valor actual de la descripción
-    final descriptionControl = widget.formGroup.control('description') as FormControl<String>;
+    final descriptionControl =
+        widget.formGroup.control('description') as FormControl<String>;
     final initialDescription = descriptionControl.value ?? '';
     _descriptionController = TextEditingController(text: initialDescription);
-    
+
     // Configurar animación de shake
     _shakeController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -66,7 +72,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     _shakeAnimation = Tween<double>(begin: 0, end: 4).animate(
       CurvedAnimation(parent: _shakeController, curve: Curves.easeInOutSine),
     );
-    
+
     // Hacer una animación inicial sutil para llamar la atención
     Future.delayed(const Duration(milliseconds: 1000), () {
       if (mounted) {
@@ -75,7 +81,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
         });
       }
     });
-    
+
     // Listeners para detectar focus y mostrar botón de unfocus en iOS
     _priceFocusNode.addListener(() {
       setState(() {
@@ -85,7 +91,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
           _isPriceEditMode = false;
         }
       });
-      
+
       // Seleccionar todo el texto cuando el campo de precio recibe focus
       if (_priceFocusNode.hasFocus) {
         _priceController.selection = TextSelection(
@@ -94,7 +100,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
         );
       }
     });
-    
+
     _descriptionFocusNode.addListener(() {
       setState(() {
         _isDescriptionFocused = _descriptionFocusNode.hasFocus;
@@ -108,8 +114,6 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
         );
       }
     });
-
-
   }
 
   @override
@@ -123,7 +127,8 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   }
 
   Widget _buildProductAvatar() {
-    final imageUrl = widget.productTicketDetail.producto?.imagenPorDefecto?.imagen;
+    final imageUrl =
+        widget.productTicketDetail.producto?.imagenPorDefecto?.imagen;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return Container(
         width: 44,
@@ -140,7 +145,13 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
           fit: BoxFit.contain,
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
-            return const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)));
+            return const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
           },
           errorBuilder: (c, e, s) => _buildInitialCircle(),
         ),
@@ -167,9 +178,9 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   };
 
   Map<String, dynamic> get _afectacionInfo => catalogo07.firstWhere(
-        (e) => e['codigo'] == _afectacionActual,
-        orElse: () => catalogo07.first,
-      );
+    (e) => e['codigo'] == _afectacionActual,
+    orElse: () => catalogo07.first,
+  );
 
   /// Fila discreta bajo el precio (mismo patrón que "Ver series"): gris
   /// cuando es la afectación por defecto, azul cuando el item es especial.
@@ -204,32 +215,165 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
     );
   }
 
-  // Envase retornable: por línea, si el cliente devolvió su envase (canje).
-  // Al marcar se aplica el precio "para canje" del producto (paridad web).
-  Widget _buildDevolvioEnvaseRow() {
-    final devolvio = widget.productTicketDetail.devolvioEnvase == true;
-    final color = devolvio ? const Color(0xFF2E7D32) : Colors.grey.shade500;
+  // Envase retornable: modalidad por línea (canje / venta con envase /
+  // préstamo), resumen de unidades y avisos. Paridad con la web.
+  Widget _buildEnvaseRow() {
+    final td = widget.productTicketDetail;
+    final sesion = ref.watch(sesionProvider);
+    final sale = ref.watch(ticketProvider);
+    final lines = ref.watch(productSaleProvider).productsSales;
+    final cliente = ref.watch(customerSaleProvider).customer;
+    final modo = modoEnvase(td);
+    final puedePrestar = puedePrestarEnvase(sale, sesion, lines);
+    final bloqueada = td.comandaDetalle != null;
+    const verde = Color(0xFF2E7D32);
+    const naranja = Color(0xFFE65100);
+
+    Widget aviso(String texto) => Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, size: 12, color: naranja),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              texto,
+              style: const TextStyle(fontSize: 11, color: naranja),
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => ref
-            .read(productSaleProvider.notifier)
-            .setDevolvioEnvase(widget.index, !devolvio),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(devolvio ? Icons.check_circle : Icons.recycling,
-                size: 13, color: color),
-            const SizedBox(width: 4),
-            Text(
-              devolvio ? 'Devolvió envase' : 'Sin devolución de envase',
-              style: TextStyle(
-                fontSize: 11,
-                color: color,
-                fontWeight: devolvio ? FontWeight.w600 : FontWeight.w400,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: verde,
+                  minimumSize: const Size(44, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                ),
+                onPressed: bloqueada
+                    ? null
+                    : () => _showModoEnvaseSheet(puedePrestar),
+                icon: const Icon(Icons.recycling, size: 18),
+                label: Text(
+                  'Envase: ${etiquetaModoEnvase(modo)}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+              if (puedeConsultarPrestamos(sale, sesion, cliente))
+                TextButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ContainerLoansMainScreen(customer: cliente),
+                    ),
+                  ),
+                  icon: const Icon(Icons.history, size: 18),
+                  label: const Text(
+                    'Ver pendientes',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+            ],
+          ),
+          Text(
+            resumenEnvase(td),
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
+          if (modo == ModoEnvase.prestamo && !puedePrestar)
+            aviso('Este comprobante no admite préstamo: elige otra modalidad.'),
+          if (modo == ModoEnvase.prestamo &&
+              puedePrestar &&
+              !clienteRegistradoParaEnvase(cliente, sesion))
+            aviso('Selecciona un cliente registrado para guardar el préstamo.'),
+          if (td.precioManual && !bloqueada)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                children: [
+                  Text(
+                    'Precio acordado: se conserva al cambiar.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                  GestureDetector(
+                    onTap: () => ref
+                        .read(productSaleProvider.notifier)
+                        .restablecerPrecioEnvase(widget.index),
+                    child: const Text(
+                      'Usar precio habitual',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: ColorSchema.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  void _showModoEnvaseSheet(bool puedePrestar) {
+    final actual = modoEnvase(widget.productTicketDetail);
+    final opciones = [
+      ModoEnvase.canje,
+      ModoEnvase.venta,
+      if (puedePrestar) ModoEnvase.prestamo,
+    ];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '¿Qué pasa con el envase?',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            for (final modo in opciones)
+              ListTile(
+                title: Text(switch (modo) {
+                  ModoEnvase.canje => 'Devuelve un envase',
+                  ModoEnvase.venta => 'Compra el envase',
+                  ModoEnvase.prestamo => 'Lo devolverá después',
+                }),
+                subtitle: Text(detalleModoEnvase(modo)),
+                trailing: modo == actual
+                    ? const Icon(Icons.check, color: ColorSchema.primaryColor)
+                    : null,
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  ref
+                      .read(productSaleProvider.notifier)
+                      .setModoEnvase(widget.index, modo);
+                },
+              ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -273,7 +417,13 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                 child: ListView(
                   shrinkWrap: true,
                   children: [
-                    for (final grupo in ['1001', '1003', '1002', '1000', '1004']) ...[
+                    for (final grupo in [
+                      '1001',
+                      '1003',
+                      '1002',
+                      '1000',
+                      '1004',
+                    ]) ...[
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
                         child: Align(
@@ -289,19 +439,24 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                           ),
                         ),
                       ),
-                      for (final item in catalogo07
-                          .where((e) => e['codigoRelacionado'] == grupo))
+                      for (final item in catalogo07.where(
+                        (e) => e['codigoRelacionado'] == grupo,
+                      ))
                         InkWell(
                           onTap: () {
                             Navigator.of(ctx).pop();
                             ref
                                 .read(productSaleProvider.notifier)
                                 .setAfectacionIgvProductSale(
-                                    widget.index, item['codigo'] as String);
+                                  widget.index,
+                                  item['codigo'] as String,
+                                );
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 11),
+                              horizontal: 20,
+                              vertical: 11,
+                            ),
                             child: Row(
                               children: [
                                 Expanded(
@@ -319,8 +474,11 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                   ),
                                 ),
                                 if (item['codigo'] == actual)
-                                  const Icon(Icons.check_rounded,
-                                      size: 18, color: ColorSchema.primaryColor),
+                                  const Icon(
+                                    Icons.check_rounded,
+                                    size: 18,
+                                    color: ColorSchema.primaryColor,
+                                  ),
                               ],
                             ),
                           ),
@@ -401,21 +559,31 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                               textInputAction: TextInputAction.next,
                               focusNode: _descriptionFocusNode,
                               controller: _descriptionController,
-                              onSubmitted: (_) => _priceFocusNode.requestFocus(),
+                              onSubmitted: (_) =>
+                                  _priceFocusNode.requestFocus(),
                               style: const TextStyle(color: Colors.black87),
                               decoration: InputDecoration(
                                 isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
                                 suffixIcon: (isIos && _isDescriptionFocused)
                                     ? GestureDetector(
-                                        onTap: () => FocusScope.of(context).unfocus(),
-                                        child: const Icon(Icons.keyboard_hide, size: 15, color: Colors.grey),
+                                        onTap: () =>
+                                            FocusScope.of(context).unfocus(),
+                                        child: const Icon(
+                                          Icons.keyboard_hide,
+                                          size: 15,
+                                          color: Colors.grey,
+                                        ),
                                       )
                                     : null,
                               ),
                               validationMessages: {
-                                ValidationMessage.minLength: (_) => 'Mínimo 3 caracteres',
-                                ValidationMessage.required: (_) => 'Nombre requerido',
+                                ValidationMessage.minLength: (_) =>
+                                    'Mínimo 3 caracteres',
+                                ValidationMessage.required: (_) =>
+                                    'Nombre requerido',
                               },
                             ),
                           const SizedBox(height: 8),
@@ -428,33 +596,68 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                       width: 150,
                                       child: ReactiveTextField<double>(
                                         formControlName: 'price',
-                                        valueAccessor: SmartPriceValueAccessor(),
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                        valueAccessor:
+                                            SmartPriceValueAccessor(),
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                              decimal: true,
+                                            ),
                                         textInputAction: TextInputAction.done,
-                                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.allow(
+                                            RegExp(r'^\d*\.?\d{0,2}'),
+                                          ),
+                                        ],
                                         focusNode: _priceFocusNode,
                                         controller: _priceController,
                                         decoration: InputDecoration(
                                           isDense: true,
-                                          labelText: provider.incIgv ? 'Precio Venta' : 'Valor unitario',
-                                          prefixText: formatExchange(moneda: provider.currency!.codigoMoneda!),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          labelText: provider.incIgv
+                                              ? 'Precio Venta'
+                                              : 'Valor unitario',
+                                          prefixText: formatExchange(
+                                            moneda: provider
+                                                .currency!
+                                                .codigoMoneda!,
+                                          ),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 8,
+                                              ),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
                                           focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                            borderSide: const BorderSide(color: ColorSchema.primaryColor),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            borderSide: const BorderSide(
+                                              color: ColorSchema.primaryColor,
+                                            ),
                                           ),
                                           suffixIcon: (isIos && _isPriceFocused)
                                               ? GestureDetector(
-                                                  onTap: () => FocusScope.of(context).unfocus(),
-                                                  child: const Icon(Icons.keyboard_hide, size: 15, color: Colors.grey),
+                                                  onTap: () => FocusScope.of(
+                                                    context,
+                                                  ).unfocus(),
+                                                  child: const Icon(
+                                                    Icons.keyboard_hide,
+                                                    size: 15,
+                                                    color: Colors.grey,
+                                                  ),
                                                 )
                                               : null,
                                         ),
-                                        onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                                        onSubmitted: (_) =>
+                                            FocusScope.of(context).unfocus(),
                                         validationMessages: {
-                                          ValidationMessage.min: (_) => 'Mínimo 0.01',
-                                          ValidationMessage.required: (_) => 'Precio requerido',
+                                          ValidationMessage.min: (_) =>
+                                              'Mínimo 0.01',
+                                          ValidationMessage.required: (_) =>
+                                              'Precio requerido',
                                         },
                                       ),
                                     )
@@ -464,24 +667,44 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                         // Editar el precio del item requiere permiso (paridad web)
                                         if (!ref
                                             .read(sesionProvider)
-                                            .hasPermission('VENTAS_EDITAR_PRECIO')) {
+                                            .hasPermission(
+                                              'VENTAS_EDITAR_PRECIO',
+                                            )) {
                                           return;
                                         }
                                         setState(() => _isPriceEditMode = true);
-                                        WidgetsBinding.instance.addPostFrameCallback((_) => _priceFocusNode.requestFocus());
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback(
+                                              (_) => _priceFocusNode
+                                                  .requestFocus(),
+                                            );
                                       },
                                       child: ReactiveFormConsumer(
                                         builder: (context, form, _) {
-                                          final priceControl = form.control('price') as FormControl<double>;
-                                          final priceValue = priceControl.value ?? 0.0;
-                                          final hasError = priceControl.hasErrors && priceControl.touched;
+                                          final priceControl =
+                                              form.control('price')
+                                                  as FormControl<double>;
+                                          final priceValue =
+                                              priceControl.value ?? 0.0;
+                                          final hasError =
+                                              priceControl.hasErrors &&
+                                              priceControl.touched;
                                           return Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 5,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: hasError
-                                                  ? Colors.red.withValues(alpha: 0.08)
-                                                  : ColorSchema.primaryColor.withValues(alpha: 0.09),
-                                              borderRadius: BorderRadius.circular(8),
+                                                  ? Colors.red.withValues(
+                                                      alpha: 0.08,
+                                                    )
+                                                  : ColorSchema.primaryColor
+                                                        .withValues(
+                                                          alpha: 0.09,
+                                                        ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
@@ -491,7 +714,10 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                                   style: TextStyle(
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.bold,
-                                                    color: hasError ? Colors.red : ColorSchema.primaryColor,
+                                                    color: hasError
+                                                        ? Colors.red
+                                                        : ColorSchema
+                                                              .primaryColor,
                                                   ),
                                                 ),
                                                 const SizedBox(width: 4),
@@ -500,7 +726,10 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                                   size: 11,
                                                   color: hasError
                                                       ? Colors.red
-                                                      : ColorSchema.primaryColor.withValues(alpha: 0.5),
+                                                      : ColorSchema.primaryColor
+                                                            .withValues(
+                                                              alpha: 0.5,
+                                                            ),
                                                 ),
                                               ],
                                             ),
@@ -510,59 +739,75 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                     ),
                               QuantityControl(
                                 formGroup: widget.formGroup,
-                                onQuantityChanged: widget.onQuantityChanged ?? () {},
-                                locked: widget.productTicketDetail.comandaDetalle != null,
+                                onQuantityChanged:
+                                    widget.onQuantityChanged ?? () {},
+                                locked:
+                                    widget.productTicketDetail.comandaDetalle !=
+                                    null,
                               ),
                             ],
                           ),
-                          if (_requiresSeriesValidation(widget.productTicketDetail.producto))
-                            Builder(builder: (context) {
-                              final cantidad = (widget.productTicketDetail.cantidad ?? 1).toInt();
-                              final seleccionadas = (widget.productTicketDetail.lotes ?? []).length;
-                              final valido = seleccionadas == cantidad;
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: GestureDetector(
-                                  onTap: () => showSeriesConfigSheet(
-                                    context,
-                                    ticketDetail: widget.productTicketDetail,
-                                    index: widget.index,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        valido ? Icons.check_circle_outline : Icons.warning_amber_rounded,
-                                        size: 13,
-                                        color: valido ? ColorSchema.primaryColor : Colors.red.shade600,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        valido
-                                            ? 'Ver series ($seleccionadas/$cantidad)'
-                                            : 'Series requeridas ($seleccionadas/$cantidad)',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: valido ? ColorSchema.primaryColor : Colors.red.shade600,
-                                          fontWeight: FontWeight.w500,
+                          if (_requiresSeriesValidation(
+                            widget.productTicketDetail.producto,
+                          ))
+                            Builder(
+                              builder: (context) {
+                                final cantidad =
+                                    (widget.productTicketDetail.cantidad ?? 1)
+                                        .toInt();
+                                final seleccionadas =
+                                    (widget.productTicketDetail.lotes ?? [])
+                                        .length;
+                                final valido = seleccionadas == cantidad;
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: GestureDetector(
+                                    onTap: () => showSeriesConfigSheet(
+                                      context,
+                                      ticketDetail: widget.productTicketDetail,
+                                      index: widget.index,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          valido
+                                              ? Icons.check_circle_outline
+                                              : Icons.warning_amber_rounded,
+                                          size: 13,
+                                          color: valido
+                                              ? ColorSchema.primaryColor
+                                              : Colors.red.shade600,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          valido
+                                              ? 'Ver series ($seleccionadas/$cantidad)'
+                                              : 'Series requeridas ($seleccionadas/$cantidad)',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: valido
+                                                ? ColorSchema.primaryColor
+                                                : Colors.red.shade600,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }),
+                                );
+                              },
+                            ),
                           // La afectación de comandas viene fijada por el
                           // producto del restaurante: no se edita aquí.
                           if (widget.productTicketDetail.comandaDetalle == null)
                             _buildAfectacionIgvRow(),
-                          if (ref.read(sesionProvider).config
-                                      ?.permitirRetornoEnvase ==
-                                  true &&
-                              widget.productTicketDetail.producto
-                                      ?.envaseRetornable ==
-                                  true)
-                            _buildDevolvioEnvaseRow(),
+                          if (manejaEnvaseRetornable(
+                            widget.productTicketDetail.producto,
+                            ref.watch(sesionProvider),
+                            isQuotation: ref.watch(ticketProvider).isQuotation,
+                          ))
+                            _buildEnvaseRow(),
                         ],
                       ),
                     ),
@@ -583,10 +828,16 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(8),
-                        onTap: () => _shakeController.forward().then((_) => _shakeController.reverse()),
+                        onTap: () => _shakeController.forward().then(
+                          (_) => _shakeController.reverse(),
+                        ),
                         child: const SizedBox(
                           width: 36,
-                          child: Icon(Icons.chevron_left_rounded, size: 22, color: ColorSchema.primaryColor),
+                          child: Icon(
+                            Icons.chevron_left_rounded,
+                            size: 22,
+                            color: ColorSchema.primaryColor,
+                          ),
                         ),
                       ),
                     ),
@@ -615,7 +866,9 @@ class _QuantityValueAccessor extends ControlValueAccessor<double, String> {
 
   @override
   double? viewToModelValue(String? viewValue) =>
-      (viewValue == null || viewValue.isEmpty) ? null : double.tryParse(viewValue);
+      (viewValue == null || viewValue.isEmpty)
+      ? null
+      : double.tryParse(viewValue);
 }
 
 // Widget personalizado para el control de cantidad
@@ -652,20 +905,23 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
 
   void _updateQuantity(double newValue) {
     if (newValue > 0) {
-      final quantityControl = widget.formGroup.control('quantity') as FormControl<double>;
+      final quantityControl =
+          widget.formGroup.control('quantity') as FormControl<double>;
       quantityControl.updateValue(newValue);
       widget.onQuantityChanged();
     }
   }
 
   void _increment() {
-    final quantityControl = widget.formGroup.control('quantity') as FormControl<double>;
+    final quantityControl =
+        widget.formGroup.control('quantity') as FormControl<double>;
     final currentValue = quantityControl.value ?? 1;
     _updateQuantity(currentValue + 1);
   }
 
   void _decrement() {
-    final quantityControl = widget.formGroup.control('quantity') as FormControl<double>;
+    final quantityControl =
+        widget.formGroup.control('quantity') as FormControl<double>;
     final currentValue = quantityControl.value ?? 1;
     // El guard de _updateQuantity (> 0) impide bajar a 0 o negativos;
     // con decimales sí permite p.ej. 1.5 → 0.5.
@@ -675,11 +931,14 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
   @override
   Widget build(BuildContext context) {
     if (widget.locked) {
-      final quantityControl = widget.formGroup.control('quantity') as FormControl<double>;
+      final quantityControl =
+          widget.formGroup.control('quantity') as FormControl<double>;
       return ReactiveFormConsumer(
         builder: (context, form, _) {
           final qtyValue = quantityControl.value ?? 1;
-          final qty = qtyValue % 1 == 0 ? qtyValue.toInt().toString() : qtyValue.toString();
+          final qty = qtyValue % 1 == 0
+              ? qtyValue.toInt().toString()
+              : qtyValue.toString();
           return Container(
             width: 120,
             height: 32,
@@ -739,7 +998,9 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
                   formControlName: 'quantity',
                   focusNode: _focusNode,
                   valueAccessor: _QuantityValueAccessor(),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14),
                   decoration: InputDecoration(
@@ -751,12 +1012,17 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
                       borderRadius: BorderRadius.circular(4),
                       borderSide: BorderSide(color: ColorSchema.primaryColor),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                   ),
                   onSubmitted: (control) {
                     widget.onQuantityChanged();
                   },
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  ],
                 ),
               ),
               const SizedBox(width: 4),
@@ -770,11 +1036,7 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
                   child: SizedBox(
                     width: 24,
                     height: 24,
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 16,
-                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 16),
                   ),
                 ),
               ),

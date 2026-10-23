@@ -49,6 +49,11 @@ class TicketDetail {
   final String? codigoDescuento;
   final bool? esAnticipo;
   final bool? devolvioEnvase;
+  final bool? prestamoEnvase;
+
+  /// Solo local (no se envía): el precio lo fijó el usuario y se conserva al
+  /// cambiar cantidad o modalidad de envase retornable. Espeja el dirty de la web.
+  final bool precioManual;
   final bool? estado;
   final String? uuid;
   final String? uuidRelated;
@@ -117,6 +122,8 @@ class TicketDetail {
       this.codigoDescuento,
       this.esAnticipo,
       this.devolvioEnvase,
+      this.prestamoEnvase,
+      this.precioManual = false,
       this.estado,
       this.uuid,
       this.uuidRelated,
@@ -184,6 +191,7 @@ class TicketDetail {
         codigoDescuento: json['codigoDescuento'],
         esAnticipo: json['esAnticipo'],
         devolvioEnvase: json['devolvioEnvase'],
+        prestamoEnvase: json['prestamoEnvase'],
         estado: json['estado'],
         uuid: json['uuid'],
         uuidRelated: json['uuidRelated'],
@@ -272,6 +280,7 @@ class TicketDetail {
         if (interes != null) 'interes': interes,
         'esAnticipo': esAnticipo,
         'devolvioEnvase': devolvioEnvase,
+        'prestamoEnvase': prestamoEnvase,
         'estado': estado,
         'uuid': uuid,
         'uuidRelated': uuidRelated,
@@ -351,6 +360,8 @@ class TicketDetail {
     String? codigoDescuento,
     bool? esAnticipo,
     bool? devolvioEnvase,
+    bool? prestamoEnvase,
+    bool? precioManual,
     bool? estado,
     String? uuid,
     String? uuidRelated,
@@ -423,6 +434,8 @@ class TicketDetail {
       codigoDescuento: codigoDescuento ?? this.codigoDescuento,
       esAnticipo: esAnticipo ?? this.esAnticipo,
       devolvioEnvase: devolvioEnvase ?? this.devolvioEnvase,
+      prestamoEnvase: prestamoEnvase ?? this.prestamoEnvase,
+      precioManual: precioManual ?? this.precioManual,
       estado: estado ?? this.estado,
       uuid: uuid ?? this.uuid,
       uuidRelated: uuidRelated ?? this.uuidRelated,

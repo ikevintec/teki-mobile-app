@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:teki_app/src/utils/notifications.dart';
+import 'package:teki_app/src/presentation/screens/container_loans/container_loans_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/today_reports_section.dart';
 import 'package:teki_app/src/presentation/screens/purchases/purchases_main_screen.dart';
 import 'package:teki_app/src/providers/config/config.dart';
@@ -304,6 +305,14 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       'icon': 'assets/icons/icon_image/inventory_list.png',
       'action': () => Get.toNamed(AppRoutes.inventory),
     },
+    if (ContainerLoansMainScreen.isAvailable(ref.watch(sesionProvider)))
+      {
+        'title': 'Envases\npendientes',
+        'icon': 'assets/icons/icon_image/inventory_list.png',
+        'action': () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ContainerLoansMainScreen()),
+        ),
+      },
   ];
 
   /// Requiere el flag `verNotificacionYape` de la empresa. El replicador pide

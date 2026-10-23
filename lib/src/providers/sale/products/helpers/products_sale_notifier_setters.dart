@@ -10,12 +10,13 @@ import 'package:teki_app/src/data/static/lists.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helper.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/utils/price.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:uuid/uuid.dart';
 
 mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   Ref get ref;
+
+  bool get _isQuotation => ref.read(ticketProvider).isQuotation;
 
   void setLoading(bool loading) {
     state = state.copyWith(isLoading: loading);
@@ -65,8 +66,14 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   }
 
   void setProductsSaleEntity(List<TicketDetail> productsSales, {String? monedaOrigen}) {
+    final sesion = ref.read(sesionProvider);
     final updatedProductsSales = productsSales.map((product) {
-      return product.copyWith(monedaOriginal: monedaOrigen ?? product.monedaOriginal);
+      return product.copyWith(
+        monedaOriginal: monedaOrigen ?? product.monedaOriginal,
+        // Retornables cargados (edición o venta desde cotización) conservan su
+        // precio negociado al cambiar cantidad o modalidad (paridad web).
+        precioManual: product.precioManual || productoConEnvase(product.producto, sesion),
+      );
     }).toList();
     state = state.copyWith(productsSales: updatedProductsSales);
     calculoTotal();
@@ -86,7 +93,8 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       final updated = _withAutoSeries(changeQtyTicketDetail(
           ticketDetail: existing,
           quantity: (existing.cantidad ?? 0) + 1,
-          sesion: ref.read(sesionProvider)));
+          sesion: ref.read(sesionProvider),
+          isQuotation: _isQuotation));
       state = state.copyWith(
         productsSales: List.from(state.productsSales)..[index] = updated,
       );
@@ -110,7 +118,8 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         final updated = _withAutoSeries(changeQtyTicketDetail(
             ticketDetail: existing,
             quantity: (existing.cantidad ?? 0) + 1,
-            sesion: ref.read(sesionProvider)));
+            sesion: ref.read(sesionProvider),
+            isQuotation: _isQuotation));
         state = state.copyWith(
           productsSales: List.from(state.productsSales)..[extraIndex] = updated,
         );
@@ -120,7 +129,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         state = state.copyWith(
           productsSales: [
             ...state.productsSales,
-            _withAutoSeries(getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider))),
+            _withAutoSeries(getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider), isQuotation: _isQuotation)),
           ],
         );
         setCurrency(state.currency!.codigoMoneda!);
@@ -137,7 +146,8 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       final updated = _withAutoSeries(changeQtyTicketDetail(
           ticketDetail: existing,
           quantity: (existing.cantidad ?? 0) + 1,
-          sesion: ref.read(sesionProvider)));
+          sesion: ref.read(sesionProvider),
+          isQuotation: _isQuotation));
       state = state.copyWith(
         productsSales: List.from(state.productsSales)..[existingIndex] = updated,
       );
@@ -147,37 +157,87 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     state = state.copyWith(
       productsSales: [
         ...state.productsSales,
-        _withAutoSeries(getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider))),
+        _withAutoSeries(getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider), isQuotation: _isQuotation)),
       ],
     );
     setCurrency(state.currency!.codigoMoneda!);
   }
 
-  /// Marca/desmarca "cliente devolvió envase" en una línea y reajusta el
-  /// precio: con canje usa el precio "para canje" (o el por defecto si no
-  /// tiene); sin canje vuelve al por defecto. Espeja la web.
-  void setDevolvioEnvase(int index, bool value) {
+  /// Cambia la modalidad del envase retornable de una línea (canje, venta con
+  /// envase o préstamo). Un precio manual se conserva; si no, aplica la tarifa
+  /// automática de la modalidad. Espeja cambiarModoEnvase de la web.
+  void setModoEnvase(int index, ModoEnvase modo) {
     if (index < 0 || index >= state.productsSales.length) return;
     final line = state.productsSales[index];
     final product = line.producto;
-    if (product == null) return;
     final sesion = ref.read(sesionProvider);
-    final ops = {
-      'qty': line.cantidad,
-      'igv': sesion.config!.igv,
-      'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
-    };
-    final canje = value ? getCanjePrice(product, sesion.office!, ops) : null;
-    final price = canje ?? getPriceProduct(product, sesion.office!, ops);
+    if (line.comandaDetalle != null ||
+        !manejaEnvaseRetornable(product, sesion, isQuotation: _isQuotation)) {
+      return;
+    }
+    if (modo == ModoEnvase.prestamo &&
+        !puedePrestarEnvase(ref.read(ticketProvider), sesion, state.productsSales)) {
+      return;
+    }
+    var updated = line.copyWith(
+      devolvioEnvase: modo == ModoEnvase.canje,
+      prestamoEnvase: modo == ModoEnvase.prestamo,
+    );
+    if (!line.precioManual) {
+      updated = _withAutomaticPrice(updated);
+    }
     state = state.copyWith(
-      productsSales: List.from(state.productsSales)
-        ..[index] = line.copyWith(
-          devolvioEnvase: value,
-          precioVentaUnitario: price,
-          montoOriginal: price,
-        ),
+      productsSales: List.from(state.productsSales)..[index] = updated,
     );
     calculoTotal();
+  }
+
+  /// Descarta el precio manual de un retornable y vuelve a la tarifa automática.
+  void restablecerPrecioEnvase(int index) {
+    if (index < 0 || index >= state.productsSales.length) return;
+    final line = state.productsSales[index];
+    if (line.comandaDetalle != null ||
+        !manejaEnvaseRetornable(line.producto, ref.read(sesionProvider),
+            isQuotation: _isQuotation)) {
+      return;
+    }
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)
+        ..[index] = _withAutomaticPrice(line.copyWith(precioManual: false)),
+    );
+    calculoTotal();
+  }
+
+  TicketDetail _withAutomaticPrice(TicketDetail line) {
+    final price = getAutomaticPrice(
+      line.producto!,
+      ref.read(sesionProvider),
+      line.cantidad ?? 1,
+      conCanje: line.devolvioEnvase == true || line.prestamoEnvase == true,
+    );
+    final sesion = ref.read(sesionProvider);
+    final tipoIgv = catalogo07.firstWhere(
+      (tipo) => tipo['codigo'] == line.codigoTipoAfectacionIgv,
+    );
+    final factorIgv = tipoIgv['codigoRelacionado'] == '1001'
+        ? 1 + (sesion.config?.igv ?? 0)
+        : 1.0;
+    final precioConvertido = exchange(
+      Exchance(
+        codigoMonedaOrigen: line.producto!.moneda ?? 'PEN',
+        codigoMonedaDestino: state.currency!.codigoMoneda!,
+        montoOrigen: price,
+      ),
+      state.currencies,
+    );
+    // Solo cambia el precio de esta línea. Sus costos ya están en la moneda
+    // de venta; reconvertirlos alteraría también la utilidad de otras líneas.
+    return line.copyWith(
+      precioVentaUnitario: precioConvertido,
+      valorUnitario: precioConvertido / factorIgv,
+      montoOriginal: state.incIgv ? price : price / factorIgv,
+      monedaOriginal: line.producto!.moneda ?? 'PEN',
+    );
   }
 
   void setCurrency(String codigoMoneda, [int? index]) {
@@ -232,11 +292,22 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   void setCantidadProductSale(int index, double cantidad) {
     if (state.productsSales[index].comandaDetalle != null) return;
     final existingTicketDetail = state.productsSales[index];
+    if (manejaEnvaseRetornable(existingTicketDetail.producto,
+        ref.read(sesionProvider), isQuotation: _isQuotation)) {
+      final line = existingTicketDetail.copyWith(cantidad: cantidad);
+      state = state.copyWith(
+        productsSales: List.from(state.productsSales)
+          ..[index] = line.precioManual ? line : _withAutomaticPrice(line),
+      );
+      calculoTotal();
+      return;
+    }
     if (existingTicketDetail.producto != null) {
       final updatedTicketDetail = changeQtyTicketDetail(
           ticketDetail: existingTicketDetail,
           quantity: cantidad,
-          sesion: ref.read(sesionProvider));
+          sesion: ref.read(sesionProvider),
+          isQuotation: _isQuotation);
       state = state.copyWith(
         productsSales: List.from(state.productsSales)
           ..[index] = updatedTicketDetail,
@@ -259,11 +330,13 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         ? existingTicketDetail.copyWith(
             precioVentaUnitario: precio,
             montoOriginal: precio,
-            monedaOriginal: state.currency!.codigoMoneda)
+            monedaOriginal: state.currency!.codigoMoneda,
+            precioManual: true)
         : existingTicketDetail.copyWith(
             valorUnitario: precio,
             montoOriginal: precio,
-            monedaOriginal: state.currency!.codigoMoneda);
+            monedaOriginal: state.currency!.codigoMoneda,
+            precioManual: true);
     state = state.copyWith(
       productsSales: List.from(state.productsSales)
         ..[index] = updatedTicketDetail,
@@ -313,13 +386,28 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       // When quantity changes on a product item, recalculate price via getPriceProduct
       // so mayoreo (wholesale) tiers are applied correctly.
       if (quantityChanged && existingTicketDetail.producto != null) {
-        updatedTicketDetail = changeQtyTicketDetail(
-          ticketDetail: existingTicketDetail,
-          quantity: quantity,
-          sesion: sesion,
-        ).copyWith(descripcion: description);
+        if (manejaEnvaseRetornable(existingTicketDetail.producto, sesion,
+            isQuotation: _isQuotation)) {
+          final line = existingTicketDetail.copyWith(
+            cantidad: quantity, descripcion: description,
+          );
+          updatedTicketDetail = line.precioManual ? line : _withAutomaticPrice(line);
+        } else {
+          updatedTicketDetail = changeQtyTicketDetail(
+            ticketDetail: existingTicketDetail,
+            quantity: quantity,
+            sesion: sesion,
+            isQuotation: _isQuotation,
+          ).copyWith(descripcion: description);
+        }
       } else {
         final precio = formData['price'] as double? ?? existingTicketDetail.precioVentaUnitario ?? 0.0;
+        final precioActual = (state.incIgv
+                ? existingTicketDetail.precioVentaUnitario
+                : existingTicketDetail.valorUnitario) ??
+            0.0;
+        final precioManual = existingTicketDetail.precioManual ||
+            (precio - precioActual).abs() > 0.000001;
         updatedTicketDetail = state.incIgv
             ? existingTicketDetail.copyWith(
                 precioVentaUnitario: precio,
@@ -327,6 +415,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
                 monedaOriginal: state.currency!.codigoMoneda,
                 descripcion: description,
                 cantidad: quantity,
+                precioManual: precioManual,
               )
             : existingTicketDetail.copyWith(
                 valorUnitario: precio,
@@ -334,6 +423,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
                 monedaOriginal: state.currency!.codigoMoneda,
                 descripcion: description,
                 cantidad: quantity,
+                precioManual: precioManual,
               );
       }
 

@@ -5,6 +5,7 @@ import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket_fee.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/repositories/quotation_repository_impl.dart';
@@ -15,6 +16,7 @@ import 'package:teki_app/src/domain/repositories/tickets_sale_repository.dart';
 import 'package:teki_app/src/providers/auth/login.dart';
 import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
+import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helper.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
@@ -219,6 +221,23 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     );
   }
 
+  /// Envases retornables: la cotización no envía devolución ni préstamo, y el
+  /// préstamo solo viaja en ventas que lo admiten (paridad web).
+  List<TicketDetail>? _itemsConEnvase(List<TicketDetail>? items) {
+    if (items == null) return null;
+    final sesion = ref.read(sesionProvider);
+    final puedePrestar = puedePrestarEnvase(state, sesion, items);
+    return items.map((td) {
+      if (td.devolvioEnvase == null && td.prestamoEnvase == null) return td;
+      final maneja = manejaEnvaseRetornable(td.producto, sesion,
+          isQuotation: state.isQuotation);
+      return td.copyWith(
+        devolvioEnvase: maneja && td.devolvioEnvase == true,
+        prestamoEnvase: maneja && puedePrestar && td.prestamoEnvase == true,
+      );
+    }).toList();
+  }
+
   /// Construye el payload del ticket listo para enviar al backend (sin llamar a la API).
   Ticket getTicketPayload() {
     return Ticket(
@@ -332,7 +351,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       agruparItems: state.ticket.agruparItems,
       efectivo: state.isQuotation ? 0 : state.ticket.efectivo,
       cambio: state.ticket.cambio,
-      items: state.ticket.items,
+      items: _itemsConEnvase(state.ticket.items),
       anticipos: state.ticket.anticipos,
       guiasRelacionadas: state.ticket.guiasRelacionadas,
       uuid: state.ticket.uuid,

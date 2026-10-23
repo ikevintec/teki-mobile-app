@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -56,6 +57,23 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     required this.configRepository,
     required this.keyvalueStorage,
   }) : super(AuthState(isLoggedIn: false));
+
+  /// Trae la configuración vigente de la empresa y la persiste. Ante un fallo
+  /// conserva la que ya estaba en sesión y devuelve null.
+  Future<ConfigCompany?> refreshConfigCompany() async {
+    try {
+      final configCompany = await configRepository.getConfigValue();
+      ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+      await keyvalueStorage.setKeyValue(
+        StorageKeys.configCompany,
+        jsonEncode(configCompany.toJson()),
+      );
+      return configCompany;
+    } catch (e) {
+      debugPrint('No se pudo refrescar la configuración de la empresa: $e');
+      return null;
+    }
+  }
 
   void login(String username, String password) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -177,6 +195,11 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         // activo (asíncrono, no bloquea el arranque de la app).
         // Luego dispara la descarga/refresco del JSON local y su timer de sync.
         _prefetchLocalProducts(configCompany);
+
+        // La configuración guardada puede estar desactualizada (p. ej. se
+        // desactivó el retorno de envases en la web): refrescarla en segundo
+        // plano para que los accesos dependientes de flags la reflejen.
+        unawaited(refreshConfigCompany());
 
         // Restauramos los roles persistidos sin repetir la petición
         if (rolesJson != null) {
