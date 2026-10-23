@@ -1,10 +1,11 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sidebarx/sidebarx.dart';
 import 'package:teki_app/main.dart';
+import 'navigation/dashboard_navigation.dart';
+import 'navigation/dashboard_bottom_bar.dart';
+import 'package:teki_app/src/presentation/screens/customer/customer_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/ai_chat/ai_chat_screen.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_sections/header_section.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/caja_tab.dart';
@@ -12,7 +13,6 @@ import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/inici
 import 'package:teki_app/src/presentation/screens/dashboard/dashboard_tabs/inventario_tab.dart';
 import 'package:teki_app/src/presentation/widgets/drawer/dashboard_drawer.dart';
 import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/utils/constants.dart';
 
 class DashboardMainScreen extends ConsumerStatefulWidget {
   const DashboardMainScreen({super.key});
@@ -24,12 +24,13 @@ class DashboardMainScreen extends ConsumerStatefulWidget {
 
 class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
     with RouteAware {
-  final _sidebarController =
-      SidebarXController(selectedIndex: 0, extended: true);
+  final _sidebarController = SidebarXController(
+    selectedIndex: 0,
+    extended: true,
+  );
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _selectedTab = 0;
-  bool _dashboardConnectionError = false;
 
   /// Tabs que ya han sido visitados al menos una vez.
   /// Solo se monta el widget real del tab cuando se visita por primera vez.
@@ -37,6 +38,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
 
   /// Un notifier por tab para disparar recargas aisladas sin recrear widgets.
   final _refreshNotifiers = [
+    ValueNotifier<int>(0),
     ValueNotifier<int>(0),
     ValueNotifier<int>(0),
     ValueNotifier<int>(0),
@@ -51,6 +53,7 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
+    _sidebarController.dispose();
     for (final n in _refreshNotifiers) {
       n.dispose();
     }
@@ -65,6 +68,11 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
   }
 
   void _onTabSelected(int index) {
+    if (!dashboardDestinations(
+      ref.read(sesionProvider),
+    ).any((destination) => destination.index == index)) {
+      return;
+    }
     if (_selectedTab == index) return;
     // Los tabs viven en un IndexedStack (no se recrean al cambiar): al volver
     // a un tab ya visitado sus datos pueden estar viejos — p.ej. regresar a
@@ -84,13 +92,19 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
   Widget build(BuildContext context) {
     final config = ref.watch(sesionProvider);
     final idPuntoVenta = config.office?.id ?? 0;
+    final destinations = dashboardDestinations(config);
+    final allowedIndices = destinations.map((d) => d.index).toSet();
 
     ref.listen<SesionState>(sesionProvider, (prev, next) {
-      if (prev?.office?.id != next.office?.id) {
+      final allowed = dashboardDestinations(next).map((d) => d.index).toSet();
+      if (!allowed.contains(_selectedTab)) _selectedTab = 0;
+      _visitedTabs.removeWhere((index) => !allowed.contains(index));
+      if (prev?.office?.id != next.office?.id ||
+          prev?.companySelected?.id != next.companySelected?.id) {
         // Inventario recibe el id nuevo directamente como propiedad y se
         // recarga en didUpdateWidget. Inicio y Caja usan sus notifiers.
         _refreshNotifiers[0].value++;
-        _refreshNotifiers[2].value++;
+        _refreshNotifiers[3].value++;
       }
     });
 
@@ -108,160 +122,111 @@ class _DashboardMainScreenState extends ConsumerState<DashboardMainScreen>
         children: [
           // ── Header fijo con gradiente ──────────────────────────────────
           Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color.fromARGB(255, 14, 78, 210),
-                    Color.fromARGB(255, 56, 152, 236),
-                  ],
-                ),
-              ),
-              child: Stack(
-                children: [
-                  // Círculo decorativo superior derecho
-                  Positioned(
-                    top: -30,
-                    right: -20,
-                    child: Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.07),
-                      ),
-                    ),
-                  ),
-                  // Círculo decorativo inferior izquierdo
-                  Positioned(
-                    bottom: 10,
-                    left: -40,
-                    child: Container(
-                      width: 110,
-                      height: 110,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.06),
-                      ),
-                    ),
-                  ),
-                  // Círculo decorativo medio
-                  Positioned(
-                    top: 10,
-                    right: 90,
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.05),
-                      ),
-                    ),
-                  ),
-                  // Contenido del header
-                  SafeArea(
-                    bottom: false,
-                    child: DashboardHeaderSection(
-                      openDrawer: () {
-                        if (!Platform.isAndroid && !Platform.isIOS) {
-                          _sidebarController.setExtended(true);
-                        }
-                        _scaffoldKey.currentState?.openDrawer();
-                      },
-                      // El orbe del asistente vive en el header, visible en
-                      // todos los tabs del dashboard.
-                      onAiTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (_) => const AiChatScreen()),
-                      ),
-                    ),
-                  ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.fromARGB(255, 14, 78, 210),
+                  Color.fromARGB(255, 56, 152, 236),
                 ],
               ),
+            ),
+            child: Stack(
+              children: [
+                // Círculo decorativo superior derecho
+                Positioned(
+                  top: -30,
+                  right: -20,
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.07),
+                    ),
+                  ),
+                ),
+                // Círculo decorativo inferior izquierdo
+                Positioned(
+                  bottom: 10,
+                  left: -40,
+                  child: Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.06),
+                    ),
+                  ),
+                ),
+                // Círculo decorativo medio
+                Positioned(
+                  top: 10,
+                  right: 90,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.05),
+                    ),
+                  ),
+                ),
+                // Contenido del header
+                SafeArea(
+                  bottom: false,
+                  child: DashboardHeaderSection(
+                    openDrawer: () {
+                      if (!Platform.isAndroid && !Platform.isIOS) {
+                        _sidebarController.setExtended(true);
+                      }
+                      _scaffoldKey.currentState?.openDrawer();
+                    },
+                    // El orbe del asistente vive en el header, visible en
+                    // todos los tabs del dashboard.
+                    onAiTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AiChatScreen()),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           // ── Área de contenido ─────────────────────────────────────────
           Expanded(
             child: _FadeIndexedStack(
               index: _selectedTab,
-              visitedIndices: _visitedTabs,
+              visitedIndices: _visitedTabs.intersection(allowedIndices),
               children: [
                 InicioTab(
                   idPuntoVenta: idPuntoVenta,
                   refreshNotifier: _refreshNotifiers[0],
-                  onConnectionError: () => setState(() => _dashboardConnectionError = true),
-                  onConnectionResolved: () => setState(() => _dashboardConnectionError = false),
-                  onIrACaja: () => _onTabSelected(2),
+
+                  onIrACaja: () => _onTabSelected(3),
+                  onIrAClientes: () => _onTabSelected(1),
+                  onIrAInventario: () => _onTabSelected(2),
+                ),
+                CustomerMainScreen(
+                  key: ValueKey((config.companySelected?.id, config.login)),
+                  embedded: true,
+                  refreshNotifier: _refreshNotifiers[1],
                 ),
                 InventarioTab(
                   idPuntoVenta: idPuntoVenta,
-                  refreshNotifier: _refreshNotifiers[1],
-                ),
-                CajaTab(
                   refreshNotifier: _refreshNotifiers[2],
                 ),
+                CajaTab(refreshNotifier: _refreshNotifiers[3]),
               ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _dashboardConnectionError ? null : _buildBottomNav(),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: const Color.fromARGB(255, 48, 47, 103).withValues(alpha: 0.25),
-                blurRadius: 30,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 9),
-              child: Container(
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                child: Row(
-                  children: [
-                    _NavItem(
-                      icon: Icons.home_rounded,
-                      label: 'Inicio',
-                      isSelected: _selectedTab == 0,
-                      onTap: () => _onTabSelected(0),
-                    ),
-                    _NavItem(
-                      icon: Icons.inventory_2_rounded,
-                      label: 'Inventario',
-                      isSelected: _selectedTab == 1,
-                      onTap: () => _onTabSelected(1),
-                    ),
-                    _NavItem(
-                      icon: Icons.point_of_sale_rounded,
-                      label: 'Caja',
-                      isSelected: _selectedTab == 2,
-                      onTap: () => _onTabSelected(2),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+      bottomNavigationBar: DashboardBottomBar(
+        destinations: destinations,
+        selected: DashboardDestination.values[_selectedTab],
+        onSelected: (destination) => _onTabSelected(destination.index),
       ),
     );
   }
@@ -306,66 +271,6 @@ class _FadeIndexedStackState extends State<_FadeIndexedStack> {
           ),
         );
       }),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeInOut,
-            constraints: const BoxConstraints(minWidth: 120),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? ColorSchema.primaryColor.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 32,
-                  color: isSelected
-                      ? ColorSchema.primaryColor
-                      : const Color.fromARGB(255, 129, 129, 129),
-                ),
-                Text(
-                  label,
-                  style: GoogleFonts.roboto(
-                    fontSize: 10,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected
-                        ? ColorSchema.primaryColor
-                        : const Color.fromARGB(255, 129, 129, 129),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

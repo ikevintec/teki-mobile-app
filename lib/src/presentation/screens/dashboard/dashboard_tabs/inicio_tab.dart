@@ -1,6 +1,7 @@
+import 'package:teki_app/src/presentation/screens/cotizaciones/quotation_navigation.dart';
 import 'package:flutter/material.dart';
-import 'package:teki_app/src/providers/loyalty/loyalty_provider.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import '../navigation/dashboard_navigation.dart';
+import '../navigation/dashboard_menu.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -13,7 +14,6 @@ import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
-import 'package:teki_app/src/shared/services/yape_notification_service.dart';
 import 'package:teki_app/src/utils/constants.dart';
 
 class InicioTab extends ConsumerStatefulWidget {
@@ -24,6 +24,8 @@ class InicioTab extends ConsumerStatefulWidget {
 
   /// Navega al tab de Caja (lo resuelve el dashboard, dueño de los tabs).
   final VoidCallback? onIrACaja;
+  final VoidCallback? onIrAClientes;
+  final VoidCallback? onIrAInventario;
 
   const InicioTab({
     super.key,
@@ -32,6 +34,8 @@ class InicioTab extends ConsumerStatefulWidget {
     this.onConnectionError,
     this.onConnectionResolved,
     this.onIrACaja,
+    this.onIrAClientes,
+    this.onIrAInventario,
   });
 
   @override
@@ -41,7 +45,7 @@ class InicioTab extends ConsumerStatefulWidget {
 class _InicioTabState extends ConsumerState<InicioTab> {
   /// Crear una venta requiere permiso (paridad web: VENTAS_CREAR).
   void _irANuevaVenta() {
-    if (!ref.read(sesionProvider).hasPermission('VENTAS_CREAR')) {
+    if (!dashboardAllows(ref.read(sesionProvider), 'VENTAS_CREAR')) {
       warningNotification('No tienes permiso para crear ventas');
       return;
     }
@@ -183,407 +187,92 @@ class _InicioTabState extends ConsumerState<InicioTab> {
     }
   }
 
-  Future<void> _openNewQuotation() async {
-    final ticketState = ref.read(ticketProvider);
-    final ticket = ticketState.ticket;
-    final productState = ref.read(productSaleProvider);
-    final customerState = ref.read(customerSaleProvider);
-
-    final hasData =
-        (ticket.items?.isNotEmpty ?? false) ||
-        ticketState.isEdit ||
-        productState.productsSales.isNotEmpty ||
-        (customerState.customer.razonSocial?.isNotEmpty ?? false);
-
-    void resetAndNavigate() {
-      ref.invalidate(ticketProvider);
-      ref.invalidate(productSaleProvider);
-      ref.invalidate(customerSaleProvider);
-      ref.read(ticketProvider.notifier).startNewQuotation();
-      _irANuevaVenta();
-    }
-
-    if (!hasData) {
-      ref.read(ticketProvider.notifier).startNewQuotation();
-      _irANuevaVenta();
-      return;
-    }
-
-    // Si lo que hay en curso es una venta normal, no tiene sentido preguntar
-    // "continuar cotización": se reinicia directo en modo cotización.
-    if (!ticketState.isQuotation) {
-      resetAndNavigate();
-      return;
-    }
-
-    // Si lo en curso es la edición de una cotización ya existente, "Nueva
-    // cotización" debe forzar una creación nueva, nunca continuar esa edición.
-    if (ticketState.isEdit) {
-      resetAndNavigate();
-      return;
-    }
-
-    if (!mounted) return;
-    final continuar = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Venta en progreso',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-        ),
-        content: const Text('Ya tienes una venta en curso. ¿Qué deseas hacer?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Nueva cotización'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ColorSchema.primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Continuar'),
-          ),
-        ],
-      ),
-    );
-
-    if (continuar == true) {
-      _irANuevaVenta();
-    } else if (continuar == false) {
-      resetAndNavigate();
-    }
-  }
-
-  List<Map<String, dynamic>> get _ventaServices => [
-    {
-      'title': 'Nueva\nVenta',
-      'icon': 'assets/icons/icon_svg/purchase_service_icon.svg',
-      'action': () => _openNewSale(),
-    },
-    {
-      'title': 'Comprobantes',
-      'icon': 'assets/icons/icon_image/voucher_list.png',
-      'action': () => Get.toNamed(AppRoutes.comprobantesVer),
-    },
-    {
-      'title': 'Productos',
-      'icon': 'assets/icons/icon_image/products_basket.png',
-      'action': () => Get.toNamed(AppRoutes.products),
-    },
-    {
-      'title': 'Crear\nCotización',
-      'icon': 'assets/icons/icon_svg/generate_invoice.svg',
-      'action': () => _openNewQuotation(),
-    },
-    {
-      'title': 'Cotizaciones',
-      'icon': 'assets/icons/icon_svg/invoice_icon.svg',
-      'action': () => Get.toNamed(AppRoutes.quotationsVer),
-    },
-    {
-      'title': 'Más\nOpciones',
-      'icon': 'assets/icons/icon_svg/dots-three.svg',
-      'action': () => _showMoreOptionsSheet(),
-    },
-  ];
-
-  /// Accesos de gestión ocasional: viven en el sheet de "Más Opciones"
-  /// (Inventario además ya está en la barra inferior).
-  List<Map<String, dynamic>> get _gestionServices => [
-    if (canViewLoyalty(ref.watch(sesionProvider)))
-      {
-        'title': 'Tarjetas de fidelización',
-        'icon': 'assets/icons/icon_svg/customer.svg',
-        'action': () => Get.toNamed(AppRoutes.loyaltyCards),
-      },
-    {
-      'title': 'Clientes',
-      'icon': 'assets/icons/icon_svg/customer.svg',
-      'action': () => Get.toNamed(AppRoutes.customer),
-    },
-    {
-      'title': 'Inventario',
-      'icon': 'assets/icons/icon_image/inventory_list.png',
-      'action': () => Get.toNamed(AppRoutes.inventory),
-    },
-    if (ContainerLoansMainScreen.isAvailable(ref.watch(sesionProvider)))
-      {
-        'title': 'Envases\npendientes',
-        'icon': 'assets/icons/icon_image/inventory_list.png',
-        'action': () => Navigator.of(context).push(
+  void _openAction(DashboardAction action) {
+    final allowed = dashboardGroups(
+      ref.read(sesionProvider),
+    ).any((group) => group.actions.contains(action));
+    if (!allowed) return;
+    switch (action) {
+      case DashboardAction.newQuotation:
+        openNewQuotation(context, ref);
+      case DashboardAction.sale:
+        _openNewSale();
+      case DashboardAction.customers:
+        if (widget.onIrAClientes != null) {
+          widget.onIrAClientes!();
+        } else {
+          Get.toNamed(AppRoutes.customer);
+        }
+      case DashboardAction.inventory:
+        if (widget.onIrAInventario != null) {
+          widget.onIrAInventario!();
+        } else {
+          Get.toNamed(AppRoutes.inventory);
+        }
+      case DashboardAction.containers:
+        Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const ContainerLoansMainScreen()),
-        ),
-      },
-  ];
-
-  /// Requiere el flag `verNotificacionYape` de la empresa. El replicador pide
-  /// además el permiso y solo existe en Android: iOS no deja leer las
-  /// notificaciones de otras apps, así que no hay nada que configurar.
-  List<Map<String, dynamic>> get _pagosServices => [
-    {
-      'title': 'Pagos Yape',
-      'icon': 'assets/icons/icon_svg/view_payment.svg',
-      'action': () => Get.toNamed(AppRoutes.pagosYape),
-    },
-    if (YapeNotificationService.instance.isSupported &&
-        ref
-            .watch(sesionProvider)
-            .hasPermission('PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS'))
-      {
-        'title': 'Replicador',
-        'icon': 'assets/icons/icon_svg/payment_status.svg',
-        'action': () => Get.toNamed(AppRoutes.replicador),
-      },
-  ];
-
-  List<Map<String, dynamic>> get _cuentasServices => [
-    if (ref.watch(sesionProvider).hasPermission('INVENTARIO_TRASLADO_RAPIDOS'))
-      {
-        'title': 'Traslados',
-        'icon': 'assets/icons/icon_image/inventory_list.png',
-        'action': () => Get.toNamed(AppRoutes.inventoryTransfers),
-      },
-    {
-      'title': 'Cuentas por Cobrar',
-      'icon': 'assets/icons/icon_svg/add_payment.svg',
-      'action': () => Get.toNamed(AppRoutes.accountsReceivable),
-    },
-    {
-      'title': 'Cuentas por Pagar',
-      'icon': 'assets/icons/icon_svg/expense_payment.svg',
-      'action': () => Get.toNamed(AppRoutes.accountsPayable),
-    },
-    {
-      'title': 'Compras',
-      'icon': 'assets/icons/icon_svg/purchase.svg',
-      'action': () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const PurchasesMainScreen())),
-    },
-  ];
-
-  void _showMoreOptionsSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    'Más opciones',
-                    style: GoogleFonts.raleway(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Divider(height: 1, color: Colors.grey.shade200),
-                _buildSheetSectionLabel('Gestión'),
-                ..._gestionServices.map(_buildSheetOptionRow),
-                const SizedBox(height: 4),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+        );
+      case DashboardAction.purchases:
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const PurchasesMainScreen()));
+      case DashboardAction.collector:
+        Get.toNamed(
+          AppRoutes.restaurantCobrador,
+          arguments: {'pvId': ref.read(sesionProvider).office?.id ?? 0},
+        );
+      default:
+        final route = switch (action) {
+          DashboardAction.vouchers => AppRoutes.comprobantesVer,
+          DashboardAction.quotations => AppRoutes.quotationsVer,
+          DashboardAction.loyalty => AppRoutes.loyaltyCards,
+          DashboardAction.products => AppRoutes.products,
+          DashboardAction.transfers => AppRoutes.inventoryTransfers,
+          DashboardAction.receivable => AppRoutes.accountsReceivable,
+          DashboardAction.payable => AppRoutes.accountsPayable,
+          DashboardAction.yape => AppRoutes.pagosYape,
+          DashboardAction.analytics => AppRoutes.analytics,
+          DashboardAction.settings => AppRoutes.settings,
+          DashboardAction.tables => AppRoutes.restaurantMesas,
+          DashboardAction.orders => AppRoutes.ordersRestaurant,
+          DashboardAction.kitchen => AppRoutes.restaurantKitchen,
+          _ => null,
+        };
+        if (route != null) Get.toNamed(route);
+    }
   }
-
-  Widget _buildSheetSectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          label,
-          style: GoogleFonts.raleway(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSheetOptionRow(Map<String, dynamic> service) {
-    final icon = service['icon'] as String;
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).pop();
-        (service['action'] as VoidCallback)();
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: ColorSchema.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: icon.endsWith('.svg')
-                    ? SvgPicture.asset(
-                        icon,
-                        colorFilter: const ColorFilter.mode(
-                          ColorSchema.primaryColor,
-                          BlendMode.srcIn,
-                        ),
-                        width: 18,
-                        height: 18,
-                      )
-                    : ImageIcon(
-                        AssetImage(icon),
-                        color: ColorSchema.primaryColor,
-                        size: 18,
-                      ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                service['title'] as String,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: ColorSchema.primaryColor,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Map<String, dynamic>> get _generalServices => [
-    {
-      'title': 'Estadísticas',
-      'icon': 'assets/icons/icon_image/stats.png',
-      'action': () => Get.toNamed(AppRoutes.analytics),
-    },
-    {
-      'title': 'Ajustes',
-      'icon': 'assets/icons/icon_image/settings.png',
-      'action': () => Get.toNamed(AppRoutes.settings),
-    },
-  ];
-
-  List<Map<String, dynamic>> get _restauranteServices => [
-    if (ref.watch(sesionProvider).hasPermission('SUPER_USUARIO') ||
-        ref.watch(sesionProvider).hasPermission('RESTAURANTE_COCINA_VER'))
-      {
-        'title': 'Cocina',
-        'icon': 'assets/icons/icon_svg/soup_kitchen.svg',
-        'action': () => Get.toNamed(AppRoutes.restaurantKitchen),
-      },
-    {
-      'title': 'Mesas',
-      'icon': 'assets/icons/icon_image/dinner-table.png',
-      'action': () => Get.toNamed(AppRoutes.restaurantMesas),
-    },
-    {
-      'title': 'Cobrador',
-      'icon': 'assets/icons/icon_image/bill_restaurant.png',
-      'action': () {
-        final pvId = ref.read(sesionProvider).office?.id ?? 0;
-        Get.toNamed(AppRoutes.restaurantCobrador, arguments: {'pvId': pvId});
-      },
-    },
-    {
-      'title': 'Pedidos',
-      'icon': 'assets/icons/icon_image/pedido_add.png',
-      'action': () => Get.toNamed(AppRoutes.ordersRestaurant),
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
     if (_hasConnectionError) return _buildNoConnectionScreen();
 
-    final dashboardContent = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Ventas del Día — fijo, no escrolea ───────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
-          child: TodayReportsSection(
-            key: _todayReportKey,
-            idPuntoVenta: widget.idPuntoVenta,
-            onConnectionError: _onConnectionError,
-            onLoadSuccess: _onLoadSuccess,
-            onIrACaja: widget.onIrACaja,
-          ),
-        ),
-        const SizedBox(height: 24),
-        // ── Opciones — escroleable ────────────────────────────────────────
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionLabel('Venta'),
-                const SizedBox(height: 12),
-                _buildServicesGrid(_ventaServices),
-                const SizedBox(height: 24),
-                // Solo negocios de rubro restaurante ven Mesas/Cobrador/Pedidos.
-                if (ref.watch(sesionProvider).config?.esRestaurante ==
-                    true) ...[
-                  _buildSectionLabel('Restaurante'),
-                  const SizedBox(height: 12),
-                  _buildServicesGrid(_restauranteServices),
-                  const SizedBox(height: 24),
-                ],
-                _buildSectionLabel('Operaciones'),
-                const SizedBox(height: 12),
-                _buildServicesGrid(_cuentasServices),
-                const SizedBox(height: 24),
-                _buildSectionLabel('General'),
-                const SizedBox(height: 12),
-                _buildServicesGrid(_generalServices),
-                if (ref.watch(sesionProvider).config?.verNotificacionYape ==
-                    true) ...[
-                  const SizedBox(height: 24),
-                  _buildSectionLabel('Pagos'),
-                  const SizedBox(height: 12),
-                  _buildServicesGrid(_pagosServices),
-                ],
-                const SizedBox(height: 120),
-              ],
+    final session = ref.watch(sesionProvider);
+    final canReadSales = dashboardAllows(session, 'VENTAS_VER');
+    final canReadCash = dashboardAllows(session, 'CAJA_VER');
+    final dashboardContent = SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (canReadSales || canReadCash) ...[
+            TodayReportsSection(
+              key: ValueKey((
+                _todayReportKey,
+                session.companySelected?.id,
+                session.login,
+                session.roles?.join(','),
+              )),
+              idPuntoVenta: widget.idPuntoVenta,
+              onConnectionError: _onConnectionError,
+              onLoadSuccess: _onLoadSuccess,
+              onIrACaja: canReadCash ? widget.onIrACaja : null,
             ),
-          ),
-        ),
-      ],
+            const SizedBox(height: 24),
+          ],
+          DashboardMenu(session: session, onAction: _openAction),
+        ],
+      ),
     );
 
     // Durante el reintento mantenemos TodayReportsSection montado (para que
@@ -679,129 +368,6 @@ class _InicioTabState extends ConsumerState<InicioTab> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(String label) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          decoration: BoxDecoration(
-            color: ColorSchema.primaryColor.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.raleway(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: ColorSchema.primaryColor,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 3),
-            height: 1,
-            color: ColorSchema.primaryColor.withValues(alpha: 0.15),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildServicesGrid(List<Map<String, dynamic>> services) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        // Cards más compactos: menos scroll para llegar a las secciones de abajo.
-        childAspectRatio: 1.55,
-      ),
-      itemCount: services.length,
-      itemBuilder: (context, index) {
-        final s = services[index];
-        return _ServiceCard(
-          title: s['title'] as String,
-          icon: s['icon'] as String,
-          onTap: s['action'] as VoidCallback,
-        );
-      },
-    );
-  }
-}
-
-class _ServiceCard extends StatelessWidget {
-  final String title;
-  final String icon;
-  final VoidCallback onTap;
-
-  const _ServiceCard({
-    required this.title,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon.endsWith('.svg'))
-              SvgPicture.asset(
-                icon,
-                colorFilter: const ColorFilter.mode(
-                  ColorSchema.primaryColor,
-                  BlendMode.srcIn,
-                ),
-                width: 28,
-                height: 28,
-              )
-            else
-              ImageIcon(
-                AssetImage(icon),
-                color: ColorSchema.primaryColor,
-                size: 28,
-              ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.roboto(
-                fontSize: screenWidth * 0.026,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-                height: 1.15,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

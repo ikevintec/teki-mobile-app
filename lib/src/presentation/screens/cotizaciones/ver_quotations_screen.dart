@@ -1,3 +1,5 @@
+import 'package:teki_app/src/presentation/screens/cotizaciones/quotation_navigation.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/navigation/dashboard_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -16,7 +18,8 @@ class VerQuotationsScreen extends ConsumerStatefulWidget {
   const VerQuotationsScreen({super.key});
 
   @override
-  ConsumerState<VerQuotationsScreen> createState() => _VerQuotationsScreenState();
+  ConsumerState<VerQuotationsScreen> createState() =>
+      _VerQuotationsScreenState();
 }
 
 class _VerQuotationsScreenState extends ConsumerState<VerQuotationsScreen> {
@@ -25,16 +28,20 @@ class _VerQuotationsScreenState extends ConsumerState<VerQuotationsScreen> {
     final desde = state.filtroDesde;
     final hasta = state.filtroHasta;
     if (desde.isNotEmpty && hasta.isNotEmpty) {
-      ref.read(quotationListProvider.notifier).loadFirstPage(desde: desde, hasta: hasta);
+      ref
+          .read(quotationListProvider.notifier)
+          .loadFirstPage(desde: desde, hasta: hasta);
     }
   }
 
   void _handleDateRangeChanged(DateTimeRange range) {
     final provider = ref.read(quotationListProvider.notifier);
-    final desde = DateFormat('dd-MM-yyyy H:mm:ss')
-        .format(DateTime(range.start.year, range.start.month, range.start.day, 0, 0, 0));
-    final hasta = DateFormat('dd-MM-yyyy H:mm:ss')
-        .format(DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59));
+    final desde = DateFormat('dd-MM-yyyy H:mm:ss').format(
+      DateTime(range.start.year, range.start.month, range.start.day, 0, 0, 0),
+    );
+    final hasta = DateFormat('dd-MM-yyyy H:mm:ss').format(
+      DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59),
+    );
     provider.loadFirstPage(desde: desde, hasta: hasta);
   }
 
@@ -45,9 +52,20 @@ class _VerQuotationsScreenState extends ConsumerState<VerQuotationsScreen> {
     });
 
     return Scaffold(
+      floatingActionButton:
+          dashboardAllows(ref.watch(sesionProvider), 'VENTAS_CREAR')
+          ? FloatingActionButton.extended(
+              onPressed: () => openNewQuotation(context, ref),
+              icon: const Icon(Icons.add),
+              label: const Text('Nueva cotización'),
+            )
+          : null,
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Ver Cotizaciones', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Ver Cotizaciones',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: ColorSchema.primaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -55,9 +73,7 @@ class _VerQuotationsScreenState extends ConsumerState<VerQuotationsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
-            child: CustomDatePicker(
-              onDateSelected: _handleDateRangeChanged,
-            ),
+            child: CustomDatePicker(onDateSelected: _handleDateRangeChanged),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),

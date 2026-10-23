@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../dashboard/navigation/dashboard_navigation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,7 +17,13 @@ import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class CustomerMainScreen extends ConsumerStatefulWidget {
-  const CustomerMainScreen({super.key});
+  const CustomerMainScreen({
+    super.key,
+    this.embedded = false,
+    this.refreshNotifier,
+  });
+  final bool embedded;
+  final ValueNotifier<int>? refreshNotifier;
 
   @override
   ConsumerState<CustomerMainScreen> createState() => _CustomerMainScreenState();
@@ -30,14 +37,15 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   @override
   void initState() {
     super.initState();
+    widget.refreshNotifier?.addListener(_refreshCustomers);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(customersProvider.notifier).clearState();
-      ref.read(customersProvider.notifier).loadFirstPage();
+      if (mounted) _reloadCustomers();
     });
 
     _scrollController.addListener(() {
       final state = ref.read(customersProvider);
-      final reachedEnd = _scrollController.position.pixels >=
+      final reachedEnd =
+          _scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 300;
 
       if (reachedEnd && state.paginacion && !state.isLoading!) {
@@ -48,6 +56,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
 
   @override
   void dispose() {
+    widget.refreshNotifier?.removeListener(_refreshCustomers);
+    controller.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -83,7 +93,17 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
         (state.email?.isNotEmpty == true);
   }
 
+  void _refreshCustomers() {
+    if (!mounted ||
+        !dashboardAllows(ref.read(sesionProvider), 'CLIENTES_VER')) {
+      return;
+    }
+    if (ref.read(customersProvider).isLoading == true) return;
+    ref.read(customersProvider.notifier).loadFirstPage();
+  }
+
   void _reloadCustomers() {
+    if (!dashboardAllows(ref.read(sesionProvider), 'CLIENTES_VER')) return;
     ref.read(customersProvider.notifier).clearState();
     ref.read(customersProvider.notifier).loadFirstPage();
   }
@@ -91,22 +111,30 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(sesionProvider, (prev, next) {
-      if (next.office?.id != prev?.office?.id) {
+      if (next.office?.id != prev?.office?.id ||
+          next.companySelected?.id != prev?.companySelected?.id ||
+          next.login != prev?.login) {
         _reloadCustomers();
       }
     });
+
+    if (!dashboardAllows(ref.watch(sesionProvider), 'CLIENTES_VER')) {
+      return const Center(child: Text('No tienes acceso a Clientes.'));
+    }
 
     // final isSmallScreen = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       key: _key,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: CustomAppBar(
-          navigateName: "Clientes",
-          onSettingsReturn: _reloadCustomers,
-        ),
-      ),
+      appBar: widget.embedded
+          ? null
+          : PreferredSize(
+              preferredSize: const Size.fromHeight(60),
+              child: CustomAppBar(
+                navigateName: "Clientes",
+                onSettingsReturn: _reloadCustomers,
+              ),
+            ),
       body: Container(
         color: Colors.white70,
         child: Column(
@@ -117,15 +145,18 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Clientes',
-                    style: GoogleFonts.roboto(
-                      color: const Color(0xFF2D3748),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Text(
+                      'Clientes',
+                      style: GoogleFonts.roboto(
+                        color: const Color(0xFF2D3748),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         width: 40,
@@ -167,17 +198,43 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            Expanded(child: _buildCustomersList())
+            const SizedBox(height: 12),
+            if (widget.embedded &&
+                dashboardAllows(ref.watch(sesionProvider), 'CLIENTES_CREAR'))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: () => Get.toNamed(AppRoutes.addCustomer),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Crear cliente'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: ColorSchema.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: widget.embedded ? 100 : 0),
+                child: _buildCustomersList(),
+              ),
+            ),
           ],
         ),
       ),
       floatingActionButton:
-          ref.watch(sesionProvider).hasPermission('CLIENTES_CREAR')
-              ? const CustomFloatingActionButton(
-                  buttonName: "Crear Cliente",
-                  routeName: AppRoutes.addCustomer)
-              : null,
+          !widget.embedded &&
+              dashboardAllows(ref.watch(sesionProvider), 'CLIENTES_CREAR')
+          ? Padding(
+              padding: EdgeInsets.only(bottom: widget.embedded ? 90 : 0),
+              child: const CustomFloatingActionButton(
+                buttonName: 'Crear cliente',
+                routeName: AppRoutes.addCustomer,
+              ),
+            )
+          : null,
     );
   }
 
@@ -226,6 +283,9 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   }
 
   Widget _buildCustomerCard(Customer customer) {
+    final stackDocument =
+        MediaQuery.textScalerOf(context).scale(12) > 16 ||
+        MediaQuery.sizeOf(context).width < 360;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
@@ -238,10 +298,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
             offset: const Offset(0, 1),
           ),
         ],
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 0.5,
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -292,11 +349,14 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                     ],
                   ),
                 ),
-                if (customer.numeroDocumento?.isNotEmpty == true) ...[
+                if (!stackDocument &&
+                    customer.numeroDocumento?.isNotEmpty == true) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: ColorSchema.primaryColor,
                       borderRadius: BorderRadius.circular(6),
@@ -313,6 +373,14 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                 ],
               ],
             ),
+            if (stackDocument && customer.numeroDocumento?.isNotEmpty == true)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Documento: ${customer.numeroDocumento}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,17 +488,23 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                         color: ColorSchema.primaryColor,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        Get.to(
-                            () => AddCustomerSection(customerId: customer.id));
-                      },
-                      icon: Icon(
-                        Icons.edit_outlined,
-                        size: 18,
-                        color: Colors.orange.shade600,
+                    if (dashboardAllows(
+                      ref.watch(sesionProvider),
+                      'CLIENTES_EDITAR',
+                    ))
+                      IconButton(
+                        tooltip: 'Editar cliente',
+                        onPressed: () {
+                          Get.to(
+                            () => AddCustomerSection(customerId: customer.id),
+                          );
+                        },
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: Colors.orange.shade600,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ],

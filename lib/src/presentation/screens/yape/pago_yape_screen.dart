@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -85,9 +88,28 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: CustomAppBar(navigateName: 'Yapes'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: CustomAppBar(
+          navigateName: 'Yapes',
+          actions: [
+            if (_yapeService.isSupported &&
+                ref.watch(sesionProvider).config?.verNotificacionYape == true &&
+                ref
+                    .watch(sesionProvider)
+                    .hasPermission(
+                      'PERMITIR_GESTIONAR_NOTIFICACIONES_BILLETERAS',
+                    ))
+              IconButton(
+                tooltip: 'Configurar replicador',
+                onPressed: () => Get.toNamed(AppRoutes.replicador),
+                icon: const Icon(
+                  Icons.settings_input_antenna_rounded,
+                  color: Colors.white,
+                ),
+              ),
+          ],
+        ),
       ),
       body: Column(
         children: [
@@ -106,8 +128,11 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
-          const Icon(Icons.notifications_off_outlined,
-              color: Color(0xFF9A6700), size: 22),
+          const Icon(
+            Icons.notifications_off_outlined,
+            color: Color(0xFF9A6700),
+            size: 22,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -268,10 +293,7 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
                   'Operación: ${payment.codigoOperacion.isEmpty ? '-' : payment.codigoOperacion}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade700,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                 ),
               ],
             ),

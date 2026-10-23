@@ -5,52 +5,67 @@ import 'package:teki_app/src/domain/repositories/customer_repository.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
 
-final customersProvider = StateNotifierProvider<CustomersStateNotifier, CustomersState>((ref) {
-  final repositorio = CustomersRepositoryImpl();
-  return CustomersStateNotifier(customersRepository: repositorio, ref: ref);
-});
+final customersProvider =
+    StateNotifierProvider<CustomersStateNotifier, CustomersState>((ref) {
+      final repositorio = CustomersRepositoryImpl();
+      return CustomersStateNotifier(customersRepository: repositorio, ref: ref);
+    });
 
 class CustomersStateNotifier extends StateNotifier<CustomersState> {
   final CustomersRepository customersRepository;
   final Ref ref;
+  int _revision = 0;
 
   CustomersStateNotifier({required this.customersRepository, required this.ref})
-      : super(CustomersState.initial());
+    : super(CustomersState.initial());
 
   Future<void> loadFirstPage() async {
+    final revision = ++_revision;
     resetPagination();
     state = state.copyWith(isLoading: true);
     try {
-      final customers = await customersRepository.getCustomers(buildCustomersQueryParams(state));
-      setCustomers(customers.content);
+      final customers = await customersRepository.getCustomers(
+        buildCustomersQueryParams(state),
+      );
+      if (!mounted || revision != _revision) return;
+      state = state.copyWith(
+        customers: customers.content,
+        totalElements: customers.totalElements,
+        hasMore: customers.last == false && customers.content.isNotEmpty,
+      );
     } catch (e) {
-      errorNotification(e.toString());
+      if (mounted && revision == _revision) errorNotification(e.toString());
     } finally {
-      setLoading(false);
+      if (mounted && revision == _revision) setLoading(false);
     }
   }
 
   Future<void> loadMorePages() async {
-    if (state.hasMore == false) return;
-    if (state.isLoading == true) return;
-    if (state.totalElements != null && state.customers!.length >= state.totalElements!) {
+    if (state.hasMore == false || state.isLoading == true) return;
+    if (state.totalElements != null &&
+        state.customers!.length >= state.totalElements!) {
       setHasMore(false);
       return;
     }
+    final revision = _revision;
+    final nextPage = state.pageNumber + 1;
     setLoading(true);
-    setPageNumber(state.pageNumber + 1);
     try {
-      final customers = await customersRepository.getCustomers(buildCustomersQueryParams(state));
-      if (customers.content.isEmpty) {
-        setHasMore(false);
-        return;
-      }
-      final allCustomers = [...?state.customers, ...customers.content];
-      setCustomers(allCustomers);
+      final params = buildCustomersQueryParams(
+        state.copyWith(pageNumber: nextPage),
+      );
+      final customers = await customersRepository.getCustomers(params);
+      if (!mounted || revision != _revision) return;
+      state = state.copyWith(
+        customers: [...?state.customers, ...customers.content],
+        pageNumber: nextPage,
+        totalElements: customers.totalElements,
+        hasMore: customers.last == false && customers.content.isNotEmpty,
+      );
     } catch (e) {
-      errorNotification(e.toString());
+      if (mounted && revision == _revision) errorNotification(e.toString());
     } finally {
-      setLoading(false);
+      if (mounted && revision == _revision) setLoading(false);
     }
   }
 
@@ -87,6 +102,7 @@ class CustomersStateNotifier extends StateNotifier<CustomersState> {
   }
 
   void clearState() {
+    _revision++;
     state = CustomersState.initial();
   }
 
@@ -98,11 +114,9 @@ class CustomersStateNotifier extends StateNotifier<CustomersState> {
       paginacion: true,
     );
   }
-
 }
 
-
-class CustomersState{
+class CustomersState {
   final List<Customer>? customers;
   final bool? isLoading;
   final int pageNumber;
@@ -144,7 +158,6 @@ class CustomersState{
     String? sortField,
     int? sortOrder,
     bool? hasMore,
-
   }) {
     return CustomersState(
       customers: customers ?? this.customers,
@@ -178,5 +191,4 @@ class CustomersState{
       hasMore: true,
     );
   }
-
 }

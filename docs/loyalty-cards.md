@@ -1,6 +1,6 @@
 # Tarjetas de fidelización en móvil — P1 y P2
 
-Acceso: **Inicio → Más Opciones → Tarjetas de fidelización** (`/loyalty/cards`).
+Acceso: **Inicio → Fidelización** (`/loyalty/cards`).
 
 P1 incluye las tarjetas activas, detalle, QR público local, compartir enlace con el menú nativo y copiar enlace. El detalle vuelve a consultar la tarjeta antes de mostrar el QR. P2 incluye clientes por tarjeta, búsqueda y paginación, detalle de saldos, movimientos de puntos y cupones emitidos. Compartir imagen del QR queda pendiente como mejora opcional.
 
