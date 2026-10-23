@@ -1,3 +1,6 @@
+import 'package:teki_app/src/presentation/screens/loyalty/widgets/loyalty_shell.dart';
+import 'package:teki_app/src/presentation/screens/loyalty/loyalty_customers_screen.dart';
+import 'package:teki_app/src/providers/loyalty/loyalty_customers_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -13,7 +16,7 @@ class LoyaltyCardsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scope = ref.watch(loyaltyScopeProvider);
-    return _LoyaltyScaffold(
+    return LoyaltyScaffold(
       title: 'Tarjetas de fidelización',
       allowed: scope != null,
       child: scope == null
@@ -25,9 +28,9 @@ class LoyaltyCardsScreen extends ConsumerWidget {
                   skipLoadingOnReload: false,
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => _Message(
+                  error: (error, _) => LoyaltyMessage(
                     icon: Icons.cloud_off_outlined,
-                    text: _errorText(error),
+                    text: loyaltyErrorText(error),
                     retry: () => ref.invalidate(loyaltyCardsProvider),
                   ),
                   data: (cards) => RefreshIndicator(
@@ -53,7 +56,7 @@ class LoyaltyCardsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 24),
                         if (cards.isEmpty)
-                          const _Message(
+                          const LoyaltyMessage(
                             icon: Icons.loyalty_outlined,
                             text:
                                 'Todavía no tienes tarjetas activas. Puedes configurarlas desde la web de Teki.',
@@ -196,7 +199,7 @@ class _LoyaltyCardScreenState extends ConsumerState<LoyaltyCardScreen> {
     final scope = ref.watch(loyaltyScopeProvider);
     final allowed = scope != null && scope.companyId == widget.companyId;
     final key = (companyId: widget.companyId, cardId: widget.cardId);
-    return _LoyaltyScaffold(
+    return LoyaltyScaffold(
       title: _showQr ? 'Registro de tarjeta' : 'Detalle de tarjeta',
       allowed: allowed,
       child: !allowed
@@ -208,9 +211,9 @@ class _LoyaltyCardScreenState extends ConsumerState<LoyaltyCardScreen> {
                   skipLoadingOnReload: false,
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => _Message(
+                  error: (error, _) => LoyaltyMessage(
                     icon: Icons.cloud_off_outlined,
-                    text: _errorText(error),
+                    text: loyaltyErrorText(error),
                     retry: () => ref.invalidate(loyaltyCardProvider(key)),
                   ),
                   data: (card) {
@@ -269,9 +272,24 @@ class _LoyaltyCardScreenState extends ConsumerState<LoyaltyCardScreen> {
                                 style: const TextStyle(fontSize: 18),
                               ),
                             ),
+                          if (!_showQr && canViewLoyaltyCustomers(session)) ...[
+                            const SizedBox(height: 20),
+                            OutlinedButton.icon(
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => LoyaltyCustomersScreen(
+                                    companyId: widget.companyId,
+                                    card: card,
+                                  ),
+                                ),
+                              ),
+                              icon: const Icon(Icons.people_outline),
+                              label: const Text('Clientes de esta tarjeta'),
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           if (url == null)
-                            _Message(
+                            LoyaltyMessage(
                               icon: Icons.info_outline,
                               text: !card.activo
                                   ? 'Esta tarjeta está inactiva y no permite nuevos registros.'
@@ -443,79 +461,3 @@ class _Logo extends StatelessWidget {
     );
   }
 }
-
-class _LoyaltyScaffold extends StatelessWidget {
-  final String title;
-  final bool allowed;
-  final Widget child;
-  const _LoyaltyScaffold({
-    required this.title,
-    required this.allowed,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) => Theme(
-    data: Theme.of(context).copyWith(
-      colorScheme: Theme.of(context).colorScheme.copyWith(
-        primary: ColorSchema.primaryColor,
-        onPrimary: Colors.white,
-      ),
-    ),
-    child: Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-        backgroundColor: ColorSchema.primaryColor,
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: allowed
-            ? child
-            : const _Message(
-                icon: Icons.lock_outline,
-                text:
-                    'Tarjetas de fidelización no disponibles para esta sesión. '
-                    'Requiere fidelización habilitada y permiso de consulta en la empresa actual.',
-              ),
-      ),
-    ),
-  );
-}
-
-class _Message extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final VoidCallback? retry;
-  const _Message({required this.icon, required this.text, this.retry});
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 40, color: const Color(0xFF535965)),
-          const SizedBox(height: 16),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
-          ),
-          if (retry != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: OutlinedButton(
-                onPressed: retry,
-                child: const Text('Reintentar'),
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
-}
-
-String _errorText(Object error) =>
-    error.toString().replaceFirst('Exception: ', '');

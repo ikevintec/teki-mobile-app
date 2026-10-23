@@ -1,5 +1,6 @@
 class LoyaltyCard {
   final int id;
+  final int? sellosParaPremio;
   final String nombre;
   final String? slug;
   final bool activo;
@@ -14,6 +15,7 @@ class LoyaltyCard {
 
   const LoyaltyCard({
     required this.id,
+    this.sellosParaPremio,
     required this.nombre,
     this.slug,
     this.activo = false,
@@ -29,6 +31,7 @@ class LoyaltyCard {
 
   factory LoyaltyCard.fromJson(Map<String, dynamic> json) => LoyaltyCard(
     id: (json['id'] as num).toInt(),
+    sellosParaPremio: (json['sellosParaPremio'] as num?)?.toInt(),
     nombre: (json['nombre'] as String?)?.trim() ?? 'Tarjeta de fidelización',
     slug: json['slug'] as String?,
     activo: json['activo'] == true,

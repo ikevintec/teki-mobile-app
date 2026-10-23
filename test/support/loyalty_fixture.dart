@@ -70,6 +70,8 @@ class DemoLoyaltyRepository implements LoyaltyRepository {
   Object? failure;
   int listCalls = 0;
   final detailCalls = <int>[];
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   DemoLoyaltyRepository({this.cards = const [demoCard, secondCard]});
 
   @override
