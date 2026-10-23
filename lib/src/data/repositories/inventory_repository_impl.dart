@@ -1,3 +1,7 @@
+import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/response/inventory_detail_page.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory_record.dart';
 import 'package:teki_app/src/data/datasource/remote_inventory.dart';
 import 'package:teki_app/src/data/models/response/inventory_record_response.dart';
 import 'package:teki_app/src/data/models/response/inventory_response.dart';
@@ -18,7 +22,9 @@ class InventoryRepositoryImpl extends InventoryRepository {
 
   @override
   Future<InventoryRecordResponse> getInventoryLogs(
-      int idInventory, Map<String, dynamic> params) async {
+    int idInventory,
+    Map<String, dynamic> params,
+  ) async {
     return inventoryDatasource.getInventoryLogs(idInventory, params);
   }
 
@@ -32,4 +38,30 @@ class InventoryRepositoryImpl extends InventoryRepository {
       idPuntoVenta: idPuntoVenta,
     );
   }
+
+  @override
+  Future<InventoryDetailPage<BatchProduct>> getInventoryBatches(
+    int idInventory,
+    int pageNumber,
+    int perPage, {
+    CancelToken? cancelToken,
+  }) => inventoryDatasource.getInventoryBatches(
+    idInventory,
+    pageNumber,
+    perPage,
+    cancelToken: cancelToken,
+  );
+
+  @override
+  Future<InventoryDetailPage<InventoryRecord>> getBatchRecords(
+    int idBatch,
+    int pageNumber,
+    int perPage, {
+    CancelToken? cancelToken,
+  }) => inventoryDatasource.getBatchRecords(
+    idBatch,
+    pageNumber,
+    perPage,
+    cancelToken: cancelToken,
+  );
 }

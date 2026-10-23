@@ -1,3 +1,6 @@
+import 'package:teki_app/src/data/models/response/inventory_detail_page.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory_record.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/inventory_record_response.dart';
 import 'package:teki_app/src/data/models/response/inventory_response.dart';
@@ -8,13 +11,17 @@ import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class RemoteInventory extends InventoryDatasource {
-  Dio dio = ApiClient.dio;
+  final Dio dio;
+
+  RemoteInventory({Dio? dio}) : dio = dio ?? ApiClient.dio;
 
   @override
   Future<InventoryResponse> getInventory(Map<String, dynamic> params) async {
     try {
-      final response =
-          await dio.get('/inventory', queryParameters: params);
+      final response = await dio.get(
+        '/inventory',
+        queryParameters: {...params, 'compact': true},
+      );
       return InventoryResponse.fromJson(response.data);
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
@@ -43,7 +50,9 @@ class RemoteInventory extends InventoryDatasource {
 
   @override
   Future<InventoryRecordResponse> getInventoryLogs(
-      int idInventory, Map<String, dynamic> params) async {
+    int idInventory,
+    Map<String, dynamic> params,
+  ) async {
     try {
       final response = await dio.get(
         '/inventory/$idInventory',
@@ -97,9 +106,7 @@ class RemoteInventory extends InventoryDatasource {
         '/inventory/operations/by-product-ids',
         queryParameters: {'idPuntoVenta': idPuntoVenta},
         data: productIds,
-        options: Options(
-          contentType: Headers.jsonContentType,
-        ),
+        options: Options(contentType: Headers.jsonContentType),
       );
       final data = response.data;
       final list = data is List ? data : const [];
@@ -120,5 +127,38 @@ class RemoteInventory extends InventoryDatasource {
     } catch (_) {
       return {};
     }
+  }
+
+  @override
+  Future<InventoryDetailPage<BatchProduct>> getInventoryBatches(
+    int idInventory,
+    int pageNumber,
+    int perPage, {
+    CancelToken? cancelToken,
+  }) async {
+    final response = await dio.get(
+      '/batch-products/inventory/$idInventory',
+      queryParameters: {'pageNumber': pageNumber, 'perPage': perPage},
+      cancelToken: cancelToken,
+    );
+    return InventoryDetailPage.fromJson(response.data, BatchProduct.fromJson);
+  }
+
+  @override
+  Future<InventoryDetailPage<InventoryRecord>> getBatchRecords(
+    int idBatch,
+    int pageNumber,
+    int perPage, {
+    CancelToken? cancelToken,
+  }) async {
+    final response = await dio.get(
+      '/batch-products/$idBatch/records',
+      queryParameters: {'pageNumber': pageNumber, 'perPage': perPage},
+      cancelToken: cancelToken,
+    );
+    return InventoryDetailPage.fromJson(
+      response.data,
+      InventoryRecord.fromJson,
+    );
   }
 }

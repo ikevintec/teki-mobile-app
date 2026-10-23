@@ -6,6 +6,7 @@ import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory_record.dart';
 import 'package:teki_app/src/providers/inventory/inventory_logs_provider.dart';
+import 'package:teki_app/src/providers/inventory/inventory_details_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -26,16 +27,19 @@ class _InventoryMovementsSheetState
   BatchProduct? _selectedLote;
 
   bool get _inLoteDetail => _selectedLote != null;
-  bool get _hasLotes => widget.inventory.lotes?.isNotEmpty ?? false;
+  bool get _hasLotes =>
+      widget.inventory.producto?.tipoLote == 'LOTE' ||
+      widget.inventory.producto?.tipoLote == 'SERIE' ||
+      (widget.inventory.producto?.loteSerie ?? false) ||
+      (widget.inventory.lotes?.isNotEmpty ?? false);
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
     Future.microtask(() {
-      ref
-          .read(inventoryLogsProvider(widget.inventory.id!).notifier)
-          .loadLogs();
+      if (!mounted) return;
+      ref.read(inventoryLogsProvider(widget.inventory.id!).notifier).loadLogs();
     });
   }
 
@@ -47,6 +51,7 @@ class _InventoryMovementsSheetState
 
   void _loadMore() {
     Future.microtask(() {
+      if (!mounted) return;
       ref
           .read(inventoryLogsProvider(widget.inventory.id!).notifier)
           .loadNextPage();
@@ -71,6 +76,10 @@ class _InventoryMovementsSheetState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(inventoryLogsProvider(widget.inventory.id!));
+    // Mantener la página de lotes al entrar/salir del historial de uno de ellos.
+    if (_activeTab == 1) {
+      ref.watch(inventoryBatchesProvider(widget.inventory.id!));
+    }
     final productName = widget.inventory.producto?.nombre ?? 'Movimientos';
 
     return Container(
@@ -141,8 +150,10 @@ class _InventoryMovementsSheetState
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close, size: 20),
                   padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 36, minHeight: 36),
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
                 ),
               ],
             ),
@@ -181,7 +192,7 @@ class _InventoryMovementsSheetState
     if (_activeTab == 1) {
       return _LotesListView(
         key: const ValueKey('lotes'),
-        lotes: widget.inventory.lotes ?? [],
+        idInventory: widget.inventory.id!,
         loteName: _loteName,
         onTap: (lote) => setState(() => _selectedLote = lote),
       );
@@ -318,13 +329,17 @@ class _MovementsListView extends StatelessWidget {
     if (state.isLoading && state.logs.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(
-            color: ColorSchema.primaryColor, strokeWidth: 2),
+          color: ColorSchema.primaryColor,
+          strokeWidth: 2,
+        ),
       );
     }
     if (state.logs.isEmpty) {
       return Center(
-        child: Text('Sin movimientos registrados',
-            style: GoogleFonts.roboto(color: Colors.black45)),
+        child: Text(
+          'Sin movimientos registrados',
+          style: GoogleFonts.roboto(color: Colors.black45),
+        ),
       );
     }
     return ListView.builder(
@@ -337,8 +352,10 @@ class _MovementsListView extends StatelessWidget {
             return const SizedBox(
               height: 40,
               child: Center(
-                child: Text('No hay más movimientos',
-                    style: TextStyle(color: Colors.black38, fontSize: 12)),
+                child: Text(
+                  'No hay más movimientos',
+                  style: TextStyle(color: Colors.black38, fontSize: 12),
+                ),
               ),
             );
           } else {
@@ -347,7 +364,9 @@ class _MovementsListView extends StatelessWidget {
               padding: EdgeInsets.all(12),
               child: Center(
                 child: CircularProgressIndicator(
-                    color: ColorSchema.primaryColor, strokeWidth: 2),
+                  color: ColorSchema.primaryColor,
+                  strokeWidth: 2,
+                ),
               ),
             );
           }
@@ -360,34 +379,27 @@ class _MovementsListView extends StatelessWidget {
 
 // ─── Vista lista de lotes ───────────────────────────────────────────────────
 
-class _LotesListView extends StatelessWidget {
-  final List<BatchProduct> lotes;
+class _LotesListView extends ConsumerWidget {
+  final int idInventory;
   final String Function(BatchProduct) loteName;
   final ValueChanged<BatchProduct> onTap;
 
   const _LotesListView({
     super.key,
-    required this.lotes,
+    required this.idInventory,
     required this.loteName,
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) {
-    if (lotes.isEmpty) {
-      return Center(
-        child: Text('Sin lotes registrados',
-            style: GoogleFonts.roboto(color: Colors.black45)),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      itemCount: lotes.length,
-      itemBuilder: (context, i) => _LoteCard(
-        lote: lotes[i],
-        name: loteName(lotes[i]),
-        onTap: () => onTap(lotes[i]),
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = inventoryBatchesProvider(idInventory);
+    return _InventoryDetailsList<BatchProduct>(
+      state: ref.watch(provider),
+      emptyMessage: 'Sin lotes registrados',
+      onLoadMore: () => ref.read(provider.notifier).loadNextPage(),
+      itemBuilder: (lote) =>
+          _LoteCard(lote: lote, name: loteName(lote), onTap: () => onTap(lote)),
     );
   }
 }
@@ -412,12 +424,12 @@ class _LoteCard extends StatelessWidget {
     final stockColor = stock <= 0
         ? Colors.red
         : stock < 3
-            ? Colors.orange
-            : Colors.green;
-    final hasMovements = lote.registros?.isNotEmpty ?? false;
+        ? Colors.orange
+        : Colors.green;
+    final canOpen = lote.id != null;
 
     return GestureDetector(
-      onTap: hasMovements ? onTap : null,
+      onTap: canOpen ? onTap : null,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
@@ -442,12 +454,16 @@ class _LoteCard extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: accentColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
@@ -482,7 +498,9 @@ class _LoteCard extends StatelessWidget {
                                 Text(
                                   'Vence: ${DateFormat('dd/MM/yyyy').format(lote.fechaVencimiento!)}',
                                   style: GoogleFonts.roboto(
-                                      fontSize: 11, color: Colors.black45),
+                                    fontSize: 11,
+                                    color: Colors.black45,
+                                  ),
                                 ),
                             ],
                           ),
@@ -490,7 +508,9 @@ class _LoteCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: stockColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
@@ -504,10 +524,13 @@ class _LoteCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (hasMovements) ...[
+                        if (canOpen) ...[
                           const SizedBox(width: 4),
-                          const Icon(Icons.chevron_right_rounded,
-                              size: 18, color: Colors.black26),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18,
+                            color: Colors.black26,
+                          ),
                         ],
                       ],
                     ),
@@ -524,26 +547,77 @@ class _LoteCard extends StatelessWidget {
 
 // ─── Vista movimientos de un lote ──────────────────────────────────────────
 
-class _LoteMovementsView extends StatelessWidget {
+class _LoteMovementsView extends ConsumerWidget {
   final BatchProduct lote;
 
   const _LoteMovementsView({super.key, required this.lote});
 
   @override
-  Widget build(BuildContext context) {
-    final registros = lote.registros ?? [];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = inventoryBatchRecordsProvider(lote.id!);
+    return _InventoryDetailsList<InventoryRecord>(
+      state: ref.watch(provider),
+      emptyMessage: 'Sin movimientos para este lote',
+      onLoadMore: () => ref.read(provider.notifier).loadNextPage(),
+      itemBuilder: (record) => _LoteLogItem(record: record),
+    );
+  }
+}
 
-    if (registros.isEmpty) {
-      return Center(
-        child: Text('Sin movimientos para este lote',
-            style: GoogleFonts.roboto(color: Colors.black45)),
+class _InventoryDetailsList<T> extends StatelessWidget {
+  final InventoryDetailsState<T> state;
+  final String emptyMessage;
+  final Widget Function(T) itemBuilder;
+  final VoidCallback onLoadMore;
+
+  const _InventoryDetailsList({
+    required this.state,
+    required this.emptyMessage,
+    required this.itemBuilder,
+    required this.onLoadMore,
+  });
+
+  Widget _footer() {
+    if (state.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
+    if (state.error != null) {
+      return Column(
+        children: [
+          Text(state.error!, textAlign: TextAlign.center),
+          TextButton(onPressed: onLoadMore, child: const Text('Reintentar')),
+        ],
+      );
+    }
+    if (state.last) return const SizedBox(height: 16);
+    return Center(
+      child: TextButton(onPressed: onLoadMore, child: const Text('Cargar más')),
+    );
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    if (state.items.isEmpty) {
+      if (state.isLoading || state.error != null) {
+        return Center(child: _footer());
+      }
+      return Center(
+        child: Text(
+          emptyMessage,
+          style: GoogleFonts.roboto(color: Colors.black45),
+        ),
+      );
+    }
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 4, bottom: 16),
-      itemCount: registros.length,
-      itemBuilder: (context, i) => _LoteLogItem(record: registros[i]),
+      key: PageStorageKey(emptyMessage),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      itemCount: state.items.length + 1,
+      itemBuilder: (context, index) => index == state.items.length
+          ? _footer()
+          : itemBuilder(state.items[index]),
     );
   }
 }
@@ -584,20 +658,26 @@ class _LogItem extends StatelessWidget {
                 Text(
                   record.concepto ?? record.tipo ?? '-',
                   style: GoogleFonts.roboto(
-                      fontWeight: FontWeight.w600, fontSize: 13),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
                 if (record.detalle != null && record.detalle!.isNotEmpty)
                   Text(
                     record.detalle!,
-                    style:
-                        GoogleFonts.roboto(fontSize: 11, color: Colors.black54),
+                    style: GoogleFonts.roboto(
+                      fontSize: 11,
+                      color: Colors.black54,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 Text(
                   fecha,
-                  style:
-                      GoogleFonts.roboto(fontSize: 11, color: Colors.black45),
+                  style: GoogleFonts.roboto(
+                    fontSize: 11,
+                    color: Colors.black45,
+                  ),
                 ),
               ],
             ),
@@ -676,13 +756,18 @@ class _LoteLogItem extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Icon(Icons.schedule_outlined,
-                        size: 11, color: Colors.black38),
+                    Icon(
+                      Icons.schedule_outlined,
+                      size: 11,
+                      color: Colors.black38,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       fecha,
                       style: GoogleFonts.roboto(
-                          fontSize: 11, color: Colors.black45),
+                        fontSize: 11,
+                        color: Colors.black45,
+                      ),
                     ),
                   ],
                 ),
@@ -690,14 +775,19 @@ class _LoteLogItem extends StatelessWidget {
                   const SizedBox(height: 1),
                   Row(
                     children: [
-                      Icon(Icons.person_outline_rounded,
-                          size: 11, color: Colors.black38),
+                      Icon(
+                        Icons.person_outline_rounded,
+                        size: 11,
+                        color: Colors.black38,
+                      ),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           responsable,
                           style: GoogleFonts.roboto(
-                              fontSize: 11, color: Colors.black45),
+                            fontSize: 11,
+                            color: Colors.black45,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

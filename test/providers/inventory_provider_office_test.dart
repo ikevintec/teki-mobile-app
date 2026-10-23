@@ -1,3 +1,7 @@
+import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/response/inventory_detail_page.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
+import 'package:teki_app/src/data/models/teki_model/inventory_record.dart';
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -85,4 +89,20 @@ class _RecordingInventoryRepository implements InventoryRepository {
   ) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<InventoryDetailPage<BatchProduct>> getInventoryBatches(
+    int idInventory,
+    int pageNumber,
+    int perPage, {
+    CancelToken? cancelToken,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<InventoryDetailPage<InventoryRecord>> getBatchRecords(
+    int idBatch,
+    int pageNumber,
+    int perPage, {
+    CancelToken? cancelToken,
+  }) => throw UnimplementedError();
 }
