@@ -231,7 +231,11 @@ class _QuickFilters extends StatelessWidget {
       width: double.infinity,
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      child: Row(
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 4,
         children: [
           if (canClear)
             TextButton.icon(
@@ -252,7 +256,6 @@ class _QuickFilters extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ),
-          const Spacer(),
           _ModeSelector(mode: state.filters.mode, onChanged: onModeChanged),
         ],
       ),
@@ -283,8 +286,9 @@ class _ModeSelector extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE3E6EB)),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        runSpacing: 4,
         children: [
           for (final option in KitchenOrderMode.values)
             _segment(option),
