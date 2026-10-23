@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:teki_app/src/presentation/screens/loyalty/loyalty_cards_screen.dart';
 import 'package:teki_app/src/presentation/screens/analytics/analytics_main_screen.dart';
 import 'package:teki_app/src/presentation/screens/authentication/forgot_password_screen.dart';
 import 'package:teki_app/src/presentation/screens/authentication/login_screen.dart';
@@ -37,6 +38,7 @@ import 'package:teki_app/src/routes/middleware/replicador_feature_middleware.dar
 import 'package:teki_app/src/routes/middleware/yape_feature_middleware.dart';
 
 class AppRoutes {
+  static const String loyaltyCards = "/loyalty/cards";
   static const String comprobantesVer = "/ver_comprobantes";
   static const String quotationsVer = "/ver_cotizaciones";
   static const String onboarding = "/onboarding";
@@ -91,6 +93,7 @@ class AppRoutes {
   static const String replicador = "/replicador-notificaciones";
 
   static final List<GetPage> _rawPages = [
+    GetPage(name: loyaltyCards, page: () => const LoyaltyCardsScreen()),
     GetPage(name: onboarding, page: () => const OnboardingScreen()),
     GetPage(name: login, page: () => const LoginScreen()),
     GetPage(name: register, page: () => const RegisterScreen()),

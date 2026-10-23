@@ -235,6 +235,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 
   void logout() async {
+    // Revoca los accesos y destruye consultas pendientes antes de salir.
+    ref.read(sesionProvider.notifier).setConfigCompany(ConfigCompany());
+    ref.read(sesionProvider.notifier).setRoles([]);
     // Antes de borrar la sesion: la llamada necesita el access_token vigente.
     await NotificationService.instance.unregisterToken();
     NotificationService.instance.dispose();

@@ -58,8 +58,11 @@ dependencies:
   flutter_blue_plus: ">=1.35.0 <2.0.0"
   esc_pos_utils_plus: ^2.0.4
   audioplayers: ^6.7.1
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_launcher_icons: ^0.14.3
   flutter_lints: ^6.0.0
   flutter_test:

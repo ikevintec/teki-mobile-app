@@ -50,6 +50,7 @@ app.*.map.json
 /android/build/
 /android/.gradle/
 android/.gradle/
+android/.kotlin/
 **/android/**/build/
 
 # iOS builds and archives

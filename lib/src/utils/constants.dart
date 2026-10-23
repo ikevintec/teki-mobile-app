@@ -17,6 +17,12 @@ class Environment {
     await dotenv.load(fileName: kReleaseMode ? '.env.production' : '.env');
   }
 
+  /// Origen público de registro; nunca se deriva de API_URL.
+  static String get loyaltyPublicBaseUrl =>
+      const String.fromEnvironment('LOYALTY_PUBLIC_BASE_URL').isNotEmpty
+          ? const String.fromEnvironment('LOYALTY_PUBLIC_BASE_URL')
+          : (dotenv.env['LOYALTY_PUBLIC_BASE_URL'] ?? '');
+
   static String apiUrl = dotenv.env['API_URL'] ?? 'no url defined';
   static String wsUrl = dotenv.env['WS_URL'] ?? 'https://sock.teki.pe';
   static String wsPath = dotenv.env['WS_PATH'] ?? '/tekiwss';

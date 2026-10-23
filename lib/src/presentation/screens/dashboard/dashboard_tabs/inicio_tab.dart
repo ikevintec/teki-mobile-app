@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/providers/loyalty/loyalty_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -295,6 +296,12 @@ class _InicioTabState extends ConsumerState<InicioTab> {
   /// Accesos de gestión ocasional: viven en el sheet de "Más Opciones"
   /// (Inventario además ya está en la barra inferior).
   List<Map<String, dynamic>> get _gestionServices => [
+    if (canViewLoyalty(ref.watch(sesionProvider)))
+      {
+        'title': 'Tarjetas de fidelización',
+        'icon': 'assets/icons/icon_svg/customer.svg',
+        'action': () => Get.toNamed(AppRoutes.loyaltyCards),
+      },
     {
       'title': 'Clientes',
       'icon': 'assets/icons/icon_svg/customer.svg',
@@ -364,41 +371,44 @@ class _InicioTabState extends ConsumerState<InicioTab> {
   void _showMoreOptionsSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Más opciones',
-                  style: GoogleFonts.raleway(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Divider(height: 1, color: Colors.grey.shade200),
-              _buildSheetSectionLabel('Gestión'),
-              ..._gestionServices.map(_buildSheetOptionRow),
-              const SizedBox(height: 4),
-            ],
+                const SizedBox(height: 14),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Más opciones',
+                    style: GoogleFonts.raleway(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Divider(height: 1, color: Colors.grey.shade200),
+                _buildSheetSectionLabel('Gestión'),
+                ..._gestionServices.map(_buildSheetOptionRow),
+                const SizedBox(height: 4),
+              ],
+            ),
           ),
         ),
       ),
@@ -459,12 +469,14 @@ class _InicioTabState extends ConsumerState<InicioTab> {
               ),
             ),
             const SizedBox(width: 14),
-            Text(
-              service['title'] as String,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: ColorSchema.primaryColor,
+            Expanded(
+              child: Text(
+                service['title'] as String,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: ColorSchema.primaryColor,
+                ),
               ),
             ),
           ],
