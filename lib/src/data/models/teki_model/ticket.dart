@@ -17,6 +17,7 @@ import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class Ticket {
+  static const _unchanged = Object();
   final int? id;
   final String? serie;
   final int? numero;
@@ -581,11 +582,11 @@ class Ticket {
     int? numero,
     String? fechaEmision,
     DateTime? fechaEmisionDate,
-    DateTime? fechaVencimientoDate,
+    Object? fechaVencimientoDate = _unchanged,
     String? horaEmision,
     String? tipoComprobante,
     String? codigoMoneda,
-    String? fechaVencimiento,
+    Object? fechaVencimiento = _unchanged,
     String? codigoTipoOperacion,
     String? rucEmisor,
     String? razonSocialEmisor,
@@ -710,11 +711,15 @@ class Ticket {
       numero: numero ?? this.numero,
       fechaEmision: fechaEmision ?? this.fechaEmision,
       fechaEmisionDate: fechaEmisionDate ?? this.fechaEmisionDate,
-      fechaVencimientoDate: fechaVencimientoDate ?? this.fechaVencimientoDate,
+      fechaVencimientoDate: identical(fechaVencimientoDate, _unchanged)
+          ? this.fechaVencimientoDate
+          : fechaVencimientoDate as DateTime?,
       horaEmision: horaEmision ?? this.horaEmision,
       tipoComprobante: tipoComprobante ?? this.tipoComprobante,
       codigoMoneda: codigoMoneda ?? this.codigoMoneda,
-      fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
+      fechaVencimiento: identical(fechaVencimiento, _unchanged)
+          ? this.fechaVencimiento
+          : fechaVencimiento as String?,
       codigoTipoOperacion: codigoTipoOperacion ?? this.codigoTipoOperacion,
       rucEmisor: rucEmisor ?? this.rucEmisor,
       razonSocialEmisor: razonSocialEmisor ?? this.razonSocialEmisor,

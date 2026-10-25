@@ -1,3 +1,5 @@
+import 'package:teki_app/src/providers/sale/cash_payment_validation.dart';
+import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/emission_review_dialog.dart';
 import 'dart:async';
 import 'dart:ui';
 
@@ -98,9 +100,6 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
   bool get _hasCash => _paymentEntries.any(
       (e) => (e.method.formaPago ?? '').toUpperCase() == 'EFECTIVO');
 
-  bool get _hasNonCash => _paymentEntries.any(
-      (e) => (e.method.formaPago ?? '').toUpperCase() != 'EFECTIVO');
-
   double get _cashTotal => _paymentEntries
       .where((e) => (e.method.formaPago ?? '').toUpperCase() == 'EFECTIVO')
       .fold(0.0, (sum, e) => sum + (double.tryParse(e.amountController.text) ?? 0.0));
@@ -119,17 +118,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
     if (_paymentEntries.isEmpty) {
       return _submitAttempted ? "Debe seleccionar al menos un método de pago" : null;
     }
-    // FIX CC/CP: comparación en céntimos; los doubles con error binario
-    // (33.33+33.33+33.34) ya no bloquean una suma exacta en decimal.
-    final paidCent = (_totalPaid * 100).round();
-    final totalCent = (total * 100).round();
-    if (paidCent < totalCent) {
-      return "El monto pagado es menor al total de la venta";
-    }
-    if (_hasNonCash && paidCent > totalCent) {
-      return "Al usar métodos de pago sin efectivo, el monto debe ser exacto.";
-    }
-    return null;
+    return validateCashPayment(total: total, cash: _cashTotal, nonCash: _nonCashTotal);
   }
 
   @override
@@ -579,6 +568,11 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                 );
               }),
             ),
+            if (ticketP.pendingEmission != null) const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text('Emisión sin confirmar. Verifica el resultado antes de volver a cobrar.',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
             // ── Botón finalizar ──────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -589,6 +583,19 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                       ? null
                       : () async {
                           final notifier = ref.read(ticketProvider.notifier);
+                          if (ref.read(ticketProvider).pendingEmission != null) {
+                            final recovered = await showDialog<Ticket>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => EmissionReviewDialog(notifier: notifier),
+                            );
+                            if (!mounted || recovered == null) return;
+                            ref.invalidate(ticketProvider);
+                            ref.invalidate(productSaleProvider);
+                            ref.invalidate(customerSaleProvider);
+                            Get.off(() => ViewComponentScreen(ticket: recovered, id: recovered.id, fromSale: true));
+                            return;
+                          }
                           final isContado = _tabController.index == 0;
 
                           if (isContado) {
@@ -674,7 +681,8 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                       : Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(ticketP.isEdit ? 'Finalizar Edición' : 'Finalizar Pago'),
+                            Text(ticketP.pendingEmission != null ? 'Verificar emisión'
+                                : ticketP.isEdit ? 'Finalizar Edición' : 'Finalizar Pago'),
                             const SizedBox(width: 8),
                             const Icon(Icons.check_circle),
                           ],

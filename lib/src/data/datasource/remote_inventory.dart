@@ -31,18 +31,7 @@ class RemoteInventory extends InventoryDatasource {
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
       errorNotification(errorMessage);
-      return InventoryResponse(
-        content: [],
-        empty: true,
-        first: true,
-        last: false,
-        number: 0,
-        size: 0,
-        totalElements: 0,
-        totalPages: 0,
-        sort: null,
-        pageable: null,
-      );
+      throw Exception(errorMessage);
     } catch (e) {
       rethrow;
     }

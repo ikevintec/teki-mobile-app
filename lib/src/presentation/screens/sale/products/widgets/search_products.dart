@@ -22,6 +22,7 @@ class SearchProducts extends ConsumerStatefulWidget {
 class _SearchProductsState extends ConsumerState<SearchProducts>
     with WidgetsBindingObserver {
   Timer? _debounce;
+  int _searchVersion = 0;
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final LayerLink _layerLink = LayerLink();
@@ -30,6 +31,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
 
   final ValueNotifier<List<Product>> _results = ValueNotifier([]);
   final ValueNotifier<bool> _isSearching = ValueNotifier(false);
+  final ValueNotifier<String?> _searchError = ValueNotifier(null);
   final ValueNotifier<bool> _hasSearched = ValueNotifier(false);
 
   @override
@@ -57,6 +59,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     _results.dispose();
     _isSearching.dispose();
     _hasSearched.dispose();
+    _searchError.dispose();
     _removeOverlay();
     super.dispose();
   }
@@ -71,6 +74,8 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
 
   void _onTextChange() {
     setState(() {}); // rebuild for clear button visibility
+    final version = ++_searchVersion;
+    _searchError.value = null;
     final query = _controller.text.trim();
     if (query.isEmpty) {
       _debounce?.cancel();
@@ -83,11 +88,18 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     _hasSearched.value = false;
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 800), () async {
-      final products = await ref.read(productSaleProvider.notifier).searchProducts(query);
-      if (mounted) {
+      try {
+        final products = await ref.read(productSaleProvider.notifier).searchProducts(query);
+        if (!mounted || version != _searchVersion) return;
         _results.value = products;
         _isSearching.value = false;
         _hasSearched.value = true;
+      } catch (_) {
+        if (!mounted || version != _searchVersion) return;
+        _results.value = [];
+        _isSearching.value = false;
+        _hasSearched.value = false;
+        _searchError.value = 'No pudimos buscar los productos. Revisa tu conexión.';
       }
     });
   }
@@ -120,6 +132,8 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
         hasSearched: _hasSearched,
         controller: _controller,
         onSelect: _selectProduct,
+        error: _searchError,
+        onRetry: _onTextChange,
       ),
     );
     Overlay.of(context).insert(_overlayEntry!);
@@ -245,6 +259,8 @@ class _SuggestionsDropdown extends StatelessWidget {
   final ValueNotifier<bool> hasSearched;
   final TextEditingController controller;
   final void Function(Product) onSelect;
+  final ValueNotifier<String?> error;
+  final VoidCallback onRetry;
 
   const _SuggestionsDropdown({
     required this.layerLink,
@@ -255,6 +271,8 @@ class _SuggestionsDropdown extends StatelessWidget {
     required this.hasSearched,
     required this.controller,
     required this.onSelect,
+    required this.error,
+    required this.onRetry,
   });
 
   @override
@@ -274,7 +292,7 @@ class _SuggestionsDropdown extends StatelessWidget {
         child: SizedBox(
           width: width,
           child: ListenableBuilder(
-            listenable: Listenable.merge([results, isSearching, hasSearched, controller]),
+            listenable: Listenable.merge([results, isSearching, hasSearched, controller, error]),
             builder: (context, _) {
               final query = controller.text.trim();
               final Widget content;
@@ -296,6 +314,14 @@ class _SuggestionsDropdown extends StatelessWidget {
                       Text('Buscando...', style: TextStyle(fontSize: 13, color: Colors.black54)),
                     ],
                   ),
+                );
+              } else if (error.value != null) {
+                content = Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(error.value!, semanticsLabel: error.value),
+                    TextButton(onPressed: onRetry, child: const Text('Reintentar')),
+                  ]),
                 );
               } else if (hasSearched.value && results.value.isEmpty) {
                 content = const Padding(

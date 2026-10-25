@@ -11,6 +11,8 @@ final inventoryProvider =
   ),
 );
 
+enum InventoryStockFilter { todos, bajo, agotado }
+
 class InventoryNotifier extends StateNotifier<InventoryState> {
   final InventoryRepository inventoryRepository;
   int _requestVersion = 0;
@@ -29,7 +31,11 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
           errorMessage: null,
         ));
 
-  Future<void> loadInventory(int idPuntoVenta) async {
+  Future<void> loadInventory(
+    int idPuntoVenta, {
+    String? search,
+    InventoryStockFilter? stockFilter,
+  }) async {
     final requestVersion = ++_requestVersion;
     state = InventoryState(
       items: [],
@@ -39,7 +45,9 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
       perPage: state.perPage,
       sortField: state.sortField,
       sortOrder: state.sortOrder,
-      filterGlobal: null,
+      filterGlobal: search?.isNotEmpty == true ? search : null,
+      stockFilter: stockFilter ?? (state.idPuntoVenta == idPuntoVenta
+          ? state.stockFilter : InventoryStockFilter.todos),
       idPuntoVenta: idPuntoVenta,
       errorMessage: null,
     );
@@ -51,6 +59,7 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
       if (requestVersion != _requestVersion) return;
       state = state.copyWith(
         items: response.content ?? [],
+        totalElements: response.totalElements ?? 0,
         last: response.last ?? false,
         isLoading: false,
       );
@@ -59,7 +68,7 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
       if (requestVersion != _requestVersion) return;
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Sin conexi\u00f3n',
+        errorMessage: 'No se pudo cargar el inventario. Reintenta.',
       );
     }
   }
@@ -67,7 +76,7 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
   Future<void> loadNextPage() async {
     if (state.last || state.isLoading) return;
     final requestVersion = _requestVersion;
-    state = state.copyWith(isLoading: true, pageNumber: state.pageNumber + 1);
+    state = state.copyWith(isLoading: true, pageNumber: state.pageNumber + 1, clearError: true);
     final requestState = state;
     try {
       final response = await inventoryRepository
@@ -85,6 +94,7 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
       state = state.copyWith(
         isLoading: false,
         pageNumber: state.pageNumber - 1,
+        errorMessage: 'No se pudo cargar la siguiente página. Reintenta.',
       );
     }
   }
@@ -95,43 +105,13 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
   }) async {
     final targetOfficeId = idPuntoVenta ?? state.idPuntoVenta;
     if (targetOfficeId == null || targetOfficeId <= 0) return;
-    if (search.isEmpty) {
-      await loadInventory(targetOfficeId);
-      return;
-    }
-    final requestVersion = ++_requestVersion;
-    state = InventoryState(
-      items: [],
-      isLoading: true,
-      last: false,
-      pageNumber: 0,
-      perPage: state.perPage,
-      sortField: state.sortField,
-      sortOrder: state.sortOrder,
-      filterGlobal: search,
-      idPuntoVenta: targetOfficeId,
-      errorMessage: null,
-    );
-    final requestState = state;
-    try {
-      final response = await inventoryRepository
-          .getInventory(buildInventoryQueryParams(requestState));
-      if (!mounted) return;
-      if (requestVersion != _requestVersion) return;
-      state = state.copyWith(
-        items: response.content ?? [],
-        last: response.last ?? false,
-        isLoading: false,
-      );
-    } catch (_) {
-      if (!mounted) return;
-      state = state.copyWith(isLoading: false, errorMessage: 'Sin conexión');
-      if (requestVersion != _requestVersion) return;
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Sin conexión',
-      );
-    }
+    await loadInventory(targetOfficeId, search: search);
+  }
+
+  Future<void> setStockFilter(InventoryStockFilter filter) async {
+    final officeId = state.idPuntoVenta;
+    if (officeId == null || filter == state.stockFilter) return;
+    await loadInventory(officeId, search: state.filterGlobal, stockFilter: filter);
   }
 }
 
@@ -146,6 +126,8 @@ class InventoryState {
   final String? filterGlobal;
   final int? idPuntoVenta;
   final String? errorMessage;
+  final InventoryStockFilter stockFilter;
+  final int totalElements;
 
   InventoryState({
     required this.items,
@@ -158,6 +140,8 @@ class InventoryState {
     required this.filterGlobal,
     required this.idPuntoVenta,
     required this.errorMessage,
+    this.stockFilter = InventoryStockFilter.todos,
+    this.totalElements = 0,
   });
 
   InventoryState copyWith({
@@ -171,6 +155,9 @@ class InventoryState {
     String? filterGlobal,
     int? idPuntoVenta,
     String? errorMessage,
+    InventoryStockFilter? stockFilter,
+    int? totalElements,
+    bool clearError = false,
   }) =>
       InventoryState(
         items: items ?? this.items,
@@ -182,6 +169,8 @@ class InventoryState {
         sortOrder: sortOrder ?? this.sortOrder,
         filterGlobal: filterGlobal ?? this.filterGlobal,
         idPuntoVenta: idPuntoVenta ?? this.idPuntoVenta,
-        errorMessage: errorMessage ?? this.errorMessage,
+        errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+        stockFilter: stockFilter ?? this.stockFilter,
+        totalElements: totalElements ?? this.totalElements,
       );
 }

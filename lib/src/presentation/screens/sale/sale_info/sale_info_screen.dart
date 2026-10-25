@@ -147,7 +147,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
   void _clearExpirationDate() {
     setState(() {
       _dateController2.clear();
-      ref.read(ticketProvider.notifier).setFechaVencimiento(DateTime.now());
+      ref.read(ticketProvider.notifier).setFechaVencimiento(null);
     });
   }
 

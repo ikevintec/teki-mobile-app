@@ -1,3 +1,4 @@
+import 'package:teki_app/src/domain/errors/ticket_emission_exception.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
@@ -39,10 +40,12 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   final TicketsSaleRepository ticketsSaleRepository;
   final QuotationRepository quotationRepository;
   final Ref ref;
+  final void Function(String) notifyError;
   TicketNotifier({
     required this.ref,
     required this.ticketsSaleRepository,
     required this.quotationRepository,
+    this.notifyError = errorNotification,
   }) : super(
          TicketProvider(
            ticket: Ticket(
@@ -106,9 +109,11 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
-  void setFechaVencimiento(DateTime fechaVencimiento) {
+  void setFechaVencimiento(DateTime? fechaVencimiento) {
     Ticket ticketToUpdate = state.ticket.copyWith(
-      fechaVencimiento: DateFormat('yyyy-MM-dd').format(fechaVencimiento),
+      fechaVencimiento: fechaVencimiento == null
+          ? null
+          : DateFormat('yyyy-MM-dd').format(fechaVencimiento),
       fechaVencimientoDate: fechaVencimiento,
     );
     state = state.copyWith(ticket: ticketToUpdate);
@@ -191,6 +196,10 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   }
 
   void resetTicket() {
+    if (state.pendingEmission != null) {
+      notifyError('Verifica la emisión pendiente antes de iniciar otra venta.');
+      return;
+    }
     state = TicketProvider(
       ticket: Ticket(
         items: [],
@@ -462,8 +471,12 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   }
 
   Future<Ticket?> proceessTicket() async {
+    if (state.pendingEmission != null) {
+      notifyError('Verifica el resultado de la emisión anterior antes de volver a cobrar.');
+      return null;
+    }
+    final ticketToSend = getTicketPayload();
     try {
-      final ticketToSend = getTicketPayload();
       if (state.isQuotation) {
         if (state.isEdit && ticketToSend.id != null) {
           return await quotationRepository.updateQuotation(ticketToSend);
@@ -474,10 +487,35 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
         return await ticketsSaleRepository.updateTicket(ticketToSend);
       }
       return await ticketsSaleRepository.createTicket(ticketToSend);
+    } on TicketEmissionException catch (e) {
+      state = state.copyWith(pendingEmission: ticketToSend);
+      notifyError('$e Verifica en comprobantes antes de repetir la operación.');
+      return null;
     } catch (e) {
-      errorNotification("Error al crear el ticket: $e");
+      notifyError('No se pudo ${state.isEdit ? 'actualizar' : 'registrar'} el comprobante: $e');
       return null;
     }
+  }
+
+  Future<List<Ticket>> verifyPendingEmission() async {
+    final pending = state.pendingEmission;
+    if (pending == null) return [];
+    if (pending.id != null) {
+      return [await ticketsSaleRepository.getTicketById(pending.id!)];
+    }
+    return ticketsSaleRepository.getComprobantes({
+      'pageNumber': 0,
+      'perPage': 20,
+      'filtroSerie': pending.serie,
+      'filtroTipoComprobante': [pending.tipoComprobante],
+      if (pending.puntoVenta?.id != null) 'idPuntoVenta': pending.puntoVenta!.id,
+      if (pending.vendedor?.id != null) 'idVendedor': pending.vendedor!.id,
+    });
+  }
+
+  /// Solo después de que el usuario revisó los comprobantes registrados.
+  void confirmEmissionNotRegistered() {
+    state = state.copyWith(clearPendingEmission: true);
   }
 
   // ignore: unused_element
@@ -654,7 +692,8 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
 class TicketProvider {
   final Ticket ticket;
   final SaleMode mode;
-  TicketProvider({required this.ticket, this.mode = SaleMode.createVenta});
+  final Ticket? pendingEmission;
+  TicketProvider({required this.ticket, this.mode = SaleMode.createVenta, this.pendingEmission});
 
   bool get isEdit =>
       mode == SaleMode.editVenta || mode == SaleMode.editCotizacion;
@@ -701,10 +740,11 @@ class TicketProvider {
     }
   }
 
-  TicketProvider copyWith({Ticket? ticket, SaleMode? mode}) {
+  TicketProvider copyWith({Ticket? ticket, SaleMode? mode, Ticket? pendingEmission, bool clearPendingEmission = false}) {
     return TicketProvider(
       ticket: ticket ?? this.ticket,
       mode: mode ?? this.mode,
+      pendingEmission: clearPendingEmission ? null : pendingEmission ?? this.pendingEmission,
     );
   }
 }

@@ -42,8 +42,6 @@ class InventoryListSection extends ConsumerStatefulWidget {
 class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
   late final ScrollController _scrollController;
 
-  /// Filtro por estado de stock (client-side sobre lo cargado).
-  _EstadoStock? _filtro;
 
   @override
   void initState() {
@@ -59,6 +57,7 @@ class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
 
   void _loadMore() {
     Future.microtask(() {
+      if (!mounted) return;
       if (!ref.read(inventoryProvider).isLoading) {
         ref.read(inventoryProvider.notifier).loadNextPage();
       }
@@ -224,22 +223,14 @@ class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
     return '';
   }
 
-  List<Inventory> get _filtrados => _filtro == null
-      ? widget.items
-      : widget.items.where((i) => _estadoDe(i) == _filtro).toList();
-
   Widget _buildFiltros() {
-    final agotados =
-        widget.items.where((i) => _estadoDe(i) == _EstadoStock.agotado).length;
-    final bajos =
-        widget.items.where((i) => _estadoDe(i) == _EstadoStock.bajo).length;
-
-    Widget chip(String label, _EstadoStock? valor, Color? color) {
-      final activo = _filtro == valor;
+    final state = ref.watch(inventoryProvider);
+    Widget chip(String label, InventoryStockFilter valor, Color? color) {
+      final activo = state.stockFilter == valor;
       return Padding(
         padding: const EdgeInsets.only(right: 8),
         child: GestureDetector(
-          onTap: () => setState(() => _filtro = valor),
+          onTap: () => ref.read(inventoryProvider.notifier).setStockFilter(valor),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -272,13 +263,9 @@ class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            chip('Todos', null, null),
-            if (agotados > 0)
-              chip('Agotados ($agotados)', _EstadoStock.agotado,
-                  Colors.red.shade600),
-            if (bajos > 0)
-              chip('Stock bajo ($bajos)', _EstadoStock.bajo,
-                  Colors.orange.shade800),
+            chip('Todos', InventoryStockFilter.todos, null),
+            chip('Agotados', InventoryStockFilter.agotado, Colors.red.shade600),
+            chip('Stock bajo', InventoryStockFilter.bajo, Colors.orange.shade800),
           ],
         ),
       ),
@@ -287,48 +274,32 @@ class _InventoryListSectionState extends ConsumerState<InventoryListSection> {
 
   @override
   Widget build(BuildContext context) {
-    final isLast = ref.watch(inventoryProvider).last;
-
-    if (widget.items.isEmpty) {
-      return ListView(
-        controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          const SizedBox(height: 80),
-          Center(
-            child: Column(
-              children: [
-                Icon(Icons.inventory_2_outlined,
-                    size: 64, color: Colors.grey.shade300),
-                const SizedBox(height: 12),
-                Text(
-                  'No se encontraron ítems de inventario',
-                  style: GoogleFonts.raleway(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF333333),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    final items = _filtrados;
+    final state = ref.watch(inventoryProvider);
+    final isLast = state.last;
+    final items = widget.items;
 
     return ListView.builder(
       controller: _scrollController,
       padding: EdgeInsets.zero,
       itemCount: items.length + 2,
       itemBuilder: (context, index) {
-        if (index == 0) return _buildFiltros();
+        if (index == 0) {
+          return Column(children: [
+            _buildFiltros(),
+            Text('${state.totalElements} resultados', style: const TextStyle(fontSize: 14)),
+            if (items.isEmpty) const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text('No se encontraron ítems con estos filtros.'),
+            ),
+          ]);
+        }
 
         if (index == items.length + 1) {
-          // Con filtro activo no se pagina (se filtra sobre lo cargado).
-          if (_filtro != null) {
-            return const SizedBox(height: 30);
+          if (state.errorMessage != null) {
+            return TextButton(
+              onPressed: state.isLoading ? null : _loadMore,
+              child: Text(state.errorMessage!),
+            );
           }
           if (isLast) {
             return const SizedBox(

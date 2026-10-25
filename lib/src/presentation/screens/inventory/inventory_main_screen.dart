@@ -250,7 +250,7 @@ class _InventoryMainScreenState extends ConsumerState<InventoryMainScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'No hay conexión',
+                                state.errorMessage ?? 'No se pudo cargar el inventario.',
                                 style: TextStyle(
                                   fontSize: 15,
                                   color: Colors.grey.shade600,

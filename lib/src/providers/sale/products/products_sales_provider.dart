@@ -92,25 +92,20 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   Future<List<Product>> searchProducts(String? filter) async {
     setFilterGlobal(filter);
     final officeId = ref.read(sesionProvider).office?.id;
-    try {
-      final List<Product> products;
-      // Solo usamos la búsqueda local si está activo el flag Y ya hay productos
-      // disponibles en memoria/cache. Si el JSON aún no se descargó o falló,
-      // caemos a la búsqueda online para siempre buscar con lo disponible.
-      if (_useLocalSearch && _localProductsAvailable) {
-        products =
-            await ref.read(localProductsProvider.notifier).searchLocal(filter ?? '');
-      } else {
-        final params = buildProductSearchQueryParams(state);
-        params['contextoVentas'] = true;
-        if (officeId != null) params['idPuntoVentaOrder'] = officeId;
-        products = await productsRepository.searchProducts(params);
-      }
-      return await _enrichWithInventory(products, officeId);
-    } catch (e) {
-      errorNotification(e.toString());
-      return [];
+    final List<Product> products;
+    // Solo usamos la búsqueda local si está activo el flag Y ya hay productos
+    // disponibles en memoria/cache. Si el JSON aún no se descargó o falló,
+    // caemos a la búsqueda online para siempre buscar con lo disponible.
+    if (_useLocalSearch && _localProductsAvailable) {
+      products =
+          await ref.read(localProductsProvider.notifier).searchLocal(filter ?? '');
+    } else {
+      final params = buildProductSearchQueryParams(state);
+      params['contextoVentas'] = true;
+      if (officeId != null) params['idPuntoVentaOrder'] = officeId;
+      products = await productsRepository.searchProducts(params);
     }
+    return await _enrichWithInventory(products, officeId);
   }
 
   /// Indica si la búsqueda de productos debe resolverse localmente (fuzzy sobre

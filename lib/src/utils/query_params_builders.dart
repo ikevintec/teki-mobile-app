@@ -271,6 +271,16 @@ Map<String, dynamic> buildInventoryQueryParams(dynamic state) {
     }
   } catch (_) {}
 
+  switch ((state.stockFilter as Enum).name) {
+    case 'bajo':
+      safeAdd('limiteStock', 'STOCK_MINIMO');
+      safeAdd('conStock', true);
+      break;
+    case 'agotado':
+      safeAdd('limiteStock', 'STOCK_AGOTADO');
+      break;
+  }
+
   return params;
 }
 

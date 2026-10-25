@@ -1,3 +1,4 @@
+import 'package:teki_app/src/domain/errors/ticket_emission_exception.dart';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/estado_sunat_response.dart';
@@ -10,7 +11,8 @@ import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart'; // Asegúrate de tener esto
 
 class RemoteTicketSaleDatasource extends TicketSaleDatasource {
-  final Dio dio = ApiClient.dio;
+  final Dio dio;
+  RemoteTicketSaleDatasource({Dio? dio}) : dio = dio ?? ApiClient.dio;
 
   /// Obtiene las series disponibles por oficina (punto de venta) y tipo de documento
   @override
@@ -179,9 +181,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
 
               return Ticket.fromJson(fixedJson);
             } catch (e) {
-              debugPrint("❌ Error al convertir un ticket: $e");
-              debugPrint("🧾 Datos problemáticos: $json");
-              return null;
+              debugPrint('Error al convertir un comprobante: $e');
+              throw const FormatException('No se pudo cargar la lista completa de comprobantes. Vuelve a consultar.');
             }
           })
           .whereType<Ticket>()
@@ -323,10 +324,21 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         data['cotizacion'] = {'id': ticket.cotizacion!.id};
       }
       final response = await dio.post('/tickets', data: data);
-      return Ticket.fromJson(response.data);
+      try {
+        final result = Ticket.fromJson(response.data);
+        if (result.id == null) throw const FormatException('Missing ticket id');
+        return result;
+      } catch (_) {
+        throw const TicketEmissionException('Teki respondió, pero no pudimos confirmar el comprobante registrado.');
+      }
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') {
         throw Exception('Sesión expirada');
+      }
+      if (e.response == null || (e.response?.statusCode ?? 0) >= 500 || e.response?.statusCode == 408) {
+        throw const TicketEmissionException(
+          'No recibimos la confirmación. La venta puede haberse registrado.',
+        );
       }
       final resData = e.response?.data;
       final message =
@@ -336,8 +348,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
           e.message ??
           'Error desconocido del servidor';
       return Future.error(message);
-    } catch (e) {
-      return Future.error(e.toString());
+    } catch (_) {
+      rethrow;
     }
   }
 
