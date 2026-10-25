@@ -61,3 +61,6 @@ android/.kotlin/
 **/ios/*.xcarchive
 **/ios/Runner/GeneratedPluginRegistrant.*
 build/ios/
+
+# Generated desktop plugin links are recreated by flutter pub get.
+**/flutter/ephemeral/

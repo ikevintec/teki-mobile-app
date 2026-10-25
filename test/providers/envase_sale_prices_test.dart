@@ -15,6 +15,97 @@ void main() {
   for (final moneda in ['PEN', 'USD']) {
     for (final incIgv in [true, false]) {
       test(
+        'agregar retornables separa modalidades sin reconvertir costos: $moneda IGV=$incIgv',
+        () {
+          final divisor = moneda == 'PEN' ? 1 : 4;
+          final h = SaleHarness(
+            initial(
+              testLine(moneda: moneda),
+              moneda: moneda,
+              incIgv: incIgv,
+            ),
+          );
+          addTearDown(h.dispose);
+          h.setModoEnvase(0, ModoEnvase.canje);
+          h.setCantidadProductSale(0, 2);
+          h.setPrecioProductSale(0, 11 / divisor / (incIgv ? 1 : 1.18));
+          final before = h.snapshot.productsSales.first;
+          final added = product.copyWith(precioCompra: 17.5);
+          h.setProductsSales(added, null);
+          expect(h.snapshot.productsSales, hasLength(2));
+          h.setModoEnvase(1, ModoEnvase.prestamo);
+          h.setCantidadProductSale(1, 3);
+          h.setProductsSales(added, null);
+          expect(h.snapshot.productsSales, hasLength(3));
+          h.setModoEnvase(2, ModoEnvase.venta);
+          final rows = h.snapshot.productsSales;
+          expect(rows.first.precioVentaUnitario, before.precioVentaUnitario);
+          expect(rows.first.precioManual, isTrue);
+          expect(rows.map((r) => r.cantidad), [2, 3, 1]);
+          expect(rows.map((r) => r.prestamoEnvase == true), [
+            false,
+            true,
+            false,
+          ]);
+          expect(rows.map((r) => r.devolvioEnvase == true), [
+            true,
+            false,
+            false,
+          ]);
+          expect(rows[0].precioCompraUnitario, closeTo(3.5 / divisor, 1e-9));
+          expect(rows[1].precioCompraUnitario, closeTo(17.5 / divisor, 1e-9));
+          expect(rows[2].precioCompraUnitario, closeTo(17.5 / divisor, 1e-9));
+          expect(h.ref.sink.ticket.totalVenta, closeTo(86 / divisor, 1e-9));
+          h.setProductsSales(added, 1);
+          expect(h.snapshot.productsSales, hasLength(3));
+          expect(h.snapshot.productsSales[1].cantidad, 4);
+          expect(
+            h.snapshot.productsSales.first.precioVentaUnitario,
+            before.precioVentaUnitario,
+          );
+        },
+      );
+    }
+  }
+  for (final reason in [
+    'empresa',
+    'producto',
+    'vinculo',
+    'cotizacion',
+    'editarCotizacion',
+  ]) {
+    test(
+      'agregar repetido sigue sumando cuando no aplica retorno: $reason',
+      () {
+        var item = product;
+        if (reason == 'producto') {
+          item = product.copyWith(envaseRetornable: false);
+        }
+        if (reason == 'vinculo') {
+          item = Product(id: 1, moneda: 'PEN', envaseRetornable: true);
+        }
+        final h = SaleHarness(initial(testLine().copyWith(producto: item)));
+        addTearDown(h.dispose);
+        if (reason == 'empresa') {
+          h.ref.session = testSesion.copyWith(
+            config: ConfigCompany(
+              permitirRetornoEnvase: false,
+              igv: .18,
+              porcentajeRecargoPorItem: 0,
+            ),
+          );
+        }
+        if (reason == 'cotizacion') h.ref.mode = SaleMode.createCotizacion;
+        if (reason == 'editarCotizacion') h.ref.mode = SaleMode.editCotizacion;
+        h.setProductsSales(item, null);
+        expect(h.snapshot.productsSales, hasLength(1));
+        expect(h.snapshot.productsSales.single.cantidad, 2);
+      },
+    );
+  }
+  for (final moneda in ['PEN', 'USD']) {
+    for (final incIgv in [true, false]) {
+      test(
         'modos, cantidades y tarifa automática cuadran en $moneda, IGV incluido=$incIgv',
         () {
           final h = SaleHarness(

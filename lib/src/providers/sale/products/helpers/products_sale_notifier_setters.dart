@@ -102,6 +102,38 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       return;
     }
 
+    final sesion = ref.read(sesionProvider);
+    if (manejaEnvaseRetornable(
+      productsSales,
+      sesion,
+      isQuotation: _isQuotation,
+    )) {
+      // Cada selección permite una modalidad independiente. Convertir únicamente
+      // la nueva línea evita alterar precios manuales y costos ya convertidos.
+      final line = _withAutomaticPrice(
+        _withAutoSeries(
+          getTicketDetail(
+            product: productsSales,
+            sesion: sesion,
+            isQuotation: _isQuotation,
+          ),
+        ),
+      );
+      state = state.copyWith(productsSales: [...state.productsSales, line]);
+      state = setPurchasePriceExchange(
+        currencies: state.currencies,
+        currency: state.currency!,
+        monedaOrigen: productsSales.moneda ?? 'PEN',
+        monedaDestino: state.currency!.codigoMoneda!,
+        monto: line.precioCompraUnitario,
+        state: state,
+        index: state.productsSales.length - 1,
+        sesion: sesion,
+      );
+      calculoTotal();
+      return;
+    }
+
     // Check if this product exists as a locked check item
     final hasCheckItem = state.productsSales.any(
       (td) => (td.producto?.id ?? -1) == productsSales.id && td.comandaDetalle != null,

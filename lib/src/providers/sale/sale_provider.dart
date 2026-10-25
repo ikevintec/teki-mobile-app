@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:teki_app/src/shared/services/error_reporting.dart';
 import 'package:teki_app/src/domain/errors/ticket_emission_exception.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -487,7 +489,8 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
         return await ticketsSaleRepository.updateTicket(ticketToSend);
       }
       return await ticketsSaleRepository.createTicket(ticketToSend);
-    } on TicketEmissionException catch (e) {
+    } on TicketEmissionException catch (e, stackTrace) {
+      unawaited(ErrorReporting.capture(e, stackTrace, 'sale.emission_uncertain'));
       state = state.copyWith(pendingEmission: ticketToSend);
       notifyError('$e Verifica en comprobantes antes de repetir la operación.');
       return null;

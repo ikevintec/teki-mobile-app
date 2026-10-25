@@ -1,3 +1,5 @@
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:teki_app/src/shared/services/error_reporting.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -23,21 +25,26 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Procesar solo data silenciosa aquí si es necesario.
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  await Environment.initEnvironment();
-  await initializeDateFormatting('es', null);
-  runApp(
-    UncontrolledProviderScope(
-      container: globalContainer,
-      child: const ProviderScope(child: MyApp()),
-    ),
+Future<void> main() async {
+  await SentryFlutter.init(
+    ErrorReporting.configure,
+    appRunner: () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      await Environment.initEnvironment();
+      await initializeDateFormatting('es', null);
+      runApp(
+        UncontrolledProviderScope(
+          container: globalContainer,
+          child: const ProviderScope(child: MyApp()),
+        ),
+      );
+      // Registra los Yapes capturados por el nativo mientras la app esté viva.
+      YapeSyncController.instance.start(globalContainer);
+    },
   );
-  // Registra los Yapes capturados por el nativo mientras la app esté viva.
-  YapeSyncController.instance.start(globalContainer);
 }
 
 class MyApp extends StatelessWidget {

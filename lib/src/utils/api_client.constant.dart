@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:teki_app/src/shared/services/error_reporting.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -27,6 +29,7 @@ class ApiClient {
             return handler.next(options);
           },
           onError: (DioException e, handler) async {
+            unawaited(ErrorReporting.captureHttpFailure(e));
             if (e.response?.statusCode == 401 && !_isLoggingOut) {
               _isLoggingOut = true;
 
