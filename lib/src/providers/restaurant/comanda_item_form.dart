@@ -17,14 +17,14 @@ class ComandaItemForm {
   /// o null si todo es válido.
   static String? validate({
     required Product product,
-    required Map<int, int?> prepSelections,
+    required Map<int, Set<int>> prepSelections,
     required Map<int, Set<int>> groupSelections,
     required Map<int, Map<int, int>> groupQuantities,
   }) {
     for (final pp in product.preparaciones ?? []) {
       if (pp.requerido == true) {
-        final selected = prepSelections[pp.preparacion?.id];
-        if (selected == null) {
+        final selected = prepSelections[pp.preparacion?.id] ?? const <int>{};
+        if (selected.isEmpty) {
           return '"${pp.preparacion?.nombre ?? 'Preparación'}" es obligatoria';
         }
       }
@@ -37,9 +37,10 @@ class ComandaItemForm {
       if (g.requerido != true) continue;
 
       if (g.permitirCantidad == true) {
-        final totalQty = (groupQuantities[g.id] ?? {})
-            .values
-            .fold<int>(0, (sum, q) => sum + q);
+        final totalQty = (groupQuantities[g.id] ?? {}).values.fold<int>(
+          0,
+          (sum, q) => sum + q,
+        );
         if (min != null && totalQty < min) {
           return '"$label" requiere al menos $min unidad(es) en total';
         }
@@ -102,29 +103,72 @@ class ComandaItemForm {
     return extras;
   }
 
-  /// Convierte las selecciones de preparaciones en las opciones del detalle.
+  /// Alterna una opción de preparación y devuelve la nueva selección.
+  /// - Selección múltiple: agrega o quita la opción (checkbox).
+  /// - Selección única: reemplaza la anterior; tocar la ya marcada la
+  ///   desmarca (mismo comportamiento que la web).
+  static Set<int> togglePreparacion({
+    required Set<int> current,
+    required int opcionId,
+    required bool seleccionMultiple,
+  }) {
+    final isSelected = current.contains(opcionId);
+    if (seleccionMultiple) {
+      return isSelected
+          ? (Set<int>.of(current)..remove(opcionId))
+          : (Set<int>.of(current)..add(opcionId));
+    }
+    return isSelected ? <int>{} : {opcionId};
+  }
+
+  /// Convierte las selecciones de preparaciones en las opciones del detalle:
+  /// una entrada por opción marcada (varias por preparación si es de
+  /// selección múltiple), en el orden en que la preparación define sus
+  /// opciones.
   static List<CommandDetailPreparationOption> buildPreparacionOpciones({
     required Product product,
-    required Map<int, int?> prepSelections,
+    required Map<int, Set<int>> prepSelections,
   }) {
     final preparacionOpciones = <CommandDetailPreparationOption>[];
     for (final pp in product.preparaciones ?? []) {
       final prepId = pp.preparacion?.id;
-      final opcionId = prepSelections[prepId];
-      if (prepId != null && opcionId != null) {
-        final opcion = (pp.preparacion?.opciones ?? []).firstWhere(
-          (o) => o.id == opcionId,
-          orElse: () => PreparationOption(),
+      if (prepId == null) continue;
+      final selected = prepSelections[prepId] ?? const <int>{};
+      if (selected.isEmpty) continue;
+      for (final PreparationOption opcion in pp.preparacion?.opciones ?? []) {
+        if (opcion.id == null || !selected.contains(opcion.id)) continue;
+        preparacionOpciones.add(
+          CommandDetailPreparationOption(
+            idPreparacion: prepId,
+            nombrePreparacion: pp.preparacion?.nombre,
+            idOpcion: opcion.id,
+            nombreOpcion: opcion.opcion,
+          ),
         );
-        preparacionOpciones.add(CommandDetailPreparationOption(
-          idPreparacion: prepId,
-          nombrePreparacion: pp.preparacion?.nombre,
-          idOpcion: opcionId,
-          nombreOpcion: opcion.opcion,
-        ));
       }
     }
     return preparacionOpciones;
+  }
+
+  /// Resumen legible de las preparaciones agrupadas por preparación.
+  /// Ej: ["TERMINO DE CARNE: TERMINO MEDIO, 3/4"].
+  static List<String> preparacionesSummary(
+    List<CommandDetailPreparationOption> opciones,
+  ) {
+    final byPrep = <String, List<String>>{};
+    for (final o in opciones) {
+      if (o.nombreOpcion == null) continue;
+      byPrep
+          .putIfAbsent(o.nombrePreparacion ?? '', () => [])
+          .add(o.nombreOpcion!);
+    }
+    return byPrep.entries
+        .map(
+          (e) => e.key.isEmpty
+              ? e.value.join(', ')
+              : '${e.key}: ${e.value.join(', ')}',
+        )
+        .toList();
   }
 
   /// Convierte las selecciones de grupos/adicionales en las opciones del
@@ -145,16 +189,18 @@ class ComandaItemForm {
         final qty = g.permitirCantidad == true
             ? (groupQuantities[g.id]?[opcionId] ?? 1)
             : 1;
-        grupoOpciones.add(CommandDetailGroupOption(
-          idGrupo: g.id,
-          nombreGrupo: g.nombre,
-          idOpcion: opcionId,
-          nombreOpcion: opcion.nombre,
-          porcion: opcion.porcion ?? 1,
-          precio: opcion.precio ?? 0,
-          cantidad: qty.toDouble(),
-          producto: opcion.producto,
-        ));
+        grupoOpciones.add(
+          CommandDetailGroupOption(
+            idGrupo: g.id,
+            nombreGrupo: g.nombre,
+            idOpcion: opcionId,
+            nombreOpcion: opcion.nombre,
+            porcion: opcion.porcion ?? 1,
+            precio: opcion.precio ?? 0,
+            cantidad: qty.toDouble(),
+            producto: opcion.producto,
+          ),
+        );
       }
     }
     return grupoOpciones;

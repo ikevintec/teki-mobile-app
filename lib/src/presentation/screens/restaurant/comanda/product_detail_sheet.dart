@@ -66,8 +66,9 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
   late TextEditingController _notaController;
   late TextEditingController _priceController;
 
-  // preparacionId -> opcionId
-  final Map<int, int?> _prepSelections = {};
+  // preparacionId -> Set<opcionId> (varias si la preparación es de
+  // selección múltiple)
+  final Map<int, Set<int>> _prepSelections = {};
   // grupoId -> Set<opcionId>
   final Map<int, Set<int>> _groupSelections = {};
   // grupoId -> opcionId -> cantidad (solo para grupos con permitirCantidad=true)
@@ -95,7 +96,9 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
 
       for (final po in existing.preparacionOpciones) {
         if (po.idPreparacion != null && po.idOpcion != null) {
-          _prepSelections[po.idPreparacion!] = po.idOpcion;
+          _prepSelections
+              .putIfAbsent(po.idPreparacion!, () => <int>{})
+              .add(po.idOpcion!);
         }
       }
       for (final go in existing.grupoOpciones) {
@@ -280,8 +283,14 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
                       PreparacionesSection(
                         product: widget.product,
                         prepSelections: _prepSelections,
-                        onSelected: (prepId, v) =>
-                            setState(() => _prepSelections[prepId] = v),
+                        onToggle: (prepId, opcionId, multiple) => setState(
+                          () => _prepSelections[prepId] =
+                              ComandaItemForm.togglePreparacion(
+                            current: _prepSelections[prepId] ?? <int>{},
+                            opcionId: opcionId,
+                            seleccionMultiple: multiple,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 4),
                     ],
