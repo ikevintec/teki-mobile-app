@@ -61,8 +61,7 @@ class GruposSection extends StatelessWidget {
             child: Column(
               children: opciones.map<Widget>((op) {
                 final isChecked = selected.contains(op.id);
-                final qty =
-                    allowQty ? (groupQuantities[g.id]?[op.id] ?? 0) : 0;
+                final qty = allowQty ? (groupQuantities[g.id]?[op.id] ?? 0) : 0;
                 final priceLabel = (op.precio ?? 0) > 0
                     ? '+${formatExchange(moneda: product.moneda ?? 'PEN')}${(op.precio ?? 0).toStringAsFixed(2)}'
                     : null;
@@ -71,15 +70,19 @@ class GruposSection extends StatelessWidget {
                   // Stepper row for permitirCantidad groups
                   return Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(op.nombre ?? '',
-                                  style: const TextStyle(fontSize: 13)),
+                              Text(
+                                op.nombre ?? '',
+                                style: const TextStyle(fontSize: 13),
+                              ),
                               if (priceLabel != null)
                                 Text(
                                   priceLabel,
@@ -110,12 +113,15 @@ class GruposSection extends StatelessWidget {
                               },
                             ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
                               child: Text(
                                 '$qty',
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 14),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                             CompactStepButton(
@@ -124,7 +130,9 @@ class GruposSection extends StatelessWidget {
                               onTap: () {
                                 groupSelections[g.id!]!.add(op.id!);
                                 groupQuantities.putIfAbsent(
-                                    g.id!, () => {})[op.id!] = qty + 1;
+                                  g.id!,
+                                  () => {},
+                                )[op.id!] = qty + 1;
                                 onChanged();
                               },
                             ),
@@ -135,7 +143,8 @@ class GruposSection extends StatelessWidget {
                   );
                 } else {
                   // Checkbox for regular groups, with forzarMaximo enforcement
-                  final atMax = maxSelect != null &&
+                  final atMax =
+                      maxSelect != null &&
                       selected.length >= maxSelect &&
                       !isChecked;
                   // forzarMaximo == 1 behaves like radio (auto-deselect previous)
@@ -143,6 +152,9 @@ class GruposSection extends StatelessWidget {
 
                   return CheckboxListTile(
                     dense: true,
+                    visualDensity: kOptionTileDensity,
+                    contentPadding: kOptionTilePadding,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     activeColor: ColorSchema.primaryColor,
                     controlAffinity: ListTileControlAffinity.leading,
                     value: isChecked,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teki_app/src/providers/restaurant/comanda_item_form.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_provider.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail_sheet.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -281,12 +282,9 @@ class _CartItemTile extends StatelessWidget {
   }
 
   String _optionsSummary() {
-    final parts = <String>[];
-    for (final prep in item.preparacionOpciones) {
-      if (prep.nombreOpcion != null) {
-        parts.add('${prep.nombrePreparacion ?? ''}: ${prep.nombreOpcion}');
-      }
-    }
+    final parts = <String>[
+      ...ComandaItemForm.preparacionesSummary(item.preparacionOpciones),
+    ];
     for (final grp in item.grupoOpciones) {
       if (grp.nombreOpcion != null) parts.add(grp.nombreOpcion!);
     }

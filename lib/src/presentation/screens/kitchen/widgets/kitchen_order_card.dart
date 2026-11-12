@@ -4,6 +4,7 @@ import 'package:teki_app/src/data/models/teki_model/command.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
 import 'package:teki_app/src/providers/kitchen/kitchen_state.dart';
 import 'package:teki_app/src/providers/kitchen/kitchen_utils.dart';
+import 'package:teki_app/src/providers/restaurant/comanda_item_form.dart';
 
 typedef KitchenItemAction =
     Future<void> Function(Command command, CommandDetail item);
@@ -584,9 +585,10 @@ class KitchenItemTile extends StatelessWidget {
                         ),
                       if (mainVisible)
                         for (final preparation
-                            in item.preparacionProductoOpciones ?? const [])
+                            in ComandaItemForm.preparacionesSummary(
+                                item.preparacionProductoOpciones ?? const []))
                           Text(
-                            '${preparation.nombrePreparacion}: ${preparation.nombreOpcion}',
+                            preparation,
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF374151),

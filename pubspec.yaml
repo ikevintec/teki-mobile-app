@@ -1,8 +1,8 @@
 name: teki_app
-description: "A new Flutter project."
+description: "Teki facturacion app"
 publish_to: 'none'
 
-version: 1.0.35+7
+version: 1.0.38+1
 
 environment:
   sdk: '>=3.9.0 <4.0.0'

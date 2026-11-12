@@ -69,7 +69,9 @@ void showProductPricePicker(
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? ColorSchema.primaryColor.withValues(alpha: 0.08)
@@ -104,7 +106,9 @@ void showProductPricePicker(
                                   const SizedBox(width: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 2),
+                                      horizontal: 5,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.amber.shade50,
                                       borderRadius: BorderRadius.circular(4),
@@ -125,8 +129,9 @@ void showProductPricePicker(
                               Text(
                                 sublabel,
                                 style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade500),
+                                  fontSize: 11,
+                                  color: Colors.grey.shade500,
+                                ),
                               ),
                           ],
                         ),
@@ -143,8 +148,11 @@ void showProductPricePicker(
                       ),
                       if (isSelected) ...[
                         const SizedBox(width: 8),
-                        const Icon(Icons.check_circle_rounded,
-                            color: ColorSchema.primaryColor, size: 18),
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          color: ColorSchema.primaryColor,
+                          size: 18,
+                        ),
                       ],
                     ],
                   ),

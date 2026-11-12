@@ -5,6 +5,14 @@ import 'package:teki_app/src/utils/constants.dart';
 // Sub-widgets reutilizables del sheet de detalle de producto
 // ---------------------------------------------------------------------------
 
+/// Densidad compacta para las filas de opciones (checkbox/radio) de
+/// preparaciones y adicionales: ~32px por fila en vez de ~48px.
+const VisualDensity kOptionTileDensity = VisualDensity(
+  horizontal: -4,
+  vertical: -4,
+);
+const EdgeInsets kOptionTilePadding = EdgeInsets.symmetric(horizontal: 8);
+
 class InfoBox extends StatelessWidget {
   final Widget child;
 
@@ -62,7 +70,7 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
@@ -72,7 +80,7 @@ class SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 2),
             child: Row(
               children: [
                 Expanded(
@@ -92,7 +100,9 @@ class SectionCard extends StatelessWidget {
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red.shade50,
                                 borderRadius: BorderRadius.circular(4),
@@ -124,7 +134,13 @@ class SectionCard extends StatelessWidget {
               ],
             ),
           ),
-          child,
+          // Material transparente: los ListTile (radio/checkbox) pintan su
+          // ripple sobre el Material más cercano; sin esto el fondo del
+          // Container lo tapa (y en debug salta un assert).
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Material(type: MaterialType.transparency, child: child),
+          ),
         ],
       ),
     );

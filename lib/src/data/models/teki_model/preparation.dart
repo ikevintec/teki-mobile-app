@@ -3,6 +3,10 @@ import 'package:teki_app/src/data/models/teki_model/preparation_option.dart';
 class Preparation {
   int? id;
   String? nombre;
+
+  /// true: el mesero puede marcar varias opciones (checkbox); false/null:
+  /// solo una (radio). Se configura en la web en "Editar preparación".
+  bool? seleccionMultiple;
   List<PreparationOption>? opciones;
   bool? modificado;
   bool? eliminado;
@@ -16,6 +20,7 @@ class Preparation {
   Preparation({
     this.id,
     this.nombre,
+    this.seleccionMultiple,
     this.opciones,
     this.modificado,
     this.eliminado,
@@ -31,6 +36,7 @@ class Preparation {
     return Preparation(
       id: json['id'],
       nombre: json['nombre'],
+      seleccionMultiple: json['seleccionMultiple'],
       opciones: json['opciones'] != null
           ? List<PreparationOption>.from(
               json['opciones'].map((x) => PreparationOption.fromJson(x)))
@@ -53,6 +59,7 @@ class Preparation {
     return {
       'id': id,
       'nombre': nombre,
+      'seleccionMultiple': seleccionMultiple,
       'opciones': opciones?.map((x) => x.toJson()).toList(),
       'modificado': modificado,
       'eliminado': eliminado,
