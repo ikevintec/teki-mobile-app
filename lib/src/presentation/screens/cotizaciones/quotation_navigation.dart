@@ -9,7 +9,11 @@ import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/navigation/dashboard_navigation.dart';
 
-Future<void> openNewQuotation(BuildContext context, WidgetRef ref) async {
+Future<void> openNewQuotation(
+  BuildContext context,
+  WidgetRef ref, {
+  bool isPedido = false,
+}) async {
   if (!dashboardAllows(ref.read(sesionProvider), 'VENTAS_CREAR')) return;
   final ticketState = ref.read(ticketProvider);
   final ticket = ticketState.ticket;
@@ -26,12 +30,12 @@ Future<void> openNewQuotation(BuildContext context, WidgetRef ref) async {
     ref.invalidate(ticketProvider);
     ref.invalidate(productSaleProvider);
     ref.invalidate(customerSaleProvider);
-    ref.read(ticketProvider.notifier).startNewQuotation();
+    ref.read(ticketProvider.notifier).startNewQuotation(pedido: isPedido);
     Get.toNamed(AppRoutes.productsSales);
   }
 
   if (!hasData) {
-    ref.read(ticketProvider.notifier).startNewQuotation();
+    ref.read(ticketProvider.notifier).startNewQuotation(pedido: isPedido);
     Get.toNamed(AppRoutes.productsSales);
     return;
   }
@@ -45,7 +49,7 @@ Future<void> openNewQuotation(BuildContext context, WidgetRef ref) async {
 
   // Si lo en curso es la edición de una cotización ya existente, "Nueva
   // cotización" debe forzar una creación nueva, nunca continuar esa edición.
-  if (ticketState.isEdit) {
+  if (ticketState.isEdit || (ticket.tipoComprobante == 'PE') != isPedido) {
     resetAndNavigate();
     return;
   }
@@ -63,7 +67,7 @@ Future<void> openNewQuotation(BuildContext context, WidgetRef ref) async {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Nueva cotización'),
+          child: Text(isPedido ? 'Nuevo pedido' : 'Nueva cotización'),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(

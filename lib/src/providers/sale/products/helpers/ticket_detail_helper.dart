@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/distribuidor/precios_comerciales.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/general/exchange.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
@@ -30,7 +31,24 @@ TicketDetail getTicketDetail({
     quantity ?? 1,
     conCanje: devolvioEnvase,
   );
+  final comercial = sesion.distribuidor['preciosComerciales'] == true
+      ? resolverPrecioComercial(
+          product,
+          List<Map<String, dynamic>>.from(sesion.distribuidor['tipos'] ?? []),
+          sesion.office?.id,
+          sesion.distribuidor['tipoPrecioCabeceraId'],
+          quantity ?? 1,
+          sesion.distribuidor['mayoreoManual'] == true,
+        )
+      : null;
+  if (comercial?.aviso != null) infoNotification(comercial!.aviso!);
   return TicketDetail(
+    comercial: comercial == null
+        ? {}
+        : {
+            ...comercial.atribucion,
+            'tipoPrecioInicialId': sesion.distribuidor['tipoPrecioCabeceraId'],
+          },
     cantidad: quantity,
     montoOriginal: price,
     precioVentaUnitario: price,
@@ -68,6 +86,51 @@ TicketDetail changeQtyTicketDetail({
   required SesionState sesion,
   bool isQuotation = false,
 }) {
+  if (sesion.distribuidor['preciosComerciales'] == true &&
+      ticketDetail.comercial.isNotEmpty) {
+    if (ticketDetail.precioManual ||
+        [
+          'MANUAL',
+          'ACCIONES',
+          'PACTADO',
+        ].contains(ticketDetail.comercial['origenPrecio'])) {
+      return ticketDetail.copyWith(cantidad: quantity);
+    }
+    final r = resolverPrecioComercial(
+      ticketDetail.producto!,
+      List<Map<String, dynamic>>.from(sesion.distribuidor['tipos'] ?? []),
+      sesion.office?.id,
+      ticketDetail.comercial['tipoPrecioInicialId'] ??
+          ticketDetail.comercial['tipoComercialId'],
+      quantity,
+      sesion.distribuidor['mayoreoManual'] == true,
+    );
+    final precio = r.precio == null
+        ? 0.0
+        : getPriceProduct(
+            ticketDetail.producto!.copyWith(
+              preciosPorPuntoVenta: false,
+              preciosVenta: [
+                ProductPrice(
+                  precio: r.precio!.precio,
+                  tipoPrecio: 'POR_DEFECTO',
+                ),
+              ],
+            ),
+            sesion.office!,
+            {
+              'igv': sesion.config!.igv,
+              'porcentajeRecargoPorItem':
+                  sesion.config!.porcentajeRecargoPorItem,
+            },
+          );
+    return ticketDetail.copyWith(
+      cantidad: quantity,
+      comercial: {...ticketDetail.comercial, ...r.atribucion},
+      precioVentaUnitario: precio,
+      montoOriginal: precio,
+    );
+  }
   // En retornables un precio manual se conserva al cambiar la cantidad.
   if (ticketDetail.precioManual &&
       manejaEnvaseRetornable(
@@ -289,6 +352,33 @@ double getAutomaticPrice(
   double qty, {
   required bool conCanje,
 }) {
+  if (sesion.distribuidor['preciosComerciales'] == true) {
+    final r = resolverPrecioComercial(
+      product,
+      List<Map<String, dynamic>>.from(sesion.distribuidor['tipos'] ?? []),
+      sesion.office?.id,
+      sesion.distribuidor['tipoPrecioCabeceraId'],
+      qty,
+      sesion.distribuidor['mayoreoManual'] == true,
+    );
+    if (r.precio == null) {
+      return 0; // La validación del formulario exige ingreso manual autorizado antes de guardar.
+    }
+    final elegido = r.precio!;
+    return getPriceProduct(
+      product.copyWith(
+        preciosPorPuntoVenta: false,
+        preciosVenta: [
+          ProductPrice(precio: elegido.precio, tipoPrecio: 'POR_DEFECTO'),
+        ],
+      ),
+      sesion.office!,
+      {
+        'igv': sesion.config!.igv,
+        'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
+      },
+    );
+  }
   final office = sesion.office!;
   final ops = {
     'qty': qty,

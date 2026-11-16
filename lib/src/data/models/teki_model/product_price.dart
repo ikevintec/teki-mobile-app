@@ -5,6 +5,7 @@ import 'package:teki_app/src/utils/formats.dart';
 
 class ProductPrice {
   final int? id;
+  final int? tipoComercialId;
   final double? precio;
   final double? precioNeto;
   final double? margenUtilidad;
@@ -19,6 +20,7 @@ class ProductPrice {
 
   ProductPrice({
     this.id,
+    this.tipoComercialId,
     this.precio,
     this.precioNeto,
     this.margenUtilidad,
@@ -33,42 +35,45 @@ class ProductPrice {
   });
 
   factory ProductPrice.fromJson(Map<String, dynamic> json) => ProductPrice(
-        id: json['id'],
-        precio: (json['precio'] as num?)?.toDouble(),
-        precioNeto: (json['precioNeto'] as num?)?.toDouble(),
-        margenUtilidad: (json['margenUtilidad'] as num?)?.toDouble(),
-        unidadesMayoreo: (json['unidadesMayoreo'] as num?)?.toDouble(),
-        tipoPrecio: json['tipoPrecio'],
-        paraCanje: json['paraCanje'],
-        nombre: json['nombre'],
-        puntoVenta: json['puntoVenta'] != null
-            ? Office.fromJson(json['puntoVenta'])
-            : null,
-        usuario:json['usuario'] != null ? User.fromJson(json['usuario']) : null,
-        fecha:  parseDateTimeFlexible(json['fecha']),
-        producto: json['producto'] != null
-            ? Product.fromJson(json['producto'])
-            : null,
-      );
+    id: json['id'],
+    tipoComercialId: json['tipoComercialId'],
+    precio: (json['precio'] as num?)?.toDouble(),
+    precioNeto: (json['precioNeto'] as num?)?.toDouble(),
+    margenUtilidad: (json['margenUtilidad'] as num?)?.toDouble(),
+    unidadesMayoreo: (json['unidadesMayoreo'] as num?)?.toDouble(),
+    tipoPrecio: json['tipoPrecio'],
+    paraCanje: json['paraCanje'],
+    nombre: json['nombre'],
+    puntoVenta: json['puntoVenta'] != null
+        ? Office.fromJson(json['puntoVenta'])
+        : null,
+    usuario: json['usuario'] != null ? User.fromJson(json['usuario']) : null,
+    fecha: parseDateTimeFlexible(json['fecha']),
+    producto: json['producto'] != null
+        ? Product.fromJson(json['producto'])
+        : null,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'precio': precio,
-        'precioNeto': precioNeto,
-        'margenUtilidad': margenUtilidad,
-        'unidadesMayoreo': unidadesMayoreo,
-        'tipoPrecio': tipoPrecio,
-        'paraCanje': paraCanje,
-        'nombre': nombre,
-        'puntoVenta': puntoVenta?.toJson(),
-        'usuario': usuario?.toJson(),
-        'fecha': fecha?.toIso8601String(),
-        'producto': producto?.toJson(),
-      };
+    'id': id,
+    'tipoComercialId': tipoComercialId,
+    'precio': precio,
+    'precioNeto': precioNeto,
+    'margenUtilidad': margenUtilidad,
+    'unidadesMayoreo': unidadesMayoreo,
+    'tipoPrecio': tipoPrecio,
+    'paraCanje': paraCanje,
+    'nombre': nombre,
+    'puntoVenta': puntoVenta?.toJson(),
+    'usuario': usuario?.toJson(),
+    'fecha': fecha?.toIso8601String(),
+    'producto': producto?.toJson(),
+  };
 }
 
 extension ProductPriceCopyWith on ProductPrice {
   ProductPrice copyWith({
+    int? tipoComercialId,
     int? id,
     double? precio,
     double? precioNeto,
@@ -84,6 +89,7 @@ extension ProductPriceCopyWith on ProductPrice {
   }) {
     return ProductPrice(
       id: id ?? this.id,
+      tipoComercialId: tipoComercialId ?? this.tipoComercialId,
       precio: precio ?? this.precio,
       precioNeto: precioNeto ?? this.precioNeto,
       margenUtilidad: margenUtilidad ?? this.margenUtilidad,
@@ -98,4 +104,3 @@ extension ProductPriceCopyWith on ProductPrice {
     );
   }
 }
-

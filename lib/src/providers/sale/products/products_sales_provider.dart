@@ -97,8 +97,9 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     // disponibles en memoria/cache. Si el JSON aún no se descargó o falló,
     // caemos a la búsqueda online para siempre buscar con lo disponible.
     if (_useLocalSearch && _localProductsAvailable) {
-      products =
-          await ref.read(localProductsProvider.notifier).searchLocal(filter ?? '');
+      products = await ref
+          .read(localProductsProvider.notifier)
+          .searchLocal(filter ?? '');
     } else {
       final params = buildProductSearchQueryParams(state);
       params['contextoVentas'] = true;
@@ -140,11 +141,8 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     final ids = products.map((p) => p.id).whereType<int>().toList();
     if (ids.isEmpty) return products;
 
-    final inventoryByProduct =
-        await inventoryRepository.getInventoryByProductIds(
-      ids,
-      idPuntoVenta: officeId,
-    );
+    final inventoryByProduct = await inventoryRepository
+        .getInventoryByProductIds(ids, idPuntoVenta: officeId);
     if (inventoryByProduct.isEmpty) return products;
 
     return products.map((p) {
@@ -161,8 +159,9 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     state = state.copyWith(isBarcodeSearching: true);
     try {
       if (_useLocalSearch && _localProductsAvailable) {
-        final localProduct =
-            ref.read(localProductsProvider.notifier).findByBarcode(barcode);
+        final localProduct = ref
+            .read(localProductsProvider.notifier)
+            .findByBarcode(barcode);
         if (localProduct != null) return localProduct;
       }
 
@@ -224,6 +223,12 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         );
         final ticketFromQuotation = quotation.toTicketForSale();
         ticketSaleNotifier.updateTicket(ticketFromQuotation);
+        final cabecera = ticketFromQuotation.comercial['tipoPrecioCabeceraId'];
+        if (cabecera is int &&
+            ref.read(sesionProvider).distribuidor['preciosComerciales'] ==
+                true) {
+          ref.read(sesionProvider.notifier).elegirTipoComercial(cabecera);
+        }
         customerNotifier.setCustomerEntity(
           ticketFromQuotation.cliente ?? Customer(),
         );
@@ -244,6 +249,12 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         );
         final ticketFromQuotation = quotation.toTicketForEdit();
         ticketSaleNotifier.updateTicket(ticketFromQuotation);
+        final cabecera = ticketFromQuotation.comercial['tipoPrecioCabeceraId'];
+        if (cabecera is int &&
+            ref.read(sesionProvider).distribuidor['preciosComerciales'] ==
+                true) {
+          ref.read(sesionProvider.notifier).elegirTipoComercial(cabecera);
+        }
         customerNotifier.setCustomerEntity(
           ticketFromQuotation.cliente ?? Customer(),
         );
@@ -262,6 +273,12 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         // Cargar el comprobante por ID
         Ticket comprobante = await comprobanteNotifier.fetchComprobanteById(id);
         ticketSaleNotifier.updateTicket(comprobante);
+        final cabecera = comprobante.comercial['tipoPrecioCabeceraId'];
+        if (cabecera is int &&
+            ref.read(sesionProvider).distribuidor['preciosComerciales'] ==
+                true) {
+          ref.read(sesionProvider.notifier).elegirTipoComercial(cabecera);
+        }
         customerNotifier.setCustomerEntity(comprobante.cliente ?? Customer());
         final items = restoreEditSaleSeriesAvailability(
           items: comprobante.items ?? [],
@@ -286,7 +303,10 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   }
 
   void removeProductSale(int index) {
-    if (state.productsSales[index].comandaDetalle != null) return;
+    if (state.productsSales[index].comandaDetalle != null ||
+        state.productsSales[index].comercial['esBonificacion'] == true) {
+      return;
+    }
     state = state.copyWith(
       productsSales: List.from(state.productsSales)..removeAt(index),
     );
@@ -465,8 +485,10 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
 /// Cantidad de la línea de un adicional al emitir el comprobante:
 /// cantidad de la opción × cantidad del item. Misma regla que la web
 /// (emitir-comprobante: gpo.cantidad * item.cantidad).
-double optionLineQuantity(CommandDetail detail, CommandDetailGroupOption option) =>
-    ((option.cantidad ?? 1) * (detail.cantidad ?? 1)).toDouble();
+double optionLineQuantity(
+  CommandDetail detail,
+  CommandDetailGroupOption option,
+) => ((option.cantidad ?? 1) * (detail.cantidad ?? 1)).toDouble();
 
 /// Precio unitario base del item de comanda para el comprobante: el
 /// precioVenta persistido (que incluye adicionales) menos sus adicionales

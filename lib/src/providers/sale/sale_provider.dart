@@ -1,3 +1,4 @@
+import 'package:teki_app/src/providers/distribuidor/beneficios_venta.dart';
 import 'dart:async';
 import 'package:teki_app/src/shared/services/error_reporting.dart';
 import 'package:teki_app/src/domain/errors/ticket_emission_exception.dart';
@@ -23,7 +24,14 @@ import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helpe
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
-enum SaleMode { createVenta, editVenta, createCotizacion, editCotizacion }
+enum SaleMode {
+  createVenta,
+  editVenta,
+  createCotizacion,
+  editCotizacion,
+  createPedido,
+  editPedido,
+}
 
 final ticketProvider = StateNotifierProvider<TicketNotifier, TicketProvider>((
   ref,
@@ -82,11 +90,14 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   }
 
   /// Inicia una cotización nueva: fuerza tipoComprobante 'CO' y cambia el modo.
-  void startNewQuotation() {
-    Ticket ticketToUpdate = state.ticket.copyWith(tipoComprobante: 'CO');
+  void startNewQuotation({bool pedido = false}) {
+    ref.invalidate(beneficiosVentaProvider);
+    Ticket ticketToUpdate = state.ticket.copyWith(
+      tipoComprobante: pedido ? 'PE' : 'CO',
+    );
     state = state.copyWith(
       ticket: ticketToUpdate,
-      mode: SaleMode.createCotizacion,
+      mode: pedido ? SaleMode.createPedido : SaleMode.createCotizacion,
     );
   }
 
@@ -202,6 +213,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       notifyError('Verifica la emisión pendiente antes de iniciar otra venta.');
       return;
     }
+    ref.invalidate(beneficiosVentaProvider);
     state = TicketProvider(
       ticket: Ticket(
         items: [],
@@ -224,11 +236,16 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   }
 
   void setEdited(bool isEdited) {
-    final isCotizacion = state.ticket.tipoComprobante == 'CO';
+    final isCotizacion = ['CO', 'PE'].contains(state.ticket.tipoComprobante);
+    final isPedido = state.ticket.tipoComprobante == 'PE';
     state = state.copyWith(
       mode: isEdited
-          ? (isCotizacion ? SaleMode.editCotizacion : SaleMode.editVenta)
-          : (isCotizacion ? SaleMode.createCotizacion : SaleMode.createVenta),
+          ? (isCotizacion
+                ? (isPedido ? SaleMode.editPedido : SaleMode.editCotizacion)
+                : SaleMode.editVenta)
+          : (isCotizacion
+                ? (isPedido ? SaleMode.createPedido : SaleMode.createCotizacion)
+                : SaleMode.createVenta),
     );
   }
 
@@ -240,8 +257,11 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     final puedePrestar = puedePrestarEnvase(state, sesion, items);
     return items.map((td) {
       if (td.devolvioEnvase == null && td.prestamoEnvase == null) return td;
-      final maneja = manejaEnvaseRetornable(td.producto, sesion,
-          isQuotation: state.isQuotation);
+      final maneja = manejaEnvaseRetornable(
+        td.producto,
+        sesion,
+        isQuotation: state.isQuotation,
+      );
       return td.copyWith(
         devolvioEnvase: maneja && td.devolvioEnvase == true,
         prestamoEnvase: maneja && puedePrestar && td.prestamoEnvase == true,
@@ -252,6 +272,13 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   /// Construye el payload del ticket listo para enviar al backend (sin llamar a la API).
   Ticket getTicketPayload() {
     return Ticket(
+      comercial: {
+        ...state.ticket.comercial,
+        if (ref.read(sesionProvider).distribuidor['preciosComerciales'] == true)
+          'tipoPrecioCabeceraId': ref
+              .read(sesionProvider)
+              .distribuidor['tipoPrecioCabeceraId'],
+      },
       serie: state.ticket.serie,
       id: state.ticket.id,
       tipoComprobante: state.ticket.tipoComprobante,
@@ -435,8 +462,10 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       items: originalItems,
       comprobante: ticketPayload,
     );
-    final checkResult =
-        await RestaurantRepositoryImpl().updateCheck(checkId, checkPayload);
+    final checkResult = await RestaurantRepositoryImpl().updateCheck(
+      checkId,
+      checkPayload,
+    );
     return checkResult.comprobante;
   }
 
@@ -457,11 +486,14 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       totalValorVenta: response.totalValorVenta ?? stateTicket.totalValorVenta,
       totalValorVentaGravada:
           response.totalValorVentaGravada ?? stateTicket.totalValorVentaGravada,
-      totalValorVentaInafecta: response.totalValorVentaInafecta ??
+      totalValorVentaInafecta:
+          response.totalValorVentaInafecta ??
           stateTicket.totalValorVentaInafecta,
-      totalValorVentaExonerada: response.totalValorVentaExonerada ??
+      totalValorVentaExonerada:
+          response.totalValorVentaExonerada ??
           stateTicket.totalValorVentaExonerada,
-      totalValorVentaExportacion: response.totalValorVentaExportacion ??
+      totalValorVentaExportacion:
+          response.totalValorVentaExportacion ??
           stateTicket.totalValorVentaExportacion,
       totalIgv: response.totalIgv ?? stateTicket.totalIgv,
       totalIsc: response.totalIsc ?? stateTicket.totalIsc,
@@ -474,7 +506,16 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
 
   Future<Ticket?> proceessTicket() async {
     if (state.pendingEmission != null) {
-      notifyError('Verifica el resultado de la emisión anterior antes de volver a cobrar.');
+      notifyError(
+        'Verifica el resultado de la emisión anterior antes de volver a cobrar.',
+      );
+      return null;
+    }
+    if (ref.read(sesionProvider).distribuidor['promociones'] == true &&
+        !await ref.read(beneficiosVentaProvider.notifier).prepararGuardado()) {
+      notifyError(
+        'Revisa los beneficios y las elecciones pendientes antes de guardar.',
+      );
       return null;
     }
     final ticketToSend = getTicketPayload();
@@ -490,12 +531,16 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       }
       return await ticketsSaleRepository.createTicket(ticketToSend);
     } on TicketEmissionException catch (e, stackTrace) {
-      unawaited(ErrorReporting.capture(e, stackTrace, 'sale.emission_uncertain'));
+      unawaited(
+        ErrorReporting.capture(e, stackTrace, 'sale.emission_uncertain'),
+      );
       state = state.copyWith(pendingEmission: ticketToSend);
       notifyError('$e Verifica en comprobantes antes de repetir la operación.');
       return null;
     } catch (e) {
-      notifyError('No se pudo ${state.isEdit ? 'actualizar' : 'registrar'} el comprobante: $e');
+      notifyError(
+        'No se pudo ${state.isEdit ? 'actualizar' : 'registrar'} el comprobante: $e',
+      );
       return null;
     }
   }
@@ -511,7 +556,8 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       'perPage': 20,
       'filtroSerie': pending.serie,
       'filtroTipoComprobante': [pending.tipoComprobante],
-      if (pending.puntoVenta?.id != null) 'idPuntoVenta': pending.puntoVenta!.id,
+      if (pending.puntoVenta?.id != null)
+        'idPuntoVenta': pending.puntoVenta!.id,
       if (pending.vendedor?.id != null) 'idVendedor': pending.vendedor!.id,
     });
   }
@@ -520,195 +566,36 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   void confirmEmissionNotRegistered() {
     state = state.copyWith(clearPendingEmission: true);
   }
-
-  // ignore: unused_element
-  Future<Ticket?> _proceessTicketLegacy() async {
-    try {
-      Ticket ticketToSend = Ticket(
-        serie: state.ticket.serie,
-        id: state.ticket.id,
-        tipoComprobante: state.ticket.tipoComprobante,
-        numero: state.ticket.numero,
-        fechaEmision: state.ticket.fechaEmision,
-        fechaEmisionDate: state.ticket.fechaEmisionDate,
-        horaEmision: state.ticket.horaEmision,
-        codigoMoneda: state.ticket.codigoMoneda,
-        fechaVencimiento: state.ticket.fechaVencimiento,
-        fechaVencimientoDate: state.ticket.fechaVencimientoDate,
-        codigoTipoOperacion: state.ticket.codigoTipoOperacion,
-        rucEmisor: state.ticket.rucEmisor,
-        razonSocialEmisor: state.ticket.razonSocialEmisor,
-        codigoLocalAnexoEmisor: state.ticket.codigoLocalAnexoEmisor,
-        tipoDocumentoReceptor: state.ticket.tipoDocumentoReceptor,
-        numeroDocumentoReceptor: state.ticket.numeroDocumentoReceptor,
-        denominacionReceptor: state.ticket.denominacionReceptor,
-        direccionReceptor: state.ticket.direccionReceptor,
-        emailReceptor: state.ticket.emailReceptor,
-        telefonoReceptor: state.ticket.telefonoReceptor,
-        cliente: state.ticket.cliente,
-        camposAdicionales: state.ticket.camposAdicionales,
-        cuotas: state.ticket.cuotas,
-        numeroOrdenRestaurante: state.ticket.numeroOrdenRestaurante,
-        codigoTipoOtroDocumentoRelacionado:
-            state.ticket.codigoTipoOtroDocumentoRelacionado,
-        serieNumeroOtroDocumentoRelacionado:
-            state.ticket.serieNumeroOtroDocumentoRelacionado,
-        totalValorVentaExportacion: state.ticket.totalValorVentaExportacion == 0
-            ? null
-            : state.ticket.totalValorVentaExportacion,
-        totalValorVentaGravada: state.ticket.totalValorVentaGravada == 0
-            ? null
-            : state.ticket.totalValorVentaGravada,
-        totalValorVentaInafecta: state.ticket.totalValorVentaInafecta == 0
-            ? null
-            : state.ticket.totalValorVentaInafecta,
-        totalValorVentaExonerada: state.ticket.totalValorVentaExonerada == 0
-            ? null
-            : state.ticket.totalValorVentaExonerada,
-        totalValorVentaGratuita: state.ticket.totalValorVentaGratuita == 0
-            ? null
-            : state.ticket.totalValorVentaGratuita,
-        totalValorBaseIsc: state.ticket.totalValorBaseIsc == 0
-            ? null
-            : state.ticket.totalValorBaseIsc,
-        totalValorBaseIgv: state.ticket.totalValorBaseIgv == 0
-            ? null
-            : state.ticket.totalValorBaseIgv,
-        totalValorVentaGravadaIvap: state.ticket.totalValorVentaGravadaIvap == 0
-            ? null
-            : state.ticket.totalValorVentaGravadaIvap,
-        totalTributosOperacionGratuita:
-            state.ticket.totalTributosOperacionGratuita == 0
-            ? null
-            : state.ticket.totalTributosOperacionGratuita,
-        totalTributosBolsas: state.ticket.totalTributosBolsas == 0
-            ? null
-            : state.ticket.totalTributosBolsas,
-        totalIvap: state.ticket.totalIvap == 0 ? null : state.ticket.totalIvap,
-        totalIgv: state.ticket.totalIgv == 0 ? null : state.ticket.totalIgv,
-        totalIsc: state.ticket.totalIsc == 0 ? null : state.ticket.totalIsc,
-        otrosTributos: state.ticket.otrosTributos == 0
-            ? null
-            : state.ticket.otrosTributos,
-        otrosCargos: state.ticket.otrosCargos == 0
-            ? null
-            : state.ticket.otrosCargos,
-        porcentajeOtrosCargos: state.ticket.porcentajeOtrosCargos,
-        totalValorVenta: state.ticket.totalValorVenta,
-        totalVenta: state.ticket.totalVenta,
-        totalVentaCredito: state.ticket.totalVentaCredito,
-        totalAnticipos: state.ticket.totalAnticipos,
-        pagoAnticipado: state.ticket.pagoAnticipado,
-        regimenPercepcion: state.ticket.regimenPercepcion,
-        montoPercepcion: state.ticket.montoPercepcion,
-        porcentajePercepcion: state.ticket.porcentajePercepcion,
-        totalVentaPercepcion: state.ticket.totalVentaPercepcion,
-        montoBaseRetencion: state.ticket.montoBaseRetencion,
-        montoRetencion: state.ticket.montoRetencion,
-        porcentajeRetencion: state.ticket.porcentajeRetencion,
-        montoBaseDescuento: state.ticket.montoBaseDescuento,
-        porcentajeDescuento: state.ticket.porcentajeDescuento,
-        totalDescuento: state.ticket.totalDescuento == 0
-            ? null
-            : state.ticket.totalDescuento,
-        descuentoGlobal: state.ticket.descuentoGlobal,
-        descuentoPorItem: state.ticket.descuentoPorItem,
-        codigoDescuento: state.ticket.codigoDescuento,
-        porcentajeDescuentoGlobal: state.ticket.porcentajeDescuentoGlobal,
-        serieAfectado: state.ticket.serieAfectado,
-        numeroAfectado: state.ticket.numeroAfectado,
-        tipoComprobanteAfectado: state.ticket.tipoComprobanteAfectado,
-        motivoNota: state.ticket.motivoNota,
-        codigoTipoNotaCredito: state.ticket.codigoTipoNotaCredito,
-        codigoTipoNotaDebito: state.ticket.codigoTipoNotaDebito,
-        identificadorDocumento: state.ticket.identificadorDocumento,
-        estadoItem: state.ticket.estadoItem,
-        estadoSunat: state.ticket.estadoSunat,
-        estado: state.ticket.estado,
-        estadoAnterior: state.ticket.estadoAnterior,
-        mensajeRespuesta: state.ticket.mensajeRespuesta,
-        motivoAnulacion: state.ticket.motivoAnulacion,
-        incIgv: state.ticket.incIgv,
-        agruparItems: state.ticket.agruparItems,
-        efectivo: state.ticket.efectivo,
-        cambio: state.ticket.cambio,
-        items: state.ticket.items,
-        anticipos: state.ticket.anticipos,
-        guiasRelacionadas: state.ticket.guiasRelacionadas,
-        uuid: state.ticket.uuid,
-        ordenCompra: state.ticket.ordenCompra,
-        condicionPago: state.ticket.condicionPago,
-        observacion: state.ticket.observacion,
-        codigosRespuestaSunat: state.ticket.codigosRespuestaSunat,
-        boletaAnuladaSinEmitir: state.ticket.boletaAnuladaSinEmitir,
-        envioAutomaticoSunat: state.ticket.envioAutomaticoSunat,
-        archivos: state.ticket.archivos,
-        sunatRespuestas: state.ticket.sunatRespuestas,
-        codigoHash: state.ticket.codigoHash,
-        codigoMedioPago: state.ticket.codigoMedioPago,
-        cuentaDetraccion: state.ticket.cuentaDetraccion,
-        codigoDetraccion: state.ticket.codigoDetraccion,
-        porcentajeDetraccion: state.ticket.porcentajeDetraccion,
-        montoDetraccion: state.ticket.montoDetraccion,
-        empresa: state.ticket.empresa,
-        empresaAdjunta: state.ticket.empresaAdjunta,
-        puntoVenta: state.ticket.puntoVenta,
-        estacionVenta: state.ticket.estacionVenta,
-        cotizacion: state.ticket.cotizacion,
-        tipoVenta: state.ticket.tipoVenta,
-        esProduccion: state.ticket.esProduccion,
-        diasCredito: state.ticket.diasCredito,
-        anulado: state.ticket.anulado,
-        comprobanteSustituto: state.ticket.comprobanteSustituto,
-        isSendBill: state.ticket.isSendBill,
-        idNotaVentaAnulada: state.ticket.idNotaVentaAnulada,
-        vendedor: state.ticket.vendedor,
-        pedidoRestaurante: state.ticket.pedidoRestaurante,
-        cuentaRestaurante: state.ticket.cuentaRestaurante,
-        canal: state.ticket.canal,
-        comprobanteAnterior: state.ticket.comprobanteAnterior,
-        movimientoCaja: state.ticket.movimientoCaja,
-        intentosSendSummary: state.ticket.intentosSendSummary,
-        createdOn: state.ticket.createdOn,
-        adelanto: state.ticket.adelanto,
-        createdBy: state.ticket.createdBy,
-        updatedBy: state.ticket.updatedBy,
-        updatedOn: state.ticket.updatedOn,
-        deleteBy: state.ticket.deleteBy,
-        deletedOn: state.ticket.deletedOn,
-        isEdited: state.ticket.isEdited,
-        numeroCotizacion: state.ticket.numeroCotizacion,
-        despachoPosterior: state.ticket.despachoPosterior,
-        isRetencion: state.ticket.isRetencion,
-      );
-      if (state.isEdit && ticketToSend.id != null) {
-        return await ticketsSaleRepository.updateTicket(ticketToSend);
-      }
-      return await ticketsSaleRepository.createTicket(ticketToSend);
-    } catch (e) {
-      errorNotification("Error al crear el ticket: $e");
-      return null;
-    }
-  }
 }
 
 class TicketProvider {
   final Ticket ticket;
   final SaleMode mode;
   final Ticket? pendingEmission;
-  TicketProvider({required this.ticket, this.mode = SaleMode.createVenta, this.pendingEmission});
+  TicketProvider({
+    required this.ticket,
+    this.mode = SaleMode.createVenta,
+    this.pendingEmission,
+  });
 
   bool get isEdit =>
-      mode == SaleMode.editVenta || mode == SaleMode.editCotizacion;
+      mode == SaleMode.editVenta ||
+      mode == SaleMode.editCotizacion ||
+      mode == SaleMode.editPedido;
   bool get isQuotation =>
-      mode == SaleMode.createCotizacion || mode == SaleMode.editCotizacion;
+      mode == SaleMode.createCotizacion ||
+      mode == SaleMode.editCotizacion ||
+      mode == SaleMode.createPedido ||
+      mode == SaleMode.editPedido;
   bool get isSaleFromQuotation => ticket.cotizacion != null;
 
   /// Subtítulo a mostrar en el AppBar a lo largo de todo el flujo de venta
   /// (Cliente, Productos, Resumen) cuando se está creando/editando una
   /// cotización, o cuando se está generando una venta a partir de una.
   String? get subtitleLabel {
-    if (isQuotation) return 'Cotización';
+    if (isQuotation) {
+      return ticket.tipoComprobante == 'PE' ? 'Pedido' : 'Cotización';
+    }
     if (isSaleFromQuotation) {
       return 'Venta cotizada de ${ticket.cotizacion?.serie ?? '--'}-${ticket.cotizacion?.numero ?? '--'}';
     }
@@ -726,7 +613,10 @@ class TicketProvider {
       case SaleMode.createCotizacion:
         return 'Cotizar';
       case SaleMode.editCotizacion:
+      case SaleMode.editPedido:
         return 'Continuar Edición';
+      case SaleMode.createPedido:
+        return 'Guardar pedido';
     }
   }
 
@@ -739,15 +629,25 @@ class TicketProvider {
       case SaleMode.createCotizacion:
         return 'Confirmar Cotización';
       case SaleMode.editCotizacion:
+      case SaleMode.editPedido:
         return 'Confirmar Edición';
+      case SaleMode.createPedido:
+        return 'Confirmar pedido';
     }
   }
 
-  TicketProvider copyWith({Ticket? ticket, SaleMode? mode, Ticket? pendingEmission, bool clearPendingEmission = false}) {
+  TicketProvider copyWith({
+    Ticket? ticket,
+    SaleMode? mode,
+    Ticket? pendingEmission,
+    bool clearPendingEmission = false,
+  }) {
     return TicketProvider(
       ticket: ticket ?? this.ticket,
       mode: mode ?? this.mode,
-      pendingEmission: clearPendingEmission ? null : pendingEmission ?? this.pendingEmission,
+      pendingEmission: clearPendingEmission
+          ? null
+          : pendingEmission ?? this.pendingEmission,
     );
   }
 }

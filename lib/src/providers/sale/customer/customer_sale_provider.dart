@@ -1,3 +1,4 @@
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/data/repositories/customer_repository_impl.dart';
@@ -7,16 +8,20 @@ import 'package:teki_app/src/utils/notifications.dart';
 
 final customerSaleProvider =
     StateNotifierProvider<CustomerSaleNotifier, CustomerSaleState>((ref) {
-  final CustomersRepository customersRepository = CustomersRepositoryImpl();
-  return CustomerSaleNotifier(customersRepository: customersRepository, ref: ref);
-});
+      final CustomersRepository customersRepository = CustomersRepositoryImpl();
+      return CustomerSaleNotifier(
+        customersRepository: customersRepository,
+        ref: ref,
+      );
+    });
 
 class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
   final CustomersRepository customersRepository;
   final Ref ref;
 
   CustomerSaleNotifier({required this.customersRepository, required this.ref})
-      : super(CustomerSaleState(
+    : super(
+        CustomerSaleState(
           customer: Customer(),
           customers: [],
           selectedCustomer: null,
@@ -27,16 +32,14 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
           filterGlobal: '',
           totalElements: null,
           paginacion: false,
-        ));
+        ),
+      );
 
   Future<List<Customer>> getCustomerss(String filtro) async {
     state = state.copyWith(isLoading: true);
     try {
       final customers = await customersRepository.searchCustomers(filtro);
-      state = state.copyWith(
-        isLoading: false,
-        customers: customers,
-      );
+      state = state.copyWith(isLoading: false, customers: customers);
       return customers;
     } catch (e) {
       errorNotification(e.toString());
@@ -51,6 +54,10 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
 
   void selectCustomer(Customer customer) {
     state = state.copyWith(selectedCustomer: customer);
+    ref
+        .read(sesionProvider.notifier)
+        .recordarCabeceraCliente(customer.id)
+        .catchError((_) {});
   }
 
   void clearSelection(Customer customer) {
@@ -61,7 +68,15 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
     state = state.copyWith(customers: []);
   }
 
-  void setCustomer({required int? id, required String nombre, required  String documento, required  String direccion,required  String email, required String telefono, required String tipoDocumento}){
+  void setCustomer({
+    required int? id,
+    required String nombre,
+    required String documento,
+    required String direccion,
+    required String email,
+    required String telefono,
+    required String tipoDocumento,
+  }) {
     Customer customerToSet = Customer(
       id: id,
       razonSocial: nombre,
@@ -69,13 +84,16 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
       direccion: direccion,
       email: email,
       telefono: telefono,
-      tipoDocumento: tipoDocumento 
+      tipoDocumento: tipoDocumento,
     );
     state = state.copyWith(customer: customerToSet);
+    ref
+        .read(sesionProvider.notifier)
+        .recordarCabeceraCliente(customerToSet.id)
+        .catchError((_) {});
   }
 
   void setCustomerEntity(Customer customer) {
     state = state.copyWith(customer: customer);
   }
-
 }

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:teki_app/src/presentation/screens/cotizaciones/view_quotation_screen.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
 import 'package:teki_app/src/providers/quotation/quotation_list_provider.dart';
+import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
@@ -128,10 +129,16 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
         onRefresh: _onRefresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
+          children: [
             Padding(
-              padding: EdgeInsets.only(top: 120),
-              child: Center(child: Text("No hay cotizaciones por mostrar.")),
+              padding: const EdgeInsets.only(top: 120),
+              child: Center(
+                child: Text(
+                  provider.esPedido
+                      ? 'No hay pedidos por mostrar.'
+                      : 'No hay cotizaciones por mostrar.',
+                ),
+              ),
             ),
           ],
         ),
@@ -169,26 +176,47 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
               actions: (isAnulada || isConcretada)
                   ? []
                   : [
-                      DismissibleActionData(
-                        type: DismissibleActionType.edit,
-                        label: 'Editar',
-                        icon: Icons.edit,
-                        backgroundColor: Colors.orange.shade600,
-                        onTap: () {
-                          Get.to(
-                            () => ProductsSaleScreen(quotationId: quotation.id),
-                          )?.then((_) => ref
-                              .read(quotationListProvider.notifier)
-                              .refresh());
-                        },
-                      ),
-                      DismissibleActionData(
-                        type: DismissibleActionType.anular,
-                        label: 'Anular',
-                        icon: Icons.cancel_outlined,
-                        backgroundColor: Colors.red.shade600,
-                        onTap: () => _confirmAnular(quotation.id ?? -1),
-                      ),
+                      if (quotation.isQuotation != false ||
+                          quotation.vendedor?.id ==
+                              ref.read(sesionProvider).login.user?.id ||
+                          ref
+                              .read(sesionProvider)
+                              .hasPermission('SUPER_USUARIO') ||
+                          ref
+                              .read(sesionProvider)
+                              .hasPermission('PEDIDOS_EDITAR_AJENOS'))
+                        DismissibleActionData(
+                          type: DismissibleActionType.edit,
+                          label: 'Editar',
+                          icon: Icons.edit,
+                          backgroundColor: Colors.orange.shade600,
+                          onTap: () {
+                            Get.to(
+                              () =>
+                                  ProductsSaleScreen(quotationId: quotation.id),
+                            )?.then(
+                              (_) => ref
+                                  .read(quotationListProvider.notifier)
+                                  .refresh(),
+                            );
+                          },
+                        ),
+                      if (quotation.isQuotation != false ||
+                          quotation.vendedor?.id ==
+                              ref.read(sesionProvider).login.user?.id ||
+                          ref
+                              .read(sesionProvider)
+                              .hasPermission('SUPER_USUARIO') ||
+                          ref
+                              .read(sesionProvider)
+                              .hasPermission('PEDIDOS_EDITAR_AJENOS'))
+                        DismissibleActionData(
+                          type: DismissibleActionType.anular,
+                          label: 'Anular',
+                          icon: Icons.cancel_outlined,
+                          backgroundColor: Colors.red.shade600,
+                          onTap: () => _confirmAnular(quotation.id ?? -1),
+                        ),
                       DismissibleActionData(
                         type: DismissibleActionType.generarVenta,
                         label: 'Generar venta',
@@ -201,9 +229,11 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                             () => ProductsSaleScreen(
                               quotationIdForSale: quotation.id,
                             ),
-                          )?.then((_) => ref
-                              .read(quotationListProvider.notifier)
-                              .refresh());
+                          )?.then(
+                            (_) => ref
+                                .read(quotationListProvider.notifier)
+                                .refresh(),
+                          );
                         },
                       ),
                     ],
@@ -221,7 +251,9 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Cotización',
+                            quotation.isQuotation == false
+                                ? 'Pedido'
+                                : 'Cotización',
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
                               fontSize: 12,
@@ -282,14 +314,18 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.swipe_left_outlined,
-                                    size: 11, color: Colors.grey.shade400),
+                                Icon(
+                                  Icons.swipe_left_outlined,
+                                  size: 11,
+                                  color: Colors.grey.shade400,
+                                ),
                                 const SizedBox(width: 3),
                                 Text(
                                   'Desliza',
                                   style: GoogleFonts.roboto(
-                                      fontSize: 9,
-                                      color: Colors.grey.shade400),
+                                    fontSize: 9,
+                                    color: Colors.grey.shade400,
+                                  ),
                                 ),
                               ],
                             ),

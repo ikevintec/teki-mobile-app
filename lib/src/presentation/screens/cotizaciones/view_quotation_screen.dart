@@ -28,10 +28,15 @@ class ViewQuotationScreen extends ConsumerStatefulWidget {
   final int id;
   final bool fromSale;
 
-  const ViewQuotationScreen({super.key, required this.id, this.fromSale = false});
+  const ViewQuotationScreen({
+    super.key,
+    required this.id,
+    this.fromSale = false,
+  });
 
   @override
-  ConsumerState<ViewQuotationScreen> createState() => _ViewQuotationScreenState();
+  ConsumerState<ViewQuotationScreen> createState() =>
+      _ViewQuotationScreenState();
 }
 
 class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
@@ -43,7 +48,9 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
-        await ref.read(quotationViewProvider.notifier).fetchQuotationById(widget.id);
+        await ref
+            .read(quotationViewProvider.notifier)
+            .fetchQuotationById(widget.id);
       } catch (_) {
         // El error ya fue notificado dentro del provider.
       }
@@ -84,23 +91,43 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
                       children: [
                         _buildHeader(quotation),
                         Padding(
-                          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 20),
+                          padding: const EdgeInsets.only(
+                            right: 16,
+                            left: 16,
+                            bottom: 20,
+                          ),
                           child: _buildSendButton(
                             quotation,
                             context,
-                            ref.watch(sesionProvider).company?.nombreComercial ?? 'Empresa',
+                            ref
+                                    .watch(sesionProvider)
+                                    .company
+                                    ?.nombreComercial ??
+                                'Empresa',
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 20),
+                          padding: const EdgeInsets.only(
+                            right: 16,
+                            left: 16,
+                            bottom: 20,
+                          ),
                           child: _buildVerPdfButton(quotation, context),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 20),
+                          padding: const EdgeInsets.only(
+                            right: 16,
+                            left: 16,
+                            bottom: 20,
+                          ),
                           child: _buildDescargarButton(quotation),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 24),
+                          padding: const EdgeInsets.only(
+                            right: 16,
+                            left: 16,
+                            bottom: 24,
+                          ),
                           child: _buildVerComprobantesButton(widget.fromSale),
                         ),
                       ],
@@ -108,7 +135,10 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: ComprobanteSummaryWidget(quotation: quotation),
                 ),
               ],
@@ -133,7 +163,7 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
             const SizedBox(height: 16),
           ],
           Text(
-            'Cotización',
+            quotation.isQuotation == false ? 'Pedido' : 'Cotización',
             textAlign: TextAlign.center,
             style: GoogleFonts.roboto(
               fontSize: 38,
@@ -168,7 +198,11 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
     );
   }
 
-  Widget _buildSendButton(Quotation quotation, BuildContext context, String nombreComercial) {
+  Widget _buildSendButton(
+    Quotation quotation,
+    BuildContext context,
+    String nombreComercial,
+  ) {
     return SplitActionButton(
       directIcon: Icons.chat_rounded,
       directIconWidget: Image.asset(
@@ -187,7 +221,10 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
           child: FormSendWhatsapp(
             data: WhatsappSendData(
               initialPhone: quotation.telefonoReceptor,
-              message: QuotationWhatsappHelper.getMessage(quotation, nombreComercial),
+              message: QuotationWhatsappHelper.getMessage(
+                quotation,
+                nombreComercial,
+              ),
               filename: QuotationWhatsappHelper.getFilename(quotation),
               documentUrl: '$url?time=$currentTime',
             ),
@@ -207,11 +244,13 @@ class _ViewQuotationScreenState extends ConsumerState<ViewQuotationScreen> {
       directLabel: 'Ver PDF',
       color: ColorSchema.primaryColor,
       onDirectAction: () {
-        Get.to(() => PdfViewerScreen(
-              customPdfUrl: QuotationWhatsappHelper.getUrlPdf(quotation),
-              fileName: '${quotation.serie}-${quotation.numero}',
-              allowPrint: false,
-            ));
+        Get.to(
+          () => PdfViewerScreen(
+            customPdfUrl: QuotationWhatsappHelper.getUrlPdf(quotation),
+            fileName: '${quotation.serie}-${quotation.numero}',
+            allowPrint: false,
+          ),
+        );
       },
       dropdownOptions: const <DropdownActionOption>[],
     );
@@ -272,18 +311,11 @@ Widget _buildErrorScreen(String message, bool fromSale) {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.grey[600],
-          ),
+          Icon(Icons.error_outline, size: 64, color: Colors.grey[600]),
           const SizedBox(height: 16),
           Text(
             message,
-            style: GoogleFonts.roboto(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
+            style: GoogleFonts.roboto(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 24),
           ElevatedButton(

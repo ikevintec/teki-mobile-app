@@ -3,6 +3,7 @@ import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 
 class QuotationDetail {
   final int? id;
+  final Map<String, dynamic> comercial;
   final int? numeroOrden;
   final int? numeroItem;
   final double? cantidad;
@@ -45,6 +46,7 @@ class QuotationDetail {
 
   QuotationDetail({
     this.id,
+    this.comercial = const {},
     this.numeroOrden,
     this.numeroItem,
     this.cantidad,
@@ -90,6 +92,21 @@ class QuotationDetail {
     Map<String, dynamic> json,
   ) => QuotationDetail(
     id: json['id'],
+    comercial: {
+      for (final key in [
+        'tipoComercialId',
+        'tipoComercialNombre',
+        'tipoComercialCategoria',
+        'productoPrecioId',
+        'detalleOrigenId',
+        'origenPrecio',
+        'precioReferencia',
+        'proveedorId',
+        'esBonificacion',
+        'promocionId',
+      ])
+        if (json.containsKey(key)) key: json[key],
+    },
     numeroOrden: json['numeroOrden'],
     numeroItem: json['numeroItem'],
     cantidad: (json['cantidad'] as num?)?.toDouble(),
@@ -138,6 +155,7 @@ class QuotationDetail {
 
   Map<String, dynamic> toJson() => {
     'id': id,
+    ...comercial,
     'numeroOrden': numeroOrden,
     'numeroItem': numeroItem,
     'cantidad': cantidad,
@@ -188,6 +206,11 @@ class QuotationDetail {
   TicketDetail toTicketDetail({bool keepId = true}) {
     return TicketDetail(
       id: keepId ? id : null,
+      comercial: {
+        ...comercial,
+        'detalleOrigenId': id,
+        if (comercial['esBonificacion'] != true) 'origenPrecio': 'PACTADO',
+      },
       numeroOrden: numeroOrden,
       numeroItem: numeroItem,
       cantidad: cantidad,

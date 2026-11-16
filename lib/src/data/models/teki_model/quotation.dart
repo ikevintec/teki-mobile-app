@@ -11,6 +11,7 @@ import 'package:teki_app/src/utils/formats.dart';
 
 class Quotation {
   final int? id;
+  final Map<String, dynamic> comercial;
   final String? serie;
   final int? numero;
   final String? fechaEmision;
@@ -69,6 +70,7 @@ class Quotation {
 
   Quotation({
     this.id,
+    this.comercial = const {},
     this.serie,
     this.numero,
     this.fechaEmision,
@@ -128,6 +130,10 @@ class Quotation {
 
   factory Quotation.fromJson(Map<String, dynamic> json) => Quotation(
     id: json['id'],
+    comercial: {
+      for (final key in ['tipoPrecioCabeceraId'])
+        if (json.containsKey(key)) key: json[key],
+    },
     serie: json['serie'],
     numero: json['numero'],
     fechaEmision: json['fechaEmision'],
@@ -195,7 +201,9 @@ class Quotation {
     estacionVenta: json['estacionVenta'] != null
         ? SaleStation.fromJson(json['estacionVenta'])
         : null,
-    vendedor: json['vendedor'] != null ? User.fromJson(json['vendedor']) : null,
+    vendedor: json['vendedor'] != null
+        ? User.fromJson(json['vendedor'])
+        : (json['idVendedor'] != null ? User(id: json['idVendedor']) : null),
     esProduccion: json['esProduccion'],
     tipoVenta: json['tipoVenta'],
     diasCredito: json['diasCredito'],
@@ -206,6 +214,7 @@ class Quotation {
 
   Map<String, dynamic> toJson() => {
     'id': id,
+    ...comercial,
     'serie': serie,
     'numero': numero,
     'fechaEmision': fechaEmision,
@@ -269,6 +278,7 @@ class Quotation {
   /// de origen mediante el campo `cotizacion` para que el backend la concrete.
   Ticket toTicketForSale() {
     return Ticket(
+      comercial: comercial,
       tipoComprobante: '03',
       codigoMoneda: codigoMoneda,
       cliente: cliente,
@@ -304,13 +314,14 @@ class Quotation {
   /// de venta (ProductsSaleScreen) en el flujo de edición de cotizaciones.
   Ticket toTicketForEdit() {
     return Ticket(
+      comercial: comercial,
       id: id,
       serie: serie,
       numero: numero,
       fechaEmision: fechaEmision,
       fechaEmisionDate: fechaEmisionDate,
       horaEmision: horaEmision,
-      tipoComprobante: 'CO',
+      tipoComprobante: isQuotation == false ? 'PE' : 'CO',
       codigoMoneda: codigoMoneda,
       fechaVencimiento: fechaVencimiento,
       cliente: cliente,

@@ -23,6 +23,14 @@ class VerQuotationsScreen extends ConsumerStatefulWidget {
 }
 
 class _VerQuotationsScreenState extends ConsumerState<VerQuotationsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(sesionProvider.notifier).cargarDistribuidor(),
+    );
+  }
+
   void _reloadWithCurrentDate() {
     final state = ref.read(quotationListProvider);
     final desde = state.filtroDesde;
@@ -55,15 +63,25 @@ class _VerQuotationsScreenState extends ConsumerState<VerQuotationsScreen> {
       floatingActionButton:
           dashboardAllows(ref.watch(sesionProvider), 'VENTAS_CREAR')
           ? FloatingActionButton.extended(
-              onPressed: () => openNewQuotation(context, ref),
+              onPressed: () => openNewQuotation(
+                context,
+                ref,
+                isPedido: ref.read(quotationListProvider).esPedido,
+              ),
               icon: const Icon(Icons.add),
-              label: const Text('Nueva cotización'),
+              label: Text(
+                ref.watch(quotationListProvider).esPedido
+                    ? 'Nuevo pedido'
+                    : 'Nueva cotización',
+              ),
             )
           : null,
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Ver Cotizaciones',
+        title: Text(
+          ref.watch(quotationListProvider).esPedido
+              ? 'Pedidos'
+              : 'Cotizaciones',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: ColorSchema.primaryColor,
@@ -71,6 +89,34 @@ class _VerQuotationsScreenState extends ConsumerState<VerQuotationsScreen> {
       ),
       body: Column(
         children: [
+          if ([
+            'preciosComerciales',
+            'promociones',
+            'reservarStockPedidos',
+          ].any((key) => ref.watch(sesionProvider).distribuidor[key] == true))
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Cotizaciones')),
+                  ButtonSegment(value: true, label: Text('Pedidos')),
+                ],
+                selected: {ref.watch(quotationListProvider).esPedido},
+                onSelectionChanged: (s) => ref
+                    .read(quotationListProvider.notifier)
+                    .cambiarModoPedido(s.first),
+              ),
+            ),
+          if (ref.watch(quotationListProvider).esPedido &&
+              (ref.watch(sesionProvider).hasPermission('PEDIDOS_VER_AJENOS') ||
+                  ref.watch(sesionProvider).hasPermission('SUPER_USUARIO')))
+            SwitchListTile(
+              title: const Text('Ver pedidos de otros vendedores'),
+              value: ref.watch(quotationListProvider).todosVendedores,
+              onChanged: (value) => ref
+                  .read(quotationListProvider.notifier)
+                  .cambiarVendedores(value),
+            ),
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: CustomDatePicker(onDateSelected: _handleDateRangeChanged),

@@ -195,7 +195,9 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
       padding: const EdgeInsets.only(top: 6),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: _showAfectacionSheet,
+        onTap: widget.productTicketDetail.comercial['esBonificacion'] == true
+            ? null
+            : _showAfectacionSheet,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -664,6 +666,11 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                   : GestureDetector(
                                       behavior: HitTestBehavior.opaque,
                                       onTap: () {
+                                        if (widget
+                                                .productTicketDetail
+                                                .comercial['esBonificacion'] ==
+                                            true)
+                                          return;
                                         // Editar el precio del item requiere permiso (paridad web)
                                         if (!ref
                                             .read(sesionProvider)
@@ -742,8 +749,12 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                 onQuantityChanged:
                                     widget.onQuantityChanged ?? () {},
                                 locked:
+                                    widget
+                                            .productTicketDetail
+                                            .comercial['esBonificacion'] ==
+                                        true ||
                                     widget.productTicketDetail.comandaDetalle !=
-                                    null,
+                                        null,
                               ),
                             ],
                           ),

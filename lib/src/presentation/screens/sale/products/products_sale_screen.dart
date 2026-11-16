@@ -1,3 +1,6 @@
+import 'package:teki_app/src/presentation/screens/sale/products/widgets/beneficios_venta.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/widgets/selector_precio_comercial.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
@@ -58,7 +61,12 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
           ),
           'price': FormControl<double>(
             value: product.precioVentaUnitario ?? 0.0,
-            validators: [Validators.required, Validators.min(0.01)],
+            validators: [
+              Validators.required,
+              Validators.min(
+                product.comercial['esBonificacion'] == true ? 0 : 0.01,
+              ),
+            ],
           ),
           // Cantidad decimal (paridad web: pKeyFilter num + min 0.01),
           // p.ej. productos por peso.
@@ -87,7 +95,8 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     // Si la búsqueda local está activa, precargar los productos planos de forma
     // asíncrona (no bloquea la carga de la pantalla ni el login).
     providerProductSale.ensureLocalProductsLoaded();
-    Future.microtask(() {
+    Future.microtask(() async {
+      await ref.read(sesionProvider.notifier).cargarDistribuidor();
       providerProductSale.loadInitialData(
         widget.id,
         quotationId: widget.quotationId,
@@ -186,6 +195,8 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                 color: ColorSchema.primaryColor,
                 child: Column(
                   children: [
+                    const SelectorPrecioComercial(),
+                    const BeneficiosVenta(),
                     SearchProducts(form: form),
                     // add row with 2 buttons add product and add service
                     Padding(
@@ -367,15 +378,46 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                         backgroundColor:
                                                             ColorSchema
                                                                 .primaryColor,
-                                                        onTap: () {
+                                                        onTap: () async {
+                                                          final original =
+                                                              products[index]
+                                                                  .producto!;
+                                                          Product completo =
+                                                              original;
+                                                          if (ref
+                                                                  .read(
+                                                                    sesionProvider,
+                                                                  )
+                                                                  .distribuidor['preciosComerciales'] ==
+                                                              true) {
+                                                            try {
+                                                              completo = await ref
+                                                                  .read(
+                                                                    productSaleProvider
+                                                                        .notifier,
+                                                                  )
+                                                                  .productsRepository
+                                                                  .getProductById(
+                                                                    original
+                                                                        .id!,
+                                                                  );
+                                                            } catch (_) {
+                                                              errorNotification(
+                                                                'No se pudieron cargar los precios. Reintenta.',
+                                                              );
+                                                              return;
+                                                            }
+                                                          }
+                                                          if (!context.mounted)
+                                                            return;
                                                           showCustomModal(
                                                             context: context,
-                                                            child: ModalProductView(
-                                                              product:
-                                                                  products[index]
-                                                                      .producto!,
-                                                              index: index,
-                                                            ),
+                                                            child:
+                                                                ModalProductView(
+                                                                  product:
+                                                                      completo,
+                                                                  index: index,
+                                                                ),
                                                             tittle:
                                                                 "Ver Producto",
                                                             allowButtons: false,
@@ -407,8 +449,11 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                         },
                                                       ),
                                                     if (products[index]
-                                                            .comandaDetalle ==
-                                                        null)
+                                                                .comercial['esBonificacion'] !=
+                                                            true &&
+                                                        products[index]
+                                                                .comandaDetalle ==
+                                                            null)
                                                       DismissibleActionData(
                                                         type:
                                                             DismissibleActionType
@@ -619,7 +664,12 @@ void _syncFormArrayWithProvider(
           ),
           'price': FormControl<double>(
             value: product.precioVentaUnitario ?? 0,
-            validators: [Validators.required, Validators.min(0.01)],
+            validators: [
+              Validators.required,
+              Validators.min(
+                product.comercial['esBonificacion'] == true ? 0 : 0.01,
+              ),
+            ],
           ),
           // Cantidad decimal (paridad web: pKeyFilter num + min 0.01),
           // p.ej. productos por peso.

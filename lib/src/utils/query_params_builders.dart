@@ -31,8 +31,10 @@ Map<String, dynamic> buildProductQueryParams(dynamic state) {
     safeAdd('codigoMoneda', state.codigoMoneda);
   } catch (_) {}
   try {
-    safeAdd('idCategoria',
-        (state.idCategoria?.isNotEmpty ?? false) ? state.idCategoria : null);
+    safeAdd(
+      'idCategoria',
+      (state.idCategoria?.isNotEmpty ?? false) ? state.idCategoria : null,
+    );
   } catch (_) {}
   try {
     safeAdd('mostrarEnRestaurante', state.mostrarEnRestaurante);
@@ -171,7 +173,11 @@ Map<String, dynamic> buildQuotationQueryParams(dynamic state) {
     if (value != null) params[key] = value;
   }
 
-  safeAdd('esPedido', 0);
+  try {
+    safeAdd('esPedido', state.esPedido ? 1 : 0);
+  } catch (_) {
+    safeAdd('esPedido', 0);
+  }
   safeAdd('pageNumber', state.pageNumber);
   safeAdd('perPage', state.perPage);
   safeAdd('sortOrder', state.sortOrder);
@@ -189,7 +195,7 @@ Map<String, dynamic> buildQuotationQueryParams(dynamic state) {
     safeAdd('idPuntoVenta', state.idPuntoVenta);
   } catch (_) {}
   try {
-    safeAdd('idVendedor', state.idVendedor);
+    if (state.idVendedor != 0) safeAdd('idVendedor', state.idVendedor);
   } catch (_) {}
   try {
     safeAdd('filtroSerie', state.filtroSerie);

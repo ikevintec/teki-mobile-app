@@ -6,7 +6,8 @@ import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
 class RemoteQuotationDatasource extends QuotationDatasource {
-  final Dio dio = ApiClient.dio;
+  final Dio dio;
+  RemoteQuotationDatasource({Dio? dio}) : dio = dio ?? ApiClient.dio;
 
   /// Crea una cotización. Agrega los campos propios de cotización
   /// que el backend espera en este endpoint y que no existen en Ticket.
@@ -17,7 +18,7 @@ class RemoteQuotationDatasource extends QuotationDatasource {
       data['ofertaValido'] = '';
       data['tiempoEntrega'] = '';
       final response = await dio.post(
-        '/quotation',
+        ticket.tipoComprobante == 'PE' ? '/ticket-order' : '/quotation',
         data: data,
       );
       return Ticket.fromJson(response.data);
@@ -26,7 +27,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
         throw Exception('Sesión expirada');
       }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
           e.message ??
           'Error desconocido del servidor';
       return Future.error(message);
@@ -42,7 +46,7 @@ class RemoteQuotationDatasource extends QuotationDatasource {
   Future<Ticket> updateQuotation(Ticket ticket) async {
     try {
       await dio.put(
-        '/quotation',
+        ticket.tipoComprobante == 'PE' ? '/ticket-order' : '/quotation',
         data: ticket.toJson(),
       );
       return ticket;
@@ -51,7 +55,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
         throw Exception('Sesión expirada');
       }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
           e.message ??
           'Error desconocido del servidor';
       return Future.error(message);
@@ -65,11 +72,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
   Future<int> getNextQuotationNumber(String tipoDocumento, String serie) async {
     try {
       final response = await dio.get(
-        '/quotation/next-number',
-        queryParameters: {
-          'tipoDocumento': tipoDocumento,
-          'serie': serie,
-        },
+        tipoDocumento == 'PE'
+            ? '/ticket-order/next-number'
+            : '/quotation/next-number',
+        queryParameters: {'tipoDocumento': tipoDocumento, 'serie': serie},
       );
 
       if (response.data is int) {
@@ -85,7 +91,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
         throw Exception('Sesión expirada');
       }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
           e.message ??
           'Error desconocido del servidor';
       return Future.error(message);
@@ -105,7 +114,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
         throw Exception('Sesión expirada');
       }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
           e.message ??
           'Error desconocido del servidor';
       return Future.error(message);
@@ -118,10 +130,7 @@ class RemoteQuotationDatasource extends QuotationDatasource {
   @override
   Future<List<Quotation>> getQuotations(Map<String, dynamic> params) async {
     try {
-      final response = await dio.get(
-        '/quotation',
-        queryParameters: params,
-      );
+      final response = await dio.get('/quotation', queryParameters: params);
 
       final List<dynamic> content = response.data['content'];
 
@@ -144,7 +153,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
         return Future.error('Sin conexión a internet');
       }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
           e.message ??
           'Error de conexión';
       return Future.error(message);
@@ -163,7 +175,10 @@ class RemoteQuotationDatasource extends QuotationDatasource {
         throw Exception('Sesión expirada');
       }
       final resData = e.response?.data;
-      final message = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ??
+      final message =
+          (resData is Map
+              ? (resData['mensaje'] ?? resData['message'])
+              : null) ??
           e.message ??
           'Error desconocido del servidor';
       return Future.error(message);

@@ -9,25 +9,41 @@ import 'package:teki_app/src/utils/query_params_builders.dart';
 
 final quotationListProvider =
     StateNotifierProvider<QuotationListNotifier, QuotationListState>((ref) {
-  final QuotationRepository repository = QuotationRepositoryImpl();
-  return QuotationListNotifier(repository: repository, ref: ref);
-});
+      final QuotationRepository repository = QuotationRepositoryImpl();
+      return QuotationListNotifier(repository: repository, ref: ref);
+    });
 
 class QuotationListNotifier extends StateNotifier<QuotationListState> {
   final QuotationRepository repository;
   final Ref ref;
   QuotationListNotifier({required this.repository, required this.ref})
-      : super(QuotationListState.initial());
+    : super(QuotationListState.initial());
+
+  Future<void> cambiarVendedores(bool todos) async {
+    final sesion = ref.read(sesionProvider);
+    if (todos &&
+        !sesion.hasPermission('PEDIDOS_VER_AJENOS') &&
+        !sesion.hasPermission('SUPER_USUARIO')) {
+      return;
+    }
+    state = state.copyWith(todosVendedores: todos);
+    await refresh();
+  }
+
+  Future<void> cambiarModoPedido(bool pedido) async {
+    state = state.copyWith(esPedido: pedido);
+    await refresh();
+  }
 
   /// Recarga la lista con los filtros vigentes (p. ej. al volver de editar
   /// una cotización o de generar la venta: el estado cambió en el backend).
   Future<void> refresh() => loadFirstPage(
-        desde: state.filtroDesde,
-        hasta: state.filtroHasta,
-        serie: state.filtroSerie,
-        numero: state.filtroNumero,
-        estadoCotizacion: state.filtroEstadoCotizacion,
-      );
+    desde: state.filtroDesde,
+    hasta: state.filtroHasta,
+    serie: state.filtroSerie,
+    numero: state.filtroNumero,
+    estadoCotizacion: state.filtroEstadoCotizacion,
+  );
 
   Future<void> loadFirstPage({
     required String desde,
@@ -41,7 +57,9 @@ class QuotationListNotifier extends StateNotifier<QuotationListState> {
       filtroHasta: hasta,
       filtroRucEmisor: ref.read(sesionProvider).companySelected?.ruc ?? '',
       idPuntoVenta: ref.read(sesionProvider).office?.id ?? 0,
-      idVendedor: ref.read(authStateProvider).user?.id ?? 0,
+      idVendedor: state.esPedido && state.todosVendedores
+          ? 0
+          : ref.read(authStateProvider).user?.id ?? 0,
       quotations: [],
       hasMore: true,
       isLoading: true,
@@ -52,14 +70,16 @@ class QuotationListNotifier extends StateNotifier<QuotationListState> {
     );
 
     try {
-      final newQuotations =
-          await repository.getQuotations(buildQuotationQueryParams(state));
+      final newQuotations = await repository.getQuotations(
+        buildQuotationQueryParams(state),
+      );
 
       state = state.copyWith(
         isLoading: false,
         pageNumber: state.pageNumber + 1,
         quotations: newQuotations,
-        hasMore: newQuotations.length == state.perPage && newQuotations.isNotEmpty,
+        hasMore:
+            newQuotations.length == state.perPage && newQuotations.isNotEmpty,
       );
     } catch (e) {
       errorNotification("Error al cargar cotizaciones: $e");
@@ -111,14 +131,16 @@ class QuotationListNotifier extends StateNotifier<QuotationListState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      final newQuotations =
-          await repository.getQuotations(buildQuotationQueryParams(state));
+      final newQuotations = await repository.getQuotations(
+        buildQuotationQueryParams(state),
+      );
 
       state = state.copyWith(
         isLoading: false,
         pageNumber: state.pageNumber + 1,
         quotations: [...state.quotations, ...newQuotations],
-        hasMore: newQuotations.length == state.perPage && newQuotations.isNotEmpty,
+        hasMore:
+            newQuotations.length == state.perPage && newQuotations.isNotEmpty,
       );
     } catch (e) {
       errorNotification("Error al cargar cotizaciones: $e");
@@ -128,6 +150,8 @@ class QuotationListNotifier extends StateNotifier<QuotationListState> {
 }
 
 class QuotationListState {
+  final bool esPedido;
+  final bool todosVendedores;
   final List<Quotation> quotations;
   final bool isLoading;
   final bool hasMore;
@@ -144,6 +168,8 @@ class QuotationListState {
   final String? filtroEstadoCotizacion;
 
   QuotationListState({
+    this.esPedido = false,
+    this.todosVendedores = false,
     required this.quotations,
     required this.isLoading,
     required this.hasMore,
@@ -161,23 +187,25 @@ class QuotationListState {
   });
 
   factory QuotationListState.initial() => QuotationListState(
-        quotations: [],
-        isLoading: false,
-        hasMore: true,
-        pageNumber: 0,
-        perPage: 10,
-        sortOrder: 1,
-        filtroDesde: '',
-        filtroHasta: '',
-        filtroRucEmisor: '',
-        idPuntoVenta: 0,
-        idVendedor: 0,
-        filtroSerie: null,
-        filtroNumero: null,
-        filtroEstadoCotizacion: null,
-      );
+    quotations: [],
+    isLoading: false,
+    hasMore: true,
+    pageNumber: 0,
+    perPage: 10,
+    sortOrder: 1,
+    filtroDesde: '',
+    filtroHasta: '',
+    filtroRucEmisor: '',
+    idPuntoVenta: 0,
+    idVendedor: 0,
+    filtroSerie: null,
+    filtroNumero: null,
+    filtroEstadoCotizacion: null,
+  );
 
   QuotationListState copyWith({
+    bool? esPedido,
+    bool? todosVendedores,
     List<Quotation>? quotations,
     bool? isLoading,
     bool? hasMore,
@@ -194,6 +222,8 @@ class QuotationListState {
     String? filtroEstadoCotizacion,
   }) {
     return QuotationListState(
+      esPedido: esPedido ?? this.esPedido,
+      todosVendedores: todosVendedores ?? this.todosVendedores,
       quotations: quotations ?? this.quotations,
       isLoading: isLoading ?? this.isLoading,
       hasMore: hasMore ?? this.hasMore,
@@ -207,7 +237,8 @@ class QuotationListState {
       idVendedor: idVendedor ?? this.idVendedor,
       filtroSerie: filtroSerie ?? this.filtroSerie,
       filtroNumero: filtroNumero ?? this.filtroNumero,
-      filtroEstadoCotizacion: filtroEstadoCotizacion ?? this.filtroEstadoCotizacion,
+      filtroEstadoCotizacion:
+          filtroEstadoCotizacion ?? this.filtroEstadoCotizacion,
     );
   }
 }
