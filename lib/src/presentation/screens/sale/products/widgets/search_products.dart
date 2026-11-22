@@ -1,12 +1,14 @@
+import 'package:teki_app/src/presentation/screens/pedidos/precio_linea.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
-import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:teki_app/src/domain/distribuidor/contexto_comercial.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -111,7 +113,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     _focusNode.unfocus();
     // El resultado de la búsqueda es ligero: al seleccionar se trae el detalle
     // completo del producto antes de agregarlo a la venta.
-    await ref.read(productSaleProvider.notifier).selectProductForSale(product);
+    await ref.read(productSaleProvider.notifier).selectProductForSale(product,solicitarPrecioManual:(_)=>ingresarPrecio(context));
   }
 
   void _showOverlay() {
@@ -150,7 +152,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     final product = await ref.read(productSaleProvider.notifier).getProductByBarcode(code);
     if (!mounted) return;
     if (product != null) {
-      await ref.read(productSaleProvider.notifier).selectProductForSale(product);
+      await ref.read(productSaleProvider.notifier).selectProductForSale(product,solicitarPrecioManual:(_)=>ingresarPrecio(context));
     } else {
       errorNotification("Producto no encontrado para el código de barras: $code");
     }
@@ -381,11 +383,17 @@ class ItemProduct extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final puntoVenta = ref.watch(sesionProvider).office;
-    final precio = (product.preciosVenta?.firstWhere(
-          (p) => p.tipoPrecio == "POR_DEFECTO",
-          orElse: () => ProductPrice(precio: 0.0),
-        ).precio ?? 0.0);
+    final sesion = ref.watch(sesionProvider);
+    final puntoVenta = sesion.office;
+    final base = sesion.comercial ?? const ContextoComercial();
+    final cabecera = base.activo
+        ? ref.watch(ticketProvider.select((s) => s.ticket.tipoPrecioCabeceraId)) ?? base.cabecera
+        : null;
+    final comercial = base.conCabecera(cabecera);
+    final precio = comercial.activo
+        ? comercial.elegir(product, puntoVenta?.id, 1)?.precio
+        : comercial.precios(product, puntoVenta?.id)
+            .where((p) => p.tipoPrecio == 'POR_DEFECTO').firstOrNull?.precio;
     final stock = product.inventarios
             ?.firstWhere(
               (inv) => inv.puntoVenta?.id == puntoVenta?.id,
@@ -443,7 +451,7 @@ class ItemProduct extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '${product.moneda ?? ''} ${precio.toStringAsFixed(2)}',
+                        precio == null ? 'Sin precio' : '${product.moneda ?? ''} ${precio.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,

@@ -1,3 +1,6 @@
+import 'package:teki_app/src/data/services/distribuidor/comercial_service.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/data/repositories/customer_repository_impl.dart';
@@ -5,11 +8,11 @@ import 'package:teki_app/src/domain/repositories/customer_repository.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_state.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
-final customerSaleProvider =
-    StateNotifierProvider<CustomerSaleNotifier, CustomerSaleState>((ref) {
-  final CustomersRepository customersRepository = CustomersRepositoryImpl();
-  return CustomerSaleNotifier(customersRepository: customersRepository, ref: ref);
-});
+final customerSaleProvider=StateNotifierProvider<CustomerSaleNotifier,CustomerSaleState>(crearClienteVenta);
+CustomerSaleNotifier crearClienteVenta(Ref ref) {
+  ref.watch(sesionProvider.select((s)=>s.claveContexto));
+  return CustomerSaleNotifier(ref:ref,customersRepository:CustomersRepositoryImpl());
+}
 
 class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
   final CustomersRepository customersRepository;
@@ -72,6 +75,20 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
       tipoDocumento: tipoDocumento 
     );
     state = state.copyWith(customer: customerToSet);
+  }
+
+  int _revisionPrecioCliente=0;
+  Future<bool> aplicarPrecioCliente(int? id) async {
+    final s=ref.read(sesionProvider);
+    if(s.comercial?.activo!=true)return true;
+    final revision=++_revisionPrecioCliente;
+    try{
+      final c=await ComercialService().cargar(s.office!.id!,cliente:id);
+      if(!mounted || revision!=_revisionPrecioCliente || state.customer.id!=id ||
+          ref.read(sesionProvider).office?.id!=s.office?.id || ref.read(sesionProvider).login.user?.id!=s.login.user?.id)return false;
+      ref.read(ticketProvider.notifier).updateTicket(ref.read(ticketProvider).ticket.copyWith(tipoPrecioCabeceraId:c.cabecera));
+      return true;
+    }catch(_){errorNotification('No se pudo cargar el tipo de precio del cliente. Reintenta antes de continuar.');return false;}
   }
 
   void setCustomerEntity(Customer customer) {

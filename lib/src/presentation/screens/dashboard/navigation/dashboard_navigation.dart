@@ -28,6 +28,7 @@ enum DashboardAction {
   sale('Nueva venta', Icons.add_shopping_cart_rounded),
   vouchers('Comprobantes', Icons.receipt_long_outlined),
   newQuotation('Nueva cotización', Icons.add_chart_outlined),
+  pedidosComerciales('Pedidos de venta', Icons.assignment_outlined),
   quotations('Cotizaciones', Icons.request_quote_outlined),
   customers('Clientes', Icons.people_outline_rounded),
   loyalty('Tarjetas de fidelización', Icons.loyalty_outlined),
@@ -64,6 +65,7 @@ List<DashboardGroup> dashboardGroups(SesionState session) {
       if (can('VENTAS_CREAR')) DashboardAction.sale,
       if (can('VENTAS_VER')) DashboardAction.vouchers,
       if (can('COTIZACION_VER')) DashboardAction.quotations,
+      if (can('COTIZACION_VER')) DashboardAction.pedidosComerciales,
       if (can('VENTAS_CREAR') && !can('COTIZACION_VER'))
         DashboardAction.newQuotation,
     ]),

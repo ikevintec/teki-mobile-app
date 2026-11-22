@@ -8,6 +8,19 @@ import 'package:teki_app/src/data/models/teki_model/ticket_dispatch_detail.dart'
 import 'package:teki_app/src/utils/formats.dart';
 
 class TicketDetail {
+  /// Predeterminado al agregar; cambiar cabecera no reinterpreta esta línea. Local/borradores.
+  final int? tipoPrecioInicialId;
+  final int? tipoComercialId;
+  final String? tipoComercialNombre;
+  final String? tipoComercialCategoria;
+  final int? productoPrecioId;
+  final double? precioReferencia;
+  final String? origenPrecio;
+  final int? proveedorId;
+  final int? detalleOrigenId;
+  final int? promocionId;
+  final bool? esBonificacion;
+
   final int? id;
   final int? numeroOrden;
   final int? numeroItem;
@@ -81,7 +94,18 @@ class TicketDetail {
   final Double? interes;
 
   TicketDetail(
-      {this.id,
+      {this.tipoPrecioInicialId,
+      this.tipoComercialId,
+      this.tipoComercialNombre,
+      this.tipoComercialCategoria,
+      this.productoPrecioId,
+      this.precioReferencia,
+      this.origenPrecio,
+      this.proveedorId,
+      this.detalleOrigenId,
+      this.promocionId,
+      this.esBonificacion,
+      this.id,
       this.numeroOrden,
       this.numeroItem,
       this.cantidad,
@@ -150,7 +174,19 @@ class TicketDetail {
       this.interes});
 
   factory TicketDetail.fromJson(Map<String, dynamic> json) => TicketDetail(
-        id: json['id'],
+                tipoPrecioInicialId: (json['tipoPrecioInicialId'] as num?)?.toInt(),
+        tipoComercialId: (json['tipoComercialId'] as num?)?.toInt(),
+        tipoComercialNombre: json['tipoComercialNombre'] as String?,
+        tipoComercialCategoria: json['tipoComercialCategoria'] as String?,
+        productoPrecioId: (json['productoPrecioId'] as num?)?.toInt(),
+        precioReferencia: (json['precioReferencia'] as num?)?.toDouble(),
+        origenPrecio: json['origenPrecio'] as String?,
+        precioManual: json['precioManual'] == true,
+        proveedorId: (json['proveedorId'] as num?)?.toInt(),
+        detalleOrigenId: (json['detalleOrigenId'] as num?)?.toInt(),
+        promocionId: (json['promocionId'] as num?)?.toInt(),
+        esBonificacion: json['esBonificacion'] as bool?,
+id: json['id'],
         numeroOrden: json['numeroOrden'],
         numeroItem: json['numeroItem'],
         cantidad: (json['cantidad'] ?? 0).toDouble(),
@@ -235,7 +271,19 @@ class TicketDetail {
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
+                'tipoPrecioInicialId':tipoPrecioInicialId,
+        'tipoComercialId': tipoComercialId,
+        'tipoComercialNombre': tipoComercialNombre,
+        'tipoComercialCategoria': tipoComercialCategoria,
+        'productoPrecioId': productoPrecioId,
+        'precioReferencia': precioReferencia,
+        'origenPrecio': origenPrecio,
+        if (precioManual) 'precioManual': true,
+        'proveedorId': proveedorId,
+        'detalleOrigenId': detalleOrigenId,
+        'promocionId': promocionId,
+        'esBonificacion': esBonificacion,
+'id': id,
         'numeroOrden': numeroOrden,
         'numeroItem': numeroItem,
         'cantidad': cantidad,
@@ -319,6 +367,18 @@ class TicketDetail {
       identical(param, _noValue) ? current : param as double?;
 
   TicketDetail copyWith({
+    int? tipoPrecioInicialId,
+    int? tipoComercialId,
+    String? tipoComercialNombre,
+    String? tipoComercialCategoria,
+    int? productoPrecioId,
+    double? precioReferencia,
+    String? origenPrecio,
+    int? proveedorId,
+    int? detalleOrigenId,
+    int? promocionId,
+    bool? esBonificacion,
+
     int? id,
     int? numeroOrden,
     int? numeroItem,
@@ -387,7 +447,18 @@ class TicketDetail {
     String? monedaOriginal,
   }) {
     return TicketDetail(
-      id: id ?? this.id,
+            tipoPrecioInicialId:tipoPrecioInicialId ?? this.tipoPrecioInicialId,
+      tipoComercialId: tipoComercialId ?? this.tipoComercialId,
+      tipoComercialNombre: tipoComercialNombre ?? this.tipoComercialNombre,
+      tipoComercialCategoria: tipoComercialCategoria ?? this.tipoComercialCategoria,
+      productoPrecioId: productoPrecioId ?? this.productoPrecioId,
+      precioReferencia: precioReferencia ?? this.precioReferencia,
+      origenPrecio: origenPrecio ?? this.origenPrecio,
+      proveedorId: proveedorId ?? this.proveedorId,
+      detalleOrigenId: detalleOrigenId ?? this.detalleOrigenId,
+      promocionId: promocionId ?? this.promocionId,
+      esBonificacion: esBonificacion ?? this.esBonificacion,
+id: id ?? this.id,
       numeroOrden: numeroOrden ?? this.numeroOrden,
       numeroItem: numeroItem ?? this.numeroItem,
       cantidad: cantidad ?? this.cantidad,

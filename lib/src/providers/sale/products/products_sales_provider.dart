@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/services/distribuidor/comercial_service.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,18 +29,12 @@ import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/price.dart';
 import 'package:teki_app/src/utils/query_params_builders.dart';
 
-final productSaleProvider =
-    StateNotifierProvider<ProductsSaleNotifier, ProductsSaleState>((ref) {
-      final ProductsRepository productsRepository = ProductsRepositoryImpl();
-      final CurrencyRepository currencyRepository = CurrencyRepositoryImpl();
-      final InventoryRepository inventoryRepository = InventoryRepositoryImpl();
-      return ProductsSaleNotifier(
-        productsRepository: productsRepository,
-        currencyRepository: currencyRepository,
-        inventoryRepository: inventoryRepository,
-        ref: ref,
-      );
-    });
+final productSaleProvider=StateNotifierProvider<ProductsSaleNotifier,ProductsSaleState>(crearCarritoVenta);
+ProductsSaleNotifier crearCarritoVenta(Ref ref) {
+  ref.watch(sesionProvider.select((s)=>s.claveContexto));
+  return ProductsSaleNotifier(ref:ref,productsRepository:ProductsRepositoryImpl(),
+    currencyRepository:CurrencyRepositoryImpl(),inventoryRepository:InventoryRepositoryImpl());
+}
 
 class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     with ProductsSaleNotifierSettersMixin {
@@ -56,7 +51,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   }) : super(
          ProductsSaleState(
            tipoComprobante:
-               ref.watch(sesionProvider).config!.tipoComprobantePorDefecto ??
+               ref.read(sesionProvider).config!.tipoComprobantePorDefecto ??
                'NV', // Factura
            productsSales: [],
            currencies: [],
@@ -76,7 +71,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
            porcentajeDescuentoGlobal: null,
            flagRetencion: false,
            porcentajeRetencion:
-               ref.watch(sesionProvider).config!.porcentajeRetencion ?? 0.0,
+               ref.read(sesionProvider).config!.porcentajeRetencion ?? 0.0,
            codigoTipoOperacion: '0101',
          ),
        );
@@ -186,24 +181,48 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   /// lo agrega a la venta. Se usa tanto al tocar un resultado de la búsqueda
   /// como al escanear un código de barras: la búsqueda solo trae data ligera,
   /// así que recién aquí se obtiene la información completa del producto.
-  Future<void> selectProductForSale(Product lightProduct) async {
-    final id = lightProduct.id;
-    if (id == null) return;
-    try {
-      final fullProduct = await productsRepository.getProductById(id);
-      setProductsSales(fullProduct, null);
-    } catch (e) {
-      errorNotification(e.toString());
-    }
+  Future<void> selectProductForSale(Product lightProduct,{Future<double?> Function(Product)? solicitarPrecioManual}) async {
+    final id=lightProduct.id;if(id==null)return;
+    final s=ref.read(sesionProvider);
+    try{
+      final full=await productsRepository.getProductById(id);
+      if(!mounted || ref.read(sesionProvider).office?.id!=s.office?.id || ref.read(sesionProvider).login.user?.id!=s.login.user?.id)return;
+      final cabecera=ref.read(ticketProvider).ticket.tipoPrecioCabeceraId;
+      final c=s.comercial?.conCabecera(cabecera);
+      final precio=c?.elegir(full,s.office?.id,1);
+      if(c?.activo==true && precio==null){
+        if(!(s.hasPermission('SUPER_USUARIO') || s.hasPermission('VENTAS_EDITAR_PRECIO')) || solicitarPrecioManual==null) {
+          throw StateError('Este producto no tiene un precio disponible. Solicita que configuren su precio.');
+        }
+        final manual=await solicitarPrecioManual(full);
+        if(manual==null || !mounted || ref.read(sesionProvider).office?.id!=s.office?.id)return;
+        agregarProductoConPrecioManual(full,manual);return;
+      }
+      setProductsSales(full,null);
+      if(c?.activo==true && precio?.tipoComercialId!=cabecera) {
+        warningNotification('El producto no tiene el tipo elegido. Se agregó con su precio minorista; puedes cambiarlo desde la línea.');
+      }
+    }catch(e){errorNotification(e.toString());}
   }
 
-  void loadInitialData(
+  Future<void> loadInitialData(
     int? id, {
     int? quotationId,
     int? quotationIdForSale,
   }) async {
+    setError(null);
     setLoading(true);
     try {
+      final sesion = ref.read(sesionProvider);
+      if (sesion.office?.id != null && sesion.login.user?.id != null) {
+        final comercial = await ComercialService().cargar(sesion.office!.id!);
+        if(ref.read(sesionProvider).office?.id != sesion.office?.id ||
+            ref.read(sesionProvider).login.user?.id != sesion.login.user?.id) {
+          return;
+        }
+        ref.read(sesionProvider.notifier).setComercial(comercial);
+        ref.read(ticketProvider.notifier).updateTicket(ref.read(ticketProvider).ticket.copyWith(tipoPrecioCabeceraId:comercial.cabecera));
+      }
       // Cargar currencies solo si no existen o si no se está editando
       if (state.currencies.isEmpty) {
         final response = await currencyRepository.getCurrencies();
@@ -286,7 +305,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
   }
 
   void removeProductSale(int index) {
-    if (state.productsSales[index].comandaDetalle != null) return;
+    if (state.productsSales[index].comandaDetalle != null || state.productsSales[index].esBonificacion == true) return;
     state = state.copyWith(
       productsSales: List.from(state.productsSales)..removeAt(index),
     );
@@ -336,7 +355,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
               )
             : detail.producto!;
         final price = getPriceProduct(mainProductForPricing, sesion.office!, {
-          'qty': qty,
+          'comercial': sesion.comercial, 'qty': qty,
           'igv': sesion.config!.igv,
           'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
         });
@@ -385,7 +404,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
               : option.producto!;
 
           double optPrice = getPriceProduct(productForPricing, sesion.office!, {
-            'qty': optQty,
+            'comercial': sesion.comercial, 'qty': optQty,
             'igv': sesion.config!.igv,
             'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
           });
@@ -564,6 +583,7 @@ class ProductsSaleState {
     bool? isLoading,
     bool? isBarcodeSearching,
     String? error,
+    bool clearError = false,
     //configuración
     bool? incIgv,
     String? tipoComprobante,
@@ -587,7 +607,7 @@ class ProductsSaleState {
       currency: currency ?? this.currency,
       isLoading: isLoading ?? this.isLoading,
       isBarcodeSearching: isBarcodeSearching ?? this.isBarcodeSearching,
-      error: error ?? this.error,
+      error: clearError ? null : (error ?? this.error),
       pageNumber: pageNumber ?? this.pageNumber,
       paginacion: paginacion ?? this.paginacion,
       perPage: perPage ?? this.perPage,

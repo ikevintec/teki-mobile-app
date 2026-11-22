@@ -118,6 +118,11 @@ Map<String, dynamic> buildComprobanteQueryParams(dynamic state) {
     safeAdd('sortOrder', '1');
   }
 
+  try {
+    final cliente = state.filtroCliente as String;
+    if (cliente.trim().isNotEmpty) safeAdd('filtroRuc', cliente.trim());
+  } catch (_) {}
+
   // Nuevos filtros adicionales
   try {
     safeAdd('filtroSerie', state.filtroSerie);

@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/general/exchange.dart';
@@ -16,6 +17,11 @@ import 'package:uuid/uuid.dart';
 mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   Ref get ref;
 
+  SesionState get _sesionComercial {
+    final s = ref.read(sesionProvider);
+    return s.copyWith(comercial:s.comercial?.conCabecera(ref.read(ticketProvider).ticket.tipoPrecioCabeceraId));
+  }
+
   bool get _isQuotation => ref.read(ticketProvider).isQuotation;
 
   void setLoading(bool loading) {
@@ -23,7 +29,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   }
 
   void setError(String? error) {
-    state = state.copyWith(error: error);
+    state = state.copyWith(error: error, clearError: error == null);
   }
 
   void setPageNumber(int pageNumber) {
@@ -65,14 +71,17 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     }
   }
 
-  void setProductsSaleEntity(List<TicketDetail> productsSales, {String? monedaOrigen}) {
-    final sesion = ref.read(sesionProvider);
+  void setProductsSaleEntity(List<TicketDetail> productsSales, {String? monedaOrigen,bool conservarPactos=true}) {
+    final sesion = _sesionComercial;
     final updatedProductsSales = productsSales.map((product) {
       return product.copyWith(
         monedaOriginal: monedaOrigen ?? product.monedaOriginal,
         // Retornables cargados (edición o venta desde cotización) conservan su
         // precio negociado al cambiar cantidad o modalidad (paridad web).
-        precioManual: product.precioManual || productoConEnvase(product.producto, sesion),
+        precioManual: product.precioManual ||
+            (conservarPactos && ref.read(ticketProvider).isPedido) ||
+            productoConEnvase(product.producto, sesion),
+        origenPrecio: conservarPactos && product.tipoComercialId != null && product.esBonificacion != true ? 'PACTADO' : product.origenPrecio,
       );
     }).toList();
     state = state.copyWith(productsSales: updatedProductsSales);
@@ -82,19 +91,30 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   TicketDetail _withAutoSeries(TicketDetail td) {
     if (td.producto?.tipoLote != 'SERIE') return td;
     return td.copyWith(
-      lotes: _autoSelectSeries(td, ref.read(sesionProvider).office?.id),
+      lotes: _autoSelectSeries(td, _sesionComercial.office?.id),
     );
+  }
+
+  void agregarProductoConPrecioManual(Product producto,double precio) {
+    if(!precio.isFinite || precio<0)throw StateError('El precio debe ser mayor o igual a cero.');
+    final s=_sesionComercial;
+    final codigo=s.office?.codigoAfectacionPorDefecto ?? producto.tipoAfectacion ?? '10';
+    final tipo=catalogo07.firstWhere((t)=>t['codigo']==codigo);
+    final factor=tipo['codigoRelacionado']=='1001'?1+(s.config?.igv ?? 0):1.0;
+    final unitario=state.incIgv?precio:precio*factor;
+    final linea=getTicketDetail(product:producto,sesion:s,isQuotation:_isQuotation,precioManual:unitario)
+      .copyWith(monedaOriginal:state.currency!.codigoMoneda,valorUnitario:unitario/factor);
+    state=state.copyWith(productsSales:[...state.productsSales,_withAutoSeries(linea)]);
+    state=setPurchasePriceExchange(currencies:state.currencies,currency:state.currency!,monedaOrigen:producto.moneda ?? 'PEN',
+      monedaDestino:state.currency!.codigoMoneda!,monto:linea.precioCompraUnitario,state:state,index:state.productsSales.length-1,sesion:s);
+    calculoTotal();
   }
 
   void setProductsSales(Product productsSales, int? index) {
     // If an explicit index is given, just increment that item's quantity
     if (index != null) {
       final existing = state.productsSales[index];
-      final updated = _withAutoSeries(changeQtyTicketDetail(
-          ticketDetail: existing,
-          quantity: (existing.cantidad ?? 0) + 1,
-          sesion: ref.read(sesionProvider),
-          isQuotation: _isQuotation));
+      final updated = _withAutoSeries(_lineaConCantidad(existing, (existing.cantidad ?? 0) + 1));
       state = state.copyWith(
         productsSales: List.from(state.productsSales)..[index] = updated,
       );
@@ -102,7 +122,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       return;
     }
 
-    final sesion = ref.read(sesionProvider);
+    final sesion = _sesionComercial;
     if (manejaEnvaseRetornable(
       productsSales,
       sesion,
@@ -147,11 +167,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       if (extraIndex != -1) {
         // Increment the extra line
         final existing = state.productsSales[extraIndex];
-        final updated = _withAutoSeries(changeQtyTicketDetail(
-            ticketDetail: existing,
-            quantity: (existing.cantidad ?? 0) + 1,
-            sesion: ref.read(sesionProvider),
-            isQuotation: _isQuotation));
+        final updated = _withAutoSeries(_lineaConCantidad(existing, (existing.cantidad ?? 0) + 1));
         state = state.copyWith(
           productsSales: List.from(state.productsSales)..[extraIndex] = updated,
         );
@@ -161,7 +177,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         state = state.copyWith(
           productsSales: [
             ...state.productsSales,
-            _withAutoSeries(getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider), isQuotation: _isQuotation)),
+            _withAutoSeries(getTicketDetail(product: productsSales, sesion: _sesionComercial, isQuotation: _isQuotation)),
           ],
         );
         setCurrency(state.currency!.codigoMoneda!);
@@ -171,15 +187,13 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
 
     // Normal flow: no check item for this product
     final existingIndex = state.productsSales.indexWhere(
-      (td) => (td.producto?.id ?? -1) == productsSales.id,
+      (td) => (td.producto?.id ?? -1) == productsSales.id && td.esBonificacion != true &&
+          (_sesionComercial.comercial?.activo != true || (td.tipoComercialId == _sesionComercial.comercial?.cabecera &&
+            td.origenPrecio == 'AUTOMATICO')),
     );
     if (existingIndex != -1) {
       final existing = state.productsSales[existingIndex];
-      final updated = _withAutoSeries(changeQtyTicketDetail(
-          ticketDetail: existing,
-          quantity: (existing.cantidad ?? 0) + 1,
-          sesion: ref.read(sesionProvider),
-          isQuotation: _isQuotation));
+      final updated = _withAutoSeries(_lineaConCantidad(existing, (existing.cantidad ?? 0) + 1));
       state = state.copyWith(
         productsSales: List.from(state.productsSales)..[existingIndex] = updated,
       );
@@ -189,7 +203,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     state = state.copyWith(
       productsSales: [
         ...state.productsSales,
-        _withAutoSeries(getTicketDetail(product: productsSales, sesion: ref.read(sesionProvider), isQuotation: _isQuotation)),
+        _withAutoSeries(getTicketDetail(product: productsSales, sesion: _sesionComercial, isQuotation: _isQuotation)),
       ],
     );
     setCurrency(state.currency!.codigoMoneda!);
@@ -202,7 +216,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     if (index < 0 || index >= state.productsSales.length) return;
     final line = state.productsSales[index];
     final product = line.producto;
-    final sesion = ref.read(sesionProvider);
+    final sesion = _sesionComercial;
     if (line.comandaDetalle != null ||
         !manejaEnvaseRetornable(product, sesion, isQuotation: _isQuotation)) {
       return;
@@ -229,7 +243,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     if (index < 0 || index >= state.productsSales.length) return;
     final line = state.productsSales[index];
     if (line.comandaDetalle != null ||
-        !manejaEnvaseRetornable(line.producto, ref.read(sesionProvider),
+        !manejaEnvaseRetornable(line.producto, _sesionComercial,
             isQuotation: _isQuotation)) {
       return;
     }
@@ -243,11 +257,11 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   TicketDetail _withAutomaticPrice(TicketDetail line) {
     final price = getAutomaticPrice(
       line.producto!,
-      ref.read(sesionProvider),
+      sesionParaLinea(line,_sesionComercial),
       line.cantidad ?? 1,
       conCanje: line.devolvioEnvase == true || line.prestamoEnvase == true,
     );
-    final sesion = ref.read(sesionProvider);
+    final sesion = _sesionComercial;
     final tipoIgv = catalogo07.firstWhere(
       (tipo) => tipo['codigo'] == line.codigoTipoAfectacionIgv,
     );
@@ -298,7 +312,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           monto: montoOriginal,
           state: state,
           index: i,
-          sesion: ref.read(sesionProvider));
+          sesion: _sesionComercial);
       if (state.productsSales[i].producto != null) {
         final precioCompra = state.productsSales[i].precioCompraUnitario ?? 
                              state.productsSales[i].producto!.precioCompraUnidad ?? 0;
@@ -310,7 +324,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
             monto: precioCompra,
             state: state,
             index: i,
-            sesion: ref.read(sesionProvider));
+            sesion: _sesionComercial);
       }
     }
     state = state.copyWith(
@@ -321,11 +335,28 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     calculoTotal();
   }
 
+  TicketDetail _lineaConCantidad(TicketDetail linea, double cantidad) {
+    final sesion = _sesionComercial;
+    final esPedido = ref.read(ticketProvider).isPedido;
+    final conserva = conservaPrecioAlCambiarCantidad(linea, sesion,
+        isPedido: esPedido, isQuotation: _isQuotation);
+    final actualizada = changeQtyTicketDetail(
+      ticketDetail: linea,
+      quantity: cantidad,
+      sesion: sesion,
+      isPedido: esPedido,
+      isQuotation: _isQuotation,
+    );
+    // Catálogo en moneda original: actualizar importe y neto juntos, sin tocar
+    // costos ya convertidos ni importes de las demás líneas.
+    return conserva ? actualizada : _withAutomaticPrice(actualizada);
+  }
+
   void setCantidadProductSale(int index, double cantidad) {
-    if (state.productsSales[index].comandaDetalle != null) return;
+    if (state.productsSales[index].comandaDetalle != null || state.productsSales[index].esBonificacion == true) return;
     final existingTicketDetail = state.productsSales[index];
     if (manejaEnvaseRetornable(existingTicketDetail.producto,
-        ref.read(sesionProvider), isQuotation: _isQuotation)) {
+        _sesionComercial, isQuotation: _isQuotation)) {
       final line = existingTicketDetail.copyWith(cantidad: cantidad);
       state = state.copyWith(
         productsSales: List.from(state.productsSales)
@@ -335,11 +366,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       return;
     }
     if (existingTicketDetail.producto != null) {
-      final updatedTicketDetail = changeQtyTicketDetail(
-          ticketDetail: existingTicketDetail,
-          quantity: cantidad,
-          sesion: ref.read(sesionProvider),
-          isQuotation: _isQuotation);
+      final updatedTicketDetail = _lineaConCantidad(existingTicketDetail, cantidad);
       state = state.copyWith(
         productsSales: List.from(state.productsSales)
           ..[index] = updatedTicketDetail,
@@ -353,18 +380,20 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           ..[index] = updatedTicketDetail,
       );
     }
-    setCurrency(state.currency!.codigoMoneda!, index);
+    calculoTotal();
   }
 
   void setPrecioProductSale(int index, double precio) {
     final existingTicketDetail = state.productsSales[index];
+    if(existingTicketDetail.esBonificacion == true)return;
+    final line = existingTicketDetail.copyWith(origenPrecio:existingTicketDetail.tipoComercialId != null?'MANUAL':existingTicketDetail.origenPrecio);
     final updatedTicketDetail = state.incIgv
-        ? existingTicketDetail.copyWith(
+        ? line.copyWith(
             precioVentaUnitario: precio,
             montoOriginal: precio,
             monedaOriginal: state.currency!.codigoMoneda,
             precioManual: true)
-        : existingTicketDetail.copyWith(
+        : line.copyWith(
             valorUnitario: precio,
             montoOriginal: precio,
             monedaOriginal: state.currency!.codigoMoneda,
@@ -402,11 +431,12 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   }
 
   void syncAllProductsFromForms(List<Map<String, dynamic>> formsData) {
-    final sesion = ref.read(sesionProvider);
+    final sesion = _sesionComercial;
     final updatedProducts = <TicketDetail>[];
 
     for (int i = 0; i < state.productsSales.length; i++) {
       final existingTicketDetail = state.productsSales[i];
+      if(existingTicketDetail.esBonificacion == true || i>=formsData.length){updatedProducts.add(existingTicketDetail);continue;}
       final formData = formsData[i];
 
       final description = formData['description'] as String? ?? existingTicketDetail.descripcion ?? '';
@@ -425,12 +455,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
           );
           updatedTicketDetail = line.precioManual ? line : _withAutomaticPrice(line);
         } else {
-          updatedTicketDetail = changeQtyTicketDetail(
-            ticketDetail: existingTicketDetail,
-            quantity: quantity,
-            sesion: sesion,
-            isQuotation: _isQuotation,
-          ).copyWith(descripcion: description);
+          updatedTicketDetail = _lineaConCantidad(existingTicketDetail, quantity).copyWith(descripcion: description);
         }
       } else {
         final precio = formData['price'] as double? ?? existingTicketDetail.precioVentaUnitario ?? 0.0;
@@ -448,6 +473,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
                 descripcion: description,
                 cantidad: quantity,
                 precioManual: precioManual,
+                origenPrecio:precioManual && existingTicketDetail.tipoComercialId!=null ? 'MANUAL' : existingTicketDetail.origenPrecio,
               )
             : existingTicketDetail.copyWith(
                 valorUnitario: precio,
@@ -456,6 +482,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
                 descripcion: description,
                 cantidad: quantity,
                 precioManual: precioManual,
+                origenPrecio:precioManual && existingTicketDetail.tipoComercialId!=null ? 'MANUAL' : existingTicketDetail.origenPrecio,
               );
       }
 
@@ -568,7 +595,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
   }
 
   void applySpecificPrice(int index, double rawPrecio) {
-    final sesion = ref.read(sesionProvider);
+    final sesion = _sesionComercial;
     final ticketDetail = state.productsSales[index];
     final product = ticketDetail.producto;
     if (product == null) return;
@@ -590,10 +617,46 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     setPrecioProductSale(index, price);
   }
 
+  /// Reutiliza altas/cálculo actuales y restaura el carrito completo si una línea ya no es utilizable.
+  void agregarCanasta(List<Product> productos,Map<int,double> cantidades) {
+    final antes=state;
+    try{
+      for(final p in productos){
+        final previos=[...state.productsSales];
+        setProductsSales(p,null);
+        final index=state.productsSales.indexWhere((l)=>!previos.any((a)=>a.uuid==l.uuid) ||
+          previos.any((a)=>a.uuid==l.uuid && a.cantidad!=l.cantidad));
+        if(index<0)throw StateError('No se pudo agregar ${p.nombre}.');
+        setCantidadProductSale(index,(state.productsSales[index].cantidad ?? 1)+(cantidades[p.id] ?? 1)-1);
+      }
+    }catch(_){state=antes;calculoTotal();rethrow;}
+  }
+
+  void reemplazarLineasComerciales(List<TicketDetail> lineas) {
+    state = state.copyWith(productsSales: lineas);
+    calculoTotal();
+  }
+
+  void precioComercial(int index, ProductPrice precio) {
+    final actual = state.productsSales[index];
+    if(actual.esBonificacion == true) return;
+    final sesion = _sesionComercial;
+    final tipo = sesion.comercial?.tipo(precio.tipoComercialId);
+    final igv = sesion.config?.igv ?? 0;
+    final unitario = (precio.precio ?? 0) * (actual.producto?.igv == false ? 1 + igv : 1);
+    final lineas = [...state.productsSales];
+    lineas[index] = actual.copyWith(precioVentaUnitario:unitario,
+      valorUnitario:unitario / (1 + igv), montoOriginal:unitario, precioManual:true,
+      tipoComercialId:precio.tipoComercialId, tipoComercialNombre:tipo?['nombre'] as String?,
+      tipoComercialCategoria:tipo?['categoria'] as String?,productoPrecioId:precio.id,
+      precioReferencia:precio.precio,origenPrecio:'ACCIONES');
+    reemplazarLineasComerciales(lineas);
+  }
+
   void calculoTotal() {
-    final igvConfig = ref.watch(sesionProvider).config!.igv!;
+    final igvConfig = ref.read(sesionProvider).config!.igv!;
     double porcentajeRecargoPorItem =
-        ref.watch(sesionProvider).config!.porcentajeRecargoPorItem!;
+        ref.read(sesionProvider).config!.porcentajeRecargoPorItem!;
     // ignore: unused_local_variable
     final tc = state.tipoComprobante;
     final porcentajeDescuentoGlobal = state.porcentajeDescuentoGlobal ?? 0.0;
@@ -641,7 +704,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       double? valorVenta = 0.0;
       double? precioTotal = 0.0;
       var descuento = 0.0;
-      double? montoBaseIgv = null;
+      double? montoBaseIgv;
       double? igv = 0.0;
       double? isc = 0.0;
       double? icbper = 0.0;
@@ -668,12 +731,12 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         if (preciosIncluidoIgv) {
           ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
             valorUnitario: ticketDetailToUpdate.precioVentaUnitario! /
-                (1 + ref.watch(sesionProvider).config!.igv!),
+                (1 + ref.read(sesionProvider).config!.igv!),
           );
         } else {
           ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
             precioVentaUnitario: ticketDetailToUpdate.valorUnitario! *
-                (1 + ref.watch(sesionProvider).config!.igv!),
+                (1 + ref.read(sesionProvider).config!.igv!),
           );
         }
         valorVenta = ticketDetailToUpdate.valorUnitario! * cantidad;
@@ -925,7 +988,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         montoBaseRetencion: ticket.totalVenta!,
         porcentajeRetencion: ticket.porcentajeRetencion,
         montoRetencion: ticket.montoBaseRetencion! *
-            ref.watch(sesionProvider).config!.porcentajeRetencion!,
+            ref.read(sesionProvider).config!.porcentajeRetencion!,
       );
     }
     if (state.codigoTipoOperacion == '1001') {
@@ -956,7 +1019,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
         'Total ISC: ${ticket.totalIsc}, '
         'Total Retencion: ${ticket.montoRetencion}, '
         'Total Detraction: ${ticket.montoDetraccion}'
-        'Ticket: ${ticket.toJson()}, ');
+        ', ');
   }
 
 }

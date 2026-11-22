@@ -128,6 +128,7 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
   Future<void> loadFirstPage({
     required String desde, 
     required String hasta,
+    String? cliente,
     String? serie,
     String? numero,
     List<String>? tiposComprobante,
@@ -153,6 +154,7 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
       isLoading: true,
       pageNumber: 0,
       // Nuevos filtros adicionales
+      filtroCliente: cliente?.trim(),
       filtroSerie: serie, // Permitir strings vacíos igual que en updateFilters
       filtroNumero: numero, // Permitir strings vacíos igual que en updateFilters
       filtroTipoComprobante: tiposComprobante?.isNotEmpty == true ? tiposComprobante : null,
@@ -181,6 +183,7 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
 
   // Método para actualizar filtros sin hacer búsqueda inmediata
   void updateFilters({
+    String? cliente,
     String? serie,
     String? numero,
     List<String>? tiposComprobante,
@@ -189,6 +192,7 @@ class ComprobantesNotifier extends StateNotifier<ComprobantesState> {
     int? idVendedor,
   }) {
     state = state.copyWith(
+      filtroCliente: cliente?.trim(),
       filtroSerie: serie, // Permitir strings vacíos
       filtroNumero: numero, // Permitir strings vacíos
       filtroTipoComprobante: tiposComprobante?.isNotEmpty == true ? tiposComprobante : null,
@@ -281,6 +285,7 @@ class ComprobantesState {
   final String filtroRucEmisor;
   final List<TotalesPorMoneda> totalesPorMoneda;
   // Nuevos filtros adicionales
+  final String filtroCliente;
   final String? filtroSerie;
   final String? filtroNumero;
   final List<String>? filtroTipoComprobante;
@@ -303,6 +308,7 @@ class ComprobantesState {
     required this.filtroRucEmisor,
     required this.totalesPorMoneda,
     // Nuevos filtros adicionales
+    this.filtroCliente = '',
     this.filtroSerie,
     this.filtroNumero,
     this.filtroTipoComprobante,
@@ -349,6 +355,7 @@ class ComprobantesState {
     String? filtroRucEmisor,
     List<TotalesPorMoneda>? totalesPorMoneda,
     // Nuevos filtros adicionales
+    String? filtroCliente,
     String? filtroSerie,
     String? filtroNumero,
     List<String>? filtroTipoComprobante,
@@ -371,6 +378,7 @@ class ComprobantesState {
       filtroRucEmisor: filtroRucEmisor ?? this.filtroRucEmisor,
       totalesPorMoneda: totalesPorMoneda ?? this.totalesPorMoneda,
       // Nuevos filtros adicionales
+      filtroCliente: filtroCliente ?? this.filtroCliente,
       filtroSerie: filtroSerie ?? this.filtroSerie,
       filtroNumero: filtroNumero ?? this.filtroNumero,
       filtroTipoComprobante: filtroTipoComprobante ?? this.filtroTipoComprobante,

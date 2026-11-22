@@ -121,8 +121,10 @@ class CustomerFormNotifier extends StateNotifier<CustomerFormState> {
     );
   }
 
-  Future<void> proccessCustomerForm() async {
+  /// Devuelve el cliente creado (o null al editar o si falla).
+  Future<Customer?> proccessCustomerForm() async {
     state = state.copyWith(isLoading: true, error: null);
+    Customer? creado;
     try {
       if (state.isEditing) {
         final customerToUpdate = prepareCustomerForUpdate();
@@ -130,7 +132,7 @@ class CustomerFormNotifier extends StateNotifier<CustomerFormState> {
         successNotification('Cliente actualizado con éxito');
       } else {
         final customerToCreate = prepareCustomerForCreate();
-        await customersRepository.createCustomer(customerToCreate);
+        creado = await customersRepository.createCustomer(customerToCreate);
         successNotification('Cliente creado con éxito');
       }
       state = state.copyWith(isLoading: false);
@@ -139,7 +141,9 @@ class CustomerFormNotifier extends StateNotifier<CustomerFormState> {
     } catch (e) {
       errorNotification('Error al procesar el formulario: ${e.toString()}');
       state = state.copyWith(isLoading: false, error: e.toString());
+      return null;
     }
+    return creado;
   }
 
   void resetForm() {

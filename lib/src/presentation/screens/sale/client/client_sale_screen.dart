@@ -530,7 +530,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               if (!(_formKey.currentState?.validate() ??
                                   false)) {
                                 setState(() => _autovalidate = true);
@@ -549,6 +549,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 tipoDocumento:
                                     _selectedTipoDocumentoValue ?? '',
                               );
+                              if(!await clienteNotifier.aplicarPrecioCliente(id) || !context.mounted)return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

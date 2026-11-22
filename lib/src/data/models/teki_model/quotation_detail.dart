@@ -2,6 +2,17 @@ import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 
 class QuotationDetail {
+  final int? tipoComercialId;
+  final String? tipoComercialNombre;
+  final String? tipoComercialCategoria;
+  final int? productoPrecioId;
+  final double? precioReferencia;
+  final String? origenPrecio;
+  final int? proveedorId;
+  final int? detalleOrigenId;
+  final int? promocionId;
+  final bool? esBonificacion;
+
   final int? id;
   final int? numeroOrden;
   final int? numeroItem;
@@ -44,6 +55,17 @@ class QuotationDetail {
   final Product? producto;
 
   QuotationDetail({
+    this.tipoComercialId,
+    this.tipoComercialNombre,
+    this.tipoComercialCategoria,
+    this.productoPrecioId,
+    this.precioReferencia,
+    this.origenPrecio,
+    this.proveedorId,
+    this.detalleOrigenId,
+    this.promocionId,
+    this.esBonificacion,
+
     this.id,
     this.numeroOrden,
     this.numeroItem,
@@ -89,7 +111,17 @@ class QuotationDetail {
   factory QuotationDetail.fromJson(
     Map<String, dynamic> json,
   ) => QuotationDetail(
-    id: json['id'],
+            tipoComercialId: (json['tipoComercialId'] as num?)?.toInt(),
+        tipoComercialNombre: json['tipoComercialNombre'] as String?,
+        tipoComercialCategoria: json['tipoComercialCategoria'] as String?,
+        productoPrecioId: (json['productoPrecioId'] as num?)?.toInt(),
+        precioReferencia: (json['precioReferencia'] as num?)?.toDouble(),
+        origenPrecio: json['origenPrecio'] as String?,
+        proveedorId: (json['proveedorId'] as num?)?.toInt(),
+        detalleOrigenId: (json['detalleOrigenId'] as num?)?.toInt(),
+        promocionId: (json['promocionId'] as num?)?.toInt(),
+        esBonificacion: json['esBonificacion'] as bool?,
+id: json['id'],
     numeroOrden: json['numeroOrden'],
     numeroItem: json['numeroItem'],
     cantidad: (json['cantidad'] as num?)?.toDouble(),
@@ -137,7 +169,17 @@ class QuotationDetail {
   );
 
   Map<String, dynamic> toJson() => {
-    'id': id,
+            'tipoComercialId': tipoComercialId,
+        'tipoComercialNombre': tipoComercialNombre,
+        'tipoComercialCategoria': tipoComercialCategoria,
+        'productoPrecioId': productoPrecioId,
+        'precioReferencia': precioReferencia,
+        'origenPrecio': origenPrecio,
+        'proveedorId': proveedorId,
+        'detalleOrigenId': detalleOrigenId,
+        'promocionId': promocionId,
+        'esBonificacion': esBonificacion,
+'id': id,
     'numeroOrden': numeroOrden,
     'numeroItem': numeroItem,
     'cantidad': cantidad,
@@ -187,6 +229,17 @@ class QuotationDetail {
   /// trate el detalle como una entidad "detached" y falle el persist.
   TicketDetail toTicketDetail({bool keepId = true}) {
     return TicketDetail(
+      tipoComercialId: tipoComercialId,
+      tipoComercialNombre: tipoComercialNombre,
+      tipoComercialCategoria: tipoComercialCategoria,
+      productoPrecioId: productoPrecioId,
+      precioReferencia: precioReferencia,
+      origenPrecio: origenPrecio,
+      proveedorId: proveedorId,
+      detalleOrigenId: id ?? detalleOrigenId,
+      promocionId: promocionId,
+      esBonificacion: esBonificacion,
+
       id: keepId ? id : null,
       numeroOrden: numeroOrden,
       numeroItem: numeroItem,

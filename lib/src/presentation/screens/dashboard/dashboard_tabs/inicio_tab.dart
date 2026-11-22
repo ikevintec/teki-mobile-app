@@ -225,6 +225,7 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       default:
         final route = switch (action) {
           DashboardAction.vouchers => AppRoutes.comprobantesVer,
+          DashboardAction.pedidosComerciales => AppRoutes.pedidosComerciales,
           DashboardAction.quotations => AppRoutes.quotationsVer,
           DashboardAction.loyalty => AppRoutes.loyaltyCards,
           DashboardAction.products => AppRoutes.products,

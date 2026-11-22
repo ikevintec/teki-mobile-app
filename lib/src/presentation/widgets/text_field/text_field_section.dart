@@ -8,6 +8,7 @@ class TextFieldSection extends StatefulWidget {
   final TextInputType inputType;
   final String? initialValue;
   final Function(String)? onChanged;
+  final bool? autocorrect;
   final bool enabled;
   final bool isReadOnly;
   final TextEditingController? controller;
@@ -32,6 +33,7 @@ class TextFieldSection extends StatefulWidget {
     this.onChanged,
     this.focusNode,
     this.initialValue,
+    this.autocorrect,
     this.enabled = true,
     this.isReadOnly = false,
     this.controller,
@@ -90,8 +92,8 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       // El teclado numérico de iOS no necesita autocorrección/sugerencias; dejarlas
       // activas hace que UIKit reserve la franja de emoji/dictado (TUIKeyplane) y
       // rompa esa constraint al mostrar el teclado numérico puro.
-      autocorrect: widget.inputType != TextInputType.number,
-      enableSuggestions: widget.inputType != TextInputType.number,
+      autocorrect: widget.autocorrect ?? widget.inputType != TextInputType.number,
+      enableSuggestions: widget.autocorrect ?? widget.inputType != TextInputType.number,
         inputFormatters: widget.inputType == TextInputType.number &&  (widget.inputFormatters ?? []).isEmpty ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))] : widget.inputFormatters,
       style: GoogleFonts.roboto(
         fontWeight: FontWeight.w600,

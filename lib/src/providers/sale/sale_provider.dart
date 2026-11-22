@@ -1,3 +1,4 @@
+import 'package:teki_app/src/providers/distribuidor/bonificaciones_provider.dart';
 import 'dart:async';
 import 'package:teki_app/src/shared/services/error_reporting.dart';
 import 'package:teki_app/src/domain/errors/ticket_emission_exception.dart';
@@ -23,20 +24,26 @@ import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helpe
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 
-enum SaleMode { createVenta, editVenta, createCotizacion, editCotizacion }
+enum SaleMode {
+  createVenta,
+  editVenta,
+  createCotizacion,
+  editCotizacion,
+  createPedido,
+  editPedido,
+}
 
-final ticketProvider = StateNotifierProvider<TicketNotifier, TicketProvider>((
-  ref,
-) {
-  final TicketsSaleRepository ticketsSaleRepository =
-      TicketSaleRepositoryImpl();
-  final QuotationRepository quotationRepository = QuotationRepositoryImpl();
+final ticketProvider = StateNotifierProvider<TicketNotifier, TicketProvider>(
+  crearTicketVenta,
+);
+TicketNotifier crearTicketVenta(Ref ref) {
+  ref.watch(sesionProvider.select((s) => s.claveContexto));
   return TicketNotifier(
     ref: ref,
-    ticketsSaleRepository: ticketsSaleRepository,
-    quotationRepository: quotationRepository,
+    ticketsSaleRepository: TicketSaleRepositoryImpl(),
+    quotationRepository: QuotationRepositoryImpl(),
   );
-});
+}
 
 class TicketNotifier extends StateNotifier<TicketProvider> {
   final TicketsSaleRepository ticketsSaleRepository;
@@ -74,6 +81,12 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     state = state.copyWith(ticket: ticket);
   }
 
+  void setTipoComprobanteDestino(String tipo) {
+    state = state.copyWith(
+      ticket: state.ticket.copyWith(tipoComprobanteDestino: tipo),
+    );
+  }
+
   void setTipoComprobante(String tipoDocumento) {
     Ticket ticketToUpdate = state.ticket.copyWith(
       tipoComprobante: tipoDocumento,
@@ -81,7 +94,26 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     state = state.copyWith(ticket: ticketToUpdate);
   }
 
-  /// Inicia una cotización nueva: fuerza tipoComprobante 'CO' y cambia el modo.
+  /// Inicia o recupera un pedido y conserva el comprobante acordado para la venta.
+  void startPedido({Ticket? pedido}) {
+    final ahora = DateTime.now();
+    state = state.copyWith(
+      mode: pedido?.id == null ? SaleMode.createPedido : SaleMode.editPedido,
+      ticket: (pedido ?? state.ticket).copyWith(
+        tipoComprobante: 'PE',
+        tipoComprobanteDestino: pedido == null
+            ? 'NV'
+            : pedido.tipoComprobanteDestino,
+        fechaEmision:
+            pedido?.fechaEmision ?? DateFormat('yyyy-MM-dd').format(ahora),
+        horaEmision:
+            pedido?.horaEmision ?? DateFormat('HH:mm:ss').format(ahora),
+        tipoVenta: pedido?.tipoVenta ?? 'CONTADO',
+        adelanto: pedido?.adelanto ?? 0,
+      ),
+    );
+  }
+
   void startNewQuotation() {
     Ticket ticketToUpdate = state.ticket.copyWith(tipoComprobante: 'CO');
     state = state.copyWith(
@@ -240,8 +272,11 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     final puedePrestar = puedePrestarEnvase(state, sesion, items);
     return items.map((td) {
       if (td.devolvioEnvase == null && td.prestamoEnvase == null) return td;
-      final maneja = manejaEnvaseRetornable(td.producto, sesion,
-          isQuotation: state.isQuotation);
+      final maneja = manejaEnvaseRetornable(
+        td.producto,
+        sesion,
+        isQuotation: state.isQuotation,
+      );
       return td.copyWith(
         devolvioEnvase: maneja && td.devolvioEnvase == true,
         prestamoEnvase: maneja && puedePrestar && td.prestamoEnvase == true,
@@ -252,6 +287,17 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   /// Construye el payload del ticket listo para enviar al backend (sin llamar a la API).
   Ticket getTicketPayload() {
     return Ticket(
+      tipoComprobanteDestino: state.ticket.tipoComprobanteDestino,
+      tipoPrecioCabeceraId: state.ticket.tipoPrecioCabeceraId,
+      revisionPedido: state.ticket.revisionPedido,
+      pedidoGestionado: state.ticket.pedidoGestionado,
+      responsablePedidoId: state.ticket.responsablePedidoId,
+      responsablePedidoNombre: state.ticket.responsablePedidoNombre,
+      estadoPedido: state.ticket.estadoPedido,
+      puedeEditarPedido: state.ticket.puedeEditarPedido,
+      puedeTomarPedido: state.ticket.puedeTomarPedido,
+      puedeLiberarPedido: state.ticket.puedeLiberarPedido,
+
       serie: state.ticket.serie,
       id: state.ticket.id,
       tipoComprobante: state.ticket.tipoComprobante,
@@ -435,8 +481,10 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       items: originalItems,
       comprobante: ticketPayload,
     );
-    final checkResult =
-        await RestaurantRepositoryImpl().updateCheck(checkId, checkPayload);
+    final checkResult = await RestaurantRepositoryImpl().updateCheck(
+      checkId,
+      checkPayload,
+    );
     return checkResult.comprobante;
   }
 
@@ -457,11 +505,14 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       totalValorVenta: response.totalValorVenta ?? stateTicket.totalValorVenta,
       totalValorVentaGravada:
           response.totalValorVentaGravada ?? stateTicket.totalValorVentaGravada,
-      totalValorVentaInafecta: response.totalValorVentaInafecta ??
+      totalValorVentaInafecta:
+          response.totalValorVentaInafecta ??
           stateTicket.totalValorVentaInafecta,
-      totalValorVentaExonerada: response.totalValorVentaExonerada ??
+      totalValorVentaExonerada:
+          response.totalValorVentaExonerada ??
           stateTicket.totalValorVentaExonerada,
-      totalValorVentaExportacion: response.totalValorVentaExportacion ??
+      totalValorVentaExportacion:
+          response.totalValorVentaExportacion ??
           stateTicket.totalValorVentaExportacion,
       totalIgv: response.totalIgv ?? stateTicket.totalIgv,
       totalIsc: response.totalIsc ?? stateTicket.totalIsc,
@@ -474,7 +525,14 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
 
   Future<Ticket?> proceessTicket() async {
     if (state.pendingEmission != null) {
-      notifyError('Verifica el resultado de la emisión anterior antes de volver a cobrar.');
+      notifyError(
+        'Verifica el resultado de la emisión anterior antes de volver a cobrar.',
+      );
+      return null;
+    }
+    if (ref.read(sesionProvider).comercial != null &&
+        !await ref.read(bonificacionesProvider.notifier).confirmar()) {
+      notifyError('Revisa las bonificaciones antes de confirmar.');
       return null;
     }
     final ticketToSend = getTicketPayload();
@@ -490,12 +548,16 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       }
       return await ticketsSaleRepository.createTicket(ticketToSend);
     } on TicketEmissionException catch (e, stackTrace) {
-      unawaited(ErrorReporting.capture(e, stackTrace, 'sale.emission_uncertain'));
+      unawaited(
+        ErrorReporting.capture(e, stackTrace, 'sale.emission_uncertain'),
+      );
       state = state.copyWith(pendingEmission: ticketToSend);
       notifyError('$e Verifica en comprobantes antes de repetir la operación.');
       return null;
     } catch (e) {
-      notifyError('No se pudo ${state.isEdit ? 'actualizar' : 'registrar'} el comprobante: $e');
+      notifyError(
+        'No se pudo ${state.isEdit ? 'actualizar' : 'registrar'} el comprobante: $e',
+      );
       return null;
     }
   }
@@ -511,7 +573,8 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       'perPage': 20,
       'filtroSerie': pending.serie,
       'filtroTipoComprobante': [pending.tipoComprobante],
-      if (pending.puntoVenta?.id != null) 'idPuntoVenta': pending.puntoVenta!.id,
+      if (pending.puntoVenta?.id != null)
+        'idPuntoVenta': pending.puntoVenta!.id,
       if (pending.vendedor?.id != null) 'idVendedor': pending.vendedor!.id,
     });
   }
@@ -696,10 +759,18 @@ class TicketProvider {
   final Ticket ticket;
   final SaleMode mode;
   final Ticket? pendingEmission;
-  TicketProvider({required this.ticket, this.mode = SaleMode.createVenta, this.pendingEmission});
+  TicketProvider({
+    required this.ticket,
+    this.mode = SaleMode.createVenta,
+    this.pendingEmission,
+  });
 
   bool get isEdit =>
-      mode == SaleMode.editVenta || mode == SaleMode.editCotizacion;
+      mode == SaleMode.editVenta ||
+      mode == SaleMode.editCotizacion ||
+      mode == SaleMode.editPedido;
+  bool get isPedido =>
+      mode == SaleMode.createPedido || mode == SaleMode.editPedido;
   bool get isQuotation =>
       mode == SaleMode.createCotizacion || mode == SaleMode.editCotizacion;
   bool get isSaleFromQuotation => ticket.cotizacion != null;
@@ -708,6 +779,7 @@ class TicketProvider {
   /// (Cliente, Productos, Resumen) cuando se está creando/editando una
   /// cotización, o cuando se está generando una venta a partir de una.
   String? get subtitleLabel {
+    if (isPedido) return 'Pedido';
     if (isQuotation) return 'Cotización';
     if (isSaleFromQuotation) {
       return 'Venta cotizada de ${ticket.cotizacion?.serie ?? '--'}-${ticket.cotizacion?.numero ?? '--'}';
@@ -719,6 +791,9 @@ class TicketProvider {
 
   String get continueButtonLabel {
     switch (mode) {
+      case SaleMode.createPedido:
+      case SaleMode.editPedido:
+        return 'Enviar pedido';
       case SaleMode.createVenta:
         return 'Continuar';
       case SaleMode.editVenta:
@@ -732,6 +807,9 @@ class TicketProvider {
 
   String get confirmButtonLabel {
     switch (mode) {
+      case SaleMode.createPedido:
+      case SaleMode.editPedido:
+        return 'Enviar pedido';
       case SaleMode.createVenta:
         return 'Confirmar';
       case SaleMode.editVenta:
@@ -743,11 +821,18 @@ class TicketProvider {
     }
   }
 
-  TicketProvider copyWith({Ticket? ticket, SaleMode? mode, Ticket? pendingEmission, bool clearPendingEmission = false}) {
+  TicketProvider copyWith({
+    Ticket? ticket,
+    SaleMode? mode,
+    Ticket? pendingEmission,
+    bool clearPendingEmission = false,
+  }) {
     return TicketProvider(
       ticket: ticket ?? this.ticket,
       mode: mode ?? this.mode,
-      pendingEmission: clearPendingEmission ? null : pendingEmission ?? this.pendingEmission,
+      pendingEmission: clearPendingEmission
+          ? null
+          : pendingEmission ?? this.pendingEmission,
     );
   }
 }

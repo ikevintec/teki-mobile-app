@@ -2,7 +2,7 @@ name: teki_app
 description: "Teki facturacion app"
 publish_to: 'none'
 
-version: 1.0.38+1
+version: 1.0.39+30
 
 environment:
   sdk: '>=3.9.0 <4.0.0'
@@ -78,6 +78,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/fonts/
     - assets/images/onboarding/
     - assets/images/logo/
     - assets/images/gif/
