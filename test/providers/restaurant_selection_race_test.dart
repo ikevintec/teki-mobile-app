@@ -15,12 +15,19 @@ class _Request {
 
 class _SlowRepository implements RestaurantRepository {
   bool hold = false;
+  bool holdLounges = false;
+  final loungeRequests = <Completer<List<Lounge>>>[];
   final requests = <_Request>[];
   @override
-  Future<List<Lounge>> getLounges(Map<String, dynamic> params) async => [
-    Lounge(id: 1),
-    Lounge(id: 2),
-  ];
+  Future<List<Lounge>> getLounges(Map<String, dynamic> params) {
+    if (holdLounges) {
+      final result = Completer<List<Lounge>>();
+      loungeRequests.add(result);
+      return result.future;
+    }
+    return Future.value([Lounge(id: 1), Lounge(id: 2)]);
+  }
+
   @override
   Future<List<OrderRestaurant>> getOrders(Map<String, dynamic> params) async =>
       [];
@@ -137,6 +144,42 @@ void main() {
     expect(notifier.state.selectedLoungeId, 2);
     expect(notifier.state.tables.single.id, 22);
   });
+
+  test(
+    'refresh de socket durante carga inicial conserva los salones recibidos',
+    () async {
+      repo.holdLounges = true;
+      final initial = notifier.loadData(1);
+      final socket = notifier.reload(1, silent: true);
+      repo.requests.single.complete(22);
+      await socket;
+      repo.loungeRequests.single.complete([Lounge(id: 1), Lounge(id: 2)]);
+      await initial;
+      expect(notifier.state.lounges.map((lounge) => lounge.id), [1, 2]);
+      expect(notifier.state.tables.single.id, 22);
+      expect(notifier.state.isLoading, isFalse);
+    },
+  );
+
+  for (final pv in [1, 2]) {
+    test(
+      'carga antigua de salones no reemplaza la nueva en sede $pv',
+      () async {
+        repo.holdLounges = true;
+        final old = notifier.loadData(1);
+        final current = notifier.loadData(pv);
+        repo.loungeRequests[1].complete([Lounge(id: 2)]);
+        await Future<void>.delayed(Duration.zero);
+        repo.requests.single.complete(22);
+        await current;
+        repo.loungeRequests[0].complete([Lounge(id: 1)]);
+        await old;
+        expect(notifier.state.lounges.single.id, 2);
+        expect(notifier.state.pvId, pv);
+        expect(notifier.state.tables.single.id, 22);
+      },
+    );
+  }
 
   test('destruir provider descarta la respuesta pendiente sin error', () async {
     final pending = notifier.selectLounge(1);

@@ -18,6 +18,7 @@ final restaurantProvider =
 class RestaurantNotifier extends StateNotifier<RestaurantState> {
   final RestaurantRepository repository;
   int _requestId = 0;
+  int _loungesRequestId = 0;
 
   RestaurantNotifier({required this.repository})
       : super(RestaurantState(
@@ -31,11 +32,16 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
 
   Future<void> loadData(int pvId) async {
     final requestId = ++_requestId;
+    final loungesRequestId = ++_loungesRequestId;
     state = state.copyWith(pvId: pvId, isLoading: true);
 
     // 1. Lounges
     final lounges = await repository.getLounges({'idPuntoVenta': pvId});
-    if (!mounted || requestId != _requestId) return;
+    if (!mounted || loungesRequestId != _loungesRequestId || state.pvId != pvId) return;
+    // Un refresh de mesas no carga salones: conservar esta respuesta aunque
+    // ese refresh haya reemplazado la consulta inicial de mesas.
+    state = state.copyWith(lounges: lounges);
+    if (requestId != _requestId) return;
 
     if (lounges.isEmpty) {
       state = state.copyWith(
