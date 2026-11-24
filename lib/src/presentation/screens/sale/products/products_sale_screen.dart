@@ -1,3 +1,6 @@
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/distribuidor/bonificaciones_provider.dart';
+import 'package:teki_app/src/presentation/screens/pedidos/bonificaciones_panel.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
@@ -76,6 +79,13 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     super.initState();
     _listFocusNode = FocusNode();
     _initializeFormArray();
+    // Sincronizar también cambios externos (selector de precio/promociones)
+    // antes de que perder el foco pueda reenviar valores anteriores del formulario.
+    ref.listenManual(productSaleProvider, (_, actual) {
+      if (mounted) {
+        _syncFormArrayWithProvider(actual.productsSales, form, actual.incIgv);
+      }
+    });
     // Listener para detectar cuando se pierde el focus de toda la lista
     _listFocusNode.addListener(() {
       if (!_listFocusNode.hasFocus) {
@@ -156,8 +166,13 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     final isBarcodeSearching = provider.isBarcodeSearching;
     final products = provider.productsSales;
     final ticketP = ref.watch(ticketProvider);
+    final preciosComerciales =
+        ref.watch(sesionProvider).comercial?.activo == true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncFormArrayWithProvider(products, form, provider.incIgv, () {
+      if (!mounted) return;
+      final actual = ref.read(productSaleProvider);
+      _syncFormArrayWithProvider(actual.productsSales, form, actual.incIgv, () {
+        if (!_scrollController.hasClients) return;
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: Duration(milliseconds: 500),
@@ -187,82 +202,145 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                 child: Column(
                   children: [
                     SearchProducts(form: form),
-                    // add row with 2 buttons add product and add service
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 20,
-                        top: 15,
-                        right: 20,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                Get.toNamed(AppRoutes.createProduct);
+                    BonificacionesPanel(
+                      selectorCompacto: true,
+                      accionesCabecera: !preciosComerciales
+                          ? null
+                          : PopupMenuButton<String>(
+                              tooltip: 'Agregar producto',
+                              onSelected: (accion) {
+                                if (accion == 'crear') {
+                                  Get.toNamed(AppRoutes.createProduct);
+                                } else {
+                                  notifier.createItemForm();
+                                }
                               },
-                              borderRadius: BorderRadius.circular(30),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(
+                                  value: 'crear',
+                                  child: ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(Icons.add),
+                                    title: Text('Crear Producto'),
+                                  ),
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(30),
+                                PopupMenuItem(
+                                  value: 'libre',
+                                  child: ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(Icons.edit_note),
+                                    title: Text('Producto Libre'),
+                                  ),
                                 ),
+                              ],
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.add, color: Colors.white),
-                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                    SizedBox(width: 4),
                                     Text(
-                                      'Crear Producto',
+                                      'Agregar',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 14,
+                                        fontSize: 13,
                                       ),
+                                    ),
+                                    Icon(
+                                      Icons.expand_more,
+                                      color: Colors.white,
+                                      size: 18,
                                     ),
                                   ],
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                notifier.createItemForm();
-                              },
-                              borderRadius: BorderRadius.circular(30),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.edit_note, color: Colors.white),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Producto Libre',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
+
+                    if (!preciosComerciales)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 20,
+                          top: 15,
+                          right: 20,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  Get.toNamed(AppRoutes.createProduct);
+                                },
+                                borderRadius: BorderRadius.circular(30),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add, color: Colors.white),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Crear Producto',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  notifier.createItemForm();
+                                },
+                                borderRadius: BorderRadius.circular(30),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.edit_note,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Producto Libre',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
                     Container(
                       padding: const EdgeInsets.only(
@@ -351,6 +429,22 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                             final formGroup =
                                                 formArray.controls[index]
                                                     as FormGroup;
+                                            if (products[index]
+                                                    .esBonificacion ==
+                                                true) {
+                                              return ListTile(
+                                                leading: const Icon(
+                                                  Icons.card_giftcard,
+                                                ),
+                                                title: Text(
+                                                  products[index].descripcion ??
+                                                      'Bonificación',
+                                                ),
+                                                subtitle: Text(
+                                                  '${products[index].cantidad} de regalo · se recalcula según la promoción',
+                                                ),
+                                              );
+                                            }
                                             return Column(
                                               children: [
                                                 DismissibleActionWidget(
@@ -478,7 +572,12 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                             children: [
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: isBarcodeSearching
+                                  onPressed:
+                                      isBarcodeSearching ||
+                                          provider.error != null ||
+                                          !ref
+                                              .watch(bonificacionesProvider)
+                                              .puedeEnviar
                                       ? null
                                       : () {
                                           form.markAllAsTouched();
@@ -618,7 +717,11 @@ void _syncFormArrayWithProvider(
             validators: [Validators.required, Validators.minLength(3)],
           ),
           'price': FormControl<double>(
-            value: product.precioVentaUnitario ?? 0,
+            value:
+                (incIgv
+                    ? product.precioVentaUnitario
+                    : product.valorUnitario) ??
+                0,
             validators: [Validators.required, Validators.min(0.01)],
           ),
           // Cantidad decimal (paridad web: pKeyFilter num + min 0.01),

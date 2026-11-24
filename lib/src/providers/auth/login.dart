@@ -13,6 +13,8 @@ import 'package:teki_app/src/data/models/teki_model/sale_station.dart';
 import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/data/repositories/auth_repository_impl.dart';
 import 'package:teki_app/src/data/repositories/config_repository_impl.dart';
+import 'package:teki_app/src/data/services/distribuidor/comercial_service.dart';
+import 'package:teki_app/src/domain/distribuidor/contexto_comercial.dart';
 import 'package:teki_app/src/data/repositories/sale_station_Repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/auth_repository.dart';
 import 'package:teki_app/src/domain/repositories/config_repository.dart';
@@ -49,6 +51,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   final SaleStationRepository saleStationRepository;
   final ConfigRepository configRepository;
   final KeyValueStorageServiceImpl keyvalueStorage;
+  Future<ConfigCompany?>? _configRefresh;
+  Object? _configRefreshSession;
+  String? _configRefreshContext;
 
   AuthStateNotifier({
     required this.saleStationRepository,
@@ -60,10 +65,59 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   /// Trae la configuración vigente de la empresa y la persiste. Ante un fallo
   /// conserva la que ya estaba en sesión y devuelve null.
-  Future<ConfigCompany?> refreshConfigCompany() async {
+  Future<ConfigCompany?> refreshConfigCompany() {
+    final session = ref.read(sesionProvider);
+    if (!state.isLoggedIn ||
+        state.isLoading ||
+        session.login.user?.id == null) {
+      return Future.value(null);
+    }
+    if (_configRefresh != null &&
+        identical(_configRefreshSession, session.login) &&
+        _configRefreshContext == session.claveContexto) {
+      return _configRefresh!;
+    }
+    _configRefreshSession = session.login;
+    _configRefreshContext = session.claveContexto;
+    final request = _refreshConfigCompany(session);
+    _configRefresh = request;
+    request.whenComplete(() {
+      if (identical(_configRefresh, request)) _configRefresh = null;
+    });
+    return request;
+  }
+
+  Future<ConfigCompany?> _refreshConfigCompany(SesionState session) async {
+    bool sameSession() =>
+        mounted &&
+        state.isLoggedIn &&
+        identical(ref.read(sesionProvider).login, session.login) &&
+        ref.read(sesionProvider).claveContexto == session.claveContexto;
     try {
       final configCompany = await configRepository.getConfigValue();
+      if (!sameSession()) return null;
+      // Actualiza el contexto de nuevas selecciones sin recalcular las líneas del carrito.
+      ContextoComercial? comercial;
+      final mode = configCompany.configuracionDistribuidor;
+      final previous = session.comercial;
+      final modeChanged = mode == null ||
+          previous?.activo != (mode['preciosComerciales'] == true) ||
+          previous?.mayoreoManual != (mode['mayoreoManual'] == true);
+      if (previous != null && session.office?.id != null && modeChanged) {
+        comercial = await ComercialService().cargar(
+          session.office!.id!,
+          config: configCompany.configuracionDistribuidor,
+        );
+        if (!sameSession()) return null;
+        final current = ref.read(sesionProvider).comercial;
+        if (comercial.tipos.any((t) => t['id'] == current?.cabecera)) {
+          comercial = comercial.conCabecera(current?.cabecera);
+        }
+      }
       ref.read(sesionProvider.notifier).setConfigCompany(configCompany);
+      if (comercial != null) {
+        ref.read(sesionProvider.notifier).setComercial(comercial);
+      }
       await keyvalueStorage.setKeyValue(
         StorageKeys.configCompany,
         jsonEncode(configCompany.toJson()),

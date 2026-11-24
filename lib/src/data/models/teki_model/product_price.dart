@@ -4,6 +4,11 @@ import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class ProductPrice {
+  final int? tipoComercialId;
+  final bool? estado;
+  final bool? eliminado;
+  final int? versionPrecio;
+
   final int? id;
   final double? precio;
   final double? precioNeto;
@@ -18,6 +23,11 @@ class ProductPrice {
   final Product? producto;
 
   ProductPrice({
+    this.tipoComercialId,
+    this.estado,
+    this.eliminado,
+    this.versionPrecio,
+
     this.id,
     this.precio,
     this.precioNeto,
@@ -33,7 +43,11 @@ class ProductPrice {
   });
 
   factory ProductPrice.fromJson(Map<String, dynamic> json) => ProductPrice(
-        id: json['id'],
+                tipoComercialId: (json['tipoComercialId'] as num?)?.toInt(),
+        estado: json['estado'] as bool?,
+        eliminado: json['eliminado'] as bool?,
+        versionPrecio: (json['versionPrecio'] as num?)?.toInt(),
+id: json['id'],
         precio: (json['precio'] as num?)?.toDouble(),
         precioNeto: (json['precioNeto'] as num?)?.toDouble(),
         margenUtilidad: (json['margenUtilidad'] as num?)?.toDouble(),
@@ -52,7 +66,11 @@ class ProductPrice {
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
+                'tipoComercialId': tipoComercialId,
+        'estado': estado,
+        'eliminado': eliminado,
+        'versionPrecio': versionPrecio,
+'id': id,
         'precio': precio,
         'precioNeto': precioNeto,
         'margenUtilidad': margenUtilidad,
@@ -69,6 +87,11 @@ class ProductPrice {
 
 extension ProductPriceCopyWith on ProductPrice {
   ProductPrice copyWith({
+    int? tipoComercialId,
+    bool? estado,
+    bool? eliminado,
+    int? versionPrecio,
+
     int? id,
     double? precio,
     double? precioNeto,
@@ -83,7 +106,11 @@ extension ProductPriceCopyWith on ProductPrice {
     Product? producto,
   }) {
     return ProductPrice(
-      id: id ?? this.id,
+            tipoComercialId: tipoComercialId ?? this.tipoComercialId,
+      estado: estado ?? this.estado,
+      eliminado: eliminado ?? this.eliminado,
+      versionPrecio: versionPrecio ?? this.versionPrecio,
+id: id ?? this.id,
       precio: precio ?? this.precio,
       precioNeto: precioNeto ?? this.precioNeto,
       margenUtilidad: margenUtilidad ?? this.margenUtilidad,

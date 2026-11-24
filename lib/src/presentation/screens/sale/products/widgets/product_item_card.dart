@@ -1,3 +1,4 @@
+import 'package:teki_app/src/presentation/screens/pedidos/precio_linea.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -525,6 +526,10 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
 
     return Column(
       children: [
+        if(ref.watch(sesionProvider).comercial?.activo == true)
+          Align(alignment:Alignment.centerRight,child:TextButton.icon(icon:const Icon(Icons.sell_outlined),
+            label:Text(widget.productTicketDetail.tipoComercialNombre ?? 'Cambiar tipo de precio'),
+            onPressed:()=>seleccionarPrecioLinea(context,ref,widget.index))),
         Stack(
           clipBehavior: Clip.none,
           children: [

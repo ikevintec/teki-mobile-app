@@ -10,6 +10,17 @@ import 'package:teki_app/src/data/models/teki_model/user.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
 class Quotation {
+  final String? tipoComprobanteDestino;
+  final int? tipoPrecioCabeceraId;
+  final int? revisionPedido;
+  final bool? pedidoGestionado;
+  final int? responsablePedidoId;
+  final String? responsablePedidoNombre;
+  final String? estadoPedido;
+  final bool? puedeEditarPedido;
+  final bool? puedeTomarPedido;
+  final bool? puedeLiberarPedido;
+
   final int? id;
   final String? serie;
   final int? numero;
@@ -68,6 +79,17 @@ class Quotation {
   final bool? agruparItems;
 
   Quotation({
+    this.tipoComprobanteDestino,
+    this.tipoPrecioCabeceraId,
+    this.revisionPedido,
+    this.pedidoGestionado,
+    this.responsablePedidoId,
+    this.responsablePedidoNombre,
+    this.estadoPedido,
+    this.puedeEditarPedido,
+    this.puedeTomarPedido,
+    this.puedeLiberarPedido,
+
     this.id,
     this.serie,
     this.numero,
@@ -127,6 +149,16 @@ class Quotation {
   });
 
   factory Quotation.fromJson(Map<String, dynamic> json) => Quotation(
+    tipoComprobanteDestino: json['tipoComprobanteDestino'] as String?,
+    tipoPrecioCabeceraId: (json['tipoPrecioCabeceraId'] as num?)?.toInt(),
+    revisionPedido: (json['revisionPedido'] as num?)?.toInt(),
+    pedidoGestionado: json['pedidoGestionado'] as bool?,
+    responsablePedidoId: (json['responsablePedidoId'] as num?)?.toInt(),
+    responsablePedidoNombre: json['responsablePedidoNombre'] as String?,
+    estadoPedido: json['estadoPedido'] as String?,
+    puedeEditarPedido: json['puedeEditarPedido'] as bool?,
+    puedeTomarPedido: json['puedeTomarPedido'] as bool?,
+    puedeLiberarPedido: json['puedeLiberarPedido'] as bool?,
     id: json['id'],
     serie: json['serie'],
     numero: json['numero'],
@@ -205,6 +237,17 @@ class Quotation {
   );
 
   Map<String, dynamic> toJson() => {
+    if (tipoComprobanteDestino != null)
+      'tipoComprobanteDestino': tipoComprobanteDestino,
+    'tipoPrecioCabeceraId': tipoPrecioCabeceraId,
+    'revisionPedido': revisionPedido,
+    'pedidoGestionado': pedidoGestionado,
+    'responsablePedidoId': responsablePedidoId,
+    'responsablePedidoNombre': responsablePedidoNombre,
+    'estadoPedido': estadoPedido,
+    'puedeEditarPedido': puedeEditarPedido,
+    'puedeTomarPedido': puedeTomarPedido,
+    'puedeLiberarPedido': puedeLiberarPedido,
     'id': id,
     'serie': serie,
     'numero': numero,
@@ -269,7 +312,18 @@ class Quotation {
   /// de origen mediante el campo `cotizacion` para que el backend la concrete.
   Ticket toTicketForSale() {
     return Ticket(
-      tipoComprobante: '03',
+      tipoComprobanteDestino: tipoComprobanteDestino,
+      tipoPrecioCabeceraId: tipoPrecioCabeceraId,
+      revisionPedido: revisionPedido,
+      pedidoGestionado: pedidoGestionado,
+      responsablePedidoId: responsablePedidoId,
+      responsablePedidoNombre: responsablePedidoNombre,
+      estadoPedido: estadoPedido,
+      puedeEditarPedido: puedeEditarPedido,
+      puedeTomarPedido: puedeTomarPedido,
+      puedeLiberarPedido: puedeLiberarPedido,
+
+      tipoComprobante: isQuotation == false ? tipoComprobanteDestino : '03',
       codigoMoneda: codigoMoneda,
       cliente: cliente,
       tipoDocumentoReceptor: tipoDocumentoReceptor,
@@ -296,7 +350,12 @@ class Quotation {
       totalDescuento: totalDescuento,
       codigoDescuento: codigoDescuento,
       adelanto: adelanto,
-      cotizacion: Quotation(id: id, serie: serie, numero: numero),
+      cotizacion: Quotation(
+        id: id,
+        serie: serie,
+        numero: numero,
+        revisionPedido: revisionPedido,
+      ),
     );
   }
 
@@ -304,6 +363,17 @@ class Quotation {
   /// de venta (ProductsSaleScreen) en el flujo de edición de cotizaciones.
   Ticket toTicketForEdit() {
     return Ticket(
+      tipoComprobanteDestino: tipoComprobanteDestino,
+      tipoPrecioCabeceraId: tipoPrecioCabeceraId,
+      revisionPedido: revisionPedido,
+      pedidoGestionado: pedidoGestionado,
+      responsablePedidoId: responsablePedidoId,
+      responsablePedidoNombre: responsablePedidoNombre,
+      estadoPedido: estadoPedido,
+      puedeEditarPedido: puedeEditarPedido,
+      puedeTomarPedido: puedeTomarPedido,
+      puedeLiberarPedido: puedeLiberarPedido,
+
       id: id,
       serie: serie,
       numero: numero,

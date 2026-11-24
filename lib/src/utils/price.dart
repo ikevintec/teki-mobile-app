@@ -1,3 +1,4 @@
+import 'package:teki_app/src/domain/distribuidor/contexto_comercial.dart';
 import 'package:flutter/foundation.dart';
 import 'package:teki_app/src/data/models/teki_model/office.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
@@ -5,14 +6,25 @@ import 'package:teki_app/src/data/models/teki_model/product_price.dart';
 
 double getPriceProduct(Product product, Office puntoVenta, Map<String, dynamic>? ops) {
     ops ??= {};
+    final contexto = ops['comercial'] as ContextoComercial?;
+    if (contexto?.activo == true) {
+      final elegido = contexto!.elegir(product, puntoVenta.id, (ops['qty'] as num?)?.toDouble() ?? 1);
+      if(elegido?.precio == null) throw StateError('No hay precio comercial. Selecciona un precio o ingresa uno autorizado.');
+      final igv = (ops['igv'] as num?)?.toDouble() ?? 0;
+      var precio = elegido!.precio! * (product.igv == false ? 1 + igv : 1);
+      if(ops.containsKey('porcentajeRecargoPorItem') && ops['absolute'] != true) {
+        precio = precio / (1 + igv + ((ops['porcentajeRecargoPorItem'] as num?)?.toDouble() ?? 0) / 100) * (1 + igv);
+      }
+      return precio;
+    }
     if (product.preciosVenta == null || product.preciosVenta!.isEmpty) {
       return 0;
     } else {
-      final listPrices = product.preciosVenta!.where((pv) =>
-          (product.preciosPorPuntoVenta! &&
+      final listPrices = product.preciosVenta!.where((pv) => pv.tipoComercialId == null && pv.estado != false && pv.eliminado != true && (
+          (product.preciosPorPuntoVenta == true &&
               pv.puntoVenta != null &&
               pv.puntoVenta!.id == puntoVenta.id) ||
-          (!product.preciosPorPuntoVenta! && pv.puntoVenta == null)).toList();
+          (product.preciosPorPuntoVenta != true && pv.puntoVenta == null))).toList();
 
       final double igv = (ops['igv'] ?? 0).toDouble();
 
@@ -59,7 +71,7 @@ double getPriceProduct(Product product, Office puntoVenta, Map<String, dynamic>?
     // exige orden ascendente; sin él puede devolver el tramo equivocado.
     arr = arr
         .where((pv) =>
-            pv.tipoPrecio == 'MAYOREO' && pv.unidadesMayoreo != null)
+            pv.tipoPrecio == 'MAYOREO' && (pv.unidadesMayoreo ?? 0) > 0)
         .toList()
       ..sort((a, b) => a.unidadesMayoreo!.compareTo(b.unidadesMayoreo!));
     int start = 0;

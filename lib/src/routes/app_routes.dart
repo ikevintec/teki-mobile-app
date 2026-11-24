@@ -1,3 +1,4 @@
+import 'package:teki_app/src/presentation/screens/pedidos/pedidos_screen.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/presentation/screens/loyalty/loyalty_cards_screen.dart';
 import 'package:teki_app/src/presentation/screens/analytics/analytics_main_screen.dart';
@@ -40,6 +41,7 @@ import 'package:teki_app/src/routes/middleware/yape_feature_middleware.dart';
 class AppRoutes {
   static const String loyaltyCards = "/loyalty/cards";
   static const String comprobantesVer = "/ver_comprobantes";
+  static const String pedidosComerciales = "/pedidos_comerciales";
   static const String quotationsVer = "/ver_cotizaciones";
   static const String onboarding = "/onboarding";
   static const String login = "/login";
@@ -103,6 +105,7 @@ class AppRoutes {
     GetPage(name: analytics, page: () => const AnalyticsMainScreen()),
     //Route Comprobantes
     GetPage(name: comprobantesVer, page: () => const VerComprobanteScreen()),
+    GetPage(name: pedidosComerciales, page: () => const PedidosScreen()),
     GetPage(name: quotationsVer, page: () => const VerQuotationsScreen()),
 
     GetPage(name: products, page: () => const ProductsMainScreen()),

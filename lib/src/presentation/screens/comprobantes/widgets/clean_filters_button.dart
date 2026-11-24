@@ -8,6 +8,7 @@ class CleanFiltersButton extends ConsumerWidget {
   int _getActiveFiltersCount(ComprobantesState state, bool canViewAllSellers) {
     int count = 0;
 
+    if (state.filtroCliente.isNotEmpty) count++;
     if (state.filtroSerie?.isNotEmpty == true) count++;
     if (state.filtroNumero?.isNotEmpty == true) count++;
     if (state.filtroTipoComprobante?.isNotEmpty == true) count++;

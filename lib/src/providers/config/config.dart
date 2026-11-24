@@ -1,3 +1,4 @@
+import 'package:teki_app/src/domain/distribuidor/contexto_comercial.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/company_summary.dart';
 import 'package:teki_app/src/data/models/teki_model/config.dart';
@@ -81,6 +82,7 @@ class SesionNotifier extends StateNotifier<SesionState> {
     );
     state = state.copyWith(
       companySelected: company,
+      limpiarComercial: true,
     );
     if (oficinaEncontrada?.rucAsignado != null) {
       changeOffice(oficinaEncontrada!, false);
@@ -97,6 +99,7 @@ class SesionNotifier extends StateNotifier<SesionState> {
     final filtered = _applyEstacionFilter(saleStations);
     state = state.copyWith(
       office: office,
+      limpiarComercial: true,
       saleStation: filtered.isNotEmpty ? filtered.first : SaleStation(),
       saleStations: filtered,
     );
@@ -109,6 +112,7 @@ class SesionNotifier extends StateNotifier<SesionState> {
       if (company?.ruc != null) {
         state = state.copyWith(
           companySelected: company,
+      limpiarComercial: true,
         );
       }
     }
@@ -118,6 +122,8 @@ class SesionNotifier extends StateNotifier<SesionState> {
       saleStation: saleStation,
     );
   }
+  void setComercial(ContextoComercial comercial) { state = state.copyWith(comercial: comercial); }
+
   void setConfigCompany(ConfigCompany configCompany) {
     state = state.copyWith(
       config: configCompany,
@@ -143,6 +149,8 @@ class SesionNotifier extends StateNotifier<SesionState> {
 }
 
 class SesionState {
+  String get claveContexto => '${companySelected?.id}_${login.user?.id}_${office?.id}';
+  final ContextoComercial? comercial;
   final Companysummary? company;
   final Companysummary? companySelected;
   final List<Companysummary>? companies;
@@ -161,6 +169,7 @@ class SesionState {
       roles?.contains(permission) ?? false;
 
   SesionState({
+    this.comercial,
     required this.login,
     this.company,
     this.companySelected,
@@ -173,6 +182,8 @@ class SesionState {
     this.config,
   });
   SesionState copyWith({
+    ContextoComercial? comercial,
+    bool limpiarComercial = false,
     Companysummary? company,
     Companysummary? companySelected,
     Office? office,
@@ -185,6 +196,7 @@ class SesionState {
     ConfigCompany? config,
   }) {
     return SesionState(
+      comercial: limpiarComercial ? null : comercial ?? this.comercial,
       company: company ?? this.company,
       companySelected: companySelected ?? this.companySelected,
       office: office ?? this.office,

@@ -23,6 +23,7 @@ class OtherFilters extends ConsumerStatefulWidget {
 }
 
 class _OtherFiltersState extends ConsumerState<OtherFilters> {
+  final TextEditingController _clienteController = TextEditingController();
   final TextEditingController _serieController = TextEditingController();
   final TextEditingController _numeroController = TextEditingController();
   final TextEditingController _vendedorController = TextEditingController();
@@ -55,6 +56,7 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
 
   @override
   void dispose() {
+    _clienteController.dispose();
     _serieController.dispose();
     _numeroController.dispose();
     _vendedorController.dispose();
@@ -83,6 +85,7 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
     final currentState = ref.read(comprobantesSaleProvider);
     
     // Actualizar los controladores de texto
+    _clienteController.text = currentState.filtroCliente;
     _serieController.text = currentState.filtroSerie ?? '';
     _numeroController.text = currentState.filtroNumero ?? '';
     
@@ -139,6 +142,7 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
   void _applyFilters() {
     // Aplicar filtros al provider y hacer búsqueda
     ref.read(comprobantesSaleProvider.notifier).updateFilters(
+      cliente: _clienteController.text.trim(),
       serie: _serieController.text.trim(),
       numero: _numeroController.text.trim(),
       tiposComprobante: _selectedDocumentTypes.isNotEmpty ? _selectedDocumentTypes : null,
@@ -272,6 +276,15 @@ class _OtherFiltersState extends ConsumerState<OtherFilters> {
         children: [
           // Vendedor: input de solo lectura que abre un sheet de selección
           _buildVendedorField(),
+          const SizedBox(height: 16),
+
+          TextFieldSection(
+            label: 'Cliente',
+            hint: 'Nombre, DNI o RUC',
+            inputType: TextInputType.text,
+            controller: _clienteController,
+            autocorrect: false,
+          ),
           const SizedBox(height: 16),
 
           // Primera fila: Serie y Número

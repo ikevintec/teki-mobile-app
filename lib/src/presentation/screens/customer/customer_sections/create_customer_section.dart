@@ -13,8 +13,15 @@ import 'package:teki_app/src/utils/constants.dart';
 
 class AddCustomerSection extends ConsumerStatefulWidget {
   final int? customerId;
-  
-  const AddCustomerSection({super.key, this.customerId});
+  /// Abierta desde otro flujo (p. ej. un pedido): al guardar vuelve con el
+  /// cliente creado en lugar de ir al listado de clientes.
+  final bool devolverCliente;
+
+  const AddCustomerSection({
+    super.key,
+    this.customerId,
+    this.devolverCliente = false,
+  });
 
   @override
   ConsumerState<AddCustomerSection> createState() => _AddCustomerSectionState();
@@ -132,11 +139,15 @@ class _AddCustomerSectionState extends ConsumerState<AddCustomerSection> {
     if (_formKey.currentState!.validate()) {
       _updateCustomerData();
       final customerFormNotifier = ref.read(customerFormProvider.notifier);
-      await customerFormNotifier.proccessCustomerForm();
-      
+      final guardado = await customerFormNotifier.proccessCustomerForm();
+      if (!mounted) return;
       final customerFormState = ref.read(customerFormProvider);
       if (!customerFormState.isLoading && customerFormState.error == null) {
-        Get.until((route) => route.settings.name == AppRoutes.customer);
+        if (widget.devolverCliente) {
+          Navigator.pop(context, guardado);
+        } else {
+          Get.until((route) => route.settings.name == AppRoutes.customer);
+        }
       }
     }
   }

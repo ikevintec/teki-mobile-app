@@ -1,3 +1,4 @@
+import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/general/exchange.dart';
 import 'package:teki_app/src/data/models/teki_model/currency.dart';
@@ -16,6 +17,7 @@ TicketDetail getTicketDetail({
   required SesionState sesion,
   double? quantity = 1,
   bool isQuotation = false,
+  double? precioManual,
 }) {
   // Envase retornable: al agregar, el canje viene activo por defecto con su
   // tarifa "para canje" (paridad web). Las cotizaciones no lo manejan.
@@ -24,13 +26,23 @@ TicketDetail getTicketDetail({
     sesion,
     isQuotation: isQuotation,
   );
-  final price = getAutomaticPrice(
+  final price = precioManual ?? getAutomaticPrice(
     product,
     sesion,
     quantity ?? 1,
     conCanje: devolvioEnvase,
   );
-  return TicketDetail(
+  final comercial = sesion.comercial;
+  final precioAplicado = precioManual==null?comercial?.elegir(product,sesion.office?.id,quantity ?? 1):null;
+  final tipo = comercial?.tipo(precioManual==null?precioAplicado?.tipoComercialId:comercial.cabecera);
+  return TicketDetail(uuid: const Uuid().v4(),
+    tipoPrecioInicialId: comercial?.cabecera,
+    tipoComercialId: precioManual==null?precioAplicado?.tipoComercialId:comercial?.cabecera,
+    tipoComercialNombre: tipo?['nombre'] as String?,
+    tipoComercialCategoria: tipo?['categoria'] as String?,
+    productoPrecioId: precioAplicado?.id, precioReferencia: precioAplicado?.precio,
+    origenPrecio:precioManual!=null?'MANUAL':comercial?.activo == true ? 'AUTOMATICO' : null,
+    precioManual:precioManual!=null,
     cantidad: quantity,
     montoOriginal: price,
     precioVentaUnitario: price,
@@ -62,21 +74,29 @@ TicketDetail getTicketDetail({
   );
 }
 
+/// Precios elegidos/pactados y retornables manuales conservan su importe.
+/// El mayoreo tradicional conserva su selección automática por cantidad.
+bool conservaPrecioAlCambiarCantidad(TicketDetail linea, SesionState sesion,
+    {bool isPedido = false, bool isQuotation = false}) =>
+    linea.esBonificacion == true ||
+    (linea.tipoComercialId != null &&
+        ['ACCIONES', 'MANUAL', 'PACTADO'].contains(linea.origenPrecio)) ||
+    (linea.precioManual &&
+        (isPedido || manejaEnvaseRetornable(linea.producto, sesion,
+            isQuotation: isQuotation)));
+
 TicketDetail changeQtyTicketDetail({
   required TicketDetail ticketDetail,
   required double quantity,
   required SesionState sesion,
   bool isQuotation = false,
+  bool isPedido = false,
 }) {
-  // En retornables un precio manual se conserva al cambiar la cantidad.
-  if (ticketDetail.precioManual &&
-      manejaEnvaseRetornable(
-        ticketDetail.producto,
-        sesion,
-        isQuotation: isQuotation,
-      )) {
+  if (conservaPrecioAlCambiarCantidad(ticketDetail, sesion,
+      isPedido: isPedido, isQuotation: isQuotation)) {
     return ticketDetail.copyWith(cantidad: quantity);
   }
+  sesion = sesionParaLinea(ticketDetail, sesion);
   final newPrice = getAutomaticPrice(
     ticketDetail.producto!,
     sesion,
@@ -85,7 +105,13 @@ TicketDetail changeQtyTicketDetail({
         ticketDetail.devolvioEnvase == true ||
         ticketDetail.prestamoEnvase == true,
   );
+  final comercial = sesion.comercial;
+  final precio = comercial?.activo == true ? comercial!.elegir(ticketDetail.producto!, sesion.office?.id, quantity) : null;
+  final tipo = comercial?.tipo(precio?.tipoComercialId);
   return ticketDetail.copyWith(
+    tipoComercialId: precio?.tipoComercialId, tipoComercialNombre: tipo?['nombre'] as String?,
+    tipoComercialCategoria: tipo?['categoria'] as String?, productoPrecioId: precio?.id,
+    precioReferencia: precio?.precio,
     cantidad: quantity,
     precioVentaUnitario: newPrice,
     montoOriginal: newPrice,
@@ -291,7 +317,7 @@ double getAutomaticPrice(
 }) {
   final office = sesion.office!;
   final ops = {
-    'qty': qty,
+    'comercial': sesion.comercial, 'qty': qty,
     'igv': sesion.config!.igv,
     'porcentajeRecargoPorItem': sesion.config!.porcentajeRecargoPorItem,
   };
@@ -338,4 +364,9 @@ double getAutomaticPrice(
     office,
     ops,
   );
+}
+
+SesionState sesionParaLinea(TicketDetail linea,SesionState sesion) {
+  if(sesion.comercial?.activo!=true)return sesion;
+  return sesion.copyWith(comercial:sesion.comercial!.conCabecera(linea.tipoPrecioInicialId ?? linea.tipoComercialId));
 }
