@@ -1,0 +1,375 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:teki_app/src/utils/constants.dart';
+
+enum CalendarFilter { day, week, month, year, custom }
+
+class CustomDatePicker extends StatefulWidget {
+  final Function(DateTimeRange) onDateSelected;
+  final bool singleDayPicker;
+
+  /// Filtro con el que se inicializa el selector.
+  /// Si no se envía, por defecto arranca por mes.
+  final CalendarFilter initialFilter;
+
+  /// Selección controlada externamente (opcional). Cuando el padre cambia
+  /// este rango (p. ej. al saltar a la fecha de una caja abierta), el picker
+  /// sincroniza su selección visual sin volver a notificar [onDateSelected].
+  final DateTimeRange? selectedRange;
+
+  const CustomDatePicker({
+    super.key,
+    required this.onDateSelected,
+    this.singleDayPicker = false,
+    this.initialFilter = CalendarFilter.month,
+    this.selectedRange,
+  });
+
+  @override
+  State<CustomDatePicker> createState() => _CustomDatePickerState();
+}
+
+class _CustomDatePickerState extends State<CustomDatePicker> {
+  late CalendarFilter _selectedFilter = widget.initialFilter;
+  DateTimeRange? _selectedRange;
+
+  @override
+  void didUpdateWidget(covariant CustomDatePicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final ext = widget.selectedRange;
+    if (ext == null || ext == oldWidget.selectedRange || ext == _selectedRange) {
+      return;
+    }
+    setState(() {
+      // Si el rango existe entre los chips del filtro actual lo selecciona;
+      // si no, lo muestra como rango personalizado.
+      final match = getCurrentList().where((r) => r == ext).toList();
+      if (match.isNotEmpty) {
+        _selectedRange = match.first;
+      } else {
+        _selectedFilter = CalendarFilter.custom;
+        _selectedRange = ext;
+      }
+    });
+  }
+
+  List<DateTimeRange> getCurrentList() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    switch (_selectedFilter) {
+      case CalendarFilter.day:
+        return List.generate(14, (i) {
+          final date = today.subtract(Duration(days: i));
+          return DateTimeRange(start: date, end: date);
+        });
+      case CalendarFilter.week:
+        return List.generate(10, (i) {
+          final startOfWeek =
+              today.subtract(Duration(days: today.weekday - 1 + i * 7));
+          final endOfWeek = startOfWeek.add(const Duration(days: 6));
+          return DateTimeRange(start: startOfWeek, end: endOfWeek);
+        });
+      case CalendarFilter.month:
+        return List.generate(now.month, (i) {
+          final firstDay = DateTime(now.year, i + 1, 1);
+          final lastDay = DateTime(now.year, i + 2, 0);
+          return DateTimeRange(start: firstDay, end: lastDay);
+        });
+
+      case CalendarFilter.year:
+        final firstDay = DateTime(now.year, 1, 1);
+        final lastDay = DateTime(now.year, 12, 31);
+        return [DateTimeRange(start: firstDay, end: lastDay)];
+      case CalendarFilter.custom:
+        return _selectedRange != null ? [_selectedRange!] : [];
+    }
+  }
+
+  String formatRange(DateTimeRange range) {
+    final format = DateFormat('dd MMM yyyy', 'es');
+    return '${format.format(range.start)} - ${format.format(range.end)}';
+  }
+
+  Future<void> _pickCustomDateRange() async {
+    final now = DateTime.now();
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
+      locale: const Locale('es'),
+      // keyboardType: TextInputType.datetime,
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: ColorSchema.primaryColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+              onSurfaceVariant: Colors.white,
+              outline: Colors.white,
+              secondary: ColorSchema.primaryColor.withOpacity(0.2),
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: ColorSchema.primaryColor,
+              dayStyle: TextStyle(color: Colors.black87),
+              headerBackgroundColor: ColorSchema.primaryColor,
+              rangePickerBackgroundColor:
+                  const Color.fromARGB(255, 240, 240, 240),
+              rangePickerHeaderBackgroundColor: ColorSchema.primaryColor,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+              ),
+            ),
+            textTheme: const TextTheme(
+              bodyMedium: TextStyle(color: Colors.black87),
+              bodySmall: TextStyle(color: Colors.black87),
+              bodyLarge: TextStyle(color: Colors.white),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedFilter = CalendarFilter.custom;
+        _selectedRange = picked;
+      });
+      widget.onDateSelected(picked);
+    }
+  }
+
+  void _showFilterSelector() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 30, vertical: 30), // Margen a todo el bloque
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: CalendarFilter.values.map((filter) {
+              final label = {
+                CalendarFilter.day: 'Hoy',
+                CalendarFilter.week: 'Últimas semanas',
+                CalendarFilter.month: 'Mes actual',
+                CalendarFilter.year: 'Año actual',
+                CalendarFilter.custom: 'Fecha personalizada',
+              }[filter]!;
+
+              return ListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                title: Text(
+                  label,
+                  style: const TextStyle(fontSize: 14),
+                ),
+                trailing: _selectedFilter == filter
+                    ? const Icon(Icons.check,
+                        color: ColorSchema.primaryColor, size: 20)
+                    : null,
+                onTap: () async {
+                  Navigator.pop(context);
+                  if (filter == CalendarFilter.custom) {
+                    await _pickCustomDateRange();
+                  } else {
+                    setState(() {
+                      _selectedFilter = filter;
+
+                      // Selecciona el último rango (última fecha a la derecha)
+                      final opciones = getCurrentList();
+                      final dateOptions =
+                          _selectedFilter == CalendarFilter.month
+                              ? opciones
+                              : opciones.reversed.toList();
+                      _selectedRange =
+                          dateOptions.isNotEmpty ? dateOptions.last : null;
+
+                      // Notifica que cambió
+                      if (_selectedRange != null) {
+                        widget.onDateSelected(_selectedRange!);
+                      }
+                    });
+
+                    _scrollToEnd();
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickSingleDay() async {
+    final now = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedRange?.start ?? now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
+      locale: const Locale('es'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: ColorSchema.primaryColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: ColorSchema.primaryColor,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final range = DateTimeRange(start: picked, end: picked);
+      setState(() {
+        _selectedFilter = CalendarFilter.custom;
+        _selectedRange = range;
+      });
+      widget.onDateSelected(range);
+    }
+  }
+
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    final opciones = getCurrentList();
+    final dateOptions = _selectedFilter == CalendarFilter.month
+        ? opciones
+        : opciones.reversed.toList();
+
+    _selectedRange = dateOptions.isNotEmpty ? dateOptions.last : null;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_selectedRange != null) {
+        widget.onDateSelected(_selectedRange!);
+      }
+
+      _scrollToEnd();
+    });
+  }
+
+  /// El ListView es perezoso: el primer maxScrollExtent es un estimado y el
+  /// mes actual quedaba cortado en el borde. Se repite hasta que el final se
+  /// estabiliza.
+  void _scrollToEnd([int intentos = 5]) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final max = _scrollController.position.maxScrollExtent;
+      _scrollController.jumpTo(max);
+      if (intentos > 1) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !_scrollController.hasClients) return;
+          if (_scrollController.position.maxScrollExtent != max) {
+            _scrollToEnd(intentos - 1);
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final options = getCurrentList();
+    final dateOptions = _selectedFilter == CalendarFilter.month
+        ? options
+        : options.reversed.toList();
+
+    return Container(
+      // color: ColorSchema.primaryColor,
+      padding: const EdgeInsets.only(bottom: 0, top: 0),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: SizedBox(
+              // Crece con el tamaño de letra del sistema: con 50 fijos el
+              // nombre del mes salía cortado por arriba.
+              height: 34 + MediaQuery.textScalerOf(context).scale(16),
+              child: ListView.builder(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                itemCount: dateOptions.length,
+                itemBuilder: (context, index) {
+                  final item = dateOptions[index];
+                  final isSelected = _selectedRange == item;
+                  final text = {
+                    CalendarFilter.day:
+                        DateFormat('dd MMM', 'es').format(item.start),
+                    CalendarFilter.week:
+                        '${DateFormat('dd MMM', 'es').format(item.start)} - ${DateFormat('dd MMM', 'es').format(item.end)}',
+                    CalendarFilter.month: DateFormat('MMMM', 'es')
+                        .format(item.start)
+                        .toUpperCase(),
+                    CalendarFilter.year: '${item.start.year}',
+                    CalendarFilter.custom: item.start == item.end
+                        ? DateFormat('dd MMM', 'es').format(item.start)
+                        : '${DateFormat('dd MMM', 'es').format(item.start)} - ${DateFormat('dd MMM', 'es').format(item.end)}',
+                  }[_selectedFilter]!;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedRange = item;
+                      });
+                      widget.onDateSelected(item);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                          color: isSelected
+                              ? ColorSchema.primaryColor
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white)),
+                      child: Center(
+                        child: Text(
+                          text,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.calendar_month,
+              color: ColorSchema.primaryColor,
+            ),
+            onPressed: widget.singleDayPicker
+                ? _pickSingleDay
+                : _showFilterSelector,
+          ),
+        ],
+      ),
+    );
+  }
+}

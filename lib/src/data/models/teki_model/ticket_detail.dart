@@ -1,0 +1,537 @@
+import 'dart:ffi';
+
+import 'package:teki_app/src/data/models/teki_model/batch_product_sale.dart';
+import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_dispatch_detail.dart';
+import 'package:teki_app/src/utils/formats.dart';
+
+class TicketDetail {
+  /// Predeterminado al agregar; cambiar cabecera no reinterpreta esta línea. Local/borradores.
+  final int? tipoPrecioInicialId;
+  final int? tipoComercialId;
+  final String? tipoComercialNombre;
+  final String? tipoComercialCategoria;
+  final int? productoPrecioId;
+  final double? precioReferencia;
+  final String? origenPrecio;
+  final int? proveedorId;
+  final int? detalleOrigenId;
+  final int? promocionId;
+  final bool? esBonificacion;
+
+  final int? id;
+  final int? numeroOrden;
+  final int? numeroItem;
+  final double? cantidad;
+  final String? codigoUnidadMedida;
+  final String? descripcion;
+  final String? detalle;
+  final String? codigoProductoSunat;
+  final String? codigoProducto;
+  final String? codigoProductoGS1;
+  final double? valorUnitario;
+  final double? precioCompraUnitario;
+  final double? precioVentaUnitario;
+  final double? valorReferencialUnitario;
+  final double? montoBaseIgv;
+  final double? montoBaseIvap;
+  final double? montoBaseExportacion;
+  final double? montoBaseExonerado;
+  final double? montoBaseInafecto;
+  final double? montoBaseGratuito;
+  final double? montoBaseIsc;
+  final double? tributoVentaGratuita;
+  final double? tributoBolsa;
+  final double? ivap;
+  final double? igv;
+  final double? isc;
+  final double? porcentajeIgv;
+  final double? porcentajeIvap;
+  final double? porcentajeIsc;
+  final double? porcentajeOtrosTributos;
+  final double? porcentajeTributoVentaGratuita;
+  final String? codigoTipoCalculoIsc;
+  final String? codigoTipoAfectacionIgv;
+  final double? valorVenta;
+  final double? precioTotal;
+  final double? montoBaseDescuento;
+  final double? porcentajeDescuento;
+  final double? descuento;
+  final String? codigoDescuento;
+  final bool? esAnticipo;
+  final bool? devolvioEnvase;
+  final bool? prestamoEnvase;
+
+  /// Solo local (no se envía): el precio lo fijó el usuario y se conserva al
+  /// cambiar cantidad o modalidad de envase retornable. Espeja el dirty de la web.
+  final bool precioManual;
+  final bool? estado;
+  final String? uuid;
+  final String? uuidRelated;
+  final Ticket? ticket;
+  final Product? producto;
+  final CommandDetail? comandaDetalle;
+  final List<BatchProductSale>? lotes;
+  final List<TicketDispatchDetail>? despachos;
+  final String? estadoDespacho;
+  final DateTime? fechaInicioPlan;
+  final bool? modificado;
+  final bool? eliminado;
+  final DateTime? createdOn;
+  final int? createdBy;
+  final int? updatedBy;
+  final DateTime? updatedOn;
+  final int? deleteBy;
+  final DateTime? deletedOn;
+  //Borrar de ser necesario
+  final double? montoOriginal;
+  final bool? tieneImpuestoBolsas;
+  final double? porcentajeDescuentoGlobal;
+  final double? porcentajeOtrosCargos;
+  final String? monedaOriginal;
+  final Double? interes;
+
+  TicketDetail(
+      {this.tipoPrecioInicialId,
+      this.tipoComercialId,
+      this.tipoComercialNombre,
+      this.tipoComercialCategoria,
+      this.productoPrecioId,
+      this.precioReferencia,
+      this.origenPrecio,
+      this.proveedorId,
+      this.detalleOrigenId,
+      this.promocionId,
+      this.esBonificacion,
+      this.id,
+      this.numeroOrden,
+      this.numeroItem,
+      this.cantidad,
+      this.codigoUnidadMedida,
+      this.descripcion,
+      this.detalle,
+      this.codigoProductoSunat,
+      this.codigoProducto,
+      this.codigoProductoGS1,
+      this.valorUnitario,
+      this.precioCompraUnitario,
+      this.precioVentaUnitario,
+      this.valorReferencialUnitario,
+      this.montoBaseIgv,
+      this.montoBaseIvap,
+      this.montoBaseExportacion,
+      this.montoBaseExonerado,
+      this.montoBaseInafecto,
+      this.montoBaseGratuito,
+      this.montoBaseIsc,
+      this.tributoVentaGratuita,
+      this.tributoBolsa,
+      this.ivap,
+      this.igv,
+      this.isc,
+      this.porcentajeIgv,
+      this.porcentajeIvap,
+      this.porcentajeIsc,
+      this.porcentajeOtrosTributos,
+      this.porcentajeTributoVentaGratuita,
+      this.codigoTipoCalculoIsc,
+      this.codigoTipoAfectacionIgv,
+      this.valorVenta,
+      this.precioTotal,
+      this.montoBaseDescuento,
+      this.porcentajeDescuento,
+      this.descuento,
+      this.codigoDescuento,
+      this.esAnticipo,
+      this.devolvioEnvase,
+      this.prestamoEnvase,
+      this.precioManual = false,
+      this.estado,
+      this.uuid,
+      this.uuidRelated,
+      this.ticket,
+      this.producto,
+      this.comandaDetalle,
+      this.lotes,
+      this.despachos,
+      this.estadoDespacho,
+      this.fechaInicioPlan,
+      this.modificado,
+      this.eliminado,
+      this.createdOn,
+      this.createdBy,
+      this.updatedBy,
+      this.updatedOn,
+      this.deleteBy,
+      this.deletedOn,
+      this.montoOriginal,
+      this.tieneImpuestoBolsas,
+      this.porcentajeDescuentoGlobal,
+      this.porcentajeOtrosCargos,
+      this.monedaOriginal,
+      this.interes});
+
+  factory TicketDetail.fromJson(Map<String, dynamic> json) => TicketDetail(
+                tipoPrecioInicialId: (json['tipoPrecioInicialId'] as num?)?.toInt(),
+        tipoComercialId: (json['tipoComercialId'] as num?)?.toInt(),
+        tipoComercialNombre: json['tipoComercialNombre'] as String?,
+        tipoComercialCategoria: json['tipoComercialCategoria'] as String?,
+        productoPrecioId: (json['productoPrecioId'] as num?)?.toInt(),
+        precioReferencia: (json['precioReferencia'] as num?)?.toDouble(),
+        origenPrecio: json['origenPrecio'] as String?,
+        precioManual: json['precioManual'] == true,
+        proveedorId: (json['proveedorId'] as num?)?.toInt(),
+        detalleOrigenId: (json['detalleOrigenId'] as num?)?.toInt(),
+        promocionId: (json['promocionId'] as num?)?.toInt(),
+        esBonificacion: json['esBonificacion'] as bool?,
+id: json['id'],
+        numeroOrden: json['numeroOrden'],
+        numeroItem: json['numeroItem'],
+        cantidad: (json['cantidad'] ?? 0).toDouble(),
+        codigoUnidadMedida: json['codigoUnidadMedida'],
+        descripcion: json['descripcion'],
+        detalle: json['detalle'],
+        codigoProductoSunat: json['codigoProductoSunat'],
+        codigoProducto: json['codigoProducto'],
+        codigoProductoGS1: json['codigoProductoGS1'],
+        valorUnitario: (json['valorUnitario'] ?? 0).toDouble(),
+        precioCompraUnitario: (json['precioCompraUnitario'] ?? 0).toDouble(),
+        precioVentaUnitario: (json['precioVentaUnitario'] ?? 0).toDouble(),
+        valorReferencialUnitario: json['valorReferencialUnitario'],
+        montoBaseIgv: json['montoBaseIgv'],
+        montoBaseIvap: json['montoBaseIvap'],
+        montoBaseExportacion: json['montoBaseExportacion'],
+        montoBaseExonerado: json['montoBaseExonerado'],
+        montoBaseInafecto: json['montoBaseInafecto'],
+        montoBaseGratuito: json['montoBaseGratuito'],
+        montoBaseIsc: json['montoBaseIsc'],
+        tributoVentaGratuita: json['tributoVentaGratuita'],
+        tributoBolsa: json['tributoBolsa'],
+        ivap: json['ivap'],
+        igv: json['igv'],
+        isc: json['isc'],
+        porcentajeIgv: json['porcentajeIgv'],
+        porcentajeIvap: json['porcentajeIvap'],
+        porcentajeIsc: json['porcentajeIsc'],
+        porcentajeOtrosTributos: json['porcentajeOtrosTributos'],
+        porcentajeTributoVentaGratuita: json['porcentajeTributoVentaGratuita'],
+        codigoTipoCalculoIsc: json['codigoTipoCalculoIsc'],
+        codigoTipoAfectacionIgv: json['codigoTipoAfectacionIgv'],
+        valorVenta: json['valorVenta'],
+        precioTotal: json['precioTotal'],
+        montoBaseDescuento: json['montoBaseDescuento'],
+        porcentajeDescuento: json['porcentajeDescuento'],
+        descuento: json['descuento'],
+        codigoDescuento: json['codigoDescuento'],
+        esAnticipo: json['esAnticipo'],
+        devolvioEnvase: json['devolvioEnvase'],
+        prestamoEnvase: json['prestamoEnvase'],
+        estado: json['estado'],
+        uuid: json['uuid'],
+        uuidRelated: json['uuidRelated'],
+        ticket: json['ticket'] != null ? Ticket.fromJson(json['ticket']) : null,
+        producto: json['producto'] != null
+            ? Product.fromJson(json['producto'])
+            : null,
+        comandaDetalle: json['comandaDetalle'] != null
+            ? CommandDetail.fromJson(json['comandaDetalle'])
+            : null,
+        lotes: json['lotes'] != null
+            ? List<BatchProductSale>.from(
+                json['lotes'].map((x) => BatchProductSale.fromJson(x)))
+            : null,
+        despachos: json['despachos'] != null
+            ? List<TicketDispatchDetail>.from(
+                json['despachos'].map((x) => TicketDispatchDetail.fromJson(x)))
+            : null,
+        estadoDespacho: json['estadoDespacho'],
+        fechaInicioPlan: json['fechaInicioPlan'] != null
+            ? parseDateTimeFlexible(json['fechaInicioPlan'])
+            : null,
+        modificado: json['modificado'],
+        eliminado: json['eliminado'],
+        createdOn: json['createdOn'] != null
+            ? parseDateTimeFlexible(json['createdOn'])
+            : null,
+        createdBy: json['createdBy'],
+        updatedBy: json['updatedBy'],
+        updatedOn: json['updatedOn'] != null
+            ? parseDateTimeFlexible(json['updatedOn'])
+            : null,
+        deleteBy: json['deleteBy'],
+        deletedOn: json['deletedOn'] != null
+            ? parseDateTimeFlexible(json['deletedOn'])
+            : null,
+        porcentajeDescuentoGlobal:
+            json['porcentajeDescuentoGlobal']?.toDouble(),
+        montoOriginal: json['montoOriginal']?.toDouble(),
+        interes: json['interes']?.toDouble(),
+      );
+
+  Map<String, dynamic> toJson() => {
+                'tipoPrecioInicialId':tipoPrecioInicialId,
+        'tipoComercialId': tipoComercialId,
+        'tipoComercialNombre': tipoComercialNombre,
+        'tipoComercialCategoria': tipoComercialCategoria,
+        'productoPrecioId': productoPrecioId,
+        'precioReferencia': precioReferencia,
+        'origenPrecio': origenPrecio,
+        if (precioManual) 'precioManual': true,
+        'proveedorId': proveedorId,
+        'detalleOrigenId': detalleOrigenId,
+        'promocionId': promocionId,
+        'esBonificacion': esBonificacion,
+'id': id,
+        'numeroOrden': numeroOrden,
+        'numeroItem': numeroItem,
+        'cantidad': cantidad,
+        'codigoUnidadMedida': codigoUnidadMedida,
+        'descripcion': descripcion,
+        'detalle': detalle,
+        'codigoProductoSunat': codigoProductoSunat,
+        'codigoProducto': codigoProducto,
+        'codigoProductoGS1': codigoProductoGS1,
+        'valorUnitario': valorUnitario,
+        'precioCompraUnitario': precioCompraUnitario,
+        'precioVentaUnitario': precioVentaUnitario,
+        'valorReferencialUnitario': valorReferencialUnitario,
+        'montoBaseIgv': montoBaseIgv,
+        'montoBaseIvap': montoBaseIvap,
+        'montoBaseExportacion': montoBaseExportacion,
+        'montoBaseExonerado': montoBaseExonerado,
+        'montoBaseInafecto': montoBaseInafecto,
+        'montoBaseGratuito': montoBaseGratuito,
+        'montoBaseIsc': montoBaseIsc,
+        'tributoVentaGratuita': tributoVentaGratuita,
+        'tributoBolsa': tributoBolsa,
+        'ivap': ivap,
+        'igv': igv,
+        'isc': isc,
+        'porcentajeIgv': porcentajeIgv,
+        'porcentajeIvap': porcentajeIvap,
+        'porcentajeIsc': porcentajeIsc,
+        'porcentajeOtrosTributos': porcentajeOtrosTributos,
+        'porcentajeTributoVentaGratuita': porcentajeTributoVentaGratuita,
+        'codigoTipoCalculoIsc': codigoTipoCalculoIsc,
+        'codigoTipoAfectacionIgv': codigoTipoAfectacionIgv,
+        'valorVenta': valorVenta,
+        'precioTotal': precioTotal,
+        //descuento
+        if (descuento != null) 'descuento': descuento,
+        if (descuento != null) 'montoBaseDescuento': montoBaseDescuento,
+        if (descuento != null) 'porcentajeDescuento': porcentajeDescuento,
+        if (descuento != null) 'codigoDescuento': "00",
+
+        //interes
+        if (interes != null) 'interes': interes,
+        'esAnticipo': esAnticipo,
+        'devolvioEnvase': devolvioEnvase,
+        'prestamoEnvase': prestamoEnvase,
+        'estado': estado,
+        'uuid': uuid,
+        'uuidRelated': uuidRelated,
+        'ticket': ticket?.toJson(),
+        'producto': producto?.toJson(),
+        if (comandaDetalle != null) 'comandaDetalle': comandaDetalle?.toJson(),
+        'lotes': lotes?.map((x) => x.toJson()).toList(),
+        'despachos': despachos?.map((x) => x.toJson()).toList(),
+        'estadoDespacho': estadoDespacho,
+        'fechaInicioPlan': fechaInicioPlan?.toIso8601String(),
+        'modificado': modificado,
+        'eliminado': eliminado,
+        'createdOn': createdOn?.toIso8601String(),
+        'createdBy': createdBy,
+        'updatedBy': updatedBy,
+        'updatedOn': updatedOn?.toIso8601String(),
+        'deleteBy': deleteBy,
+        'deletedOn': deletedOn?.toIso8601String(),
+        //Borrar de ser necesario
+        'montoOriginal': montoOriginal,
+        'tieneImpuestoBolsas': tieneImpuestoBolsas,
+        'porcentajeDescuentoGlobal': porcentajeDescuentoGlobal,
+        'porcentajeOtrosCargos': porcentajeOtrosCargos,
+        'monedaOriginal': monedaOriginal,
+      };
+
+  // implement copywith
+  /// Centinela para distinguir "no me pasaron el parámetro" de "me pasaron
+  /// null": los campos de impuestos DEBEN poder limpiarse a null al cambiar
+  /// la afectación IGV (p. ej. gravado → exonerado), igual que hace la web
+  /// con patchValue(null). Con el patrón `?? this.x` el null se ignoraba y
+  /// el IGV viejo viajaba a SUNAT (rechazo 3110).
+  static const Object _noValue = Object();
+
+  static double? _resolve(Object? param, double? current) =>
+      identical(param, _noValue) ? current : param as double?;
+
+  TicketDetail copyWith({
+    int? tipoPrecioInicialId,
+    int? tipoComercialId,
+    String? tipoComercialNombre,
+    String? tipoComercialCategoria,
+    int? productoPrecioId,
+    double? precioReferencia,
+    String? origenPrecio,
+    int? proveedorId,
+    int? detalleOrigenId,
+    int? promocionId,
+    bool? esBonificacion,
+
+    int? id,
+    int? numeroOrden,
+    int? numeroItem,
+    double? cantidad,
+    String? codigoUnidadMedida,
+    String? descripcion,
+    String? detalle,
+    String? codigoProductoSunat,
+    String? codigoProducto,
+    String? codigoProductoGS1,
+    double? valorUnitario,
+    double? precioCompraUnitario,
+    double? precioVentaUnitario,
+    Object? valorReferencialUnitario = _noValue,
+    Object? montoBaseIgv = _noValue,
+    double? montoBaseIvap,
+    Object? montoBaseExportacion = _noValue,
+    Object? montoBaseExonerado = _noValue,
+    Object? montoBaseInafecto = _noValue,
+    Object? montoBaseGratuito = _noValue,
+    Object? montoBaseIsc = _noValue,
+    Object? tributoVentaGratuita = _noValue,
+    double? tributoBolsa,
+    double? ivap,
+    Object? igv = _noValue,
+    double? isc,
+    Object? porcentajeIgv = _noValue,
+    double? porcentajeIvap,
+    double? porcentajeIsc,
+    double? porcentajeOtrosTributos,
+    Object? porcentajeTributoVentaGratuita = _noValue,
+    String? codigoTipoCalculoIsc,
+    String? codigoTipoAfectacionIgv,
+    double? valorVenta,
+    double? precioTotal,
+    double? montoBaseDescuento,
+    double? porcentajeDescuento,
+    double? descuento,
+    String? codigoDescuento,
+    bool? esAnticipo,
+    bool? devolvioEnvase,
+    bool? prestamoEnvase,
+    bool? precioManual,
+    bool? estado,
+    String? uuid,
+    String? uuidRelated,
+    Ticket? ticket,
+    Product? producto,
+    CommandDetail? comandaDetalle,
+    List<BatchProductSale>? lotes,
+    List<TicketDispatchDetail>? despachos,
+    String? estadoDespacho,
+    DateTime? fechaInicioPlan,
+    bool? modificado,
+    bool? eliminado,
+    DateTime? createdOn,
+    int? createdBy,
+    int? updatedBy,
+    DateTime? updatedOn,
+    int? deleteBy,
+    DateTime? deletedOn,
+    double? montoOriginal,
+    bool? tieneImpuestoBolsas,
+    double? porcentajeDescuentoGlobal,
+    double? porcentajeOtrosCargos,
+    String? monedaOriginal,
+  }) {
+    return TicketDetail(
+            tipoPrecioInicialId:tipoPrecioInicialId ?? this.tipoPrecioInicialId,
+      tipoComercialId: tipoComercialId ?? this.tipoComercialId,
+      tipoComercialNombre: tipoComercialNombre ?? this.tipoComercialNombre,
+      tipoComercialCategoria: tipoComercialCategoria ?? this.tipoComercialCategoria,
+      productoPrecioId: productoPrecioId ?? this.productoPrecioId,
+      precioReferencia: precioReferencia ?? this.precioReferencia,
+      origenPrecio: origenPrecio ?? this.origenPrecio,
+      proveedorId: proveedorId ?? this.proveedorId,
+      detalleOrigenId: detalleOrigenId ?? this.detalleOrigenId,
+      promocionId: promocionId ?? this.promocionId,
+      esBonificacion: esBonificacion ?? this.esBonificacion,
+id: id ?? this.id,
+      numeroOrden: numeroOrden ?? this.numeroOrden,
+      numeroItem: numeroItem ?? this.numeroItem,
+      cantidad: cantidad ?? this.cantidad,
+      codigoUnidadMedida: codigoUnidadMedida ?? this.codigoUnidadMedida,
+      descripcion: descripcion ?? this.descripcion,
+      detalle: detalle ?? this.detalle,
+      codigoProductoSunat: codigoProductoSunat ?? this.codigoProductoSunat,
+      codigoProducto: codigoProducto ?? this.codigoProducto,
+      codigoProductoGS1: codigoProductoGS1 ?? this.codigoProductoGS1,
+      valorUnitario: valorUnitario ?? this.valorUnitario,
+      precioCompraUnitario: precioCompraUnitario ?? this.precioCompraUnitario,
+      precioVentaUnitario: precioVentaUnitario ?? this.precioVentaUnitario,
+      valorReferencialUnitario:
+          _resolve(valorReferencialUnitario, this.valorReferencialUnitario),
+      montoBaseIgv: _resolve(montoBaseIgv, this.montoBaseIgv),
+      montoBaseIvap: montoBaseIvap ?? this.montoBaseIvap,
+      montoBaseExportacion:
+          _resolve(montoBaseExportacion, this.montoBaseExportacion),
+      montoBaseExonerado: _resolve(montoBaseExonerado, this.montoBaseExonerado),
+      montoBaseInafecto: _resolve(montoBaseInafecto, this.montoBaseInafecto),
+      montoBaseGratuito: _resolve(montoBaseGratuito, this.montoBaseGratuito),
+      montoBaseIsc: _resolve(montoBaseIsc, this.montoBaseIsc),
+      tributoVentaGratuita:
+          _resolve(tributoVentaGratuita, this.tributoVentaGratuita),
+      tributoBolsa: tributoBolsa ?? this.tributoBolsa,
+      ivap: ivap ?? this.ivap,
+      igv: _resolve(igv, this.igv),
+      isc: isc ?? this.isc,
+      porcentajeIgv: _resolve(porcentajeIgv, this.porcentajeIgv),
+      porcentajeIvap: porcentajeIvap ?? this.porcentajeIvap,
+      porcentajeIsc: porcentajeIsc ?? this.porcentajeIsc,
+      porcentajeOtrosTributos:
+          porcentajeOtrosTributos ?? this.porcentajeOtrosTributos,
+      porcentajeTributoVentaGratuita: _resolve(
+          porcentajeTributoVentaGratuita, this.porcentajeTributoVentaGratuita),
+      codigoTipoCalculoIsc: codigoTipoCalculoIsc ?? this.codigoTipoCalculoIsc,
+      codigoTipoAfectacionIgv:
+          codigoTipoAfectacionIgv ?? this.codigoTipoAfectacionIgv,
+      valorVenta: valorVenta ?? this.valorVenta,
+      precioTotal: precioTotal ?? this.precioTotal,
+      montoBaseDescuento: montoBaseDescuento ?? this.montoBaseDescuento,
+      porcentajeDescuento: porcentajeDescuento ?? this.porcentajeDescuento,
+      descuento: descuento ?? this.descuento,
+      codigoDescuento: codigoDescuento ?? this.codigoDescuento,
+      esAnticipo: esAnticipo ?? this.esAnticipo,
+      devolvioEnvase: devolvioEnvase ?? this.devolvioEnvase,
+      prestamoEnvase: prestamoEnvase ?? this.prestamoEnvase,
+      precioManual: precioManual ?? this.precioManual,
+      estado: estado ?? this.estado,
+      uuid: uuid ?? this.uuid,
+      uuidRelated: uuidRelated ?? this.uuidRelated,
+      ticket: ticket ?? this.ticket,
+      producto: producto ?? this.producto,
+      comandaDetalle: comandaDetalle ?? this.comandaDetalle,
+      lotes: lotes ?? this.lotes,
+      despachos: despachos ?? this.despachos,
+      estadoDespacho: estadoDespacho ?? this.estadoDespacho,
+      fechaInicioPlan: fechaInicioPlan ?? this.fechaInicioPlan,
+      modificado: modificado ?? this.modificado,
+      eliminado: eliminado ?? this.eliminado,
+      createdOn: createdOn ?? this.createdOn,
+      createdBy: createdBy ?? this.createdBy,
+      updatedBy: updatedBy ?? this.updatedBy,
+      updatedOn: updatedOn ?? this.updatedOn,
+      deleteBy: deleteBy ?? this.deleteBy,
+      deletedOn: deletedOn ?? this.deletedOn,
+      montoOriginal: montoOriginal ?? this.montoOriginal,
+      tieneImpuestoBolsas: tieneImpuestoBolsas ?? this.tieneImpuestoBolsas,
+      porcentajeDescuentoGlobal:
+          porcentajeDescuentoGlobal ?? this.porcentajeDescuentoGlobal,
+      porcentajeOtrosCargos:
+          porcentajeOtrosCargos ?? this.porcentajeOtrosCargos,
+      monedaOriginal: monedaOriginal ?? this.monedaOriginal,
+    );
+  }
+}

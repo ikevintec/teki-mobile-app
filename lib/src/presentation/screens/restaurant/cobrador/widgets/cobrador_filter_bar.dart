@@ -1,0 +1,266 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teki_app/src/providers/restaurant/cobrador_provider.dart';
+import 'package:teki_app/src/utils/constants.dart';
+
+class CobradorFilterBar extends ConsumerWidget {
+  final int pvId;
+
+  const CobradorFilterBar({super.key, required this.pvId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(cobradorProvider);
+    final notifier = ref.read(cobradorProvider.notifier);
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      // Alineados abajo y con cajas de igual alto: antes la etiqueta "Fecha"
+      // quedaba más baja que "Tipo" y "Estado".
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            flex: 3,
+            child: _DateDropdown(
+              state: state,
+              pvId: pvId,
+              notifier: notifier,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: _FilterDropdown<TipoPedidoFilter>(
+              label: 'Tipo',
+              value: state.tipoPedidoFilter,
+              items: TipoPedidoFilter.values,
+              itemLabel: (f) => f.label,
+              onChanged: (f) => notifier.setTipoPedido(f, pvId),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 4,
+            child: _FilterDropdown<EstadoPagoFilter>(
+              label: 'Estado',
+              value: state.pagadoFilter,
+              items: EstadoPagoFilter.values,
+              itemLabel: (f) => f.label,
+              onChanged: (f) => notifier.setEstadoPago(f, pvId),
+            ),
+          ),
+          const SizedBox(width: 4),
+          _ReloadButton(
+            isLoading: state.isLoading,
+            onTap: () => notifier.init(pvId),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateDropdown extends StatelessWidget {
+  final CobradorState state;
+  final int pvId;
+  final CobradorNotifier notifier;
+
+  const _DateDropdown(
+      {required this.state, required this.pvId, required this.notifier});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _pickDate(context),
+      child: _FilterShell(
+        label: 'Fecha',
+        highlighted: true,
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today,
+                size: 13, color: ColorSchema.primaryColor),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                _formatDate(state.selectedDate),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: ColorSchema.primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down,
+                size: 18, color: ColorSchema.primaryColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: state.selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      locale: const Locale('es', 'PE'),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: ColorSchema.primaryColor,
+            onPrimary: Colors.white,
+            onSurface: Colors.black87,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) notifier.setDate(picked, pvId);
+  }
+
+  /// Corto para que no se corte: "Hoy" o dd/MM/aa.
+  String _formatDate(DateTime d) {
+    final hoy = DateTime.now();
+    if (d.year == hoy.year && d.month == hoy.month && d.day == hoy.day) {
+      return 'Hoy';
+    }
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${(d.year % 100).toString().padLeft(2, '0')}';
+  }
+}
+
+class _FilterDropdown<T> extends StatelessWidget {
+  final String label;
+  final T value;
+  final List<T> items;
+  final String Function(T) itemLabel;
+  final void Function(T) onChanged;
+
+  const _FilterDropdown({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.itemLabel,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _FilterShell(
+      label: label,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isDense: true,
+          isExpanded: true,
+          icon: const Icon(Icons.arrow_drop_down, size: 16, color: Colors.black54),
+          style: const TextStyle(fontSize: 13, color: Colors.black87),
+          items: items
+              .map((item) => DropdownMenuItem<T>(
+                    value: item,
+                    child: Text(itemLabel(item),
+                        overflow: TextOverflow.ellipsis),
+                  ))
+              .toList(),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterShell extends StatelessWidget {
+  final String label;
+  final Widget child;
+  final bool highlighted;
+
+  const _FilterShell({
+    required this.label,
+    required this.child,
+    this.highlighted = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: highlighted ? ColorSchema.primaryColor : Colors.grey.shade500,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Container(
+          // Alto mínimo (no fijo): con letra grande la caja crece.
+          constraints: const BoxConstraints(minHeight: 36),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+          decoration: BoxDecoration(
+            color: highlighted
+                ? ColorSchema.primaryColor.withValues(alpha: 0.06)
+                : Colors.grey.shade50,
+            border: Border.all(
+              color: highlighted
+                  ? ColorSchema.primaryColor
+                  : Colors.grey.shade300,
+              width: highlighted ? 1.4 : 1,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+}
+
+class _ReloadButton extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _ReloadButton({required this.isLoading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 36,
+          height: 36,
+          child: isLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(7),
+                  child: CircularProgressIndicator(
+                      color: ColorSchema.primaryColor, strokeWidth: 2),
+                )
+              : InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: ColorSchema.primaryColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: ColorSchema.primaryColor.withValues(alpha: 0.3)),
+                    ),
+                    child: const Icon(Icons.refresh,
+                        color: ColorSchema.primaryColor, size: 18),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}

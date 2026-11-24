@@ -1,0 +1,106 @@
+import 'package:intl/intl.dart';
+import 'package:teki_app/src/data/static/lists.dart';
+
+DateTime? parseDateTimeFlexible(dynamic value) {
+  if (value == null) return null;
+  if (value is int) {
+    // Asume timestamp en milisegundos
+    return DateTime.fromMillisecondsSinceEpoch(value);
+  } else if (value is String) {
+    try {
+      return DateTime.parse(value);
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}
+
+/// Normaliza un texto con guiones bajos reemplazándolos por espacios.
+/// Ejemplo: "PEDIDO_ONLINE" → "PEDIDO ONLINE"
+String normalizeEnumLabel(String? value) {
+  if (value == null || value.isEmpty) return '-';
+  return value.replaceAll('_', ' ');
+}
+
+/// Formatea un número de orden a 8 dígitos rellenando con ceros a la izquierda.
+/// Ejemplo: 123 → "00000123"
+String formatOrderNumber(int? number) {
+  if (number == null) return '-';
+  return number.toString().padLeft(8, '0');
+}
+
+String formatDouble(double value) {
+  if (value == value.toInt()) {
+    return value.toInt().toString(); // 7.0 → 7
+  }
+  return value.toStringAsFixed(2); // 7.25 → 7.25
+}
+
+final NumberFormat _formatoMonto = NumberFormat('#,##0.00', 'en_US');
+
+/// Monto con separador de miles: 1284 → "1,284.00". Es la forma usual en Perú
+/// (SUNAT y bancos) y la única que debe usar la app: antes convivían
+/// "1284.00", "1.284,00" y "100,00" según la pantalla.
+String formatoMonto(num? valor) => _formatoMonto.format(valor ?? 0);
+
+String formatExchange({required String moneda}) {
+  switch (moneda) {
+    case 'PEN':
+      return 'S/ ';
+    case 'USD':
+      return '\$ ';
+    case 'EUR':
+      return '€ ';
+    case 'JPY':
+      return '¥ ';
+    case 'CLP':
+      return '\$ ';
+    case 'GBP':
+      return '£ ';
+    default:
+      return moneda; // Retorna el código de moneda si no coincide con los casos anteriores
+  }
+}
+
+  String formatEstadoSunat(String? value) {
+    switch (value) {
+      case 'ACEPT':
+        return 'Aceptado';
+      case 'RECHA':
+        return 'Rechazado';
+      case 'ANULA':
+        return 'Anulado';
+      case 'N_ENV':
+        return 'No enviado';
+      default:
+        return '-';
+    }
+  }
+
+String formatTipoComprobante(String tipoComprobante) {
+  List<Map<String, String>> lista = tipoComprobantesVerVenta;
+  Map<String, String> item = lista.firstWhere(
+    (item) => item['value'] == tipoComprobante,
+    orElse: () => const {},
+  );
+  return item['label2'] ?? '';
+}
+
+String formatTipoComprobanteTitulo(String tipoComprobante) {
+  List<Map<String, String>> lista = tipoComprobantesVerVenta;
+  Map<String, String> item = lista.firstWhere(
+    (item) => item['value'] == tipoComprobante,
+    orElse: () => const {},
+  );
+  return item['label'] ?? '';
+}
+
+String formatTipoDocumento(String tipo) {
+  List<Map<String, String>> lista = tipoDocumento;
+  Map<String, String> item = lista.firstWhere(
+    (item) => item['value'] == tipo,
+    orElse: () => const {},
+  );
+  return item['label'] ?? '';
+}

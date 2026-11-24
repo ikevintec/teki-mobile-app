@@ -1,0 +1,785 @@
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
+import 'package:teki_app/src/providers/distribuidor/bonificaciones_provider.dart';
+import 'package:teki_app/src/presentation/screens/pedidos/bonificaciones_panel.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:get/route_manager.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:reactive_forms/reactive_forms.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/presentation/screens/sale/client/client_sale_screen.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/widgets/product_item_card.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/widgets/search_products.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_product_view.dart';
+import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/aviso_faltante.dart';
+import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
+import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
+import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
+import 'package:teki_app/src/presentation/widgets/switch/custom_switch.dart';
+import 'package:teki_app/src/presentation/widgets/text_field/dropdown_form_field_section.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
+import 'package:teki_app/src/utils/constants.dart';
+import 'package:teki_app/src/utils/formats.dart';
+
+class ProductsSaleScreen extends ConsumerStatefulWidget {
+  final int? id;
+  final int? quotationId;
+  final int? quotationIdForSale;
+  const ProductsSaleScreen({
+    super.key,
+    this.id,
+    this.quotationId,
+    this.quotationIdForSale,
+  });
+
+  @override
+  ConsumerState<ProductsSaleScreen> createState() => _ProductsSaleScreenState();
+}
+
+class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
+  Timer? _debounce; // Timer para debounce
+  late FocusNode _listFocusNode; // Focus node para toda la lista
+
+  final ScrollController _scrollController = ScrollController();
+
+  void _initializeFormArray() {
+    final products = ref.read(productSaleProvider).productsSales;
+    final formArray = form.control('products') as FormArray;
+    formArray.clear();
+    for (final product in products) {
+      formArray.add(
+        FormGroup({
+          'description': FormControl<String>(
+            value: "",
+            validators: [Validators.required, Validators.minLength(3)],
+          ),
+          'price': FormControl<double>(
+            value: product.precioVentaUnitario ?? 0.0,
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+          // Cantidad decimal (paridad web: pKeyFilter num + min 0.01),
+          // p.ej. productos por peso.
+          'quantity': FormControl<double>(
+            value: (product.cantidad ?? 1).toDouble(),
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+        }),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _listFocusNode = FocusNode();
+    _initializeFormArray();
+    // Sincronizar también cambios externos (selector de precio/promociones)
+    // antes de que perder el foco pueda reenviar valores anteriores del formulario.
+    ref.listenManual(productSaleProvider, (_, actual) {
+      if (mounted) {
+        _syncFormArrayWithProvider(actual.productsSales, form, actual.incIgv);
+      }
+    });
+    // Listener para detectar cuando se pierde el focus de toda la lista
+    _listFocusNode.addListener(() {
+      if (!_listFocusNode.hasFocus) {
+        _syncAllProductsToProvider();
+      }
+    });
+
+    final providerProductSale = ref.read(productSaleProvider.notifier);
+    // Si la búsqueda local está activa, precargar los productos planos de forma
+    // asíncrona (no bloquea la carga de la pantalla ni el login).
+    providerProductSale.ensureLocalProductsLoaded();
+    Future.microtask(() {
+      providerProductSale.loadInitialData(
+        widget.id,
+        quotationId: widget.quotationId,
+        quotationIdForSale: widget.quotationIdForSale,
+      );
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
+  }
+
+  void _syncAllProductsToProvider() {
+    // Recopilar todos los datos de los formularios
+    final formArray = form.control('products') as FormArray;
+    final formsData = <Map<String, dynamic>>[];
+
+    for (int i = 0; i < formArray.controls.length; i++) {
+      final formGroup = formArray.controls[i] as FormGroup;
+      formsData.add({
+        'price': formGroup.control('price').value ?? 0.0,
+        'description': formGroup.control('description').value ?? '',
+        'quantity': formGroup.control('quantity').value ?? 1,
+      });
+    }
+
+    // Llamar al método global del provider
+    ref.read(productSaleProvider.notifier).syncAllProductsFromForms(formsData);
+  }
+
+  @override
+  void dispose() {
+    _listFocusNode.dispose();
+    _debounce?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  final form = FormGroup({
+    'products': FormArray(
+      [
+        FormGroup({
+          'description': FormControl<String>(
+            value: "",
+            validators: [Validators.required, Validators.minLength(3)],
+          ),
+          'price': FormControl<double>(
+            value: 0.0,
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+          'quantity': FormControl<double>(
+            value: 1.0,
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+        }),
+      ],
+      validators: [Validators.minLength(1)],
+    ),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = ref.watch(productSaleProvider);
+    final notifier = ref.read(productSaleProvider.notifier);
+    final isLoading = provider.isLoading;
+    final isBarcodeSearching = provider.isBarcodeSearching;
+    final products = provider.productsSales;
+    final ticketP = ref.watch(ticketProvider);
+    final preciosComerciales =
+        ref.watch(sesionProvider).comercial?.activo == true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final actual = ref.read(productSaleProvider);
+      _syncFormArrayWithProvider(actual.productsSales, form, actual.incIgv, () {
+        if (!_scrollController.hasClients) return;
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+        );
+      });
+    });
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(72),
+        child: CustomAppBar(
+          navigateName: ticketP.tituloFlujo,
+          subtitle: ticketP.subtituloPaso('Escoge los productos'),
+        ),
+      ),
+      body: isLoading
+          ? ScreenLoader(message: 'Cargando Información')
+          : ReactiveForm(
+              formGroup: form,
+              child: Container(
+                color: ColorSchema.primaryColor,
+                child: Column(
+                  children: [
+                    SearchProducts(form: form),
+                    BonificacionesPanel(
+                      selectorCompacto: true,
+                      accionesCabecera: !preciosComerciales
+                          ? null
+                          : PopupMenuButton<String>(
+                              tooltip: 'Agregar producto',
+                              onSelected: (accion) {
+                                if (accion == 'crear') {
+                                  Get.toNamed(AppRoutes.createProduct);
+                                } else {
+                                  notifier.createItemForm();
+                                }
+                              },
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(
+                                  value: 'crear',
+                                  child: ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(Icons.add),
+                                    title: Text('Crear Producto'),
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'libre',
+                                  child: ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(Icons.edit_note),
+                                    title: Text('Producto Libre'),
+                                  ),
+                                ),
+                              ],
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Agregar',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.expand_more,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                    ),
+
+                    // Con el teclado abierto se oculta: en pantallas chicas
+                    // (iPhone SE) la columna se desbordaba 15 px.
+                    if (!preciosComerciales &&
+                        MediaQuery.viewInsetsOf(context).bottom == 0)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 20,
+                          top: 15,
+                          right: 20,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  Get.toNamed(AppRoutes.createProduct);
+                                },
+                                borderRadius: BorderRadius.circular(30),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add, color: Colors.white),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Crear Producto',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  notifier.createItemForm();
+                                },
+                                borderRadius: BorderRadius.circular(30),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.edit_note,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Producto Libre',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    Container(
+                      padding: const EdgeInsets.only(
+                        top: 20,
+                        bottom: 10,
+                        left: 20,
+                        right: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(40),
+                          topRight: Radius.circular(40),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(
+                              top: 3,
+                              bottom: 5,
+                              left: 16,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                SizedBox(
+                                  width: 100,
+                                  child: DropdownFormFieldSection(
+                                    label: "",
+                                    hint: "Elige una moneda",
+                                    items: ref
+                                        .watch(productSaleProvider)
+                                        .currencies
+                                        .map((c) => c.codigoMoneda!)
+                                        .toList(),
+                                    selectionItem:
+                                        provider.currency?.codigoMoneda,
+                                    onChanged: (value) {
+                                      notifier.setCurrency(value!);
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 160,
+                                  child: CustomSwitch(
+                                    title: "Inc. IGV",
+                                    border: false,
+                                    value: provider.incIgv,
+                                    onChanged: notifier.setIncIgv,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Expanded(
+                      child: Container(
+                        color: Colors.white,
+                        child: products.isEmpty
+                            ? Center(
+                                child: Text(
+                                  "Aun no hay productos seleccionados",
+                                ),
+                              )
+                            : Focus(
+                                focusNode: _listFocusNode,
+                                child: ReactiveFormArray(
+                                  formArray:
+                                      form.control('products') as FormArray,
+                                  builder: (context, formArray, child) {
+                                    final controls = formArray.controls;
+                                    final visibleItems =
+                                        products.length < controls.length
+                                        ? products.length
+                                        : controls.length;
+                                    return Stack(
+                                      children: [
+                                        ListView.builder(
+                                          controller: _scrollController,
+                                          itemCount: visibleItems,
+                                          itemBuilder: (context, index) {
+                                            final formGroup =
+                                                formArray.controls[index]
+                                                    as FormGroup;
+                                            if (products[index]
+                                                    .esBonificacion ==
+                                                true) {
+                                              return ListTile(
+                                                leading: const Icon(
+                                                  Icons.card_giftcard,
+                                                ),
+                                                title: Text(
+                                                  products[index].descripcion ??
+                                                      'Bonificación',
+                                                ),
+                                                subtitle: Text(
+                                                  '${products[index].cantidad} de regalo · se recalcula según la promoción',
+                                                ),
+                                              );
+                                            }
+                                            return Column(
+                                              children: [
+                                                DismissibleActionWidget(
+                                                  actions: [
+                                                    if (products[index]
+                                                            .producto !=
+                                                        null)
+                                                      DismissibleActionData(
+                                                        type:
+                                                            DismissibleActionType
+                                                                .edit,
+                                                        label: 'Ver',
+                                                        icon: Icons.visibility,
+                                                        backgroundColor:
+                                                            ColorSchema
+                                                                .primaryColor,
+                                                        onTap: () {
+                                                          showCustomModal(
+                                                            context: context,
+                                                            child: ModalProductView(
+                                                              product:
+                                                                  products[index]
+                                                                      .producto!,
+                                                              index: index,
+                                                            ),
+                                                            tittle:
+                                                                "Ver Producto",
+                                                            allowButtons: false,
+                                                          );
+                                                        },
+                                                      ),
+                                                    if (_requiresSeriesValidation(
+                                                      products[index].producto,
+                                                    ))
+                                                      DismissibleActionData(
+                                                        type:
+                                                            DismissibleActionType
+                                                                .edit,
+                                                        label: 'Series',
+                                                        icon: Icons.list_alt,
+                                                        backgroundColor:
+                                                            ColorSchema
+                                                                .primaryColor
+                                                                .withValues(
+                                                                  alpha: 0.8,
+                                                                ),
+                                                        onTap: () {
+                                                          showSeriesConfigSheet(
+                                                            context,
+                                                            ticketDetail:
+                                                                products[index],
+                                                            index: index,
+                                                          );
+                                                        },
+                                                      ),
+                                                    if (products[index]
+                                                            .comandaDetalle ==
+                                                        null)
+                                                      DismissibleActionData(
+                                                        type:
+                                                            DismissibleActionType
+                                                                .edit,
+                                                        label: 'Eliminar',
+                                                        icon: Icons.delete,
+                                                        backgroundColor:
+                                                            Colors.redAccent,
+                                                        onTap: () {
+                                                          Future.delayed(
+                                                            const Duration(
+                                                              milliseconds: 150,
+                                                            ),
+                                                            () {
+                                                              ref
+                                                                  .read(
+                                                                    productSaleProvider
+                                                                        .notifier,
+                                                                  )
+                                                                  .removeProductSale(
+                                                                    index,
+                                                                  );
+                                                            },
+                                                          );
+                                                        },
+                                                      ),
+                                                  ],
+                                                  child: ProductItemCard(
+                                                    key: UniqueKey(),
+                                                    productTicketDetail:
+                                                        products[index],
+                                                    index: index,
+                                                    formGroup: formGroup,
+                                                    onQuantityChanged:
+                                                        _syncAllProductsToProvider,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 10),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                      ),
+                    ),
+
+                    Container(
+                      padding: const EdgeInsets.only(
+                        top: 5,
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                      ),
+                      //add border top
+                      decoration: BoxDecoration(color: Colors.white),
+                      child: Column(
+                        children: [
+                          Builder(
+                            builder: (context) =>
+                                SummaryBarSales(showIndicatorKeyboard: true),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed:
+                                      isBarcodeSearching ||
+                                          provider.error != null ||
+                                          !ref
+                                              .watch(bonificacionesProvider)
+                                              .puedeEnviar
+                                      ? null
+                                      : () {
+                                          form.markAllAsTouched();
+
+                                          if (form.valid) {
+                                            final seriesInvalidas = products
+                                                .where(
+                                                  (p) =>
+                                                      _requiresSeriesValidation(
+                                                        p.producto,
+                                                      ) &&
+                                                      (p.lotes?.length ?? 0) !=
+                                                          (p.cantidad ?? 1)
+                                                              .toInt(),
+                                                )
+                                                .toList();
+                                            if (seriesInvalidas.isNotEmpty) {
+                                              avisarFaltante(
+                                                context,
+                                                "Configura las series de todos los productos (${seriesInvalidas.length} pendiente${seriesInvalidas.length > 1 ? 's' : ''})",
+                                              );
+                                              return;
+                                            }
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ClientSaleScreen(),
+                                              ),
+                                            );
+                                          }
+                                          final faltante = _faltanteEnLineas(
+                                            form,
+                                            products,
+                                          );
+                                          if (faltante != null) {
+                                            avisarFaltante(context, faltante);
+                                          }
+                                        },
+                                  style: estiloAccionPrincipal,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(ticketP.continueButtonLabel),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.arrow_forward_ios),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+void showSettingsModal(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.white,
+        title: const Text("Opciones"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.filter_list),
+              title: Text('Filtrar productos'),
+              onTap: () {
+                // lógica para filtrar
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('Configuraciones generales'),
+              onTap: () {
+                // lógica para ir a configuraciones
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Cerrar",
+              style: TextStyle(
+                color: ColorSchema.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _syncFormArrayWithProvider(
+  List<TicketDetail> products,
+  FormGroup form,
+  bool incIgv, [
+  void Function()? scroll,
+]) {
+  final formArray = form.control('products') as FormArray;
+
+  if (formArray.controls.length != products.length) {
+    formArray.clear();
+    for (int i = 0; i < products.length; i++) {
+      final product = products[i];
+      formArray.add(
+        FormGroup({
+          'description': FormControl<String>(
+            value: product.descripcion == ''
+                ? "Producto ${i + 1}"
+                : product.descripcion,
+            validators: [Validators.required, Validators.minLength(3)],
+          ),
+          'price': FormControl<double>(
+            value:
+                (incIgv
+                    ? product.precioVentaUnitario
+                    : product.valorUnitario) ??
+                0,
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+          // Cantidad decimal (paridad web: pKeyFilter num + min 0.01),
+          // p.ej. productos por peso.
+          'quantity': FormControl<double>(
+            value: (product.cantidad ?? 1).toDouble(),
+            validators: [Validators.required, Validators.min(0.01)],
+          ),
+        }),
+      );
+    }
+    if (scroll != null && products.length > 5) {
+      scroll();
+    }
+  } else {
+    for (int i = 0; i < formArray.controls.length; i++) {
+      final control = formArray.controls[i] as FormGroup;
+      final cantidad = (products[i].cantidad ?? 1).toDouble();
+      final precio = products[i].precioVentaUnitario ?? 0.0;
+      final precioUnitario = products[i].valorUnitario ?? 0.0;
+      if (control.control('quantity').value != cantidad) {
+        control.control('quantity').updateValue(cantidad);
+      }
+      final precioControl = control.control('price').value;
+      if (precioControl != precio && incIgv) {
+        control.control('price').updateValue(precio);
+      } else if (precioControl != precioUnitario && !incIgv) {
+        control.control('price').updateValue(precioUnitario);
+      }
+      control
+          .control('description')
+          .updateValue(
+            products[i].descripcion == ''
+                ? "Producto ${i + 1}"
+                : products[i].descripcion,
+            emitEvent: false,
+          );
+      control.control('quantity').markAsTouched();
+      control.control('price').markAsTouched();
+      control.control('description').markAsTouched();
+    }
+  }
+}
+
+/// Qué le falta a la venta para continuar, dicho con el producto concreto
+/// (la línea en rojo sola no explica qué corregir). Null si no falta nada.
+String? _faltanteEnLineas(FormGroup form, List<TicketDetail> products) {
+  final formArray = form.control('products') as FormArray;
+  if (formArray.controls.isEmpty || products.isEmpty) {
+    return 'Agrega al menos un producto para continuar.';
+  }
+  for (var i = 0; i < formArray.controls.length && i < products.length; i++) {
+    final linea = formArray.controls[i] as FormGroup;
+    if (linea.valid) continue;
+    final nombre = (products[i].descripcion ?? '').trim();
+    final cual = nombre.isEmpty ? 'la línea ${i + 1}' : '«$nombre»';
+    if (linea.control('description').invalid) {
+      return 'Falta el nombre del producto en la línea ${i + 1}.';
+    }
+    if (linea.control('price').invalid) return 'Falta el precio de $cual.';
+    if (linea.control('quantity').invalid) return 'Falta la cantidad de $cual.';
+  }
+  return null;
+}
+
+bool _requiresSeriesValidation(Product? product) {
+  if (product == null) return false;
+  return product.tipoLote == 'SERIE' &&
+      (product.validacionLote ?? false) &&
+      (product.tipoProducto == 'ARTICULO' || product.tipoProducto == 'INSUMO');
+}

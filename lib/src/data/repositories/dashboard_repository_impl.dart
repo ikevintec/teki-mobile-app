@@ -1,0 +1,53 @@
+import 'package:teki_app/src/data/models/response/daily_sales_summary.dart';
+import 'package:teki_app/src/data/models/response/dashboard_analytics.dart';
+import 'package:teki_app/src/data/models/response/top_product.dart';
+import 'package:teki_app/src/data/models/teki_model/total_counter.dart';
+import 'package:teki_app/src/domain/datasource/dashboard_datasource.dart';
+import 'package:teki_app/src/domain/repositories/dashboard_repository.dart';
+import 'package:teki_app/src/data/datasource/remote_dashboard.dart';
+
+class DashboardRepositoryImpl extends DashboardRepository {
+  final DashboardDatasource dashboardDatasource;
+
+  DashboardRepositoryImpl({DashboardDatasource? dashboardDatasource})
+      : dashboardDatasource =
+            dashboardDatasource ?? RemoteDashboardDatasource();
+
+  @override
+  Future<TotalCounter> getSalesCount(int idPuntoVenta) {
+    return dashboardDatasource.getSalesCount(idPuntoVenta);
+  }
+
+  @override
+  Future<TotalCounter> getCustomerCount() {
+    return dashboardDatasource.getCustomerCount();
+  }
+
+  /// ✅ Nuevo método: obtiene montos por moneda con filtros
+  Future<List<Map<String, dynamic>>> getAmountsByCurrency(
+      Map<String, dynamic> params) {
+    return dashboardDatasource.getAmountsByCurrency(params);
+  }
+
+  @override
+  Future<DailySalesSummary> getTodaySalesSummary(Map<String, dynamic> params) {
+    return dashboardDatasource.getTodaySalesSummary(params);
+  }
+
+  @override
+  Future<List<TopProduct>> getTopProducts(Map<String, dynamic> params) {
+    return dashboardDatasource.getTopProducts(params);
+  }
+
+  @override
+  Future<List<TotalCategory>> getTotalCategories(Map<String, dynamic> params) =>
+      dashboardDatasource.getTotalCategories(params);
+
+  @override
+  Future<List<ScheduleSale>> getSalesBySchedule(Map<String, dynamic> params) =>
+      dashboardDatasource.getSalesBySchedule(params);
+
+  @override
+  Future<List<VendorSummary>> getVendorsSummary(Map<String, dynamic> params) =>
+      dashboardDatasource.getVendorsSummary(params);
+}

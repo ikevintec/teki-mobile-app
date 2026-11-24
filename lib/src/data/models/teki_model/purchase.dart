@@ -1,0 +1,136 @@
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/company.dart';
+import 'package:teki_app/src/data/models/teki_model/office.dart';
+import 'package:teki_app/src/data/models/teki_model/purchase_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/sale_station.dart';
+import 'package:teki_app/src/data/models/teki_model/supplier.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_fee.dart';
+import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/utils/formats.dart';
+
+class Purchase {
+  final int? id;
+  final String? tipoComprobante;
+  final String? comprobante;
+  final DateTime? fecha;
+  final String? numeroDocumentoProveedor;
+  final String? nombreProveedor;
+  final Supplier? proveedor;
+  final String? tipoCompra;
+  final String? tipoOperacion;
+  final String? estadoOrdenCompra;
+  final int? diasCredito;
+  final String? codigoMoneda;
+  final List<PurchaseDetail>? items;
+  final Company? empresa;
+  final Office? puntoVenta;
+  final User? usuario;
+  final SaleStation? estacionVenta;
+  final String? uuid;
+  final CashRegisterDetail? movimientoCaja;
+  final double? totalCompra;
+  final bool? anulado;
+  final String? motivoAnulacion;
+  final bool? estado;
+  final DateTime? fechaEntrega;
+  final bool? incIgv;
+  final double? igv;
+  final String? observacion;
+  final List<TicketFee>? cuotas;
+  final bool? tieneNotaCredito;
+
+  Purchase({
+    this.id,
+    this.tipoComprobante,
+    this.comprobante,
+    this.fecha,
+    this.numeroDocumentoProveedor,
+    this.nombreProveedor,
+    this.proveedor,
+    this.tipoCompra,
+    this.tipoOperacion,
+    this.estadoOrdenCompra,
+    this.diasCredito,
+    this.codigoMoneda,
+    this.items,
+    this.empresa,
+    this.puntoVenta,
+    this.usuario,
+    this.estacionVenta,
+    this.uuid,
+    this.movimientoCaja,
+    this.totalCompra,
+    this.anulado,
+    this.motivoAnulacion,
+    this.estado,
+    this.fechaEntrega,
+    this.incIgv,
+    this.igv,
+    this.observacion,
+    this.cuotas,
+    this.tieneNotaCredito,
+  });
+
+  factory Purchase.fromJson(Map<String, dynamic> json) => Purchase(
+    id: json['id'],
+    tipoComprobante: json['tipoComprobante'],
+    comprobante: json['comprobante'],
+    fecha: json['fecha'] != null ? parseDateTimeFlexible(json['fecha']) : null,
+    numeroDocumentoProveedor: json['numeroDocumentoProveedor'],
+    nombreProveedor: json['nombreProveedor'],
+    proveedor: json['proveedor'] != null ? Supplier.fromJson(json['proveedor']) : null,
+    tipoCompra: json['tipoCompra'],
+    tipoOperacion: json['tipoOperacion'],
+    estadoOrdenCompra: json['estadoOrdenCompra'],
+    diasCredito: json['diasCredito'],
+    codigoMoneda: json['codigoMoneda'],
+    items: (json['items'] as List?)?.map((e) => PurchaseDetail.fromJson(e)).toList(),
+    empresa: json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
+    puntoVenta: json['puntoVenta'] != null ? Office.fromJson(json['puntoVenta']) : null,
+    usuario: json['usuario'] != null ? User.fromJson(json['usuario']) : null,
+    estacionVenta: json['estacionVenta'] != null ? SaleStation.fromJson(json['estacionVenta']) : null,
+    uuid: json['uuid'],
+    movimientoCaja: json['movimientoCaja'] != null ? CashRegisterDetail.fromJson(json['movimientoCaja']) : null,
+    totalCompra: (json['totalCompra'] as num?)?.toDouble(),
+    anulado: json['anulado'],
+    motivoAnulacion: json['motivoAnulacion'],
+    estado: json['estado'],
+    fechaEntrega: json['fechaEntrega'] != null ? parseDateTimeFlexible(json['fechaEntrega']) : null,
+    incIgv: json['incIgv'],
+    igv: (json['igv'] as num?)?.toDouble(),
+    observacion: json['observacion'],
+    cuotas: (json['cuotas'] as List?)?.map((e) => TicketFee.fromJson(e)).toList(),
+    tieneNotaCredito: json['tieneNotaCredito'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'tipoComprobante': tipoComprobante,
+    'comprobante': comprobante,
+    'fecha': fecha?.toIso8601String(),
+    'numeroDocumentoProveedor': numeroDocumentoProveedor,
+    'nombreProveedor': nombreProveedor,
+    'proveedor': proveedor?.toJson(),
+    'tipoCompra': tipoCompra,
+    'tipoOperacion': tipoOperacion,
+    'estadoOrdenCompra': estadoOrdenCompra,
+    'diasCredito': diasCredito,
+    'codigoMoneda': codigoMoneda,
+    'items': items?.map((e) => e.toJson()).toList(),
+    'empresa': empresa?.toJson(),
+    'puntoVenta': puntoVenta?.toJson(),
+    'usuario': usuario?.toJson(),
+    'estacionVenta': estacionVenta?.toJson(),
+    'uuid': uuid,
+    'movimientoCaja': movimientoCaja?.toJson(),
+    'totalCompra': totalCompra,
+    'anulado': anulado,
+    'motivoAnulacion': motivoAnulacion,
+    'estado': estado,
+    'fechaEntrega': fechaEntrega?.toIso8601String(),
+    'incIgv': incIgv,
+    'igv': igv,
+    'observacion': observacion,
+    'cuotas': cuotas?.map((e) => e.toJson()).toList(),
+  };
+}

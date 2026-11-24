@@ -1,6 +1,6 @@
 {
-    "name": "salespro_saas_admin",
-    "short_name": "salespro_saas_admin",
+    "name": "teki_app",
+    "short_name": "teki_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

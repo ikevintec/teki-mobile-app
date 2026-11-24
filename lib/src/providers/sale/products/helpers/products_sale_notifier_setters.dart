@@ -1,0 +1,1025 @@
+import 'package:teki_app/src/data/models/teki_model/product_price.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:teki_app/src/data/models/general/exchange.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product.dart';
+import 'package:teki_app/src/data/models/teki_model/batch_product_sale.dart';
+import 'package:teki_app/src/data/models/teki_model/product.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
+import 'package:teki_app/src/data/static/lists.dart';
+import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helper.dart';
+import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:uuid/uuid.dart';
+
+mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
+  Ref get ref;
+
+  SesionState get _sesionComercial {
+    final s = ref.read(sesionProvider);
+    return s.copyWith(comercial:s.comercial?.conCabecera(ref.read(ticketProvider).ticket.tipoPrecioCabeceraId));
+  }
+
+  bool get _isQuotation => ref.read(ticketProvider).isQuotation;
+
+  void setLoading(bool loading) {
+    state = state.copyWith(isLoading: loading);
+  }
+
+  void setError(String? error) {
+    state = state.copyWith(error: error, clearError: error == null);
+  }
+
+  void setPageNumber(int pageNumber) {
+    state = state.copyWith(pageNumber: pageNumber);
+  }
+
+  void setPaginacion(bool paginacion) {
+    state = state.copyWith(paginacion: paginacion);
+  }
+
+  void setPerPage(int perPage) {
+    state = state.copyWith(perPage: perPage);
+  }
+
+  void setSortField(String sortField) {
+    state = state.copyWith(sortField: sortField);
+  }
+
+  void setSortOrder(int sortOrder) {
+    state = state.copyWith(sortOrder: sortOrder);
+  }
+
+  void setFilterGlobal(String? filterGlobal) {
+    state = state.copyWith(filterGlobal: filterGlobal);
+  }
+
+  void setIdPuntoVenta(int? idPuntoVenta) {
+    state = state.copyWith(idPuntoVenta: idPuntoVenta);
+  }
+
+  void setIdPuntoVentaOrder(int? idPuntoVenta) {
+    state = state.copyWith(idPuntoVenta: idPuntoVenta);
+  }
+
+  void setIncIgv(bool incIgv) {
+    state = state.copyWith(incIgv: incIgv);
+    if (state.productsSales.isNotEmpty) {
+      calculoTotal();
+    }
+  }
+
+  void setProductsSaleEntity(List<TicketDetail> productsSales, {String? monedaOrigen,bool conservarPactos=true}) {
+    final sesion = _sesionComercial;
+    final updatedProductsSales = productsSales.map((product) {
+      return product.copyWith(
+        monedaOriginal: monedaOrigen ?? product.monedaOriginal,
+        // Retornables cargados (edición o venta desde cotización) conservan su
+        // precio negociado al cambiar cantidad o modalidad (paridad web).
+        precioManual: product.precioManual ||
+            (conservarPactos && ref.read(ticketProvider).isPedido) ||
+            productoConEnvase(product.producto, sesion),
+        origenPrecio: conservarPactos && product.tipoComercialId != null && product.esBonificacion != true ? 'PACTADO' : product.origenPrecio,
+      );
+    }).toList();
+    state = state.copyWith(productsSales: updatedProductsSales);
+    calculoTotal();
+  }
+
+  TicketDetail _withAutoSeries(TicketDetail td) {
+    if (td.producto?.tipoLote != 'SERIE') return td;
+    return td.copyWith(
+      lotes: _autoSelectSeries(td, _sesionComercial.office?.id),
+    );
+  }
+
+  void agregarProductoConPrecioManual(Product producto,double precio) {
+    if(!precio.isFinite || precio<0)throw StateError('El precio debe ser mayor o igual a cero.');
+    final s=_sesionComercial;
+    final codigo=s.office?.codigoAfectacionPorDefecto ?? producto.tipoAfectacion ?? '10';
+    final tipo=catalogo07.firstWhere((t)=>t['codigo']==codigo);
+    final factor=tipo['codigoRelacionado']=='1001'?1+(s.config?.igv ?? 0):1.0;
+    final unitario=state.incIgv?precio:precio*factor;
+    final linea=getTicketDetail(product:producto,sesion:s,isQuotation:_isQuotation,precioManual:unitario)
+      .copyWith(monedaOriginal:state.currency!.codigoMoneda,valorUnitario:unitario/factor);
+    state=state.copyWith(productsSales:[...state.productsSales,_withAutoSeries(linea)]);
+    state=setPurchasePriceExchange(currencies:state.currencies,currency:state.currency!,monedaOrigen:producto.moneda ?? 'PEN',
+      monedaDestino:state.currency!.codigoMoneda!,monto:linea.precioCompraUnitario,state:state,index:state.productsSales.length-1,sesion:s);
+    calculoTotal();
+  }
+
+  void setProductsSales(Product productsSales, int? index) {
+    // If an explicit index is given, just increment that item's quantity
+    if (index != null) {
+      final existing = state.productsSales[index];
+      final updated = _withAutoSeries(_lineaConCantidad(existing, (existing.cantidad ?? 0) + 1));
+      state = state.copyWith(
+        productsSales: List.from(state.productsSales)..[index] = updated,
+      );
+      calculoTotal();
+      return;
+    }
+
+    final sesion = _sesionComercial;
+    if (manejaEnvaseRetornable(
+      productsSales,
+      sesion,
+      isQuotation: _isQuotation,
+    )) {
+      // Cada selección permite una modalidad independiente. Convertir únicamente
+      // la nueva línea evita alterar precios manuales y costos ya convertidos.
+      final line = _withAutomaticPrice(
+        _withAutoSeries(
+          getTicketDetail(
+            product: productsSales,
+            sesion: sesion,
+            isQuotation: _isQuotation,
+          ),
+        ),
+      );
+      state = state.copyWith(productsSales: [...state.productsSales, line]);
+      state = setPurchasePriceExchange(
+        currencies: state.currencies,
+        currency: state.currency!,
+        monedaOrigen: productsSales.moneda ?? 'PEN',
+        monedaDestino: state.currency!.codigoMoneda!,
+        monto: line.precioCompraUnitario,
+        state: state,
+        index: state.productsSales.length - 1,
+        sesion: sesion,
+      );
+      calculoTotal();
+      return;
+    }
+
+    // Check if this product exists as a locked check item
+    final hasCheckItem = state.productsSales.any(
+      (td) => (td.producto?.id ?? -1) == productsSales.id && td.comandaDetalle != null,
+    );
+
+    if (hasCheckItem) {
+      // Look for an extra (non-check) line for the same product
+      final extraIndex = state.productsSales.indexWhere(
+        (td) => (td.producto?.id ?? -1) == productsSales.id && td.comandaDetalle == null,
+      );
+      if (extraIndex != -1) {
+        // Increment the extra line
+        final existing = state.productsSales[extraIndex];
+        final updated = _withAutoSeries(_lineaConCantidad(existing, (existing.cantidad ?? 0) + 1));
+        state = state.copyWith(
+          productsSales: List.from(state.productsSales)..[extraIndex] = updated,
+        );
+        calculoTotal();
+      } else {
+        // Add a new extra line for this product
+        state = state.copyWith(
+          productsSales: [
+            ...state.productsSales,
+            _withAutoSeries(getTicketDetail(product: productsSales, sesion: _sesionComercial, isQuotation: _isQuotation)),
+          ],
+        );
+        setCurrency(state.currency!.codigoMoneda!);
+      }
+      return;
+    }
+
+    // Normal flow: no check item for this product
+    final existingIndex = state.productsSales.indexWhere(
+      (td) => (td.producto?.id ?? -1) == productsSales.id && td.esBonificacion != true &&
+          (_sesionComercial.comercial?.activo != true || (td.tipoComercialId == _sesionComercial.comercial?.cabecera &&
+            td.origenPrecio == 'AUTOMATICO')),
+    );
+    if (existingIndex != -1) {
+      final existing = state.productsSales[existingIndex];
+      final updated = _withAutoSeries(_lineaConCantidad(existing, (existing.cantidad ?? 0) + 1));
+      state = state.copyWith(
+        productsSales: List.from(state.productsSales)..[existingIndex] = updated,
+      );
+      calculoTotal();
+      return;
+    }
+    state = state.copyWith(
+      productsSales: [
+        ...state.productsSales,
+        _withAutoSeries(getTicketDetail(product: productsSales, sesion: _sesionComercial, isQuotation: _isQuotation)),
+      ],
+    );
+    setCurrency(state.currency!.codigoMoneda!);
+  }
+
+  /// Cambia la modalidad del envase retornable de una línea (canje, venta con
+  /// envase o préstamo). Un precio manual se conserva; si no, aplica la tarifa
+  /// automática de la modalidad. Espeja cambiarModoEnvase de la web.
+  void setModoEnvase(int index, ModoEnvase modo) {
+    if (index < 0 || index >= state.productsSales.length) return;
+    final line = state.productsSales[index];
+    final product = line.producto;
+    final sesion = _sesionComercial;
+    if (line.comandaDetalle != null ||
+        !manejaEnvaseRetornable(product, sesion, isQuotation: _isQuotation)) {
+      return;
+    }
+    if (modo == ModoEnvase.prestamo &&
+        !puedePrestarEnvase(ref.read(ticketProvider), sesion, state.productsSales)) {
+      return;
+    }
+    var updated = line.copyWith(
+      devolvioEnvase: modo == ModoEnvase.canje,
+      prestamoEnvase: modo == ModoEnvase.prestamo,
+    );
+    if (!line.precioManual) {
+      updated = _withAutomaticPrice(updated);
+    }
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)..[index] = updated,
+    );
+    calculoTotal();
+  }
+
+  /// Descarta el precio manual de un retornable y vuelve a la tarifa automática.
+  void restablecerPrecioEnvase(int index) {
+    if (index < 0 || index >= state.productsSales.length) return;
+    final line = state.productsSales[index];
+    if (line.comandaDetalle != null ||
+        !manejaEnvaseRetornable(line.producto, _sesionComercial,
+            isQuotation: _isQuotation)) {
+      return;
+    }
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)
+        ..[index] = _withAutomaticPrice(line.copyWith(precioManual: false)),
+    );
+    calculoTotal();
+  }
+
+  TicketDetail _withAutomaticPrice(TicketDetail line) {
+    final price = getAutomaticPrice(
+      line.producto!,
+      sesionParaLinea(line,_sesionComercial),
+      line.cantidad ?? 1,
+      conCanje: line.devolvioEnvase == true || line.prestamoEnvase == true,
+    );
+    final sesion = _sesionComercial;
+    final tipoIgv = catalogo07.firstWhere(
+      (tipo) => tipo['codigo'] == line.codigoTipoAfectacionIgv,
+    );
+    final factorIgv = tipoIgv['codigoRelacionado'] == '1001'
+        ? 1 + (sesion.config?.igv ?? 0)
+        : 1.0;
+    final precioConvertido = exchange(
+      Exchance(
+        codigoMonedaOrigen: line.producto!.moneda ?? 'PEN',
+        codigoMonedaDestino: state.currency!.codigoMoneda!,
+        montoOrigen: price,
+      ),
+      state.currencies,
+    );
+    // Solo cambia el precio de esta línea. Sus costos ya están en la moneda
+    // de venta; reconvertirlos alteraría también la utilidad de otras líneas.
+    return line.copyWith(
+      precioVentaUnitario: precioConvertido,
+      valorUnitario: precioConvertido / factorIgv,
+      montoOriginal: state.incIgv ? price : price / factorIgv,
+      monedaOriginal: line.producto!.moneda ?? 'PEN',
+    );
+  }
+
+  void setCurrency(String codigoMoneda, [int? index]) {
+    for (var i = 0; i < state.productsSales.length; i++) {
+      if (index != null && i == index) continue;
+      final double montoAnterior = state.incIgv
+          ? state.productsSales[i].precioVentaUnitario!
+          : state.productsSales[i].valorUnitario!;
+      double? montoOriginal = state.productsSales[i].montoOriginal;
+      final monedaOriginal = state.productsSales[i].monedaOriginal ??
+          state.productsSales[i].producto!.moneda;
+      if (montoOriginal == null) {
+        state = state.copyWith(
+          productsSales: List.from(state.productsSales)
+            ..[i] = state.productsSales[i].copyWith(
+              montoOriginal: montoAnterior,
+            ),
+        );
+        montoOriginal = montoAnterior;
+      }
+      state = setPriceExchange(
+          currencies: state.currencies,
+          currency: state.currency!,
+          monedaOrigen: monedaOriginal!,
+          monedaDestino: codigoMoneda,
+          monto: montoOriginal,
+          state: state,
+          index: i,
+          sesion: _sesionComercial);
+      if (state.productsSales[i].producto != null) {
+        final precioCompra = state.productsSales[i].precioCompraUnitario ?? 
+                             state.productsSales[i].producto!.precioCompraUnidad ?? 0;
+        state = setPurchasePriceExchange(
+            currencies: state.currencies,
+            currency: state.currency!,
+            monedaOrigen: monedaOriginal,
+            monedaDestino: codigoMoneda,
+            monto: precioCompra,
+            state: state,
+            index: i,
+            sesion: _sesionComercial);
+      }
+    }
+    state = state.copyWith(
+        currency: state.currencies.firstWhere(
+      (currency) => currency.codigoMoneda == codigoMoneda,
+      orElse: () => state.currencies[0],
+    ));
+    calculoTotal();
+  }
+
+  TicketDetail _lineaConCantidad(TicketDetail linea, double cantidad) {
+    final sesion = _sesionComercial;
+    final esPedido = ref.read(ticketProvider).isPedido;
+    final conserva = conservaPrecioAlCambiarCantidad(linea, sesion,
+        isPedido: esPedido, isQuotation: _isQuotation);
+    final actualizada = changeQtyTicketDetail(
+      ticketDetail: linea,
+      quantity: cantidad,
+      sesion: sesion,
+      isPedido: esPedido,
+      isQuotation: _isQuotation,
+    );
+    // Catálogo en moneda original: actualizar importe y neto juntos, sin tocar
+    // costos ya convertidos ni importes de las demás líneas.
+    return conserva ? actualizada : _withAutomaticPrice(actualizada);
+  }
+
+  void setCantidadProductSale(int index, double cantidad) {
+    if (state.productsSales[index].comandaDetalle != null || state.productsSales[index].esBonificacion == true) return;
+    final existingTicketDetail = state.productsSales[index];
+    if (manejaEnvaseRetornable(existingTicketDetail.producto,
+        _sesionComercial, isQuotation: _isQuotation)) {
+      final line = existingTicketDetail.copyWith(cantidad: cantidad);
+      state = state.copyWith(
+        productsSales: List.from(state.productsSales)
+          ..[index] = line.precioManual ? line : _withAutomaticPrice(line),
+      );
+      calculoTotal();
+      return;
+    }
+    if (existingTicketDetail.producto != null) {
+      final updatedTicketDetail = _lineaConCantidad(existingTicketDetail, cantidad);
+      state = state.copyWith(
+        productsSales: List.from(state.productsSales)
+          ..[index] = updatedTicketDetail,
+      );
+    } else {
+      final updatedTicketDetail = existingTicketDetail.copyWith(
+        cantidad: cantidad,
+      );
+      state = state.copyWith(
+        productsSales: List.from(state.productsSales)
+          ..[index] = updatedTicketDetail,
+      );
+    }
+    calculoTotal();
+  }
+
+  void setPrecioProductSale(int index, double precio) {
+    final existingTicketDetail = state.productsSales[index];
+    if(existingTicketDetail.esBonificacion == true)return;
+    final line = existingTicketDetail.copyWith(origenPrecio:existingTicketDetail.tipoComercialId != null?'MANUAL':existingTicketDetail.origenPrecio);
+    final updatedTicketDetail = state.incIgv
+        ? line.copyWith(
+            precioVentaUnitario: precio,
+            montoOriginal: precio,
+            monedaOriginal: state.currency!.codigoMoneda,
+            precioManual: true)
+        : line.copyWith(
+            valorUnitario: precio,
+            montoOriginal: precio,
+            monedaOriginal: state.currency!.codigoMoneda,
+            precioManual: true);
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)
+        ..[index] = updatedTicketDetail,
+    );
+    calculoTotal();
+  }
+
+  /// Cambia el tipo de afectación IGV (catálogo 07) del item y recalcula.
+  /// calculoTotal ya ramifica por grupo tributario (gravado, exonerado,
+  /// inafecto, exportación, gratuitas) con las mismas reglas que la web.
+  void setAfectacionIgvProductSale(int index, String codigoAfectacion) {
+    final existingTicketDetail = state.productsSales[index];
+    final updatedTicketDetail = existingTicketDetail.copyWith(
+      codigoTipoAfectacionIgv: codigoAfectacion,
+    );
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)
+        ..[index] = updatedTicketDetail,
+    );
+    calculoTotal();
+  }
+
+  void setDescriptionProductSale(int index, String description) {
+    final existingTicketDetail = state.productsSales[index];
+    final updatedTicketDetail =
+        existingTicketDetail.copyWith(descripcion: description);
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)
+        ..[index] = updatedTicketDetail,
+    );
+  }
+
+  void syncAllProductsFromForms(List<Map<String, dynamic>> formsData) {
+    final sesion = _sesionComercial;
+    final updatedProducts = <TicketDetail>[];
+
+    for (int i = 0; i < state.productsSales.length; i++) {
+      final existingTicketDetail = state.productsSales[i];
+      if(existingTicketDetail.esBonificacion == true || i>=formsData.length){updatedProducts.add(existingTicketDetail);continue;}
+      final formData = formsData[i];
+
+      final description = formData['description'] as String? ?? existingTicketDetail.descripcion ?? '';
+      final quantity = double.tryParse(formData['quantity'].toString()) ?? existingTicketDetail.cantidad ?? 1.0;
+      final quantityChanged = quantity != (existingTicketDetail.cantidad ?? 1.0);
+
+      TicketDetail updatedTicketDetail;
+
+      // When quantity changes on a product item, recalculate price via getPriceProduct
+      // so mayoreo (wholesale) tiers are applied correctly.
+      if (quantityChanged && existingTicketDetail.producto != null) {
+        if (manejaEnvaseRetornable(existingTicketDetail.producto, sesion,
+            isQuotation: _isQuotation)) {
+          final line = existingTicketDetail.copyWith(
+            cantidad: quantity, descripcion: description,
+          );
+          updatedTicketDetail = line.precioManual ? line : _withAutomaticPrice(line);
+        } else {
+          updatedTicketDetail = _lineaConCantidad(existingTicketDetail, quantity).copyWith(descripcion: description);
+        }
+      } else {
+        final precio = formData['price'] as double? ?? existingTicketDetail.precioVentaUnitario ?? 0.0;
+        final precioActual = (state.incIgv
+                ? existingTicketDetail.precioVentaUnitario
+                : existingTicketDetail.valorUnitario) ??
+            0.0;
+        final precioManual = existingTicketDetail.precioManual ||
+            (precio - precioActual).abs() > 0.000001;
+        updatedTicketDetail = state.incIgv
+            ? existingTicketDetail.copyWith(
+                precioVentaUnitario: precio,
+                montoOriginal: precio,
+                monedaOriginal: state.currency!.codigoMoneda,
+                descripcion: description,
+                cantidad: quantity,
+                precioManual: precioManual,
+                origenPrecio:precioManual && existingTicketDetail.tipoComercialId!=null ? 'MANUAL' : existingTicketDetail.origenPrecio,
+              )
+            : existingTicketDetail.copyWith(
+                valorUnitario: precio,
+                montoOriginal: precio,
+                monedaOriginal: state.currency!.codigoMoneda,
+                descripcion: description,
+                cantidad: quantity,
+                precioManual: precioManual,
+                origenPrecio:precioManual && existingTicketDetail.tipoComercialId!=null ? 'MANUAL' : existingTicketDetail.origenPrecio,
+              );
+      }
+
+      // Auto-seleccionar series cuando la cantidad cambia en productos SERIE
+      if (quantityChanged && updatedTicketDetail.producto?.tipoLote == 'SERIE') {
+        updatedTicketDetail = updatedTicketDetail.copyWith(
+          lotes: _autoSelectSeries(
+            updatedTicketDetail,
+            sesion.office?.id,
+            previousLotes: existingTicketDetail.lotes,
+          ),
+        );
+      }
+
+      updatedProducts.add(updatedTicketDetail);
+    }
+
+    state = state.copyWith(productsSales: updatedProducts);
+    calculoTotal();
+  }
+
+  List<BatchProductSale> _autoSelectSeries(
+    TicketDetail ticketDetail,
+    int? officeId, {
+    List<BatchProductSale>? previousLotes,
+  }) {
+    final producto = ticketDetail.producto;
+    if (producto == null) return [];
+
+    final available = <BatchProduct>[];
+    for (final inv in (producto.inventarios ?? [])) {
+      if (inv.puntoVenta?.id != officeId) continue;
+      for (final lote in (inv.lotes ?? [])) {
+        if (lote.tipoLote == 'SERIE' && (lote.cantidad ?? 0) == 1) {
+          available.add(lote);
+        }
+      }
+    }
+
+    final newQty = (ticketDetail.cantidad ?? 1).toInt();
+
+    // Sin selección previa: tomar las primeras N disponibles
+    if (previousLotes == null || previousLotes.isEmpty) {
+      return available
+          .take(newQty)
+          .map((s) => BatchProductSale(lote: s, cantidad: 1))
+          .toList();
+    }
+
+    // Mantener solo las series previamente seleccionadas que siguen disponibles
+    final availableIds = available.map((a) => a.id).toSet();
+    final currentSelection = previousLotes
+        .where((l) => availableIds.contains(l.lote?.id))
+        .toList();
+
+    if (newQty <= currentSelection.length) {
+      // Reducir: quitar desde el final respetando el orden de selección
+      return currentSelection.take(newQty).toList();
+    } else {
+      // Aumentar: agregar las siguientes disponibles que no estén ya seleccionadas
+      final selectedIds = currentSelection.map((l) => l.lote?.id).toSet();
+      for (final serie in available) {
+        if (currentSelection.length >= newQty) break;
+        if (!selectedIds.contains(serie.id)) {
+          currentSelection.add(BatchProductSale(lote: serie, cantidad: 1));
+          selectedIds.add(serie.id);
+        }
+      }
+      return currentSelection;
+    }
+  }
+
+  void updateLotesProductSale(int index, List<BatchProductSale> lotes) {
+    final updatedTicketDetail = state.productsSales[index].copyWith(lotes: lotes);
+    state = state.copyWith(
+      productsSales: List.from(state.productsSales)..[index] = updatedTicketDetail,
+    );
+  }
+
+  void createItemForm() {
+    const uuid = Uuid();
+    TicketDetail ticketDetail = TicketDetail(
+      producto: null,
+      codigoProducto: null,
+      descripcion: '',
+      cantidad: 1,
+      detalle: '',
+      codigoUnidadMedida: 'NIU',
+      // Paridad web: el item libre respeta la afectación por defecto del
+      // punto de venta (p. ej. exonerado en Amazonía); '10' solo de último.
+      codigoTipoAfectacionIgv: ref
+              .read(sesionProvider)
+              .office
+              ?.codigoAfectacionPorDefecto ??
+          '10',
+      precioVentaUnitario: 0.0,
+      valorUnitario: 0.0,
+      valorVenta: 0.0,
+      precioTotal: 0.0,
+      monedaOriginal: state.currency!.codigoMoneda,
+      montoOriginal: 0.0,
+      esAnticipo: false,
+      igv: 0.0,
+      uuid: uuid.v4(),
+    );
+    state = state.copyWith(
+      productsSales: [...state.productsSales, ticketDetail],
+    );
+    calculoTotal();
+  }
+
+  void applySpecificPrice(int index, double rawPrecio) {
+    final sesion = _sesionComercial;
+    final ticketDetail = state.productsSales[index];
+    final product = ticketDetail.producto;
+    if (product == null) return;
+
+    final igv = (sesion.config!.igv ?? 0.0).toDouble();
+    final porcentajeRecargo =
+        (sesion.config!.porcentajeRecargoPorItem ?? 0.0).toDouble();
+
+    double price = rawPrecio;
+
+    if (product.igv == false) {
+      price *= (1 + igv);
+    }
+
+    if (porcentajeRecargo > 0) {
+      price = (price / (1 + igv + (porcentajeRecargo / 100))) * (1 + igv);
+    }
+
+    setPrecioProductSale(index, price);
+  }
+
+  /// Reutiliza altas/cálculo actuales y restaura el carrito completo si una línea ya no es utilizable.
+  void agregarCanasta(List<Product> productos,Map<int,double> cantidades) {
+    final antes=state;
+    try{
+      for(final p in productos){
+        final previos=[...state.productsSales];
+        setProductsSales(p,null);
+        final index=state.productsSales.indexWhere((l)=>!previos.any((a)=>a.uuid==l.uuid) ||
+          previos.any((a)=>a.uuid==l.uuid && a.cantidad!=l.cantidad));
+        if(index<0)throw StateError('No se pudo agregar ${p.nombre}.');
+        setCantidadProductSale(index,(state.productsSales[index].cantidad ?? 1)+(cantidades[p.id] ?? 1)-1);
+      }
+    }catch(_){state=antes;calculoTotal();rethrow;}
+  }
+
+  void reemplazarLineasComerciales(List<TicketDetail> lineas) {
+    state = state.copyWith(productsSales: lineas);
+    calculoTotal();
+  }
+
+  void precioComercial(int index, ProductPrice precio) {
+    final actual = state.productsSales[index];
+    if(actual.esBonificacion == true) return;
+    final sesion = _sesionComercial;
+    final tipo = sesion.comercial?.tipo(precio.tipoComercialId);
+    final igv = sesion.config?.igv ?? 0;
+    final unitario = (precio.precio ?? 0) * (actual.producto?.igv == false ? 1 + igv : 1);
+    final lineas = [...state.productsSales];
+    lineas[index] = actual.copyWith(precioVentaUnitario:unitario,
+      valorUnitario:unitario / (1 + igv), montoOriginal:unitario, precioManual:true,
+      tipoComercialId:precio.tipoComercialId, tipoComercialNombre:tipo?['nombre'] as String?,
+      tipoComercialCategoria:tipo?['categoria'] as String?,productoPrecioId:precio.id,
+      precioReferencia:precio.precio,origenPrecio:'ACCIONES');
+    reemplazarLineasComerciales(lineas);
+  }
+
+  void calculoTotal() {
+    final igvConfig = ref.read(sesionProvider).config!.igv!;
+    double porcentajeRecargoPorItem =
+        ref.read(sesionProvider).config!.porcentajeRecargoPorItem!;
+    // ignore: unused_local_variable
+    final tc = state.tipoComprobante;
+    final porcentajeDescuentoGlobal = state.porcentajeDescuentoGlobal ?? 0.0;
+    // Paridad web: el % de otros cargos viene del item PLAN de la venta
+    // (la web lo lee del form al seleccionar el plan). Antes estaba
+    // cableado a null y los planes perdían su recargo.
+    final double? porcentajeOtrosCargos = state.productsSales
+        .map((d) => d.porcentajeOtrosCargos)
+        .where((pct) => pct != null && pct > 0)
+        .firstOrNull;
+    Ticket ticket = ref.read(ticketProvider).ticket;
+    ticket = ticket.copyWith(
+      totalValorVentaExonerada: 0,
+      totalValorVentaExportacion: 0,
+      totalValorVentaGravada: 0,
+      totalValorVentaInafecta: 0,
+      totalValorVentaGratuita: 0,
+      totalValorBaseIsc: 0,
+      totalValorBaseIgv: 0,
+      totalValorVenta: 0,
+      totalIsc: 0,
+      totalIgv: 0,
+      totalVenta: 0,
+      totalDescuento: 0,
+      descuentoPorItem: 0,
+      descuentoGlobal: 0,
+      montoBaseDescuento: 0,
+      totalTributosBolsas: 0,
+      montoBaseRetencion: 0,
+      montoRetencion: 0,
+      montoDetraccion: 0,
+      otrosCargos: 0,
+    );
+    for (var i = 0; i < state.productsSales.length; i++) {
+      TicketDetail ticketDetailToUpdate = state.productsSales[i];
+      ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          tributoVentaGratuita: null, porcentajeTributoVentaGratuita: null);
+      Map<String, dynamic>? tipoIgv = catalogo07.firstWhere(
+        (element) =>
+            element['codigo'] == ticketDetailToUpdate.codigoTipoAfectacionIgv,
+      );
+      final cantidad = ticketDetailToUpdate.cantidad ?? 0;
+      final esAnticipo = ticketDetailToUpdate.esAnticipo ?? false;
+      final agregador = esAnticipo ? -1 : 1;
+      double? valorVenta = 0.0;
+      double? precioTotal = 0.0;
+      var descuento = 0.0;
+      double? montoBaseIgv;
+      double? igv = 0.0;
+      double? isc = 0.0;
+      double? icbper = 0.0;
+      if (ticketDetailToUpdate.isc != null) {
+        isc = (ticketDetailToUpdate.isc!).toDouble();
+      }
+      if (ticketDetailToUpdate.tributoBolsa != null) {
+        icbper = (ticketDetailToUpdate.tributoBolsa!).toDouble();
+      }
+      if (ticketDetailToUpdate.tieneImpuestoBolsas != null &&
+          ticketDetailToUpdate.tieneImpuestoBolsas!) {
+        icbper = 0.50 * cantidad;
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          tributoBolsa: icbper,
+        );
+        ticket = ticket.copyWith(
+          totalTributosBolsas: (ticket.totalTributosBolsas ?? 0) + icbper,
+        );
+      }
+      // Calcular el valor de venta
+      final preciosIncluidoIgv = state.incIgv;
+
+      if (tipoIgv['codigoRelacionado'] == '1001') {
+        if (preciosIncluidoIgv) {
+          ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+            valorUnitario: ticketDetailToUpdate.precioVentaUnitario! /
+                (1 + ref.read(sesionProvider).config!.igv!),
+          );
+        } else {
+          ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+            precioVentaUnitario: ticketDetailToUpdate.valorUnitario! *
+                (1 + ref.read(sesionProvider).config!.igv!),
+          );
+        }
+        valorVenta = ticketDetailToUpdate.valorUnitario! * cantidad;
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseDescuento: valorVenta,
+        );
+        if (ticketDetailToUpdate.descuento != null) {
+          descuento = ticketDetailToUpdate.descuento!;
+          valorVenta = valorVenta - descuento;
+          ticket = ticket.copyWith(
+            descuentoPorItem: (ticket.descuentoPorItem ?? 0) + descuento,
+          );
+        }
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          valorVenta: valorVenta,
+        );
+        montoBaseIgv = (valorVenta + isc);
+        igv = montoBaseIgv * igvConfig;
+        precioTotal = (valorVenta + igv + isc + icbper);
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseIgv: montoBaseIgv,
+          porcentajeIgv: igvConfig * 100,
+          igv: igv,
+          precioTotal: precioTotal,
+        );
+      } else {
+        if (preciosIncluidoIgv) {
+          ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+            valorUnitario: ticketDetailToUpdate.precioVentaUnitario!,
+          );
+        } else {
+          ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+            precioVentaUnitario: ticketDetailToUpdate.valorUnitario!,
+          );
+        }
+        valorVenta = ticketDetailToUpdate.precioVentaUnitario! * cantidad;
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseDescuento: valorVenta,
+        );
+        if (ticketDetailToUpdate.descuento != null) {
+          descuento = ticketDetailToUpdate.descuento!;
+          valorVenta = valorVenta - descuento;
+          ticket = ticket.copyWith(
+            descuentoPorItem: ticket.descuentoPorItem! + descuento,
+          );
+        }
+        precioTotal = valorVenta;
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          valorVenta: valorVenta,
+          precioTotal: precioTotal,
+          igv: null,
+          montoBaseIgv: null,
+          porcentajeIgv: null,
+        );
+      }
+      ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+        montoBaseInafecto: null,
+        montoBaseExonerado: null,
+        montoBaseGratuito: null,
+        montoBaseExportacion: null,
+        valorReferencialUnitario: null,
+        tributoVentaGratuita: null,
+      );
+      ticket = ticket.copyWith(
+        totalDescuento: (ticket.totalDescuento ?? 0) + descuento,
+      );
+      ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+        porcentajeTributoVentaGratuita: null,
+      );
+      final valorAgrgador =
+          ((ticketDetailToUpdate.valorVenta ?? 0) * agregador);
+      if (tipoIgv['codigoRelacionado'] == '1001') {
+        ticket = ticket.copyWith(
+          totalValorVentaGravada:
+              (ticket.totalValorVentaGravada ?? 0) + valorAgrgador,
+          totalValorBaseIgv: (ticket.totalValorBaseIgv ?? 0) + valorAgrgador,
+          totalIgv:
+              (ticket.totalIgv ?? 0) + (ticketDetailToUpdate.igv! * agregador),
+        );
+      } else if (tipoIgv['codigoRelacionado'] == '1002') {
+        ticket = ticket.copyWith(
+          totalValorVentaInafecta:
+              (ticket.totalValorVentaInafecta ?? 0) + valorAgrgador,
+        );
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseInafecto: ticketDetailToUpdate.valorVenta!,
+        );
+      } else if (tipoIgv['codigoRelacionado'] == '1003') {
+        ticket = ticket.copyWith(
+          totalValorVentaExonerada:
+              (ticket.totalValorVentaExonerada ?? 0) + valorAgrgador,
+        );
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseExonerado: ticketDetailToUpdate.valorVenta!,
+        );
+      } else if (tipoIgv['codigoRelacionado'] == '1000') {
+        ticket = ticket.copyWith(
+          totalValorVentaExportacion:
+              (ticket.totalValorVentaExportacion ?? 0) + valorAgrgador,
+        );
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseExportacion: ticketDetailToUpdate.valorVenta!,
+        );
+      } else if (tipoIgv['codigoRelacionado'] == '1004') {
+        if (['11', '12', '13', '14', '15', '16', '17']
+            .contains(ticketDetailToUpdate.codigoTipoAfectacionIgv)) {
+          ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+            porcentajeTributoVentaGratuita: igvConfig * 100,
+            tributoVentaGratuita: ticketDetailToUpdate.valorVenta! * igvConfig,
+          );
+        } else {
+          ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+            tributoVentaGratuita: 0,
+            porcentajeTributoVentaGratuita: 0,
+          );
+        }
+        ticket = ticket.copyWith(
+          totalValorVentaGratuita:
+              (ticket.totalValorVentaGratuita ?? 0) + valorAgrgador,
+        );
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseGratuito: ticketDetailToUpdate.valorVenta,
+          valorReferencialUnitario: ticketDetailToUpdate.precioVentaUnitario,
+        );
+        ticket = ticket.copyWith(
+          totalTributosOperacionGratuita:
+              (ticket.totalTributosOperacionGratuita ?? 0) +
+                  (ticketDetailToUpdate.tributoVentaGratuita ?? 0),
+        );
+      }
+      if (isc > 0) {
+        ticket = ticket.copyWith(
+          totalValorBaseIsc:
+              ticket.totalValorBaseIsc ?? 0 + ticketDetailToUpdate.valorVenta!,
+          totalIsc: ticket.totalIsc ?? 0 + isc,
+        );
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseIsc: ticketDetailToUpdate.valorVenta!,
+        );
+      } else {
+        ticketDetailToUpdate = ticketDetailToUpdate.copyWith(
+          montoBaseIsc: null,
+        );
+      }
+      //actualizar detalle del ticket
+      state = state.copyWith(
+        productsSales: List.from(state.productsSales)
+          ..[i] = ticketDetailToUpdate,
+      );
+      debugPrint('Valort unitario: ${ticketDetailToUpdate.valorUnitario}, '
+          'Precio VentaUnitario Venta: ${ticketDetailToUpdate.precioVentaUnitario}, '
+          'Precio Total: ${ticketDetailToUpdate.precioTotal}');
+    }
+    if (porcentajeDescuentoGlobal > 0) {
+      final pordesGlobal = porcentajeDescuentoGlobal / 100;
+      if (ticket.totalValorVentaGravada != null &&
+          ticket.totalValorVentaGravada! > 0) {
+        final descuentoGravada =
+            (ticket.totalValorVentaGravada ?? 0) * pordesGlobal;
+        ticket = ticket.copyWith(
+          montoBaseDescuento: (ticket.totalValorVentaGravada ?? 0),
+          totalValorVentaGravada:
+              (ticket.totalValorVentaGravada ?? 0) - descuentoGravada,
+          totalDescuento: (ticket.totalDescuento ?? 0) + descuentoGravada,
+          descuentoGlobal: ticket.descuentoGlobal! + descuentoGravada,
+        );
+      }
+      if (ticket.totalValorVentaInafecta != null &&
+          ticket.totalValorVentaInafecta! > 0) {
+        final descuentoInafecta =
+            (ticket.totalValorVentaInafecta ?? 0) * pordesGlobal;
+        ticket = ticket.copyWith(
+          montoBaseDescuento: ticket.totalValorVentaInafecta ?? 0,
+          totalValorVentaInafecta:
+              (ticket.totalValorVentaInafecta ?? 0) - descuentoInafecta,
+          totalDescuento: (ticket.totalDescuento ?? 0) + descuentoInafecta,
+          descuentoGlobal: ticket.descuentoGlobal! + descuentoInafecta,
+        );
+      }
+      if (ticket.totalValorVentaExonerada != null &&
+          ticket.totalValorVentaExonerada! > 0) {
+        final descuentoExonerada =
+            (ticket.totalValorVentaExonerada ?? 0) * pordesGlobal;
+        ticket = ticket.copyWith(
+          montoBaseDescuento: ticket.totalValorVentaExonerada,
+          totalValorVentaExonerada:
+              (ticket.totalValorVentaExonerada ?? 0) - descuentoExonerada,
+          totalDescuento: (ticket.totalDescuento ?? 0) + descuentoExonerada,
+          descuentoGlobal: ticket.descuentoGlobal! + descuentoExonerada,
+        );
+      }
+      if (ticket.totalValorBaseIgv != null && ticket.totalValorBaseIgv! > 0) {
+        ticket = ticket.copyWith(
+          totalValorBaseIgv: (ticket.totalValorBaseIgv ?? 0) -
+              ((ticket.totalValorBaseIgv ?? 0) * pordesGlobal),
+        );
+      }
+      if (ticket.totalIgv != null && ticket.totalIgv! > 0) {
+        ticket = ticket.copyWith(
+          totalIgv:
+              (ticket.totalIgv ?? 0) - ((ticket.totalIgv ?? 0) * pordesGlobal),
+        );
+      }
+      if (ticket.totalValorBaseIsc != null) {
+        ticket = ticket.copyWith(
+          totalValorBaseIsc: ticket.totalValorBaseIsc! -
+              (ticket.totalValorBaseIsc! * pordesGlobal),
+        );
+      }
+      if (ticket.totalIsc != null && ticket.totalIsc! > 0) {
+        ticket = ticket.copyWith(
+          totalIsc:
+              (ticket.totalIsc ?? 0) - ((ticket.totalIsc ?? 0) * pordesGlobal),
+        );
+      }
+      ticket = ticket.copyWith(porcentajeDescuento: pordesGlobal);
+    }
+    ticket = ticket.copyWith(
+      totalValorVenta: (ticket.totalValorVentaGravada ?? 0) +
+          (ticket.totalValorVentaInafecta ?? 0) +
+          (ticket.totalValorVentaExonerada ?? 0) +
+          (ticket.totalValorVentaExportacion ?? 0),
+    );
+    if (porcentajeOtrosCargos != null) {
+      ticket = ticket.copyWith(
+        otrosCargos: ticket.totalValorVenta! * (porcentajeOtrosCargos / 100),
+      );
+    }
+    // Paridad web: solo si hay recargo (> 0); con 0 la web no toca
+    // otrosCargos y así no pisa el recargo de un PLAN.
+    if (porcentajeRecargoPorItem > 0) {
+      ticket = ticket.copyWith(
+        otrosCargos: ticket.totalValorVenta! * (porcentajeRecargoPorItem / 100),
+      );
+    }
+    ticket = ticket.copyWith(
+      totalVenta: (ticket.totalValorVentaGravada ?? 0) +
+          (ticket.totalValorVentaInafecta ?? 0) +
+          (ticket.totalValorVentaExonerada ?? 0) +
+          (ticket.totalValorVentaExportacion ?? 0) +
+          (ticket.totalIsc ?? 0) +
+          (ticket.totalIgv ?? 0) +
+          (ticket.totalTributosBolsas ?? 0) +
+          (ticket.otrosCargos ?? 0) +
+          (ticket.otrosTributos ?? 0),
+    );
+    if (state.flagRetencion) {
+      ticket = ticket.copyWith(
+        montoBaseRetencion: ticket.totalVenta!,
+        porcentajeRetencion: ticket.porcentajeRetencion,
+        montoRetencion: ticket.montoBaseRetencion! *
+            ref.read(sesionProvider).config!.porcentajeRetencion!,
+      );
+    }
+    if (state.codigoTipoOperacion == '1001') {
+      final montoDetraccionMonedaOrigen = ticket.totalVenta!;
+      final tipoCambioDetraccion = exchange(
+          Exchance(
+            codigoMonedaOrigen: state.currency!.codigoMoneda!,
+            codigoMonedaDestino: 'PEN',
+            montoOrigen: montoDetraccionMonedaOrigen,
+          ),
+          state.currencies);
+      ticket = ticket.copyWith(
+        montoDetraccion: tipoCambioDetraccion,
+      );
+    }
+    if (ticket.totalDescuento == null && (ticket.totalDescuento ?? 0) < 1) {
+      ticket = ticket.copyWith(
+        totalDescuento: null,
+        montoBaseDescuento: null,
+        porcentajeDescuento: null,
+        codigoDescuento: null,
+      );
+    }
+
+    ref.read(ticketProvider.notifier).updateTicket(ticket);
+    debugPrint('Total Venta: ${ticket.totalVenta}, '
+        'Total Igv: ${ticket.totalIgv}, '
+        'Total ISC: ${ticket.totalIsc}, '
+        'Total Retencion: ${ticket.montoRetencion}, '
+        'Total Detraction: ${ticket.montoDetraccion}'
+        ', ');
+  }
+
+}
