@@ -83,7 +83,8 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
     if(s.comercial?.activo!=true)return true;
     final revision=++_revisionPrecioCliente;
     try{
-      final c=await ComercialService().cargar(s.office!.id!,cliente:id);
+      final c=await ComercialService().cargar(s.office!.id!,cliente:id,
+          config:s.config?.configuracionDistribuidor);
       if(!mounted || revision!=_revisionPrecioCliente || state.customer.id!=id ||
           ref.read(sesionProvider).office?.id!=s.office?.id || ref.read(sesionProvider).login.user?.id!=s.login.user?.id)return false;
       ref.read(ticketProvider.notifier).updateTicket(ref.read(ticketProvider).ticket.copyWith(tipoPrecioCabeceraId:c.cabecera));

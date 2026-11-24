@@ -182,6 +182,7 @@ class _PedidoFormState extends ConsumerState<PedidoForm> {
       final c = await ComercialService().cargar(
         ref.read(sesionProvider).office!.id!,
         cliente: customer.id,
+        config: ref.read(sesionProvider).config?.configuracionDistribuidor,
       );
       if (!mounted || !_mismaSesion) return;
       if (c.activo) {

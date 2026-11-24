@@ -64,16 +64,20 @@ class BonificacionesPanel extends ConsumerWidget {
         ),
       if (_hayAlgo(estado)) _ResumenBonificaciones(estado: estado),
       if (estado.error != null)
-        ListTile(
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.error_outline),
-          title: Text(estado.error!),
-          trailing: TextButton(
-            onPressed: () => ref
-                .read(bonificacionesProvider.notifier)
-                .programar(forzar: true),
-            child: const Text('Reintentar'),
+        // En tarjeta para que se lea también sobre la cabecera azul.
+        Card(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          child: ListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.only(left: 12, right: 4),
+            leading: const Icon(Icons.error_outline),
+            title: Text(estado.error!),
+            trailing: TextButton(
+              onPressed: () => ref
+                  .read(bonificacionesProvider.notifier)
+                  .programar(forzar: true),
+              child: const Text('Reintentar'),
+            ),
           ),
         ),
     ];
@@ -106,15 +110,18 @@ class BonificacionesPanel extends ConsumerWidget {
         if (!selectorCompacto && mostrarSelector) const SelectorTipoPrecio(),
         if (beneficios.isNotEmpty)
           selectorCompacto
-              ? Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: beneficios,
+              // Sobre la cabecera azul, como el buscador: sin franja blanca de lado a lado.
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  child: ProgressIndicatorTheme(
+                    data: const ProgressIndicatorThemeData(
+                      color: Colors.white,
+                      linearTrackColor: Colors.white24,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: beneficios,
+                    ),
                   ),
                 )
               : Column(

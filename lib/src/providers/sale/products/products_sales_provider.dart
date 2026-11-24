@@ -215,7 +215,10 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     try {
       final sesion = ref.read(sesionProvider);
       if (sesion.office?.id != null && sesion.login.user?.id != null) {
-        final comercial = await ComercialService().cargar(sesion.office!.id!);
+        final comercial = await ComercialService().cargar(
+          sesion.office!.id!,
+          config: sesion.config?.configuracionDistribuidor,
+        );
         if(ref.read(sesionProvider).office?.id != sesion.office?.id ||
             ref.read(sesionProvider).login.user?.id != sesion.login.user?.id) {
           return;

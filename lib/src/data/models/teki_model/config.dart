@@ -57,6 +57,9 @@ class ConfigCompany {
   bool? busquedaProductosLocalmente;
   bool? verNotificacionYape;
 
+  /// Modo de precios de distribuidor (sin configuración llega apagado: modo tradicional).
+  Map<String, dynamic>? configuracionDistribuidor;
+
   ConfigCompany({
     this.envioAutomaticoSunat,
     this.preciosIncluidoIgv,
@@ -108,6 +111,7 @@ class ConfigCompany {
     this.motivoAnulacionPlato,
     this.busquedaProductosLocalmente,
     this.verNotificacionYape,
+    this.configuracionDistribuidor,
   });
 
   factory ConfigCompany.fromJson(Map<String, dynamic> json) {
@@ -144,7 +148,8 @@ class ConfigCompany {
       seleccionLoteAutomatica: json['seleccionLoteAutomatica'],
       agruparItemsVenta: json['agruparItemsVenta'],
       recargoPorItem: json['recargoPorItem'],
-      porcentajeRecargoPorItem: (json['porcentajeRecargoPorItem'] as num?)?.toDouble(),
+      porcentajeRecargoPorItem: (json['porcentajeRecargoPorItem'] as num?)
+          ?.toDouble(),
       imprimeTicketsEscPos: json['imprimeTicketsEscPos'],
       imprimirBoletaLite: json['imprimirBoletaLite'],
       clienteImpresion: json['clienteImpresion'],
@@ -168,6 +173,9 @@ class ConfigCompany {
       motivoAnulacionPlato: json['motivoAnulacionPlato'],
       busquedaProductosLocalmente: json['busquedaProductosLocalmente'],
       verNotificacionYape: json['verNotificacionYape'] == true,
+      configuracionDistribuidor: json['configuracionDistribuidor'] is Map
+          ? Map<String, dynamic>.from(json['configuracionDistribuidor'] as Map)
+          : null,
     );
   }
 
@@ -223,6 +231,7 @@ class ConfigCompany {
       'motivoAnulacionPlato': motivoAnulacionPlato,
       'busquedaProductosLocalmente': busquedaProductosLocalmente,
       'verNotificacionYape': verNotificacionYape,
+      'configuracionDistribuidor': configuracionDistribuidor,
     };
   }
 }
