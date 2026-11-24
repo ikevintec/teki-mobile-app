@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:teki_app/src/application.dart';
+import 'package:teki_app/src/shared/services/config_resume_refresh.dart';
 import 'package:teki_app/src/shared/services/yape_sync_controller.dart';
 import 'package:teki_app/src/utils/constants.dart';
 // Nota: firebase_options.dart se genera con `flutterfire configure`.
@@ -52,6 +53,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Application();
+    return const ConfigResumeRefresh(child: Application());
   }
 }

@@ -348,3 +348,26 @@ Implementado localmente: ModalProductView usa ContextoComercial.precios(producto
 Pruebas: 464Flutter completas aprobadas (incluye regresiones existentes venta/pedido/cotización) y 4widgets nuevos de modal en390×844/1024×768; estos verifican mezcla de modos/sedes, exclusión de eliminados/inactivos/tipo inexistente, selección de mayorista sin mínimo, asociación y conservación al cambiar cantidad. Repetición final4tests aprueba además atribución en JSON. Análisis dirigido sin incidencias y build iOSsimulador correcto. Autorrevisión: solo modal productivo y nuevo test; cambios ajenos preservados.
 
 QA nativo con API ficticia, copia pe.teki.app.modalqa: se agregó Arroz a venta, pero CUA no pudo abrir acciones (dos fallos noWindowsAvailable en coordenadas). No se acredita interacción nativa del modal ni Android/hardware, nueva emisión/persistencia real o prueba fiscal. Cobertura del modal procede de widgets reales de Flutter, no de captura nativa. Copia QA retirada y app original restaurada en pantalla original, sin reemplazar instalación ni tocar sus pedidos/datos. Evidencia `Teki/output/modal-precios-mobile-2026-11-22/`. Sin commit/push/despliegue; requiere recompilar app original para cargar este código.
+
+
+## Configuración al volver del segundo plano — 23/11/2026
+
+La raíz de la app observa el ciclo de vida y llama a refreshConfigCompany al regresar de paused/hidden
+a resumed. No consulta por cada inactive/resumed (p. ej. una interrupción breve), ni sin sesión autenticada.
+Consultas simultáneas de la misma sesión/contexto comparten la petición. Respuestas tras logout o cambio
+de usuario/empresa/sede se descartan antes de aplicarlas o persistirlas.
+
+Se vuelve a consultar /companies/config y se persiste la respuesta. Si cambió el modo comercial/mayoreo,
+se actualiza también el contexto activo (tipos/cabecera); mantiene la selección elegible y no recalcula ni
+vacía las líneas ya agregadas. Si el modo sigue igual conserva el contexto sin consultas extras de tipos.
+Ante fallo conserva lo anterior y permite reintento en la siguiente vuelta del fondo. No hay polling.
+
+Verificación local:9 regresiones nuevas de ciclo de vida/refresh y suite completa480 aprobadas; análisis
+dirigido sin incidencias. Pruebas usan eventos del binding Flutter y repositorios/HTTP ficticios; no
+acreditan regreso nativo de una app instalada ni E2E con backend real. Sin publicación/despliegue;
+requiere recompilar la instalación para incorporar el cambio. Evidencia en
+`Teki/output/revision-claude-2026-11-23/{mobile-full.log,mobile-analyze.log}`.
+
+Compilación iOSsimulador arm64 final aprobada con xcodebuild(exit0); no se instaló/reemplazó la app.
+El build genérico Flutter previo falló al interpretar arquitecturas múltiples; se resolvió compilando
+solo arm64 sin cambiar configuración versionada. Log `mobile-build-arm64.log` en la misma evidencia.
