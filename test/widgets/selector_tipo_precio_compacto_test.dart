@@ -64,6 +64,9 @@ void main() {
       await t.tap(find.text('Arroz extra 1 kg').last);
       await t.pumpAndSettle();
       expect(container.read(productSaleProvider).productsSales, hasLength(1));
+      // La búsqueda queda abierta para seguir sumando; se cierra con "Listo".
+      await t.tap(find.text('Listo'));
+      await t.pumpAndSettle();
 
       await t.tap(find.byTooltip('Agregar producto'));
       await t.pumpAndSettle();

@@ -9,7 +9,6 @@ class CustomAppBar extends StatelessWidget {
   final String? navigateRoute;
   final String? subtitle;
   final Color? backgroundColor;
-  final bool subtitleEmphasis;
 
   /// Acciones adicionales que se insertan antes del botón de ajustes.
   final List<Widget>? actions;
@@ -23,10 +22,16 @@ class CustomAppBar extends StatelessWidget {
     this.navigateRoute,
     this.subtitle,
     this.backgroundColor,
-    this.subtitleEmphasis = false,
     this.actions,
     this.onSettingsReturn,
   });
+
+  /// Mismo estilo de título que pedidos (titleLarge, peso 500), para que venta,
+  /// cotización y pedido se vean de la misma familia.
+  TextStyle? _estiloTitulo(BuildContext context) => Theme.of(context)
+      .textTheme
+      .titleLarge
+      ?.copyWith(fontWeight: FontWeight.w500, color: Colors.white);
 
   @override
   Widget build(BuildContext context) {
@@ -52,28 +57,21 @@ class CustomAppBar extends StatelessWidget {
               children: [
                 Text(
                   navigateName,
-                  style: GoogleFonts.roboto(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
+                  style: _estiloTitulo(context),
                 ),
                 Text(
                   subtitle!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.roboto(
-                    fontSize: subtitleEmphasis ? 12 : 11,
-                    fontWeight: subtitleEmphasis ? FontWeight.w800 : FontWeight.w400,
-                    color: subtitleEmphasis
-                        ? ColorSchema.quotationColor
-                        : Colors.white.withValues(alpha: 0.75),
-                    letterSpacing: subtitleEmphasis ? 0.3 : 0,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white.withValues(alpha: 0.85),
                   ),
                 ),
               ],
             )
-          : Text(
-              navigateName,
-              style: GoogleFonts.raleway(fontWeight: FontWeight.w500, color: Colors.white),
-            ),
+          : Text(navigateName, style: _estiloTitulo(context)),
       automaticallyImplyLeading: false,
       leading: IconButton(
         onPressed: () {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/presentation/screens/pedidos/busqueda_pedido.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -97,7 +98,8 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
             onRefresh: widget.onRefresh,
             child: ListView.builder(
             controller: _scrollController,
-            padding: EdgeInsets.zero,
+            // Espacio para el botón "Agregar": no tapa la última tarjeta.
+            padding: const EdgeInsets.only(bottom: 96),
             itemCount: widget.productList.length +
                 1, // +1 para el loader/mensaje final
             itemBuilder: (context, index) {
@@ -216,7 +218,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                               children: [
                                 _infoChip(
                                   icon: Icons.inventory_2_outlined,
-                                  label: 'Stock: $stock',
+                                  label: 'Stock ${cantidadPedido(stock)}',
                                   color: stock > 0
                                       ? const Color(0xFF2E7D32)
                                       : const Color(0xFFC62828),
@@ -231,7 +233,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    'Venta: ${precioVenta != null ? '${formatExchange(moneda: product.moneda ?? 'PEN')} $precioVenta' : "—"}',
+                                    'Venta: ${precioVenta != null ? '${formatExchange(moneda: product.moneda ?? 'PEN')}${formatoMonto(precioVenta)}' : "—"}',
                                     style: GoogleFonts.roboto(
                                       fontSize: 11,
                                       color: const Color(0xFF555555),
@@ -241,7 +243,7 @@ class _ProductListSectionState extends ConsumerState<ProductListSection> {
                                 ),
                                 Expanded(
                                   child: Text(
-                                    'Compra: ${product.precioCompra != null ? '${formatExchange(moneda: product.moneda ?? 'PEN')} ${product.precioCompra}' : "—"}',
+                                    'Compra: ${product.precioCompra != null ? '${formatExchange(moneda: product.moneda ?? 'PEN')}${formatoMonto(product.precioCompra)}' : "—"}',
                                     style: GoogleFonts.roboto(
                                       fontSize: 11,
                                       color: const Color(0xFF555555),

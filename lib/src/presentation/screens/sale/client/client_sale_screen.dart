@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/aviso_faltante.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/customer.dart';
@@ -12,7 +14,6 @@ import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
-import 'package:teki_app/src/utils/notifications.dart';
 
 class ClientSaleScreen extends ConsumerStatefulWidget {
   const ClientSaleScreen({super.key});
@@ -150,15 +151,10 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     final ticketP = ref.watch(ticketProvider);
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(
-          ticketP.ticket.pedidoRestaurante != null ? 72 : 60,
-        ),
+        preferredSize: const Size.fromHeight(72),
         child: CustomAppBar(
-          navigateName: "Cliente",
-          subtitle: ticketP.ticket.pedidoRestaurante != null
-              ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : ticketP.subtitleLabel,
-          subtitleEmphasis: ticketP.subtitleEmphasis,
+          navigateName: ticketP.tituloFlujo,
+          subtitle: ticketP.subtituloPaso('Elige el cliente'),
         ),
       ),
       body: Container(
@@ -534,8 +530,9 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                               if (!(_formKey.currentState?.validate() ??
                                   false)) {
                                 setState(() => _autovalidate = true);
-                                errorNotification(
-                                  'Revisa los datos del cliente para continuar',
+                                avisarFaltante(
+                                  context,
+                                  'Revisa el número de documento del cliente para continuar.',
                                 );
                                 return;
                               }
@@ -557,15 +554,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 ),
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorSchema.primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 2,
-                            ),
+                            style: estiloAccionPrincipal,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [

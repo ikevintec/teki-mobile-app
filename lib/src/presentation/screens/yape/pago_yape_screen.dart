@@ -25,7 +25,7 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
   final YapeNotificationService _yapeService = YapeNotificationService.instance;
   bool _permissionGranted = true;
   static final NumberFormat _amountFormat = NumberFormat.currency(
-    locale: 'es_PE',
+    locale: 'en_US',
     symbol: 'S/ ',
     decimalDigits: 2,
   );
@@ -91,7 +91,7 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: CustomAppBar(
-          navigateName: 'Yapes',
+          navigateName: 'Pagos Yape',
           actions: [
             if (_yapeService.isSupported &&
                 ref.watch(sesionProvider).config?.verNotificacionYape == true &&
@@ -113,7 +113,10 @@ class _PagoYapeScreenState extends ConsumerState<PagoYapeScreen>
       ),
       body: Column(
         children: [
-          if (!_permissionGranted) _permissionBanner(),
+          // En iOS no existe ese permiso (no se pueden leer notificaciones de
+          // otras apps): el aviso pedía algo imposible de activar.
+          if (_yapeService.isSupported && !_permissionGranted)
+            _permissionBanner(),
           _summary(state.totalElements),
           Expanded(child: _content(state)),
         ],

@@ -62,7 +62,7 @@ class _CerrarCajaSheetState extends ConsumerState<CerrarCajaSheet> {
       double.tryParse(_controllers[moneda]?.text.trim() ?? '') ?? 0.0;
 
   String _fmt(String moneda, double v) =>
-      '${formatExchange(moneda: moneda)}${v.toStringAsFixed(2)}';
+      '${formatExchange(moneda: moneda)}${formatoMonto(v)}';
 
   Future<void> _confirmarYCerrar() async {
     final cajaState = ref.read(cashRegisterProvider);

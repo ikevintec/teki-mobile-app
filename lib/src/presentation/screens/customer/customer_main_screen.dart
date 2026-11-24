@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../dashboard/navigation/dashboard_navigation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,6 +34,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   final controller = SidebarXController(selectedIndex: 1, extended: true);
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _buscar = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -59,7 +62,21 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
     widget.refreshNotifier?.removeListener(_refreshCustomers);
     controller.dispose();
     _scrollController.dispose();
+    _buscar.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  /// Buscador a la vista: antes había que abrir el filtro para encontrar a
+  /// alguien. Usa el mismo filtro por nombre o documento que el modal.
+  void _onBuscar(String texto) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      ref.read(customersProvider.notifier).setFiltro(texto.trim());
+      ref.read(customersProvider.notifier).loadFirstPage();
+      setState(() {});
+    });
   }
 
   void _showFiltersModal() {
@@ -73,7 +90,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
         ),
         child: CustomerFiltersModal(
           onApplyFilters: () {
-            setState(() {});
+            _debounce?.cancel();
+            setState(() => _buscar.text = ref.read(customersProvider).filtro ?? '');
           },
         ),
       ),
@@ -81,9 +99,10 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   }
 
   void _clearFilters() {
+    _debounce?.cancel();
     ref.read(customersProvider.notifier).clearState();
     ref.read(customersProvider.notifier).loadFirstPage();
-    setState(() {});
+    setState(_buscar.clear);
   }
 
   bool _hasActiveFilters() {
@@ -103,6 +122,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   }
 
   void _reloadCustomers() {
+    _debounce?.cancel();
+    _buscar.clear();
     if (!dashboardAllows(ref.read(sesionProvider), 'CLIENTES_VER')) return;
     ref.read(customersProvider.notifier).clearState();
     ref.read(customersProvider.notifier).loadFirstPage();
@@ -139,22 +160,42 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
         color: Colors.white70,
         child: Column(
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(
-                      'Clientes',
-                      style: GoogleFonts.roboto(
-                        color: const Color(0xFF2D3748),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                    child: TextField(
+                      controller: _buscar,
+                      onChanged: _onBuscar,
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por nombre o documento',
+                        prefixIcon: const Icon(Icons.search),
+                        isDense: true,
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: ColorSchema.primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -174,6 +215,30 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
                           onPressed: _showFiltersModal,
                         ),
                       ),
+                      if (widget.embedded &&
+                          dashboardAllows(
+                            ref.watch(sesionProvider),
+                            'CLIENTES_CREAR',
+                          )) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: ColorSchema.primaryColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: IconButton(
+                            tooltip: 'Crear cliente',
+                            icon: const Icon(
+                              Icons.person_add_alt_1_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            onPressed: () => Get.toNamed(AppRoutes.addCustomer),
+                          ),
+                        ),
+                      ],
                       if (_hasActiveFilters()) ...[
                         const SizedBox(width: 8),
                         Container(
@@ -199,22 +264,6 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            if (widget.embedded &&
-                dashboardAllows(ref.watch(sesionProvider), 'CLIENTES_CREAR'))
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.icon(
-                    onPressed: () => Get.toNamed(AppRoutes.addCustomer),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Crear cliente'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: ColorSchema.primaryColor,
-                    ),
-                  ),
-                ),
-              ),
             Expanded(
               child: Padding(
                 padding: EdgeInsets.only(bottom: widget.embedded ? 100 : 0),

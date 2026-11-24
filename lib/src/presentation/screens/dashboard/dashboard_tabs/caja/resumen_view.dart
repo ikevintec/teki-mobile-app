@@ -30,7 +30,7 @@ class CajaResumenView extends StatelessWidget {
   });
 
   String _fmt(String moneda, double v) =>
-      '${formatExchange(moneda: moneda)}${v.toStringAsFixed(2)}';
+      '${formatExchange(moneda: moneda)}${formatoMonto(v)}';
 
   String get _rangoLabel {
     final range = state.range;

@@ -263,7 +263,7 @@ class _QuotationListSectionState extends ConsumerState<QuotationListSection> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            '${formatExchange(moneda: quotation.codigoMoneda ?? "PEN")}${quotation.totalVenta?.toStringAsFixed(2) ?? "--"}',
+                            '${formatExchange(moneda: quotation.codigoMoneda ?? "PEN")}${quotation.totalVenta == null ? "--" : formatoMonto(quotation.totalVenta)}',
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               color: ColorSchema.primaryColor,

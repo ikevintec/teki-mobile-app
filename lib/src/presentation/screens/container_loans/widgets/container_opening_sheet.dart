@@ -334,7 +334,7 @@ class _ContainerOpeningSheetState extends ConsumerState<ContainerOpeningSheet> {
                                 const TextSpan(text: 'Valor de referencia: '),
                                 TextSpan(
                                   text:
-                                      '${formatExchange(moneda: currency)}${pendingValue.toStringAsFixed(2)}',
+                                      '${formatExchange(moneda: currency)}${formatoMonto(pendingValue)}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                   ),

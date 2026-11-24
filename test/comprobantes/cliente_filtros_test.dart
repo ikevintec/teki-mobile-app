@@ -62,7 +62,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         Future<void> abrir() async {
-          await tester.tap(find.text('Mas filtros'));
+          await tester.tap(find.text('Más filtros'));
           await tester.pumpAndSettle();
         }
 

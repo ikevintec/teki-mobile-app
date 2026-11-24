@@ -38,7 +38,7 @@ class _AnalyticsMainScreenState extends ConsumerState<AnalyticsMainScreen> {
     return Scaffold(
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(60),
-        child: CustomAppBar(navigateName: "Dashboard"),
+        child: CustomAppBar(navigateName: "Estadísticas"),
       ),
       body: Container(
         color: Colors.white70,

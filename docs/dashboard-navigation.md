@@ -14,6 +14,8 @@ La barra inferior conserva el orden Inicio, Clientes, Inventario, Caja. Cada des
 
 Las reglas compartidas viven en `dashboard_navigation.dart`. Los grupos vacíos desaparecen y la grilla de accesos se compacta. No se crean permisos ni se conceden desde la app. La autorización del servidor sigue siendo necesaria para cada operación.
 
+Cobrador usa `RESTAURANTE_COBRADOR_VER` tanto para el acceso del menú como para la pantalla; `SUPER_USUARIO` también permite abrirlo. `RESTAURANTE_COMANDAS_VER` por sí solo no concede acceso a Cobrador. Sin autorización, abrir la ruta directamente muestra el bloqueo y no consulta cuentas.
+
 Fidelización requiere su flag y permiso propios, sin depender de envases. Envases requiere `permitirRetornoEnvase`, `inventario` y lectura de inventario. Yape usa su flag de empresa; Replicador se encuentra en la barra de Yape y conserva sus requisitos de Android y permiso específico.
 
 Clientes se integra como pestaña reutilizando el listado existente. Crear y editar se muestran con sus permisos respectivos. El listado respeta el final de página y descarta respuestas anteriores después de limpiar/recargar el estado. Al volver desde una subpantalla se actualiza el tab activo.
@@ -23,7 +25,7 @@ El resumen de Inicio es compacto y se desplaza junto al menú. Solo consulta ven
 ## Verificación
 
 ```sh
-flutter test test/navigation/dashboard_navigation_test.dart test/widgets/dashboard_navigation_test.dart test/providers/customer_pagination_test.dart
+flutter test test/widgets/restaurant_qa_regression_test.dart test/providers/restaurant_selection_race_test.dart test/navigation/dashboard_navigation_test.dart test/widgets/dashboard_navigation_test.dart test/providers/customer_pagination_test.dart
 flutter run -t test/previews/dashboard_preview.dart -d <simulador>
 LOYALTY_QA_OUTPUT=/tmp/teki-menu-qa flutter drive --no-dds --driver=test_driver/loyalty_p1_driver.dart --target=integration_test/dashboard_menu_test.dart -d <simulador>
 ```

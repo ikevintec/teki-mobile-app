@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
@@ -442,7 +443,7 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'S/. ${((item.precioVenta ?? 0) * (item.cantidad ?? 1)).toStringAsFixed(2)}',
+                'S/ ${formatoMonto(((item.precioVenta ?? 0) * (item.cantidad ?? 1)))}',
                 style: const TextStyle(fontSize: 12, color: ColorSchema.primaryColor, fontWeight: FontWeight.w600),
               ),
             ],
@@ -506,7 +507,7 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
                     ),
                   ),
                   Text(
-                    'S/. ${((item.precioVenta ?? 0) * (item.cantidad ?? 1)).toStringAsFixed(2)}',
+                    'S/ ${formatoMonto(((item.precioVenta ?? 0) * (item.cantidad ?? 1)))}',
                     style: TextStyle(
                       fontSize: 12,
                       color: subColor,
@@ -651,7 +652,7 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
                       ),
                       const Spacer(),
                       Text(
-                        'S/. ${check.total.toStringAsFixed(2)}',
+                        'S/ ${formatoMonto(check.total)}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -745,7 +746,7 @@ class _DividirScreenState extends ConsumerState<DividirScreen> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'S/. ${((ie.value.precioVenta ?? 0) * (ie.value.cantidad ?? 1)).toStringAsFixed(2)}',
+                                          'S/ ${formatoMonto(((ie.value.precioVenta ?? 0) * (ie.value.cantidad ?? 1)))}',
                                           style: const TextStyle(fontSize: 12, color: ColorSchema.primaryColor, fontWeight: FontWeight.w600),
                                         ),
                                       ],

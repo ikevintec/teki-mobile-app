@@ -449,6 +449,8 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   /// La navegación post-creación es responsabilidad del screen llamador.
   Future<OrderRestaurant?> submitPedidoSinMesa({
     required Office puntoVenta,
+    ConfigCompany? config,
+    int? idCompany,
     required String tipo,
     required String nombreCliente,
     required String tipoDocumentoReceptor,
@@ -460,6 +462,7 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
     String? direccionCompleta,
     double? montoDelivery,
   }) async {
+    if (state.isSubmitting) return null;
     if (state.cartItems.isEmpty) {
       warningNotification('Agregue al menos un producto');
       return null;
@@ -502,8 +505,28 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
       );
 
       final createdOrder = await repository.createOrder(order);
-      if (!mounted) return null;
-      state = state.copyWith(isSubmitting: false);
+      // Igual que la web: imprimir tras guardar, antes de navegar al listado
+      // o al comprobante. Un fallo de impresión no invalida la orden creada.
+      if (config?.imprimirPedidoComandaSinComprobante == true &&
+          config?.clienteImpresion == 'COFFE') {
+        try {
+          final commandId = createdOrder.comandas?.firstOrNull?.id;
+          if (commandId == null) {
+            errorNotification('Pedido registrado, pero no se encontró la comanda para imprimir.');
+          } else {
+            await _printService.processCommand(
+              commandId: commandId,
+              puntoVenta: puntoVenta,
+              escPos: config?.imprimeTicketsEscPos ?? false,
+              clientPrinter: config?.clienteImpresion,
+              idCompany: idCompany,
+            );
+          }
+        } catch (_) {
+          errorNotification('Pedido registrado, pero no se pudo imprimir la comanda.');
+        }
+      }
+      if (mounted) state = state.copyWith(isSubmitting: false);
       return createdOrder;
     } catch (e) {
       if (!mounted) return null;

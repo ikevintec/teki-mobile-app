@@ -56,6 +56,28 @@ class _Search extends ProductsSaleNotifier {
   }
 }
 
+class _PendingSelections extends _Search {
+  _PendingSelections({this.manualSecond = false});
+  final bool manualSecond;
+  final firstSelection = Completer<void>();
+  final selected = <int>[];
+  final manualResults = <double?>[];
+
+  @override
+  Future<void> selectProductForSale(
+    Product product, {
+    Future<double?> Function(Product)? solicitarPrecioManual,
+  }) async {
+    if (product.id == 1) await firstSelection.future;
+    if (!mounted) return;
+    if (product.id == 2 && manualSecond) {
+      manualResults.add(await solicitarPrecioManual!(product));
+      return;
+    }
+    selected.add(product.id!);
+  }
+}
+
 Future<void> _pumpSearch(WidgetTester tester, _Search search) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -73,6 +95,60 @@ Future<void> _pumpSearch(WidgetTester tester, _Search search) async {
 }
 
 void main() {
+  for (final scenario in ['conservar', 'descartar', 'precio manual']) {
+    testWidgets('salir de búsqueda con dos selecciones pendientes: $scenario', (
+      tester,
+    ) async {
+      final discardCart = scenario == 'descartar';
+      final manualSecond = scenario == 'precio manual';
+      final search = _PendingSelections(manualSecond: manualSecond);
+      final container = ProviderContainer(
+        overrides: [
+          productSaleProvider.overrideWith((_) => search),
+          sesionProvider.overrideWith((_) => _Session()),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(body: SearchProducts(form: FormGroup({}))),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), 'producto');
+      await tester.pump(const Duration(milliseconds: 801));
+      search.requests['producto']!.complete([
+        Product(id: 1, nombre: 'Producto uno'),
+        Product(id: 2, nombre: 'Producto dos'),
+      ]);
+      await tester.pump();
+      await tester.tap(find.text('Producto uno'));
+      await tester.pump();
+      await tester.tap(find.text('Producto dos'));
+      await tester.pump();
+      // Sale la pantalla; el contenedor/carrito sigue vivo, como al volver al menú.
+      await tester.pumpWidget(const SizedBox.shrink());
+      if (discardCart) {
+        container.invalidate(productSaleProvider);
+        await tester.pump(const Duration(milliseconds: 1));
+      }
+      search.firstSelection.complete();
+      await tester.pump();
+      expect(
+        search.selected,
+        discardCart
+            ? isEmpty
+            : manualSecond
+            ? [1]
+            : [1, 2],
+      );
+      expect(search.manualResults, manualSecond ? [null] : isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets(
     'una búsqueda lenta no sobrescribe la consulta nueva ni reabre una consulta borrada',
     (tester) async {

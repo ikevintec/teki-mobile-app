@@ -298,7 +298,7 @@ class _AccountRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  '$moneda${_saldo.toStringAsFixed(2)}',
+                  '$moneda${formatoMonto(_saldo)}',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -309,7 +309,7 @@ class _AccountRow extends StatelessWidget {
                 ),
                 if (!saldoCero)
                   Text(
-                    'de $moneda${_total.toStringAsFixed(2)}',
+                    'de $moneda${formatoMonto(_total)}',
                     style: GoogleFonts.roboto(
                       fontSize: 10.5,
                       color: Colors.grey.shade500,

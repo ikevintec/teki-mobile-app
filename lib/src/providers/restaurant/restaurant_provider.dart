@@ -17,6 +17,8 @@ final restaurantProvider =
 
 class RestaurantNotifier extends StateNotifier<RestaurantState> {
   final RestaurantRepository repository;
+  int _requestId = 0;
+  int _loungesRequestId = 0;
 
   RestaurantNotifier({required this.repository})
       : super(RestaurantState(
@@ -29,10 +31,17 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
         ));
 
   Future<void> loadData(int pvId) async {
-    state = state.copyWith(isLoading: true);
+    final requestId = ++_requestId;
+    final loungesRequestId = ++_loungesRequestId;
+    state = state.copyWith(pvId: pvId, isLoading: true);
 
     // 1. Lounges
     final lounges = await repository.getLounges({'idPuntoVenta': pvId});
+    if (!mounted || loungesRequestId != _loungesRequestId || state.pvId != pvId) return;
+    // Un refresh de mesas no carga salones: conservar esta respuesta aunque
+    // ese refresh haya reemplazado la consulta inicial de mesas.
+    state = state.copyWith(lounges: lounges);
+    if (requestId != _requestId) return;
 
     if (lounges.isEmpty) {
       state = state.copyWith(
@@ -60,6 +69,7 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
       }),
     ]);
 
+    if (!mounted || requestId != _requestId) return;
     state = state.copyWith(
       pvId: pvId,
       tables: results[0] as List<Table>,
@@ -71,7 +81,12 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
   Future<void> selectAll() async {
     final pvId = state.pvId;
     if (pvId == null) return;
-    state = state.copyWith(selectedLoungeId: RestaurantState.kAllSelected, tables: [], isLoading: true);
+    final requestId = ++_requestId;
+    state = state.copyWith(
+      selectedLoungeId: RestaurantState.kAllSelected,
+      tables: [],
+      isLoading: true,
+    );
 
     final results = await Future.wait([
       repository.getTables({'idPuntoVenta': pvId}),
@@ -82,6 +97,7 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
       }),
     ]);
 
+    if (!mounted || requestId != _requestId) return;
     state = state.copyWith(
       tables: results[0] as List<Table>,
       orders: results[1] as List<OrderRestaurant>,
@@ -92,7 +108,12 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
   Future<void> selectLounge(int loungeId) async {
     final pvId = state.pvId;
     if (pvId == null) return;
-    state = state.copyWith(selectedLoungeId: loungeId, tables: [], isLoading: true);
+    final requestId = ++_requestId;
+    state = state.copyWith(
+      selectedLoungeId: loungeId,
+      tables: [],
+      isLoading: true,
+    );
 
     final results = await Future.wait([
       repository.getTables({'idSalon': loungeId}),
@@ -103,6 +124,7 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
       }),
     ]);
 
+    if (!mounted || requestId != _requestId) return;
     state = state.copyWith(
       tables: results[0] as List<Table>,
       orders: results[1] as List<OrderRestaurant>,
@@ -127,6 +149,7 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
 
   /// Actualiza mesas y órdenes sin limpiar la vista ni activar el loader.
   Future<void> _reloadSilently(int pvId) async {
+    final requestId = ++_requestId;
     final selectedLoungeId = state.selectedLoungeId;
     final tableParams = selectedLoungeId == RestaurantState.kAllSelected
         ? <String, dynamic>{'idPuntoVenta': pvId}
@@ -143,7 +166,9 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
 
     // Si el usuario cambió de salón o punto de venta durante la consulta,
     // ignoramos esta respuesta para no reemplazar la selección actual.
-    if (state.pvId != pvId ||
+    if (!mounted ||
+        requestId != _requestId ||
+        state.pvId != pvId ||
         state.selectedLoungeId != selectedLoungeId) {
       return;
     }
@@ -151,6 +176,7 @@ class RestaurantNotifier extends StateNotifier<RestaurantState> {
     state = state.copyWith(
       tables: results[0] as List<Table>,
       orders: results[1] as List<OrderRestaurant>,
+      isLoading: false,
     );
   }
 

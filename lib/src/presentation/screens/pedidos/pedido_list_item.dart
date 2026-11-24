@@ -160,7 +160,7 @@ class PedidoListItem extends StatelessWidget {
                           Text(
                             total == null
                                 ? 'Sin importe'
-                                : '${formatExchange(moneda: moneda)}${total.toStringAsFixed(2)}',
+                                : '${formatExchange(moneda: moneda)}${formatoMonto(total)}',
                             textAlign: TextAlign.right,
                             style: GoogleFonts.poppins(
                               fontSize: 14,

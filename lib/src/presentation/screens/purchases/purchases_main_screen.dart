@@ -26,7 +26,7 @@ class _PurchasesMainScreenState extends ConsumerState<PurchasesMainScreen> {
   Timer? _debounce;
 
   static final _fmtFecha = DateFormat('dd/MM/yy HH:mm', 'es_PE');
-  static final _fmtMonto = NumberFormat('#,##0.00', 'es_PE');
+  static final _fmtMonto = NumberFormat('#,##0.00', 'en_US');
   static const _meses = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -270,7 +270,7 @@ class _PurchasesMainScreenState extends ConsumerState<PurchasesMainScreen> {
         '01' => 'Factura',
         '03' => 'Boleta',
         'NV' => 'N. venta',
-        _ => tipo ?? '-',
+        _ => tipo ?? '',
       };
 
   Widget _purchaseCard(Purchase compra) {
@@ -294,7 +294,11 @@ class _PurchasesMainScreenState extends ConsumerState<PurchasesMainScreen> {
             children: [
               Expanded(
                 child: Text(
-                  '${compra.comprobante ?? 'Sin número'} · ${_tipoComprobanteLabel(compra.tipoComprobante)}',
+                  // Sin tipo no se agrega " · -" al final.
+                  [
+                    compra.comprobante ?? 'Sin número',
+                    _tipoComprobanteLabel(compra.tipoComprobante),
+                  ].where((t) => t.isNotEmpty).join(' · '),
                   style: GoogleFonts.roboto(
                     fontWeight: FontWeight.w700,
                     fontSize: 13.5,
@@ -326,7 +330,7 @@ class _PurchasesMainScreenState extends ConsumerState<PurchasesMainScreen> {
                       child: Text(
                         compra.proveedor?.razonSocial ??
                             compra.nombreProveedor ??
-                            '-',
+                            'Sin proveedor',
                         style: TextStyle(
                             fontSize: 12.5, color: Colors.grey.shade700),
                         overflow: TextOverflow.ellipsis,

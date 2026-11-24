@@ -137,7 +137,7 @@ void showProductPricePicker(
                         ),
                       ),
                       Text(
-                        '${formatExchange(moneda: product.moneda ?? 'PEN')}${(pp.precio ?? 0).toStringAsFixed(2)}',
+                        '${formatExchange(moneda: product.moneda ?? 'PEN')}${formatoMonto(pp.precio ?? 0)}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,

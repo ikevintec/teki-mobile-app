@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart' hide Table;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
@@ -294,9 +295,13 @@ class _RestaurantMesasScreenState
       appBar: AppBar(
         backgroundColor: ColorSchema.primaryColor,
         foregroundColor: Colors.white,
-        title: const Text(
-          'Restaurante - Mesas',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        centerTitle: true,
+        title: Text(
+          'Mesas',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
         ),
         actions: [
           IconButton(
@@ -344,35 +349,53 @@ class _RestaurantMesasScreenState
                                 color: ColorSchema.primaryColor),
                           )
                         : tables.isEmpty
-                            ? ListView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                children: const [
-                                  SizedBox(height: 80),
-                                  Center(
-                                    child: Text(
-                                      'No hay mesas en este salón',
-                                      style: TextStyle(
-                                          color: Colors.grey, fontSize: 14),
-                                    ),
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 80),
+                              Center(
+                                child: Text(
+                                  'No hay mesas en este salón',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
                                   ),
-                                ],
-                              )
-                            : GridView.builder(
-                                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 1.05,
                                 ),
+                              ),
+                            ],
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final tileWidth = (constraints.maxWidth - 56) / 2;
+                              final textScale =
+                                  MediaQuery.textScalerOf(context).scale(11) /
+                                  11;
+                              return GridView.builder(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  20,
+                                  20,
+                                  24,
+                                ),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 16,
+                                      mainAxisExtent: math.max(
+                                        tileWidth / 1.05,
+                                        190 * textScale,
+                                      ),
+                                    ),
                                 itemCount: tables.length,
                                 itemBuilder: (_, i) => TableCard(
                                   table: tables[i],
                                   onTap: () => unawaited(_onTableTap(tables[i])),
                                   showLounge: state.selectedLoungeId == RestaurantState.kAllSelected,
                                 ),
-                              ),
+                              );
+                            },
+                          ),
                   ),
                 ),
               ],

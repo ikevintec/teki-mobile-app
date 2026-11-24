@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/order_restaurant.dart';
@@ -281,7 +282,7 @@ class OrderRestaurantCard extends ConsumerWidget {
                 ],
                 const Spacer(),
                 Text(
-                  'S/. ${_totalPedido().toStringAsFixed(2)}',
+                  'S/ ${formatoMonto(_totalPedido())}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,

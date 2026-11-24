@@ -1,4 +1,5 @@
 import 'package:teki_app/src/providers/config/config.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
 import 'package:teki_app/src/providers/distribuidor/bonificaciones_provider.dart';
 import 'package:teki_app/src/presentation/screens/pedidos/bonificaciones_panel.dart';
 import 'dart:async';
@@ -14,6 +15,7 @@ import 'package:teki_app/src/presentation/screens/sale/products/widgets/search_p
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_product_view.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/widgets/modal_series_config.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/summary_bar.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/aviso_faltante.dart';
 import 'package:teki_app/src/presentation/widgets/app_bar/custom_app_bar.dart';
 import 'package:teki_app/src/presentation/widgets/loader/screen_loader.dart';
 import 'package:teki_app/src/presentation/widgets/modal/custom_modal.dart';
@@ -25,7 +27,6 @@ import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/src/shared/widgets/dismissible_action_widget.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/formats.dart';
-import 'package:teki_app/src/utils/notifications.dart';
 
 class ProductsSaleScreen extends ConsumerStatefulWidget {
   final int? id;
@@ -182,15 +183,10 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
     });
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(
-          ticketP.ticket.pedidoRestaurante != null ? 72 : 60,
-        ),
+        preferredSize: const Size.fromHeight(72),
         child: CustomAppBar(
-          navigateName: "Escoge los productos",
-          subtitle: ticketP.ticket.pedidoRestaurante != null
-              ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : ticketP.subtitleLabel,
-          subtitleEmphasis: ticketP.subtitleEmphasis,
+          navigateName: ticketP.tituloFlujo,
+          subtitle: ticketP.subtituloPaso('Escoge los productos'),
         ),
       ),
       body: isLoading
@@ -262,7 +258,10 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                             ),
                     ),
 
-                    if (!preciosComerciales)
+                    // Con el teclado abierto se oculta: en pantallas chicas
+                    // (iPhone SE) la columna se desbordaba 15 px.
+                    if (!preciosComerciales &&
+                        MediaQuery.viewInsetsOf(context).bottom == 0)
                       Padding(
                         padding: const EdgeInsets.only(
                           left: 20,
@@ -595,7 +594,8 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                 )
                                                 .toList();
                                             if (seriesInvalidas.isNotEmpty) {
-                                              errorNotification(
+                                              avisarFaltante(
+                                                context,
                                                 "Configura las series de todos los productos (${seriesInvalidas.length} pendiente${seriesInvalidas.length > 1 ? 's' : ''})",
                                               );
                                               return;
@@ -608,25 +608,15 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                               ),
                                             );
                                           }
-                                          if (form
-                                              .control('products')
-                                              .hasError('minLength')) {
-                                            errorNotification(
-                                              "Debe seleccionar al menos un producto",
-                                            );
+                                          final faltante = _faltanteEnLineas(
+                                            form,
+                                            products,
+                                          );
+                                          if (faltante != null) {
+                                            avisarFaltante(context, faltante);
                                           }
                                         },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: ColorSchema.primaryColor,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    elevation: 2,
-                                  ),
+                                  style: estiloAccionPrincipal,
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -764,6 +754,27 @@ void _syncFormArrayWithProvider(
       control.control('description').markAsTouched();
     }
   }
+}
+
+/// Qué le falta a la venta para continuar, dicho con el producto concreto
+/// (la línea en rojo sola no explica qué corregir). Null si no falta nada.
+String? _faltanteEnLineas(FormGroup form, List<TicketDetail> products) {
+  final formArray = form.control('products') as FormArray;
+  if (formArray.controls.isEmpty || products.isEmpty) {
+    return 'Agrega al menos un producto para continuar.';
+  }
+  for (var i = 0; i < formArray.controls.length && i < products.length; i++) {
+    final linea = formArray.controls[i] as FormGroup;
+    if (linea.valid) continue;
+    final nombre = (products[i].descripcion ?? '').trim();
+    final cual = nombre.isEmpty ? 'la línea ${i + 1}' : '«$nombre»';
+    if (linea.control('description').invalid) {
+      return 'Falta el nombre del producto en la línea ${i + 1}.';
+    }
+    if (linea.control('price').invalid) return 'Falta el precio de $cual.';
+    if (linea.control('quantity').invalid) return 'Falta la cantidad de $cual.';
+  }
+  return null;
 }
 
 bool _requiresSeriesValidation(Product? product) {

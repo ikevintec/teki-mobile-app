@@ -352,56 +352,71 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                           }),
                         ],
                       ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      // El alto del ListTile lo fijan título y subtítulo: con letra
+                      // grande la columna del monto no entraba y se desbordaba.
+                      trailing: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          // Sello sutil de aceptación SUNAT, sobre el monto.
-                          if (ticket.estadoSunat == 'ACEPT' &&
-                              ticket.anulado != true) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2ECC71)
-                                    .withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'SUNAT',
-                                    style: GoogleFonts.roboto(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.4,
-                                      color: const Color(0xFF1565C0),
+                          // Sello sutil de aceptación SUNAT junto al monto (no
+                          // encima): con bonificación gratuita la columna tendría
+                          // cuatro líneas y desborda la altura del ListTile.
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (ticket.estadoSunat == 'ACEPT' &&
+                                  ticket.anulado != true) ...[
+                                Tooltip(
+                                  message: 'Aceptado por SUNAT',
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF2ECC71)
+                                          .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'SUNAT',
+                                          style: GoogleFonts.roboto(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.4,
+                                            color: const Color(0xFF1565C0),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 3),
+                                        const Icon(
+                                          Icons.check_circle_rounded,
+                                          size: 11,
+                                          color: Color(0xFF2ECC71),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 3),
-                                  const Icon(
-                                    Icons.check_circle_rounded,
-                                    size: 11,
-                                    color: Color(0xFF2ECC71),
-                                  ),
-                                ],
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Text(
+                                '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalVenta == null ? "--" : formatoMonto(ticket.totalVenta)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: ColorSchema.primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                          ],
-                          Text(
-                            '${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalVenta?.toStringAsFixed(2) ?? "--"}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: ColorSchema.primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            ],
                           ),
                           if (ticket.totalValorVentaGratuita != null &&
                               ticket.totalValorVentaGratuita! > 0)
                             Text(
-                              '(${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalValorVentaGratuita?.toStringAsFixed(2) ?? "--"})',
+                              '(${formatExchange(moneda: ticket.codigoMoneda ?? "PEN")}${ticket.totalValorVentaGratuita == null ? "--" : formatoMonto(ticket.totalValorVentaGratuita)})',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 color: ColorSchema.primaryColor,
@@ -416,6 +431,7 @@ class _TicketListSectionState extends ConsumerState<TicketListSection> {
                             style: GoogleFonts.roboto(fontSize: 11),
                           ),
                         ],
+                      ),
                       ),
                       onTap: () {
                         //navigate to ViewComponentScreen

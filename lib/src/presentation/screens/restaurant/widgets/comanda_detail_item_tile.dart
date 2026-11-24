@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail_group_option.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/item_action_bottom_sheet.dart';
@@ -170,7 +171,7 @@ class ComandaDetailItemTile extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'S/. ${total.toStringAsFixed(2)}',
+                        'S/ ${formatoMonto(total)}',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -312,7 +313,7 @@ class _GroupOptionRow extends StatelessWidget {
           ),
           if (optPrice > 0)
             Text(
-              'S/. ${optPrice.toStringAsFixed(2)}',
+              'S/ ${formatoMonto(optPrice)}',
               style: TextStyle(
                 fontSize: 11,
                 color: subColor,

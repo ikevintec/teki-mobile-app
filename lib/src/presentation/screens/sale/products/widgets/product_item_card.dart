@@ -715,7 +715,7 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text(
-                                                  '${formatExchange(moneda: provider.currency!.codigoMoneda!)} ${priceValue.toStringAsFixed(2)}',
+                                                  '${formatExchange(moneda: provider.currency!.codigoMoneda!)}${formatoMonto(priceValue)}',
                                                   style: TextStyle(
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.bold,
@@ -895,16 +895,31 @@ class QuantityControl extends ConsumerStatefulWidget {
 
 class _QuantityControlState extends ConsumerState<QuantityControl> {
   late FocusNode _focusNode;
+  final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
+    _focusNode = FocusNode()..addListener(_seleccionarAlEnfocar);
+  }
+
+  /// Al tocar la cantidad se selecciona todo: escribir "3" reemplaza el valor
+  /// en vez de dejar "31". Tras el frame, para ganarle al cursor del toque.
+  void _seleccionarAlEnfocar() {
+    if (!_focusNode.hasFocus) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_focusNode.hasFocus) return;
+      _controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _controller.text.length,
+      );
+    });
   }
 
   @override
   void dispose() {
     _focusNode.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -969,8 +984,8 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
     }
 
     return SizedBox(
-      width: 120,
-      height: 32,
+      width: 132,
+      height: 36,
       child: ReactiveForm(
         formGroup: widget.formGroup,
         child: Material(
@@ -985,13 +1000,13 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
                 child: InkWell(
                   onTap: _decrement,
                   borderRadius: BorderRadius.circular(4),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: const Icon(
+                  child: const SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: Icon(
                       Icons.remove,
                       color: Colors.white,
-                      size: 16,
+                      size: 18,
                     ),
                   ),
                 ),
@@ -1001,6 +1016,7 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
               Expanded(
                 child: ReactiveTextField<double>(
                   formControlName: 'quantity',
+                  controller: _controller,
                   focusNode: _focusNode,
                   valueAccessor: _QuantityValueAccessor(),
                   keyboardType: const TextInputType.numberWithOptions(
@@ -1038,10 +1054,10 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
                 child: InkWell(
                   onTap: _increment,
                   borderRadius: BorderRadius.circular(4),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: const Icon(Icons.add, color: Colors.white, size: 16),
+                  child: const SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: Icon(Icons.add, color: Colors.white, size: 18),
                   ),
                 ),
               ),

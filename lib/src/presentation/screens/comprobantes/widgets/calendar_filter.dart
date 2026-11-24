@@ -269,10 +269,21 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
     });
   }
 
-  void _scrollToEnd() {
+  /// El ListView es perezoso: el primer maxScrollExtent es un estimado y el
+  /// mes actual quedaba cortado en el borde. Se repite hasta que el final se
+  /// estabiliza.
+  void _scrollToEnd([int intentos = 5]) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      if (!mounted || !_scrollController.hasClients) return;
+      final max = _scrollController.position.maxScrollExtent;
+      _scrollController.jumpTo(max);
+      if (intentos > 1) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !_scrollController.hasClients) return;
+          if (_scrollController.position.maxScrollExtent != max) {
+            _scrollToEnd(intentos - 1);
+          }
+        });
       }
     });
   }
@@ -292,7 +303,9 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
           Expanded(
             flex: 3,
             child: SizedBox(
-              height: 50,
+              // Crece con el tamaño de letra del sistema: con 50 fijos el
+              // nombre del mes salía cortado por arriba.
+              height: 34 + MediaQuery.textScalerOf(context).scale(16),
               child: ListView.builder(
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,

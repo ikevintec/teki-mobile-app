@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/aviso_faltante.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
@@ -191,15 +193,10 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     final ticketP = ref.watch(ticketProvider);
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(
-          ticketP.ticket.pedidoRestaurante != null ? 72 : 60,
-        ),
+        preferredSize: const Size.fromHeight(72),
         child: CustomAppBar(
-          navigateName: "Comprobante",
-          subtitle: ticketP.ticket.pedidoRestaurante != null
-              ? 'Pedido #${formatOrderNumber(ticketP.ticket.pedidoRestaurante!.id)}'
-              : ticketP.subtitleLabel,
-          subtitleEmphasis: ticketP.subtitleEmphasis,
+          navigateName: ticketP.tituloFlujo,
+          subtitle: ticketP.subtituloPaso('Revisa el comprobante y confirma'),
         ),
       ),
       body: Container(
@@ -554,8 +551,9 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                                 0) <
                                             11 &&
                                         tipoDocumento == "01") {
-                                      warningNotification(
-                                        "Debe seleccionar un cliente con RUC para emitir una factura.",
+                                      avisarFaltante(
+                                        context,
+                                        "Para emitir una factura, el cliente debe tener RUC.",
                                       );
                                       Navigator.of(context).pop();
                                       return;
@@ -570,7 +568,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                     if (esGasolinera &&
                                         placa.isNotEmpty &&
                                         placa.length != 6) {
-                                      warningNotification(
+                                      avisarFaltante(
+                                        context,
                                         'La placa del vehículo debe tener exactamente 6 caracteres.',
                                       );
                                       return;
@@ -617,18 +616,7 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
 
                                     PaymentWidget.show(context);
                                   },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorSchema.primaryColor,
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor:
-                                  ColorSchema.primaryColor.withValues(alpha: 0.5),
-                              disabledForegroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 2,
-                            ),
+                            style: estiloAccionPrincipal,
                             child: _isSubmitting
                                 ? const SizedBox(
                                     width: 20,

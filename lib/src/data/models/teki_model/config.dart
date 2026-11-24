@@ -22,6 +22,7 @@ class ConfigCompany {
   bool? esRestaurante;
   bool? usaCodigoBarras;
   bool? ocultarModalRegistroComanda;
+  bool? imprimirPedidoComandaSinComprobante;
   String? tipoImpresion;
   String? tipoImpresionGuia;
 
@@ -80,6 +81,7 @@ class ConfigCompany {
     this.esRestaurante,
     this.usaCodigoBarras,
     this.ocultarModalRegistroComanda,
+    this.imprimirPedidoComandaSinComprobante,
     this.tipoImpresion,
     this.tipoImpresionGuia,
     this.tipoImpresionMovil,
@@ -135,6 +137,7 @@ class ConfigCompany {
       esRestaurante: json['esRestaurante'],
       usaCodigoBarras: json['usaCodigoBarras'],
       ocultarModalRegistroComanda: json['ocultarModalRegistroComanda'],
+      imprimirPedidoComandaSinComprobante: json['imprimirPedidoComandaSinComprobante'],
       tipoImpresion: json['tipoImpresion'],
       tipoImpresionGuia: json['tipoImpresionGuia'],
       tipoImpresionMovil: json['tipoImpresionMovil'],
@@ -200,6 +203,7 @@ class ConfigCompany {
       'esRestaurante': esRestaurante,
       'usaCodigoBarras': usaCodigoBarras,
       'ocultarModalRegistroComanda': ocultarModalRegistroComanda,
+      'imprimirPedidoComandaSinComprobante': imprimirPedidoComandaSinComprobante,
       'tipoImpresion': tipoImpresion,
       'tipoImpresionGuia': tipoImpresionGuia,
       'tipoImpresionMovil': tipoImpresionMovil,

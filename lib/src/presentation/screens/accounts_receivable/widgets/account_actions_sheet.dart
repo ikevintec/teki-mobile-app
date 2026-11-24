@@ -402,7 +402,7 @@ class _PaymentTile extends StatelessWidget {
     final moneda = crd?.monedaMovimientoCaja ?? 'PEN';
     final simbolo = formatExchange(moneda: moneda);
     final montoStr = crd?.monto != null
-        ? '$simbolo${crd!.monto!.toStringAsFixed(2)}'
+        ? '$simbolo${formatoMonto(crd!.monto!)}'
         : '--';
     final fecha = crd?.fechaMovimiento != null
         ? DateFormat('dd/MM/yyyy').format(crd!.fechaMovimiento!)
@@ -478,7 +478,7 @@ class _PaymentDetailSheet extends StatelessWidget {
     final moneda = crd?.monedaMovimientoCaja ?? 'PEN';
     final simbolo = formatExchange(moneda: moneda);
     final montoStr = crd?.monto != null
-        ? '$simbolo${crd!.monto!.toStringAsFixed(2)} $moneda'
+        ? '$simbolo${formatoMonto(crd!.monto!)} $moneda'
         : '--';
     final fecha = crd?.fechaMovimiento != null
         ? DateFormat('dd/MM/yyyy HH:mm').format(crd!.fechaMovimiento!)

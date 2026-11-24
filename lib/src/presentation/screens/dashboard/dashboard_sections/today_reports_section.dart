@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart' hide Response;
@@ -169,7 +170,7 @@ class _TodayReportsSectionState extends ConsumerState<TodayReportsSection> {
   }
 
   String _simbolo(String codigo) => switch (codigo) {
-    'PEN' => 'S/.',
+    'PEN' => 'S/',
     'USD' => '\$',
     'EUR' => '€',
     _ => codigo,
@@ -178,7 +179,7 @@ class _TodayReportsSectionState extends ConsumerState<TodayReportsSection> {
   String _monto(String codigo) {
     if (ventasHoy == null) return '0.00';
     final entry = ventasHoy!.montos.where((m) => m.moneda == codigo);
-    return (entry.isEmpty ? 0.0 : entry.first.monto).toStringAsFixed(2);
+    return formatoMonto(entry.isEmpty ? 0.0 : entry.first.monto);
   }
 
   @override

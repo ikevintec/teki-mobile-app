@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
@@ -403,7 +404,7 @@ class _ItemReadyBody extends StatelessWidget {
                                 const Icon(Icons.attach_money_rounded,
                                     size: 16, color: Colors.grey),
                                 Text(
-                                  'S/. ${total.toStringAsFixed(2)}',
+                                  'S/ ${formatoMonto(total)}',
                                   style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -579,7 +580,7 @@ class _GroupOptionRow extends StatelessWidget {
           ),
           if (price > 0)
             Text(
-              'S/. ${price.toStringAsFixed(2)}',
+              'S/ ${formatoMonto(price)}',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
         ],

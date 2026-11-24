@@ -122,7 +122,8 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
   // -------------------------------------------------------------------------
 
   Future<void> _handlePedidoSinMesa() async {
-    final office = ref.read(sesionProvider).office;
+    final session = ref.read(sesionProvider);
+    final office = session.office;
     if (office == null) {
       warningNotification('No hay punto de venta seleccionado');
       return;
@@ -138,6 +139,8 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
 
     final createdOrder = await notifier.submitPedidoSinMesa(
       puntoVenta: office,
+      config: session.config,
+      idCompany: session.company?.id,
       tipo: result.tipo,
       nombreCliente: result.nombreCliente,
       tipoDocumentoReceptor: result.tipoDocumentoReceptor,

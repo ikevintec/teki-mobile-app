@@ -33,7 +33,7 @@ void main() {
       expect(find.text('21'), findsOneWidget);
       expect(find.text('SET'), findsOneWidget);
       expect(find.text('PE01 - 4'), findsOneWidget);
-      expect(find.text('S/. 30.00'), findsOneWidget);
+      expect(find.text('S/ 30.00'), findsOneWidget);
       expect(find.text('Al contado'), findsOneWidget);
       expect(find.text('Convertido en venta'), findsOneWidget);
       expect(find.textContaining('SUNAT'), findsNothing);
@@ -102,7 +102,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.text('Anulado'), findsOneWidget);
-        expect(find.text('\$ 123456789.99'), findsOneWidget);
+        expect(find.text('\$ 123,456,789.99'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );

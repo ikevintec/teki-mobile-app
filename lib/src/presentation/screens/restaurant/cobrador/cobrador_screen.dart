@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
+import 'package:teki_app/src/presentation/screens/dashboard/navigation/dashboard_navigation.dart';
+import 'package:teki_app/src/presentation/screens/restaurant/widgets/comanda_detail_item_tile.dart';
 import 'package:teki_app/src/providers/restaurant/check_totals.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/presentation/screens/sale/products/products_sale_screen.dart';
@@ -32,6 +34,12 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
     _currentPvId = widget.pvId;
     Future.microtask(() {
       if (!mounted) return;
+      if (!dashboardAllows(
+        ref.read(sesionProvider),
+        'RESTAURANTE_COBRADOR_VER',
+      )) {
+        return;
+      }
       ref.read(cobradorProvider.notifier).init(_currentPvId);
     });
   }
@@ -42,7 +50,10 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!ref.watch(sesionProvider).hasPermission('RESTAURANTE_COBRADOR_VER')) {
+    if (!dashboardAllows(
+      ref.watch(sesionProvider),
+      'RESTAURANTE_COBRADOR_VER',
+    )) {
       return Scaffold(
         appBar: AppBar(title: const Text('Cobrador')),
         body: Center(
@@ -81,9 +92,13 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
       appBar: AppBar(
         backgroundColor: ColorSchema.primaryColor,
         foregroundColor: Colors.white,
-        title: const Text(
+        centerTitle: true,
+        title: Text(
           'Cobrador',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
         ),
         actions: [
           IconButton(
@@ -138,20 +153,30 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: items.length,
-                itemBuilder: (_, i) {
-                  final d = items[i];
-                  return ListTile(
-                    dense: true,
-                    title: Text(d.producto?.nombre ?? '-'),
-                    trailing: Text(
-                      'x${d.cantidad?.toInt() ?? 1}  S/. ${((d.precioVenta ?? 0) * (d.cantidad ?? 1)).toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  );
-                },
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  itemBuilder: (_, i) {
+                    final d = items[i];
+                    final cancelled = ComandaDetailStatus.isCancelledItem(d);
+                    final itemStyle = TextStyle(
+                      color: cancelled ? Colors.red.shade700 : null,
+                      decoration: cancelled ? TextDecoration.lineThrough : null,
+                    );
+                    return ListTile(
+                      dense: true,
+                      title: Text(d.producto?.nombre ?? '-', style: itemStyle),
+                      subtitle: cancelled
+                          ? const Text('Cancelado · No se cobra')
+                          : null,
+                      trailing: Text(
+                        'x${d.cantidad?.toInt() ?? 1}  S/ ${formatoMonto(((d.precioVenta ?? 0) * (d.cantidad ?? 1)))}',
+                        style: itemStyle.copyWith(fontSize: 13),
+                      ),
+                    );
+                  },
+                ),
               ),
               const Divider(),
               Row(
@@ -160,7 +185,7 @@ class _CobradorScreenState extends ConsumerState<CobradorScreen> {
                   const Text('Total:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   Text(
-                    'S/. ${total.toStringAsFixed(2)}',
+                    'S/ ${formatoMonto(total)}',
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: ColorSchema.primaryColor),
