@@ -439,8 +439,8 @@ class _DirectInventoryTransferSheetState
   @override
   Widget build(BuildContext context) {
     final sesion = ref.watch(sesionProvider);
-    final offices = _availableOffices(sesion.offices);
     final sessionOfficeId = sesion.office?.id;
+    final offices = _availableOffices(sesion.offices, sessionOfficeId);
     final mediaQuery = MediaQuery.of(context);
     final availableHeight =
         mediaQuery.size.height - mediaQuery.viewInsets.bottom;
@@ -934,13 +934,19 @@ class _DirectInventoryTransferSheetState
     );
   }
 
-  List<Office> _availableOffices(List<Office>? offices) {
+  /// Alfabético, pero el punto de la sesión (el origen) va primero: antes
+  /// quedaba al final de la lista.
+  List<Office> _availableOffices(List<Office>? offices, int? sessionOfficeId) {
     final byId = <int, Office>{};
     for (final office in offices ?? const <Office>[]) {
       if (office.id != null) byId[office.id!] = office;
     }
     return byId.values.toList()
-      ..sort((a, b) => (a.nombre ?? '').compareTo(b.nombre ?? ''));
+      ..sort((a, b) {
+        if (a.id == sessionOfficeId) return -1;
+        if (b.id == sessionOfficeId) return 1;
+        return (a.nombre ?? '').compareTo(b.nombre ?? '');
+      });
   }
 
   Widget _buildHeader() {

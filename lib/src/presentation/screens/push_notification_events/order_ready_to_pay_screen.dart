@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
@@ -385,7 +386,7 @@ class _OrderReadyToPayScreenState extends ConsumerState<OrderReadyToPayScreen> {
                                           color: Colors.grey.shade600),
                                     ),
                                     Text(
-                                      'S/. ${subtotal.toStringAsFixed(2)}',
+                                      'S/ ${formatoMonto(subtotal)}',
                                       style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey.shade600),
@@ -412,7 +413,7 @@ class _OrderReadyToPayScreenState extends ConsumerState<OrderReadyToPayScreen> {
                                       ],
                                     ),
                                     Text(
-                                      'S/. ${montoDelivery.toStringAsFixed(2)}',
+                                      'S/ ${formatoMonto(montoDelivery)}',
                                       style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey.shade600),
@@ -435,7 +436,7 @@ class _OrderReadyToPayScreenState extends ConsumerState<OrderReadyToPayScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'S/. ${total.toStringAsFixed(2)}',
+                                    'S/ ${formatoMonto(total)}',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
@@ -590,7 +591,7 @@ class _ItemRow extends StatelessWidget {
             ),
             if (price > 0)
               Text(
-                'S/. ${price.toStringAsFixed(2)}',
+                'S/ ${formatoMonto(price)}',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
               ),
           ],
@@ -730,7 +731,7 @@ class _ItemRow extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'S/. ${price.toStringAsFixed(2)}',
+                      'S/ ${formatoMonto(price)}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,

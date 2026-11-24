@@ -644,7 +644,7 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${isEdit ? 'Actualizar' : 'Agregar'}  ·  ${formatExchange(moneda: widget.product.moneda ?? 'PEN')}${_totalPrice.toStringAsFixed(2)}',
+                    '${isEdit ? 'Actualizar' : 'Agregar'}  ·  ${formatExchange(moneda: widget.product.moneda ?? 'PEN')}${formatoMonto(_totalPrice)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,

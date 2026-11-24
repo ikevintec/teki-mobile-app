@@ -16,7 +16,10 @@ class CobradorFilterBar extends ConsumerWidget {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      // Alineados abajo y con cajas de igual alto: antes la etiqueta "Fecha"
+      // quedaba más baja que "Tipo" y "Estado".
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
             flex: 3,
@@ -39,7 +42,7 @@ class CobradorFilterBar extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            flex: 3,
+            flex: 4,
             child: _FilterDropdown<EstadoPagoFilter>(
               label: 'Estado',
               value: state.pagadoFilter,
@@ -119,8 +122,14 @@ class _DateDropdown extends StatelessWidget {
     if (picked != null) notifier.setDate(picked, pvId);
   }
 
-  String _formatDate(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  /// Corto para que no se corte: "Hoy" o dd/MM/aa.
+  String _formatDate(DateTime d) {
+    final hoy = DateTime.now();
+    if (d.year == hoy.year && d.month == hoy.month && d.day == hoy.day) {
+      return 'Hoy';
+    }
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${(d.year % 100).toString().padLeft(2, '0')}';
+  }
 }
 
 class _FilterDropdown<T> extends StatelessWidget {
@@ -147,7 +156,7 @@ class _FilterDropdown<T> extends StatelessWidget {
           value: value,
           isDense: true,
           isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down, size: 18, color: Colors.black54),
+          icon: const Icon(Icons.arrow_drop_down, size: 16, color: Colors.black54),
           style: const TextStyle(fontSize: 13, color: Colors.black87),
           items: items
               .map((item) => DropdownMenuItem<T>(
@@ -193,7 +202,10 @@ class _FilterShell extends StatelessWidget {
         ),
         const SizedBox(height: 3),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+          // Alto mínimo (no fijo): con letra grande la caja crece.
+          constraints: const BoxConstraints(minHeight: 36),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
           decoration: BoxDecoration(
             color: highlighted
                 ? ColorSchema.primaryColor.withValues(alpha: 0.06)
@@ -224,10 +236,9 @@ class _ReloadButton extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 14),
         SizedBox(
-          width: 34,
-          height: 34,
+          width: 36,
+          height: 36,
           child: isLoading
               ? const Padding(
                   padding: EdgeInsets.all(7),

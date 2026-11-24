@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:teki_app/src/data/static/lists.dart';
 
 DateTime? parseDateTimeFlexible(dynamic value) {
@@ -36,10 +37,17 @@ String formatDouble(double value) {
   return value.toStringAsFixed(2); // 7.25 → 7.25
 }
 
+final NumberFormat _formatoMonto = NumberFormat('#,##0.00', 'en_US');
+
+/// Monto con separador de miles: 1284 → "1,284.00". Es la forma usual en Perú
+/// (SUNAT y bancos) y la única que debe usar la app: antes convivían
+/// "1284.00", "1.284,00" y "100,00" según la pantalla.
+String formatoMonto(num? valor) => _formatoMonto.format(valor ?? 0);
+
 String formatExchange({required String moneda}) {
   switch (moneda) {
     case 'PEN':
-      return 'S/. ';
+      return 'S/ ';
     case 'USD':
       return '\$ ';
     case 'EUR':

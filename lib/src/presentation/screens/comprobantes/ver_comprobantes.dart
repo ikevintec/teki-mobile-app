@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -183,12 +184,13 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
                 for (int i = 0; i < items.length; i++)
                   Padding(
                     padding: EdgeInsets.only(top: i == 0 ? 0 : 2),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                    // Wrap: con letra grande el IGV baja de línea en vez de
+                    // desbordar contra "Desglose".
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.end,
                       children: [
                         Text(
-                          '${simbolo(items[i].codigoMoneda)} ${totalDe(items[i]).toStringAsFixed(2)}',
+                          '${simbolo(items[i].codigoMoneda)} ${formatoMonto(totalDe(items[i]))}',
                           style: GoogleFonts.roboto(
                             fontSize: i == 0 ? 17 : 13,
                             fontWeight: FontWeight.w700,
@@ -197,7 +199,7 @@ class _VerComprobanteScreenState extends ConsumerState<VerComprobanteScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'IGV ${simbolo(items[i].codigoMoneda)} ${items[i].totalIgv.toStringAsFixed(2)}',
+                          'IGV ${simbolo(items[i].codigoMoneda)} ${formatoMonto(items[i].totalIgv)}',
                           style: GoogleFonts.roboto(
                             fontSize: 11,
                             color: Colors.grey.shade600,
@@ -286,7 +288,7 @@ class _DesgloseTotalesSheetState extends State<_DesgloseTotalesSheet> {
         _ => moneda,
       };
 
-  String _fmt(double v) => '${_simbolo(_moneda)} ${v.toStringAsFixed(2)}';
+  String _fmt(double v) => '${_simbolo(_moneda)} ${formatoMonto(v)}';
 
   Widget _fila(String label, double monto,
       {bool negativo = false, bool informativo = false}) {

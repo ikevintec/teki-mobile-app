@@ -6,6 +6,7 @@ import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/routes/app_routes.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/trabajo_en_curso_dialog.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/presentation/screens/dashboard/navigation/dashboard_navigation.dart';
 
@@ -36,17 +37,24 @@ Future<void> openNewQuotation(BuildContext context, WidgetRef ref) async {
     return;
   }
 
-  // Si lo que hay en curso es una venta normal, no tiene sentido preguntar
-  // "continuar cotización": se reinicia directo en modo cotización.
-  if (!ticketState.isQuotation) {
-    resetAndNavigate();
-    return;
-  }
-
-  // Si lo en curso es la edición de una cotización ya existente, "Nueva
-  // cotización" debe forzar una creación nueva, nunca continuar esa edición.
-  if (ticketState.isEdit) {
-    resetAndNavigate();
+  // Una venta o una edición en curso no se continúa como cotización nueva,
+  // pero tampoco se descarta sin avisar: el usuario elige retomarla o descartarla.
+  if (!ticketState.isQuotation || ticketState.isEdit) {
+    if (!context.mounted) return;
+    final decision = await preguntarTrabajoEnCurso(
+      context,
+      enCurso: describirEnCurso(
+        esCotizacion: ticketState.isQuotation,
+        esEdicion: ticketState.isEdit,
+      ),
+      productos: productState.productsSales.length,
+      nuevo: 'una cotización nueva',
+    );
+    if (decision == DecisionEnCurso.retomar) {
+      Get.toNamed(AppRoutes.productsSales);
+    } else if (decision == DecisionEnCurso.descartar) {
+      resetAndNavigate();
+    }
     return;
   }
 
@@ -56,10 +64,10 @@ Future<void> openNewQuotation(BuildContext context, WidgetRef ref) async {
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: const Text(
-        'Venta en progreso',
+        'Cotización en progreso',
         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
       ),
-      content: const Text('Ya tienes una venta en curso. ¿Qué deseas hacer?'),
+      content: const Text('Ya tienes una cotización en curso. ¿Qué deseas hacer?'),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),

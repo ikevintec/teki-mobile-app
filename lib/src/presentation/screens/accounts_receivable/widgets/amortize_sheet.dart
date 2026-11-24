@@ -424,7 +424,7 @@ class _TotalsCard extends StatelessWidget {
                   child: _TotalCell(
                     label: 'Total',
                     value: montoTotal != null
-                        ? '$simbolo${montoTotal.toStringAsFixed(2)}'
+                        ? '$simbolo${formatoMonto(montoTotal)}'
                         : '--',
                   ),
                 ),
@@ -432,7 +432,7 @@ class _TotalsCard extends StatelessWidget {
                   child: _TotalCell(
                     label: 'Pagado',
                     value: montoPagado != null
-                        ? '$simbolo${montoPagado.toStringAsFixed(2)}'
+                        ? '$simbolo${formatoMonto(montoPagado)}'
                         : '--',
                     valueColor: Colors.green[700],
                   ),
@@ -441,7 +441,7 @@ class _TotalsCard extends StatelessWidget {
                   Expanded(
                     child: _TotalCell(
                       label: 'Nota crédito',
-                      value: '$simbolo${totalNotaCredito.toStringAsFixed(2)}',
+                      value: '$simbolo${formatoMonto(totalNotaCredito)}',
                       valueColor: Colors.orange[700],
                     ),
                   ),
@@ -449,7 +449,7 @@ class _TotalsCard extends StatelessWidget {
                   child: _TotalCell(
                     label: 'Restante',
                     value: montoRestante != null
-                        ? '$simbolo${montoRestante.toStringAsFixed(2)}'
+                        ? '$simbolo${formatoMonto(montoRestante)}'
                         : '--',
                     valueColor: ColorSchema.primaryColor,
                     bold: true,
@@ -582,7 +582,7 @@ class _PaymentTile extends StatelessWidget {
     final moneda = crd?.monedaMovimientoCaja ?? 'PEN';
     final simbolo = formatExchange(moneda: moneda);
     final montoStr = crd?.monto != null
-        ? '$simbolo${crd!.monto!.toStringAsFixed(2)}'
+        ? '$simbolo${formatoMonto(crd!.monto!)}'
         : '--';
     final fecha = crd?.fechaMovimiento != null
         ? DateFormat('dd/MM/yyyy').format(crd!.fechaMovimiento!)
@@ -659,7 +659,7 @@ class _PaymentDetailSheet extends StatelessWidget {
     final moneda = crd?.monedaMovimientoCaja ?? 'PEN';
     final simbolo = formatExchange(moneda: moneda);
     final montoStr = crd?.monto != null
-        ? '$simbolo${crd!.monto!.toStringAsFixed(2)} $moneda'
+        ? '$simbolo${formatoMonto(crd!.monto!)} $moneda'
         : '--';
     final fecha = crd?.fechaMovimiento != null
         ? DateFormat('dd/MM/yyyy HH:mm').format(crd!.fechaMovimiento!)

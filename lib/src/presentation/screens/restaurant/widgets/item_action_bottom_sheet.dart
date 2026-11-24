@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/comanda_detail_item_tile.dart';
@@ -138,7 +139,7 @@ class _ItemActionSheetContentState extends ConsumerState<_ItemActionSheetContent
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${(widget.item.cantidad ?? 1).toInt()}x  ·  S/. ${((widget.item.precioVenta ?? 0) * (widget.item.cantidad ?? 1)).toStringAsFixed(2)}',
+                          '${(widget.item.cantidad ?? 1).toInt()}x  ·  S/ ${formatoMonto(((widget.item.precioVenta ?? 0) * (widget.item.cantidad ?? 1)))}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,

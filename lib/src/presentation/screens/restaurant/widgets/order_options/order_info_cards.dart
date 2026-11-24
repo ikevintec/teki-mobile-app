@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/data/models/teki_model/delivery.dart';
 import 'package:teki_app/src/utils/constants.dart';
@@ -284,7 +285,7 @@ class DireccionInfoCard extends StatelessWidget {
           OrderInfoRow(
             icon: Icons.delivery_dining_outlined,
             label: 'Costo delivery',
-            value: 'S/. ${monto.toStringAsFixed(2)}',
+            value: 'S/ ${formatoMonto(monto)}',
           ),
       ],
     );

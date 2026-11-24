@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
@@ -124,7 +125,7 @@ class _OrderOptionsSheetState extends ConsumerState<OrderOptionsSheet> {
                         ),
                       ),
                       Text(
-                        '${allItems.length} producto(s) · S/. ${total.toStringAsFixed(2)}',
+                        '${allItems.length} producto(s) · S/ ${formatoMonto(total)}',
                         style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                       ),
                     ],

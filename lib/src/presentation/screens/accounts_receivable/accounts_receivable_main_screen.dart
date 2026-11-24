@@ -92,7 +92,7 @@ class _AccountsReceivableMainScreenState
   }
 
   String get _titulo =>
-      widget.tipoCuenta == 'CC' ? 'Cuentas por Cobrar' : 'Cuentas por Pagar';
+      widget.tipoCuenta == 'CC' ? 'Cuentas por cobrar' : 'Cuentas por pagar';
 
   void _openDateFiltersModal() {
     showCustomModal(
@@ -251,7 +251,7 @@ class _AccountsReceivableMainScreenState
             if (i > 0) const SizedBox(height: 8),
             Text(
               '$etiquetaSaldo ${formatExchange(moneda: totales[i].codigoMoneda)}'
-              '${totales[i].saldo.toStringAsFixed(2)}',
+              '${formatoMonto(totales[i].saldo)}',
               style: GoogleFonts.roboto(
                 fontSize: i == 0 ? 17 : 13,
                 fontWeight: FontWeight.w700,
@@ -260,9 +260,9 @@ class _AccountsReceivableMainScreenState
             ),
             Text(
               'Crédito ${formatExchange(moneda: totales[i].codigoMoneda)}'
-              '${totales[i].totalCredito.toStringAsFixed(2)}'
+              '${formatoMonto(totales[i].totalCredito)}'
               '  ·  Pagado ${formatExchange(moneda: totales[i].codigoMoneda)}'
-              '${totales[i].totalPagado.toStringAsFixed(2)}',
+              '${formatoMonto(totales[i].totalPagado)}',
               style: GoogleFonts.roboto(
                 fontSize: 11,
                 color: Colors.grey.shade600,

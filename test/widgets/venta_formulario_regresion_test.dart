@@ -24,6 +24,54 @@ void main() {
       ..addFont(rootBundle.load('assets/fonts/Roboto-Regular.ttf'));
     await fuente.load();
   });
+  testWidgets('continuar sin precio dice qué producto lo necesita', (t) async {
+    t.view.physicalSize = const Size(390, 844);
+    t.view.devicePixelRatio = 1;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    Get.reset();
+    SharedPreferences.setMockInitialValues({});
+    ApiClient.dio = Dio(BaseOptions(baseUrl: 'https://example.invalid/api'))
+      ..httpClientAdapter = PedidosOpcionesAdapter();
+    final container = ProviderContainer(
+      overrides: [
+        sesionProvider.overrideWith(
+          (_) => LoyaltySessionNotifier(pedidosSession()),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await t.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: ToastificationWrapper(
+          child: GetMaterialApp(
+            theme: ThemeData(fontFamily: 'Roboto'),
+            home: const ProductsSaleScreen(),
+          ),
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Continuar'));
+    await t.pumpAndSettle();
+    expect(find.text('Agrega al menos un producto para continuar.'), findsOneWidget);
+
+    await t.enterText(find.widgetWithText(TextField, 'Buscar producto'), 'Arroz');
+    await t.pumpAndSettle();
+    await t.tap(find.text('Arroz extra 1 kg').last);
+    await t.pumpAndSettle();
+    await t.tap(find.text('Listo'));
+    await t.pumpAndSettle();
+    container.read(productSaleProvider.notifier).setPrecioProductSale(0, 0);
+    await t.pumpAndSettle();
+    await t.tap(find.text('Continuar'));
+    await t.pumpAndSettle();
+    expect(find.text('Falta el precio de «Arroz extra 1 kg».'), findsOneWidget);
+    await t.pump(const Duration(seconds: 5));
+    await t.pumpAndSettle();
+  });
+
   for (final size in [const Size(390, 844), const Size(1024, 768)]) {
     for (final comercial in [false, true]) {
       for (final incIgv in [true, false]) {
@@ -71,6 +119,9 @@ void main() {
               container.read(productSaleProvider).productsSales,
               hasLength(1),
             );
+            // La búsqueda queda abierta para seguir sumando; se cierra con "Listo".
+            await t.tap(find.text('Listo'));
+            await t.pumpAndSettle();
             if (!incIgv) {
               await t.tap(find.text('Si'));
               await t.pumpAndSettle();

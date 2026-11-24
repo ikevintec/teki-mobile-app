@@ -137,7 +137,7 @@ class ComprobanteSummaryWidget extends StatelessWidget {
             style: GoogleFonts.roboto(fontSize: 14, fontWeight: fontWeight, color: textColor),
           ),
           Text(
-            '${formatExchange(moneda: currency ?? "PEN")} ${(value ?? 0).toStringAsFixed(2)}',
+            '${formatExchange(moneda: currency ?? "PEN")}${formatoMonto(value ?? 0)}',
             style: GoogleFonts.roboto(fontSize: 14, fontWeight: fontWeight, color: textColor),
           ),
         ],

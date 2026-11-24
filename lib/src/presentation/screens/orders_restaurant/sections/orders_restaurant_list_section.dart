@@ -71,7 +71,9 @@ class _OrdersRestaurantListSectionState
     return ListView.builder(
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
+      // Espacio para el botón flotante "+ Pedido": no debe tapar el monto
+      // de la última tarjeta.
+      padding: const EdgeInsets.only(bottom: 96),
       itemCount: widget.orders.length + 1,
       itemBuilder: (context, index) {
         if (index == widget.orders.length) {

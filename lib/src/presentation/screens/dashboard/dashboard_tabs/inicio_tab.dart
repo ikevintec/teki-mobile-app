@@ -1,4 +1,5 @@
 import 'package:teki_app/src/presentation/screens/cotizaciones/quotation_navigation.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/trabajo_en_curso_dialog.dart';
 import 'package:flutter/material.dart';
 import '../navigation/dashboard_navigation.dart';
 import '../navigation/dashboard_menu.dart';
@@ -136,17 +137,24 @@ class _InicioTabState extends ConsumerState<InicioTab> {
       return;
     }
 
-    // Si lo que hay en curso es una cotización, no tiene sentido preguntar
-    // "continuar venta": se reinicia directo en modo venta.
-    if (ticketState.isQuotation) {
-      resetAndNavigate();
-      return;
-    }
-
-    // Si lo en curso es la edición de una venta ya existente, "Nueva venta"
-    // debe forzar una creación nueva, nunca continuar esa edición.
-    if (ticketState.isEdit) {
-      resetAndNavigate();
+    // Una cotización o una edición en curso no se continúa como venta nueva,
+    // pero tampoco se descarta sin avisar: el usuario elige retomarla o descartarla.
+    if (ticketState.isQuotation || ticketState.isEdit) {
+      if (!mounted) return;
+      final decision = await preguntarTrabajoEnCurso(
+        context,
+        enCurso: describirEnCurso(
+          esCotizacion: ticketState.isQuotation,
+          esEdicion: ticketState.isEdit,
+        ),
+        productos: productState.productsSales.length,
+        nuevo: 'una venta nueva',
+      );
+      if (decision == DecisionEnCurso.retomar) {
+        _irANuevaVenta();
+      } else if (decision == DecisionEnCurso.descartar) {
+        resetAndNavigate();
+      }
       return;
     }
 

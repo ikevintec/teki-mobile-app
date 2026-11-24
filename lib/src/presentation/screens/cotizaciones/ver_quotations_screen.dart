@@ -58,12 +58,14 @@ class _VerQuotationsScreenState extends ConsumerState<VerQuotationsScreen> {
               onPressed: () => openNewQuotation(context, ref),
               icon: const Icon(Icons.add),
               label: const Text('Nueva cotización'),
+              backgroundColor: ColorSchema.primaryColor,
+              foregroundColor: Colors.white,
             )
           : null,
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Ver Cotizaciones',
+          'Cotizaciones',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: ColorSchema.primaryColor,

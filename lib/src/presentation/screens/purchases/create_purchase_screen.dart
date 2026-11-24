@@ -25,7 +25,7 @@ class CreatePurchaseScreen extends ConsumerStatefulWidget {
 }
 
 class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
-  static final _fmt = NumberFormat('#,##0.00', 'es_PE');
+  static final _fmt = NumberFormat('#,##0.00', 'en_US');
   static final _fmtFecha = DateFormat('dd/MM/yyyy');
 
   // ── Proveedor ─────────────────────────────────────────────────────────
@@ -187,6 +187,10 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
+                  // Azul de la marca (el tema por defecto lo pintaba morado).
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: ColorSchema.primaryColor,
+                  ),
                   onPressed: _agregarProducto,
                   icon: const Icon(Icons.search, size: 18),
                   label: const Text('Buscar producto'),
@@ -319,7 +323,8 @@ class _CreatePurchaseScreenState extends ConsumerState<CreatePurchaseScreen> {
               Expanded(
                 child: TextFormField(
                   initialValue: form.comprobante,
-                  decoration: _inputDeco('Número (F001-123)'),
+                  // Etiqueta corta y el ejemplo como pista: antes se cortaba.
+                  decoration: _inputDeco('Número').copyWith(hintText: 'F001-123'),
                   onChanged: notifier.setComprobante,
                 ),
               ),

@@ -122,16 +122,35 @@ class _QuickAction extends StatelessWidget {
                 size: 25,
               ),
               const SizedBox(height: 8),
-              Text(
-                action == DashboardAction.loyalty
-                    ? 'Fidelización'
-                    : action.label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: primary ? Colors.white : const Color(0xFF353537),
-                ),
+              // Palabra por palabra: con letra grande una palabra larga se
+              // achica en vez de partirse ("Comprobant/es").
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final label = action == DashboardAction.loyalty
+                      ? 'Fidelización'
+                      : action.label;
+                  final style = TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: primary ? Colors.white : const Color(0xFF353537),
+                  );
+                  return Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 4,
+                    children: [
+                      for (final palabra in label.split(' '))
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: constraints.maxWidth,
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(palabra, style: style),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ],
           ),

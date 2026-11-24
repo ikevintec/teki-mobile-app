@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:teki_app/src/utils/formats.dart';
 
 import 'package:flutter/material.dart' hide Table;
 import 'package:teki_app/src/data/models/teki_model/table.dart';
@@ -275,7 +276,7 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              'S/. ${_totalOrder(order).toStringAsFixed(2)}',
+                              'S/ ${formatoMonto(_totalOrder(order))}',
                               style: TextStyle(fontSize: 11, color: textColor, fontWeight: FontWeight.w700),
                             ),
                           ),
@@ -289,12 +290,21 @@ class _TableCardState extends State<TableCard> with SingleTickerProviderStateMix
                             if (loungeLabel != null)
                               Text(
                                 loungeLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(fontSize: 11, color: textColor.withValues(alpha: 0.7), fontWeight: FontWeight.w600),
                               ),
                             // Número de mesa
-                            Text(
-                              'Mesa ${table.numero ?? table.id}',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26, color: textColor),
+                            // Una sola línea: "Mesa 9931" se achica en vez de
+                            // partirse en dos renglones.
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Mesa ${table.numero ?? table.id}',
+                                maxLines: 1,
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26, color: textColor),
+                              ),
                             ),
                             const Spacer(),
                             // Info inferior izquierda

@@ -290,7 +290,7 @@ class _RegisterPaymentSheetState extends ConsumerState<_RegisterPaymentSheet> {
                             final n = double.tryParse(v ?? '');
                             if (n == null || n <= 0) return 'Ingresa un monto mayor a 0';
                             if (n > _montoRestante + 0.005) {
-                              return 'Máx $simbolo${_montoRestante.toStringAsFixed(2)}';
+                              return 'Máx $simbolo${formatoMonto(_montoRestante)}';
                             }
                             return null;
                           },
@@ -498,7 +498,7 @@ class _InfoCard extends StatelessWidget {
                 style: GoogleFonts.roboto(fontSize: 11, color: Colors.black45),
               ),
               Text(
-                '$simbolo${montoRestante.toStringAsFixed(2)} $moneda',
+                '$simbolo${formatoMonto(montoRestante)} $moneda',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

@@ -63,7 +63,7 @@ class GruposSection extends StatelessWidget {
                 final isChecked = selected.contains(op.id);
                 final qty = allowQty ? (groupQuantities[g.id]?[op.id] ?? 0) : 0;
                 final priceLabel = (op.precio ?? 0) > 0
-                    ? '+${formatExchange(moneda: product.moneda ?? 'PEN')}${(op.precio ?? 0).toStringAsFixed(2)}'
+                    ? '+${formatExchange(moneda: product.moneda ?? 'PEN')}${formatoMonto(op.precio ?? 0)}'
                     : null;
 
                 if (allowQty) {

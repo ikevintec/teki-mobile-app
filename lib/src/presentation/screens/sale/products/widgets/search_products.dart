@@ -1,4 +1,6 @@
 import 'package:teki_app/src/presentation/screens/pedidos/precio_linea.dart';
+import 'package:teki_app/src/presentation/screens/pedidos/busqueda_pedido.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +37,10 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
   final ValueNotifier<bool> _isSearching = ValueNotifier(false);
   final ValueNotifier<String?> _searchError = ValueNotifier(null);
   final ValueNotifier<bool> _hasSearched = ValueNotifier(false);
+  // Productos que se están agregando: muestran un indicador y no aceptan un
+  // segundo toque hasta terminar (en red lenta parecía que no pasaba nada).
+  final ValueNotifier<Set<int>> _agregando = ValueNotifier({});
+  Future<void> _cola = Future.value();
 
   @override
   void initState() {
@@ -62,6 +68,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     _isSearching.dispose();
     _hasSearched.dispose();
     _searchError.dispose();
+    _agregando.dispose();
     _removeOverlay();
     super.dispose();
   }
@@ -106,14 +113,34 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     });
   }
 
-  Future<void> _selectProduct(Product product) async {
-    _controller.clear();
-    _results.value = [];
-    _hasSearched.value = false;
-    _focusNode.unfocus();
-    // El resultado de la búsqueda es ligero: al seleccionar se trae el detalle
-    // completo del producto antes de agregarlo a la venta.
-    await ref.read(productSaleProvider.notifier).selectProductForSale(product,solicitarPrecioManual:(_)=>ingresarPrecio(context));
+  /// Agrega el producto sin cerrar la búsqueda (como en pedidos): el texto, los
+  /// resultados y el teclado se quedan para seguir sumando productos.
+  void _selectProduct(Product product) {
+    final id = product.id;
+    if (id == null || _agregando.value.contains(id)) return;
+    // La selección pertenece a este carrito, aunque se cierre la pantalla.
+    final carrito = ref.read(productSaleProvider.notifier);
+    _agregando.value = {..._agregando.value, id};
+    // En orden y de a uno: cada agregado lee el carrito que dejó el anterior.
+    _cola = _cola.then((_) async {
+      try {
+        // Descartar la venta o cambiar de sesión invalida el carrito original.
+        if (!carrito.mounted) return;
+        // El resultado de la búsqueda es ligero: al seleccionar se trae el
+        // detalle completo del producto antes de agregarlo a la venta.
+        await carrito.selectProductForSale(
+          product,
+          solicitarPrecioManual: (_) async {
+            if (!mounted) return null;
+            return ingresarPrecio(context);
+          },
+        );
+      } finally {
+        if (mounted) {
+          _agregando.value = {..._agregando.value}..remove(id);
+        }
+      }
+    });
   }
 
   void _showOverlay() {
@@ -134,6 +161,8 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
         hasSearched: _hasSearched,
         controller: _controller,
         onSelect: _selectProduct,
+        agregando: _agregando,
+        onDone: _focusNode.unfocus,
         error: _searchError,
         onRetry: _onTextChange,
       ),
@@ -263,6 +292,8 @@ class _SuggestionsDropdown extends StatelessWidget {
   final void Function(Product) onSelect;
   final ValueNotifier<String?> error;
   final VoidCallback onRetry;
+  final ValueNotifier<Set<int>> agregando;
+  final VoidCallback onDone;
 
   const _SuggestionsDropdown({
     required this.layerLink,
@@ -275,6 +306,8 @@ class _SuggestionsDropdown extends StatelessWidget {
     required this.onSelect,
     required this.error,
     required this.onRetry,
+    required this.agregando,
+    required this.onDone,
   });
 
   @override
@@ -294,7 +327,7 @@ class _SuggestionsDropdown extends StatelessWidget {
         child: SizedBox(
           width: width,
           child: ListenableBuilder(
-            listenable: Listenable.merge([results, isSearching, hasSearched, controller, error]),
+            listenable: Listenable.merge([results, isSearching, hasSearched, controller, error, agregando]),
             builder: (context, _) {
               final query = controller.text.trim();
               final Widget content;
@@ -336,24 +369,47 @@ class _SuggestionsDropdown extends StatelessWidget {
               } else if (results.value.isNotEmpty) {
                 content = ConstrainedBox(
                   constraints: BoxConstraints(maxHeight: maxHeight),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: results.value.map((product) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => onSelect(product),
-                              child: ItemProduct(product: product),
-                            ),
-                            if (product != results.value.last)
-                              Divider(height: 1, thickness: 1, color: Colors.grey.shade300),
-                          ],
-                        );
-                      }).toList(),
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: results.value.map((product) {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () => onSelect(product),
+                                    child: ItemProduct(
+                                      product: product,
+                                      agregando: agregando.value.contains(product.id),
+                                    ),
+                                  ),
+                                  if (product != results.value.last)
+                                    Divider(height: 1, thickness: 1, color: Colors.grey.shade300),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                      // Igual que la búsqueda de pedidos: la lista queda abierta
+                      // para sumar varios productos y se cierra a propósito.
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: estiloAccionPrincipal,
+                            onPressed: onDone,
+                            child: const Text('Listo'),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               } else {
@@ -379,7 +435,8 @@ class _SuggestionsDropdown extends StatelessWidget {
 
 class ItemProduct extends ConsumerWidget {
   final Product product;
-  const ItemProduct({super.key, required this.product});
+  final bool agregando;
+  const ItemProduct({super.key, required this.product, this.agregando = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -401,6 +458,10 @@ class ItemProduct extends ConsumerWidget {
             )
             .stock ??
         0.0;
+    // Cuánto lleva ya la venta de este producto (sin contar regalos).
+    final enVenta = ref.watch(productSaleProvider.select((s) => s.productsSales
+        .where((l) => l.producto?.id == product.id && l.esBonificacion != true)
+        .fold<double>(0, (total, l) => total + (l.cantidad ?? 0))));
     final inicial = (product.nombre?.isNotEmpty == true)
         ? product.nombre![0].toUpperCase()
         : 'P';
@@ -463,7 +524,7 @@ class ItemProduct extends ConsumerWidget {
                     Icon(Icons.inventory_2_outlined, size: 12, color: Colors.grey.shade500),
                     const SizedBox(width: 3),
                     Text(
-                      'Stock: $stock',
+                      'Stock ${cantidadPedido(stock)}',
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   ],
@@ -471,7 +532,28 @@ class ItemProduct extends ConsumerWidget {
               ],
             ),
           ),
-          Icon(Icons.add_circle_outline, size: 20, color: ColorSchema.primaryColor.withValues(alpha: 0.5)),
+          if (agregando)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: ColorSchema.primaryColor),
+            )
+          else ...[
+            if (enVenta > 0) ...[
+              const Icon(Icons.check_circle, size: 18, color: ColorSchema.primaryColor),
+              const SizedBox(width: 3),
+              Text(
+                cantidadPedido(enVenta),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: ColorSchema.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Icon(Icons.add_circle_outline, size: 22, color: ColorSchema.primaryColor.withValues(alpha: 0.7)),
+          ],
         ],
       ),
     );

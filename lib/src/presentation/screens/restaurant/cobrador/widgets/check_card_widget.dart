@@ -50,7 +50,7 @@ class CheckCardWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${items.length} items · S/. ${total.toStringAsFixed(2)}',
+                      '${items.length} items · S/ ${formatoMonto(total)}',
                       style:
                           TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),

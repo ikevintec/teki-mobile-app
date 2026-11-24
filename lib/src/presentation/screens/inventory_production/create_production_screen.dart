@@ -41,7 +41,7 @@ class _CreateProductionScreenState
   bool _showResults = false;
   bool _loadingProduct = false;
 
-  static final _fmt = NumberFormat('#,##0.00', 'es_PE');
+  static final _fmt = NumberFormat('#,##0.00', 'en_US');
 
   @override
   void dispose() {

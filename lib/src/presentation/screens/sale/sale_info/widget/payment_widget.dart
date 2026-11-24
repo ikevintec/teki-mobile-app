@@ -1,4 +1,6 @@
 import 'package:teki_app/src/providers/sale/cash_payment_validation.dart';
+import 'package:teki_app/src/utils/formats.dart';
+import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/emission_review_dialog.dart';
 import 'dart:async';
 import 'dart:ui';
@@ -371,7 +373,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
         cuotas.map((c) => c.monto ?? 0).toList(), total)) {
       final suma = cuotas.fold<double>(0, (a, c) => a + (c.monto ?? 0));
       errorNotification(
-          "Las cuotas suman S/. ${suma.toStringAsFixed(2)} y deben sumar el total de la venta (S/. ${total.toStringAsFixed(2)})");
+          "Las cuotas suman S/ ${formatoMonto(suma)} y deben sumar el total de la venta (S/ ${formatoMonto(total)})");
       return false;
     }
     provider.setCuotas(cuotas, diasCredito: int.tryParse(diasCredito.text));
@@ -659,18 +661,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                             if (mounted) setState(() => _isSubmitting = false);
                           }
                         },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorSchema.primaryColor,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        ColorSchema.primaryColor.withValues(alpha: 0.5),
-                    disabledForegroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
+                  style: estiloAccionPrincipal,
                   child: _isSubmitting
                       ? const SizedBox(
                           width: 20,

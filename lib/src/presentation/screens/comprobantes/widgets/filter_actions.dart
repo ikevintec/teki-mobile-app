@@ -57,7 +57,7 @@ class FilterActions extends ConsumerWidget {
           },
           icon: const Icon(Icons.filter_list_outlined, color: ColorSchema.primaryColor),
           label: const Text(
-            'Mas filtros',
+            'Más filtros',
             style: TextStyle(
               color: ColorSchema.primaryColor,
               fontWeight: FontWeight.w500,

@@ -17,7 +17,7 @@ Map<String, dynamic> analyticsMonthParams(int idPuntoVenta) {
 }
 
 String fmtMontoAnalytics(double v) =>
-    NumberFormat('#,##0.00', 'es_PE').format(v);
+    NumberFormat('#,##0.00', 'en_US').format(v);
 
 /// Card contenedora con título e ícono, estilo del módulo de analíticas.
 /// Se oculta sola (SizedBox.shrink) cuando [visible] es false — las

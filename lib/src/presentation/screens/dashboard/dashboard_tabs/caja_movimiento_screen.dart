@@ -716,7 +716,7 @@ class _CambiarMetodoPagoSheetState extends State<_CambiarMetodoPagoSheet> {
                   style: GoogleFonts.raleway(
                       fontWeight: FontWeight.bold, fontSize: 15)),
               Text(
-                '${widget.titulo} · total S/. ${widget.total.toStringAsFixed(2)}',
+                '${widget.titulo} · total S/ ${formatoMonto(widget.total)}',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
               ),
               const SizedBox(height: 12),
@@ -767,7 +767,7 @@ class _CambiarMetodoPagoSheetState extends State<_CambiarMetodoPagoSheet> {
                           ],
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
-                            prefixText: 'S/. ',
+                            prefixText: 'S/ ',
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 10),
@@ -812,9 +812,9 @@ class _CambiarMetodoPagoSheetState extends State<_CambiarMetodoPagoSheet> {
                 ),
                 child: Text(
                   _sumaExacta
-                      ? 'Asignado S/. ${_asignado.toStringAsFixed(2)} ✓'
-                      : 'Asignado S/. ${_asignado.toStringAsFixed(2)} de S/. ${widget.total.toStringAsFixed(2)} · '
-                          '${_asignado < widget.total ? 'faltan' : 'sobran'} S/. ${(_asignado - widget.total).abs().toStringAsFixed(2)}',
+                      ? 'Asignado S/ ${formatoMonto(_asignado)} ✓'
+                      : 'Asignado S/ ${formatoMonto(_asignado)} de S/ ${formatoMonto(widget.total)} · '
+                          '${_asignado < widget.total ? 'faltan' : 'sobran'} S/ ${formatoMonto((_asignado - widget.total).abs())}',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12.5,

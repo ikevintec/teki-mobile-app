@@ -23,6 +23,7 @@ import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart
 import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helper.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/notifications.dart';
+import 'package:teki_app/src/utils/formats.dart';
 
 enum SaleMode {
   createVenta,
@@ -776,19 +777,27 @@ class TicketProvider {
       mode == SaleMode.createCotizacion || mode == SaleMode.editCotizacion;
   bool get isSaleFromQuotation => ticket.cotizacion != null;
 
-  /// Subtítulo a mostrar en el AppBar a lo largo de todo el flujo de venta
-  /// (Cliente, Productos, Resumen) cuando se está creando/editando una
-  /// cotización, o cuando se está generando una venta a partir de una.
-  String? get subtitleLabel {
-    if (isPedido) return 'Pedido';
-    if (isQuotation) return 'Cotización';
-    if (isSaleFromQuotation) {
-      return 'Venta cotizada de ${ticket.cotizacion?.serie ?? '--'}-${ticket.cotizacion?.numero ?? '--'}';
-    }
-    return null;
-  }
+  /// Título fijo de todo el flujo (Productos, Cliente, Comprobante): dice qué
+  /// se está haciendo, para no confundir una venta con una cotización.
+  String get tituloFlujo => switch (mode) {
+    SaleMode.createVenta => 'Nueva venta',
+    SaleMode.editVenta => 'Editar venta',
+    SaleMode.createCotizacion => 'Nueva cotización',
+    SaleMode.editCotizacion => 'Editar cotización',
+    SaleMode.createPedido => 'Nuevo pedido',
+    SaleMode.editPedido => 'Editar pedido',
+  };
 
-  bool get subtitleEmphasis => isQuotation || isSaleFromQuotation;
+  /// Subtítulo de cada pantalla: el paso que toca y, si lo hay, de dónde viene
+  /// (pedido de mesa o cotización que se convierte en venta).
+  String subtituloPaso(String paso) {
+    final origen = ticket.pedidoRestaurante != null
+        ? 'Pedido #${formatOrderNumber(ticket.pedidoRestaurante!.id)}'
+        : isSaleFromQuotation
+        ? 'De la cotización ${ticket.cotizacion?.serie ?? '--'}-${ticket.cotizacion?.numero ?? '--'}'
+        : null;
+    return origen == null ? paso : '$paso · $origen';
+  }
 
   String get continueButtonLabel {
     switch (mode) {

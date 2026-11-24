@@ -43,9 +43,11 @@ enum DashboardAction {
   analytics('Estadísticas', Icons.bar_chart_rounded),
   settings('Ajustes', Icons.settings_outlined),
   tables('Mesas', Icons.table_restaurant_outlined),
-  orders('Pedidos', Icons.restaurant_menu_rounded),
+  // "Pedidos de mesa" para no confundirlo con "Pedidos de venta".
+  orders('Pedidos de mesa', Icons.restaurant_menu_rounded),
   kitchen('Cocina', Icons.soup_kitchen_outlined),
-  collector('Cobrador', Icons.point_of_sale_rounded);
+  // Ícono propio: point_of_sale ya es el de la pestaña Caja.
+  collector('Cobrador', Icons.price_check_rounded);
 
   const DashboardAction(this.label, this.icon);
   final String label;
@@ -94,7 +96,7 @@ List<DashboardGroup> dashboardGroups(SesionState session) {
         if (can('RESTAURANTE_MESAS_VER')) DashboardAction.tables,
         if (can('RESTAURANTE_PEDIDOS_VER')) DashboardAction.orders,
         if (can('RESTAURANTE_COCINA_VER')) DashboardAction.kitchen,
-        if (can('RESTAURANTE_COMANDAS_VER')) DashboardAction.collector,
+        if (can('RESTAURANTE_COBRADOR_VER')) DashboardAction.collector,
       ]),
     DashboardGroup('Administración', [
       if (can('REPORTE_VENTAS')) DashboardAction.analytics,

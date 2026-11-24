@@ -99,7 +99,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
                       ),
                     ),
                     Text(
-                      "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.totalVenta ?? 0).toStringAsFixed(2)}",
+                      "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')}${formatoMonto(providerTicket.ticket.totalVenta ?? 0)}",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -117,7 +117,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
                         style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${widget.montoPagado.toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')}${formatoMonto(widget.montoPagado)}",
                         style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                       ),
                     ],
@@ -131,7 +131,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green.shade700),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${widget.cambio.toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')}${formatoMonto(widget.cambio)}",
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green.shade700),
                       ),
                     ],
@@ -147,7 +147,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.totalValorVentaGravada ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')}${formatoMonto(providerTicket.ticket.totalValorVentaGravada ?? 0)}",
                         style: TextStyle(
                           fontSize: 12,
                         ),
@@ -165,7 +165,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.otrosCargos ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')}${formatoMonto(providerTicket.ticket.otrosCargos ?? 0)}",
                         style: TextStyle(
                           fontSize: 12,
                         ),
@@ -183,7 +183,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.otrosTributos ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')}${formatoMonto(providerTicket.ticket.otrosTributos ?? 0)}",
                         style: TextStyle(
                           fontSize: 12,
                         ),
@@ -201,7 +201,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.totalIgv ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')}${formatoMonto(providerTicket.ticket.totalIgv ?? 0)}",
                         style: TextStyle(
                           fontSize: 12,
                         ),
@@ -220,7 +220,7 @@ class _SummaryBarSalesState extends ConsumerState<SummaryBarSales>
                         ),
                       ),
                       Text(
-                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')} ${(providerTicket.ticket.totalValorVentaGratuita ?? 0).toStringAsFixed(2)}",
+                        "${formatExchange(moneda: provider.currency != null ? (provider.currency!.codigoMoneda ?? 'U') : '')}${formatoMonto(providerTicket.ticket.totalValorVentaGratuita ?? 0)}",
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

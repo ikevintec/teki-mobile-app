@@ -68,14 +68,19 @@ class CommandPrintService {
 
     final areasProductions = <ProductionArea>[];
 
-    void processProduct(Product producto) {
-      final area = producto.categoria?.areaProduccion;
-      if (area == null) return;
-      final hasMatchingPrinter = area.impresoras?.any((imp) =>
-              imp.puntoVenta?.id == puntoVenta.id &&
-              (imp.tipoImpresora == null || imp.tipoImpresora == 'TICKETERA')) ??
-          false;
-      if (hasMatchingPrinter) areasProductions.add(area);
+    void processProduct(Product? producto) {
+      // La web envía a las áreas primaria y secundaria de la categoría.
+      for (final area in [
+        producto?.categoria?.areaProduccion,
+        producto?.categoria?.areaProduccionSecundaria,
+      ]) {
+        if (area == null || area.id == null) continue;
+        final hasMatchingPrinter = area.impresoras?.any((imp) =>
+                imp.puntoVenta?.id == puntoVenta.id &&
+                (imp.tipoImpresora == null || imp.tipoImpresora == 'TICKETERA')) ??
+            false;
+        if (hasMatchingPrinter) areasProductions.add(area);
+      }
     }
 
     for (final cd in command.items ?? []) {
@@ -91,9 +96,7 @@ class CommandPrintService {
       }
 
       for (final gp in cd.grupoProductoOpciones ?? []) {
-        if (gp.producto?.categoria?.areaProduccion.impresoras?.any((imp) => imp.puntoVenta?.id == puntoVenta.id) == true) {
-          processProduct(gp.producto);
-        }
+        processProduct(gp.producto);
       }
     }
 
@@ -135,8 +138,9 @@ class CommandPrintService {
     final printerOfficeCode =
         '$officeCode${printer.codigoCoffe != null ? '_${printer.codigoCoffe}' : ''}';
 
-    if (tipoImpresion == 'ESCPOS') {
-      try {
+    try {
+      PrintCoffeResult? result;
+      if (tipoImpresion == 'ESCPOS') {
         final response = await _dio.get(
           '/ticket-esc-pos/command/$commandId',
           queryParameters: _paramsToMap(params),
@@ -145,28 +149,31 @@ class CommandPrintService {
           response.data as Map<String, dynamic>,
         );
         final orders = _escPosFormatter.format(commandPrint, printer);
-        await _printCoffeService.printCoffe({
+        result = await _printCoffeService.printCoffe({
           'printerName': printer.nombre,
           'orders': orders,
           'event': 'printEscPos',
           'idCompany': idCompany,
           'officeCode': printerOfficeCode,
         });
-      } on PrintCoffeException catch (e) {
-        errorNotification(e.message);
-      } catch (e) {
-        errorNotification('Error al imprimir comanda: ${e.toString()}');
+      } else if (tipoImpresion == 'PDF') {
+        final url = '${Environment.apiUrl}/public/pdf/command/$commandId?$params';
+        result = await _printCoffeService.printCoffe({
+          'url': url,
+          'scale': printer.coffeEscala ?? 2.5,
+          'printerName': printer.nombre,
+          'event': 'printPdf',
+          'idCompany': idCompany,
+          'officeCode': printerOfficeCode,
+        });
       }
-    } else if (tipoImpresion == 'PDF') {
-      final url = '${Environment.apiUrl}/public/pdf/command/$commandId?$params';
-      await _printCoffeService.printCoffe({
-        'url': url,
-        'scale': printer.coffeEscala ?? 2.5,
-        'printerName': printer.nombre,
-        'event': 'printPdf',
-        'idCompany': idCompany,
-        'officeCode': printerOfficeCode,
-      });
+      if (result?.printed == false) {
+        errorNotification(result?.message ?? 'Pedido registrado, pero no se pudo imprimir la comanda.');
+      }
+    } on PrintCoffeException catch (e) {
+      errorNotification(e.message);
+    } catch (e) {
+      errorNotification('Error al imprimir comanda: $e');
     }
   }
 

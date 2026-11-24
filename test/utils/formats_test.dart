@@ -70,7 +70,7 @@ void main() {
 
   group('formatExchange', () {
     test('monedas conocidas', () {
-      expect(formatExchange(moneda: 'PEN'), 'S/. ');
+      expect(formatExchange(moneda: 'PEN'), 'S/ ');
       expect(formatExchange(moneda: 'USD'), '\$ ');
       expect(formatExchange(moneda: 'EUR'), '€ ');
     });
@@ -91,6 +91,14 @@ void main() {
     test('null o desconocido retorna guion', () {
       expect(formatEstadoSunat(null), '-');
       expect(formatEstadoSunat('OTRO'), '-');
+    });
+  });
+
+  group('formatoMonto', () {
+    test('separa miles con coma y decimales con punto', () {
+      expect(formatoMonto(1284), '1,284.00');
+      expect(formatoMonto(5926727.149), '5,926,727.15');
+      expect(formatoMonto(null), '0.00');
     });
   });
 }

@@ -89,7 +89,7 @@ class OrdersRestaurantNotifier
     if (value == 'PAGADOS') pedidoFacturado = true;
     if (value == 'NO_PAGADOS') pedidoFacturado = false;
     state = state.copyWith(
-      selectedEstadoPago: value ?? 'PAGADOS',
+      selectedEstadoPago: value ?? 'NO_PAGADOS',
       pedidoFacturado: pedidoFacturado,
       clearPedidoFacturado: value == 'TODOS',
       pageNumber: 0,
@@ -226,8 +226,10 @@ class OrdersRestaurantState {
       desde: null,
       hasta: null,
       selectedTipo: 'TODOS',
-      selectedEstadoPago: 'PAGADOS',
-      pedidoFacturado: true,
+      // Se abre en lo que falta cobrar: los pagados son historial y antes
+      // obligaban a cambiar el filtro cada vez.
+      selectedEstadoPago: 'NO_PAGADOS',
+      pedidoFacturado: false,
       notificationTrigger: 0,
     );
   }

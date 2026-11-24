@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/data/models/teki_model/command_detail.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/comanda_detail_item_tile.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/widgets/item_action_bottom_sheet.dart';
@@ -226,7 +227,7 @@ class CommandaItemRowState extends State<CommandaItemRow>
                 ),
               ),
               Text(
-                'S/. ${total.toStringAsFixed(2)}',
+                'S/ ${formatoMonto(total)}',
                 style: TextStyle(
                   fontSize: isCancelled ? 11 : 13,
                   fontWeight: FontWeight.w600,
@@ -268,7 +269,7 @@ class CommandaItemRowState extends State<CommandaItemRow>
                         ),
                         if (optPrice > 0)
                           Text(
-                            'S/. ${optPrice.toStringAsFixed(2)}',
+                            'S/ ${formatoMonto(optPrice)}',
                             style: TextStyle(
                               fontSize: 11,
                               color: subColor,

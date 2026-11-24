@@ -184,7 +184,7 @@ class _AnalyticsReportSectionState
       };
 
   static String _fmtMonto(double v) =>
-      NumberFormat('#,##0.00', 'es_PE').format(v);
+      NumberFormat('#,##0.00', 'en_US').format(v);
 
   /// Moneda principal de los datos del mes (PEN si está presente).
   String get _monedaPrincipal {

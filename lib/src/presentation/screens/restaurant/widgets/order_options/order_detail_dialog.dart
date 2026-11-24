@@ -116,7 +116,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
         children: [
           if (leading != null) leading,
           Text(
-            'Subtotal: S/. ${subtotal.toStringAsFixed(2)}',
+            'Subtotal: S/ ${formatoMonto(subtotal)}',
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey.shade700,
@@ -977,7 +977,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                           ),
                         ),
                         Text(
-                          'S/. ${order.montoDelivery!.toStringAsFixed(2)}',
+                          'S/ ${formatoMonto(order.montoDelivery!)}',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -998,7 +998,7 @@ class OrderDetailDialogState extends ConsumerState<OrderDetailDialog>
                       ),
                     ),
                     Text(
-                      'S/. ${grandTotal.toStringAsFixed(2)}',
+                      'S/ ${formatoMonto(grandTotal)}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
