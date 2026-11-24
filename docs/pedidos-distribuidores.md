@@ -1,5 +1,10 @@
 # Pedidos de venta: backend, web y app
 
+> **Estado consolidado22/11/2026:** [backend, web, worker y app](../../docs/distribuidores/refinamiento.md).
+> Las secciones siguientes conservan pruebas/decisiones fechadas. El plan vigente reemplaza pendientes
+> históricos de integración móvil y distingue implementación local, publicación y despliegue.
+
+
 **20/11/2026 · Implementado localmente; pendiente de publicación y despliegue.**
 Alcance aprobado por Kevin: flujo y prevención de errores, captura rápida móvil y bonificaciones interactivas.
 La web conserva su interfaz actual. Esta versión sustituye el plan previo, que figuraba como no implementado.
