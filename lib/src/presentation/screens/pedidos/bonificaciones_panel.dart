@@ -275,7 +275,8 @@ double _num(dynamic v) => (v as num?)?.toDouble() ?? 0;
 
 String _unidad(dynamic u) {
   final t = '${u ?? ''}'.trim().toLowerCase();
-  return t.isEmpty || t == 'niu' ? 'und' : t;
+  if (t.isEmpty || t == 'niu' || t == 'und') return 'und';
+  return t == 'mts' || t == 'mtr' ? 'm' : t;
 }
 
 /// Motivo por el que las bonificaciones impiden enviar, o null si no hay.
@@ -407,9 +408,23 @@ Future<void> elegirRegaloBonificacion(
   WidgetRef ref,
   dynamic eleccion,
 ) async {
+  final notifier = ref.read(bonificacionesProvider.notifier);
   final regalos =
       ref.read(bonificacionesProvider).resultado['regalos'] as Map? ?? {};
   final opciones = eleccion['opciones'] as List;
+  final cantidades = eleccion['cantidadesPorOpcion'] as Map? ?? {};
+  double? cantidadPara(dynamic id) {
+    final valor = cantidades['$id'] ?? cantidades[id];
+    return valor == null ? null : _num(valor);
+  }
+
+  bool disponible(dynamic id) {
+    final cantidad = cantidadPara(id);
+    final stock = regalos['$id']?['disponible'];
+    // Un API anterior no publica cantidades por opción; el servidor valida al elegir.
+    return cantidad == null || stock == null || _num(stock) >= cantidad;
+  }
+
   final elegido = await showModalBottomSheet<int>(
     context: context,
     useSafeArea: true,
@@ -423,30 +438,30 @@ Future<void> elegirRegaloBonificacion(
               'Elige el regalo',
               style: Theme.of(ctx).textTheme.titleMedium,
             ),
-            subtitle: Text(
-              '${eleccion['nombre']} · ${cantidadPedido(_num(eleccion['cantidad']))} und',
-            ),
+            subtitle: Text('${eleccion['nombre']}'),
           ),
           for (final dynamic id in opciones)
             ListTile(
+              enabled: disponible(id),
               leading: const Icon(Icons.card_giftcard),
               title: Text('${regalos['$id']?['nombre'] ?? 'Producto $id'}'),
               subtitle: Text(
-                regalos['$id']?['disponible'] == null
-                    ? 'Stock por verificar'
-                    : 'Disponible: ${cantidadPedido(_num(regalos['$id']['disponible']))} ${_unidad(regalos['$id']['unidad'])}',
+                '${cantidadPedido(cantidadPara(id) ?? _num(eleccion['cantidad']))} ${_unidad(regalos['$id']?['unidad'])} de regalo · '
+                '${regalos['$id']?['disponible'] == null ? 'Stock por verificar' : 'Disponible: ${cantidadPedido(_num(regalos['$id']['disponible']))} ${_unidad(regalos['$id']['unidad'])}'}',
               ),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.pop(ctx, (id as num).toInt()),
+              onTap: disponible(id)
+                  ? () => Navigator.pop(ctx, (id as num).toInt())
+                  : null,
             ),
         ],
       ),
     ),
   );
-  if (elegido != null) {
-    ref
-        .read(bonificacionesProvider.notifier)
-        .elegirRegalo((eleccion['idPromocion'] as num).toInt(), elegido);
+  if (elegido != null &&
+      context.mounted &&
+      identical(ref.read(bonificacionesProvider.notifier), notifier)) {
+    notifier.elegirRegalo((eleccion['idPromocion'] as num).toInt(), elegido);
   }
 }
 

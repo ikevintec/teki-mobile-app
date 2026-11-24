@@ -81,6 +81,29 @@ SaleHarness venta({
 }
 
 void main() {
+  test(
+    'regular cero creado al apagar comerciales no toma el precio comercial',
+    () {
+      final producto = articulo.copyWith(
+        preciosVenta: [
+          ProductPrice(id: 30, tipoPrecio: 'POR_DEFECTO', precio: 0),
+          ProductPrice(
+            id: 31,
+            tipoPrecio: 'POR_DEFECTO',
+            tipoComercialId: 1,
+            precio: 110,
+          ),
+        ],
+      );
+      final linea = getTicketDetail(
+        product: producto,
+        sesion: testSesion.copyWith(comercial: const ContextoComercial()),
+      );
+      expect(linea.precioVentaUnitario, 0);
+      expect(linea.tipoComercialId, isNull);
+    },
+  );
+
   for (final incIgv in [true, false]) {
     for (final comercial in [false, true]) {
       test(

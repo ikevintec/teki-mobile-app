@@ -58,6 +58,23 @@ void main() {
     return ComercialService(dio: dio);
   }
 
+  test(
+    'clientes de otra sesión no comparten caché aunque la sede coincida',
+    () async {
+      final a = _Adapter({_vigentes: {}});
+      final primero = servicio(a);
+      await primero.productosConPromocion(1);
+      final b = _Adapter({
+        _vigentes: {
+          '7': ['Promoción de la otra sesión'],
+        },
+      });
+      final otro = servicio(b);
+      expect(await otro.productosConPromocion(1), contains(7));
+      expect(b.llamadas(_vigentes), 1);
+    },
+  );
+
   test('sin productos en promoción no llama a evaluar', () async {
     final adapter = _Adapter({_vigentes: {}});
     final r = await servicio(adapter).evaluar(_req(101, [7]));

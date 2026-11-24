@@ -36,12 +36,21 @@ class BonificacionesState {
       bloqueos.isEmpty;
 }
 
+/// Caché compartida dentro de una sesión; renovar configuración descarta su vigencia.
+final comercialPromocionesProvider = Provider<ComercialService>((ref) {
+  ref.watch(sesionProvider.select((s) => s.claveContexto));
+  ref.watch(sesionProvider.select((s) => s.config));
+  return ComercialService();
+});
+
 /// Productos con promoción vigente en la sede (para marcarlos al buscar).
 /// Si el servidor no lo soporta o falla, no se marca nada.
 final productosConPromocionProvider = FutureProvider.autoDispose
     .family<Map<int, List<String>>, int?>((ref, sede) async {
       try {
-        return await ComercialService().productosConPromocion(sede);
+        return await ref
+            .watch(comercialPromocionesProvider)
+            .productosConPromocion(sede);
       } catch (_) {
         return const {};
       }
@@ -54,9 +63,17 @@ final bonificacionesProvider =
     >(crearBonificaciones);
 
 BonificacionesNotifier crearBonificaciones(Ref ref) {
+  ref.watch(sesionProvider.select((s) => s.claveContexto));
+  ref.watch(productSaleProvider.notifier);
+  ref.watch(ticketProvider.notifier);
+  ref.watch(
+    ticketProvider.select(
+      (s) => (s.ticket.id, s.mode, s.ticket.cotizacion?.id),
+    ),
+  );
   final notifier = BonificacionesNotifier(ref);
   ref.listen(productSaleProvider, (_, _) => notifier.programar());
-  ref.listen(sesionProvider, (_, _) => notifier.programar());
+  ref.listen(sesionProvider, (_, _) => notifier.programar(forzar: true));
   ref.listen(ticketProvider, (_, _) => notifier.programar());
   ref.listen(customerSaleProvider, (_, _) => notifier.programar());
   ref.onDispose(notifier.cancelar);
@@ -150,12 +167,16 @@ class BonificacionesNotifier extends StateNotifier<BonificacionesState> {
 
   Future<void> _evaluar(Map<String, dynamic> req, int revision) async {
     try {
-      final resultado = await ComercialService().evaluar(req);
+      final resultado = await ref
+          .read(comercialPromocionesProvider)
+          .evaluar(req);
+      if (_cerrado || revision != _revision) return;
       final regalos = <TicketDetail>[];
       for (final dynamic a in resultado['aplicadas'] as List? ?? []) {
         final id = (a['idProductoRegalo'] as num).toInt();
         final product =
             _productos[id] ?? await ProductsRepositoryImpl().getProductById(id);
+        if (_cerrado || revision != _revision) return;
         _productos[id] = product;
         final sede = ref.read(sesionProvider).office?.id;
         final contexto = ref.read(sesionProvider).comercial;
@@ -239,7 +260,19 @@ class BonificacionesNotifier extends StateNotifier<BonificacionesState> {
     final revision = ++_revision;
     state = BonificacionesState(resultado: state.resultado, calculando: true);
     await _evaluar(req, revision);
-    return state.puedeEnviar;
+    return !_cerrado && revision == _revision && state.puedeEnviar;
+  }
+
+  /// Un documento nuevo no debe inferir decisiones de las líneas del anterior aún visibles.
+  void reiniciar() {
+    _timer?.cancel();
+    _revision++;
+    _huella = null;
+    _seleccionesInicializadas = true;
+    selecciones.clear();
+    excluyentes.clear();
+    _productos.clear();
+    state = const BonificacionesState();
   }
 
   void cambiarRegalo(int promo) {

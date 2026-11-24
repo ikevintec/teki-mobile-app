@@ -371,3 +371,24 @@ requiere recompilar la instalación para incorporar el cambio. Evidencia en
 Compilación iOSsimulador arm64 final aprobada con xcodebuild(exit0); no se instaló/reemplazó la app.
 El build genérico Flutter previo falló al interpretar arquitecturas múltiples; se resolvió compilando
 solo arm64 sin cambiar configuración versionada. Log `mobile-build-arm64.log` en la misma evidencia.
+
+
+## 23/11/2026 — Promociones alineadas con backend/web y aislamiento de ventas
+
+El selector compartido interpreta `cantidadesPorOpcion` (incluye bloques), muestra cantidad/unidad por
+regalo y deshabilita por su propio stock; sin mapa/stock conocido conserva validación del servidor.
+OMITIR sin alternativas deja continuar con aviso y BLOQUEAR conserva su bloqueo. NIU/UND→und, MTR/MTS→m.
+Las decisiones y respuestas se aíslan por contexto/documento/carrito. Reset explícito limpia sin inferir el
+regalo de líneas anteriores; una confirmación obsoleta devuelvefalse, y una hoja antigua no decide por otra
+venta. Caché30s compartida por provider de sesión/configuración, renovada al recibir config; no global.
+Refresco al reanudar y precios tradicionales conservados; regresión regular0 no toma precio comercial110.
+Impresión móvil consume el contrato backend TicketPrint, sin duplicar textos/reglas de su formateador.
+
+491/491 Flutter completas, análisis dirigido sin incidencias y build iOSarm64 final aprobados. Integración
+real CUA/iPhone18Pro iOS27.2/API+MySQL efímeros: NV01-1 S/40 sin regalo conOMITIR; NV01-2 S/40 con
+alternativa1/stock1, primera2/stock0disabled. SQL confirma inventario/bonificación15 y caja100+40+40.
+Selector390/1024 y compatibilidad API anterior probados con widgets; no QA Android/fiscal/PDF/impresora.
+Fixture sin rol VENTAS_CREAR para navegación desdeDetalle: caso2 inició relanzando copiaQA; aislamiento
+entre documentos/reset comprobado en providers. Evidencia workspace `output/ajuste-mobile-promociones-2026-11-23/REGISTRO.md`.
+Copia QA retirada, backend efímero cerrado y original conservada/abierta. Config build vuelve a lib/main.dart.
+Implementado/probado localmente; sin publicación/despliegue ni actualización de la app instalada original.

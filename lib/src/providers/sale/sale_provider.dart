@@ -234,6 +234,7 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       notifyError('Verifica la emisión pendiente antes de iniciar otra venta.');
       return;
     }
+    ref.read(bonificacionesProvider.notifier).reiniciar();
     state = TicketProvider(
       ticket: Ticket(
         items: [],

@@ -43,7 +43,13 @@ Future<void> main() async {
   final dio = Dio(BaseOptions(baseUrl: url));
   final response = await dio.post(
     '/auth/login',
-    data: {'username': 'test-admin', 'password': 'TestPass123!'},
+    data: {
+      'username': const String.fromEnvironment(
+        'QA_USER',
+        defaultValue: 'test-admin',
+      ),
+      'password': 'TestPass123!',
+    },
   );
   final token = response.data['accessToken'] as String;
   dio.options.headers['Authorization'] = 'Bearer $token';

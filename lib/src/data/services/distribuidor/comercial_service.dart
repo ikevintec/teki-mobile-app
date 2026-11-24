@@ -86,10 +86,7 @@ class ComercialService {
 
   // Caché corta por sede: el carrito cambia seguido y las promociones casi nunca.
   static const _vigenciaCache = Duration(seconds: 30);
-  static final Map<
-    int?,
-    ({DateTime hasta, Future<Map<int, List<String>>> datos})
-  >
+  final Map<int?, ({DateTime hasta, Future<Map<int, List<String>>> datos})>
   _cacheVigentes = {};
 
   /// Producto de compra → nombres de promociones vigentes en la sede (caché de 30 s).
