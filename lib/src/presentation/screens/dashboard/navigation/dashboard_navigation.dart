@@ -43,8 +43,7 @@ enum DashboardAction {
   analytics('Estadísticas', Icons.bar_chart_rounded),
   settings('Ajustes', Icons.settings_outlined),
   tables('Mesas', Icons.table_restaurant_outlined),
-  // "Pedidos de mesa" para no confundirlo con "Pedidos de venta".
-  orders('Pedidos de mesa', Icons.restaurant_menu_rounded),
+  orders('Pedidos de restaurante', Icons.restaurant_menu_rounded),
   kitchen('Cocina', Icons.soup_kitchen_outlined),
   // Ícono propio: point_of_sale ya es el de la pestaña Caja.
   collector('Cobrador', Icons.price_check_rounded);
