@@ -170,9 +170,7 @@ class _OrdersRestaurantMainScreenState
 
   bool get _hasNonDefaultFilters {
     final state = ref.watch(ordersRestaurantProvider);
-    return state.estados.length < kAllEstados.length ||
-        state.desde != null ||
-        state.hasta != null;
+    return state.hasAdvancedFilters;
   }
 
   /// Devuelve el par (order, cuenta) si se cumple la condición de auto-pago,
