@@ -64,7 +64,7 @@ Future<void> agregar(WidgetTester t) async {
 
 /// La búsqueda de productos queda abierta para agregar varios; se cierra con Listo.
 Future<void> cerrarBusqueda(WidgetTester t) async {
-  final listo = find.textContaining('Listo (');
+  final listo = find.text('Listo');
   await t.tap(
     listo.evaluate().isNotEmpty ? listo.last : find.text('Cerrar').last,
   );

@@ -1,16 +1,13 @@
+import 'package:teki_app/src/presentation/widgets/product_search_result.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket_detail.dart';
 import 'package:teki_app/src/presentation/screens/pedidos/precio_linea.dart';
-import 'package:teki_app/src/presentation/screens/pedidos/busqueda_pedido.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
-import 'package:teki_app/src/data/models/teki_model/inventory.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/presentation/widgets/barcode_scanner/barcode_scanner_sheet.dart';
-import 'package:teki_app/src/providers/config/config.dart';
-import 'package:teki_app/src/providers/sale/sale_provider.dart';
-import 'package:teki_app/src/domain/distribuidor/contexto_comercial.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
 import 'package:teki_app/src/utils/constants.dart';
 import 'package:teki_app/src/utils/notifications.dart';
@@ -37,7 +34,7 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
   final ValueNotifier<bool> _isSearching = ValueNotifier(false);
   final ValueNotifier<String?> _searchError = ValueNotifier(null);
   final ValueNotifier<bool> _hasSearched = ValueNotifier(false);
-  // Productos que se están agregando: muestran un indicador y no aceptan un
+  // Productos con una operación pendiente: muestran un indicador y no aceptan un
   // segundo toque hasta terminar (en red lenta parecía que no pasaba nada).
   final ValueNotifier<Set<int>> _agregando = ValueNotifier({});
   Future<void> _cola = Future.value();
@@ -113,34 +110,113 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
     });
   }
 
-  /// Agrega el producto sin cerrar la búsqueda (como en pedidos): el texto, los
-  /// resultados y el teclado se quedan para seguir sumando productos.
-  void _selectProduct(Product product) {
+  void _encolar(
+    Product product,
+    Future<void> Function(ProductsSaleNotifier) accion, {
+    bool restaurarBusqueda = false,
+  }) {
     final id = product.id;
     if (id == null || _agregando.value.contains(id)) return;
-    // La selección pertenece a este carrito, aunque se cierre la pantalla.
     final carrito = ref.read(productSaleProvider.notifier);
     _agregando.value = {..._agregando.value, id};
-    // En orden y de a uno: cada agregado lee el carrito que dejó el anterior.
     _cola = _cola.then((_) async {
       try {
-        // Descartar la venta o cambiar de sesión invalida el carrito original.
-        if (!carrito.mounted) return;
-        // El resultado de la búsqueda es ligero: al seleccionar se trae el
-        // detalle completo del producto antes de agregarlo a la venta.
-        await carrito.selectProductForSale(
-          product,
-          solicitarPrecioManual: (_) async {
-            if (!mounted) return null;
-            return ingresarPrecio(context);
-          },
-        );
+        if (carrito.mounted) await accion(carrito);
+      } catch (_) {
+        if (mounted) {
+          _searchError.value =
+              'No pudimos actualizar el producto. Inténtalo nuevamente.';
+        }
       } finally {
         if (mounted) {
           _agregando.value = {..._agregando.value}..remove(id);
+          if (restaurarBusqueda &&
+              carrito.mounted &&
+              identical(ref.read(productSaleProvider.notifier), carrito)) {
+            _focusNode.requestFocus();
+          }
         }
       }
     });
+  }
+
+  void _selectProduct(Product product) {
+    _encolar(
+      product,
+      (carrito) => carrito.selectProductForSale(
+        product,
+        solicitarPrecioManual: (_) async {
+          if (!mounted) return null;
+          final precio = await ingresarPrecio(context);
+          if (mounted) _focusNode.requestFocus();
+          return precio;
+        },
+      ),
+    );
+  }
+
+  bool _carritoActual(ProductsSaleNotifier carrito) =>
+      mounted &&
+      carrito.mounted &&
+      identical(ref.read(productSaleProvider.notifier), carrito);
+
+  List<TicketDetail> _lineas(Product producto) => ref
+      .read(productSaleProvider)
+      .productsSales
+      .where((l) => l.producto?.id == producto.id && l.esBonificacion != true)
+      .toList();
+
+  int _indiceLinea(TicketDetail linea) => ref
+      .read(productSaleProvider)
+      .productsSales
+      .indexWhere(
+        (actual) => linea.uuid != null
+            ? actual.uuid == linea.uuid
+            : identical(actual, linea),
+      );
+
+  bool _editable(TicketDetail linea) =>
+      linea.comandaDetalle == null && linea.esBonificacion != true;
+
+  void _disminuir(Product producto) {
+    _encolar(producto, (carrito) async {
+      if (!_carritoActual(carrito)) return;
+      final linea = _lineas(producto).where(_editable).lastOrNull;
+      if (linea == null) return;
+      final indice = _indiceLinea(linea);
+      if ((linea.cantidad ?? 1) <= 1) {
+        carrito.removeProductSale(indice);
+      } else {
+        carrito.setCantidadProductSale(
+          indice,
+          linea.cantidad! - 1,
+          actualizarSeries: true,
+        );
+      }
+    });
+  }
+
+  void _quitar(Product producto) {
+    _encolar(producto, (carrito) async {
+      if (!_carritoActual(carrito)) return;
+      final lineas = _lineas(producto).where(_editable).toList();
+      for (final linea in lineas.reversed) {
+        final indice = _indiceLinea(linea);
+        if (indice >= 0) carrito.removeProductSale(indice);
+      }
+    });
+  }
+
+  void _editarCantidad(Product producto) {
+    _encolar(producto, (carrito) async {
+      if (!_carritoActual(carrito)) return;
+      final cambio = await editarCantidadResultado(context, producto, _lineas(producto));
+      if (cambio == null || !_carritoActual(carrito)) return;
+      final indice = _indiceLinea(cambio.$1);
+      if (indice >= 0) {
+        carrito.setCantidadProductSale(indice, cambio.$2, actualizarSeries: true);
+      }
+    }, restaurarBusqueda: true);
   }
 
   void _showOverlay() {
@@ -161,6 +237,9 @@ class _SearchProductsState extends ConsumerState<SearchProducts>
         hasSearched: _hasSearched,
         controller: _controller,
         onSelect: _selectProduct,
+        onDecrease: _disminuir,
+        onEdit: _editarCantidad,
+        onRemove: _quitar,
         agregando: _agregando,
         onDone: _focusNode.unfocus,
         error: _searchError,
@@ -290,6 +369,9 @@ class _SuggestionsDropdown extends StatelessWidget {
   final ValueNotifier<bool> hasSearched;
   final TextEditingController controller;
   final void Function(Product) onSelect;
+  final void Function(Product) onDecrease;
+  final void Function(Product) onEdit;
+  final void Function(Product) onRemove;
   final ValueNotifier<String?> error;
   final VoidCallback onRetry;
   final ValueNotifier<Set<int>> agregando;
@@ -304,6 +386,9 @@ class _SuggestionsDropdown extends StatelessWidget {
     required this.hasSearched,
     required this.controller,
     required this.onSelect,
+    required this.onDecrease,
+    required this.onEdit,
+    required this.onRemove,
     required this.error,
     required this.onRetry,
     required this.agregando,
@@ -380,13 +465,13 @@ class _SuggestionsDropdown extends StatelessWidget {
                               return Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  GestureDetector(
-                                    behavior: HitTestBehavior.opaque,
-                                    onTap: () => onSelect(product),
-                                    child: ItemProduct(
-                                      product: product,
-                                      agregando: agregando.value.contains(product.id),
-                                    ),
+                                  ItemProduct(
+                                    product: product,
+                                    agregando: agregando.value.contains(product.id),
+                                    onAdd: () => onSelect(product),
+                                    onDecrease: () => onDecrease(product),
+                                    onEdit: () => onEdit(product),
+                                    onRemove: () => onRemove(product),
                                   ),
                                   if (product != results.value.last)
                                     Divider(height: 1, thickness: 1, color: Colors.grey.shade300),
@@ -433,129 +518,4 @@ class _SuggestionsDropdown extends StatelessWidget {
   }
 }
 
-class ItemProduct extends ConsumerWidget {
-  final Product product;
-  final bool agregando;
-  const ItemProduct({super.key, required this.product, this.agregando = false});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sesion = ref.watch(sesionProvider);
-    final puntoVenta = sesion.office;
-    final base = sesion.comercial ?? const ContextoComercial();
-    final cabecera = base.activo
-        ? ref.watch(ticketProvider.select((s) => s.ticket.tipoPrecioCabeceraId)) ?? base.cabecera
-        : null;
-    final comercial = base.conCabecera(cabecera);
-    final precio = comercial.activo
-        ? comercial.elegir(product, puntoVenta?.id, 1)?.precio
-        : comercial.precios(product, puntoVenta?.id)
-            .where((p) => p.tipoPrecio == 'POR_DEFECTO').firstOrNull?.precio;
-    final stock = product.inventarios
-            ?.firstWhere(
-              (inv) => inv.puntoVenta?.id == puntoVenta?.id,
-              orElse: () => Inventory(stock: 0.0),
-            )
-            .stock ??
-        0.0;
-    // Cuánto lleva ya la venta de este producto (sin contar regalos).
-    final enVenta = ref.watch(productSaleProvider.select((s) => s.productsSales
-        .where((l) => l.producto?.id == product.id && l.esBonificacion != true)
-        .fold<double>(0, (total, l) => total + (l.cantidad ?? 0))));
-    final inicial = (product.nombre?.isNotEmpty == true)
-        ? product.nombre![0].toUpperCase()
-        : 'P';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: ColorSchema.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              inicial,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: ColorSchema.primaryColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  (product.nombre ?? '').trim(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: ColorSchema.primaryColor.withValues(alpha: 0.09),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        precio == null ? 'Sin precio' : '${product.moneda ?? ''} ${precio.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: ColorSchema.primaryColor,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.inventory_2_outlined, size: 12, color: Colors.grey.shade500),
-                    const SizedBox(width: 3),
-                    Text(
-                      'Stock ${cantidadPedido(stock)}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (agregando)
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: ColorSchema.primaryColor),
-            )
-          else ...[
-            if (enVenta > 0) ...[
-              const Icon(Icons.check_circle, size: 18, color: ColorSchema.primaryColor),
-              const SizedBox(width: 3),
-              Text(
-                cantidadPedido(enVenta),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: ColorSchema.primaryColor,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Icon(Icons.add_circle_outline, size: 22, color: ColorSchema.primaryColor.withValues(alpha: 0.7)),
-          ],
-        ],
-      ),
-    );
-  }
-}
+typedef ItemProduct = ProductSearchResult;

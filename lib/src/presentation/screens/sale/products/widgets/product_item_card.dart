@@ -1,4 +1,5 @@
 import 'package:teki_app/src/presentation/screens/pedidos/precio_linea.dart';
+import 'package:teki_app/src/presentation/screens/pedidos/entrada_numerica_pedido.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -592,9 +593,11 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
                               },
                             ),
                           const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                          Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
                               _isPriceEditMode
                                   ? SizedBox(
@@ -858,24 +861,6 @@ class _ProductItemCardState extends ConsumerState<ProductItemCard>
   }
 }
 
-/// Muestra la cantidad sin ".0" cuando es entera (el accessor por defecto
-/// de FormControl&lt;double&gt; renderizaría "1.0") y parsea decimales al escribir.
-class _QuantityValueAccessor extends ControlValueAccessor<double, String> {
-  @override
-  String modelToViewValue(double? modelValue) {
-    if (modelValue == null) return '';
-    return modelValue % 1 == 0
-        ? modelValue.toInt().toString()
-        : modelValue.toString();
-  }
-
-  @override
-  double? viewToModelValue(String? viewValue) =>
-      (viewValue == null || viewValue.isEmpty)
-      ? null
-      : double.tryParse(viewValue);
-}
-
 // Widget personalizado para el control de cantidad
 class QuantityControl extends ConsumerStatefulWidget {
   final FormGroup formGroup;
@@ -894,33 +879,27 @@ class QuantityControl extends ConsumerStatefulWidget {
 }
 
 class _QuantityControlState extends ConsumerState<QuantityControl> {
-  late FocusNode _focusNode;
-  final TextEditingController _controller = TextEditingController();
+  String _textoCantidad(double valor) =>
+      valor % 1 == 0 ? valor.toInt().toString() : valor.toString();
 
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode()..addListener(_seleccionarAlEnfocar);
-  }
-
-  /// Al tocar la cantidad se selecciona todo: escribir "3" reemplaza el valor
-  /// en vez de dejar "31". Tras el frame, para ganarle al cursor del toque.
-  void _seleccionarAlEnfocar() {
-    if (!_focusNode.hasFocus) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_focusNode.hasFocus) return;
-      _controller.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: _controller.text.length,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    _controller.dispose();
-    super.dispose();
+  Future<void> _editarCantidad() async {
+    final formulario = widget.formGroup;
+    final control = formulario.control('quantity') as FormControl<double>;
+    final valor = await showDialog<double>(
+      context: context,
+      builder: (_) => EntradaNumericaPedido(
+        titulo: 'Cantidad',
+        etiqueta: 'Cantidad mayor a cero',
+        accion: 'Aceptar',
+        textoInicial: _textoCantidad(control.value ?? 1),
+      ),
+    );
+    if (valor != null &&
+        mounted &&
+        !widget.locked &&
+        widget.formGroup == formulario) {
+      _updateQuantity(valor);
+    }
   }
 
   void _updateQuantity(double newValue) {
@@ -1003,47 +982,34 @@ class _QuantityControlState extends ConsumerState<QuantityControl> {
                   child: const SizedBox(
                     width: 36,
                     height: 36,
-                    child: Icon(
-                      Icons.remove,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    child: Icon(Icons.remove, color: Colors.white, size: 18),
                   ),
                 ),
               ),
               const SizedBox(width: 4),
-              // Campo de entrada
               Expanded(
-                child: ReactiveTextField<double>(
+                child: ReactiveValueListenableBuilder<double>(
                   formControlName: 'quantity',
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  valueAccessor: _QuantityValueAccessor(),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
+                  builder: (context, control, _) => Semantics(
+                    button: true,
+                    label: 'Cambiar cantidad',
+                    value: _textoCantidad(control.value ?? 1),
+                    child: InkWell(
+                      onTap: _editarCantidad,
                       borderRadius: BorderRadius.circular(4),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
-                      borderSide: BorderSide(color: ColorSchema.primaryColor),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _textoCantidad(control.value ?? 1),
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
                     ),
                   ),
-                  onSubmitted: (control) {
-                    widget.onQuantityChanged();
-                  },
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                  ],
                 ),
               ),
               const SizedBox(width: 4),

@@ -104,4 +104,75 @@ void main() {
     enCamino.complete();
     await t.pumpAndSettle();
   });
+  testWidgets(
+    'resultado personalizado no cierra ni repite acciones pendientes',
+    (t) async {
+      final pendiente = Completer<void>();
+      var llamadas = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => buscarEnPedido<String>(
+                  context,
+                  'Buscar producto',
+                  (_) async => ['Arroz'],
+                  (s) => s,
+                  agregar: (_) async {},
+                  claveResultado: (s) => s,
+                  resultado: (item, agregar, operar, ocupado) => Column(
+                    children: [
+                      Text(item),
+                      TextButton(
+                        onPressed: ocupado
+                            ? null
+                            : () => operar(() async {
+                                llamadas++;
+                                await pendiente.future;
+                              }),
+                        child: const Text('Editar'),
+                      ),
+                    ],
+                  ),
+                ),
+                child: const Text('Abrir'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await t.tap(find.text('Abrir'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Editar'));
+      await t.pump();
+      expect(llamadas, 1);
+      expect(
+        t
+            .widget<TextButton>(find.widgetWithText(TextButton, 'Editar'))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        t
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Agregando…'),
+            )
+            .onPressed,
+        isNull,
+      );
+      await t.binding.handlePopRoute();
+      await esperar(t);
+      expect(find.text('Buscar producto'), findsOneWidget);
+      await t.tapAt(const Offset(20, 20));
+      await esperar(t);
+      expect(find.text('Buscar producto'), findsOneWidget);
+      pendiente.complete();
+      await t.pumpAndSettle();
+      await t.tap(find.text('Listo'));
+      await t.pumpAndSettle();
+      expect(find.text('Buscar producto'), findsNothing);
+      expect(t.takeException(), isNull);
+    },
+  );
 }

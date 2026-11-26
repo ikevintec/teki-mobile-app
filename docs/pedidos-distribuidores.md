@@ -410,3 +410,105 @@ Ver guía backend qa-pedidos-inventario.md y evidencia Teki/output/kardex-pedido
 25/11/2026 — Delta móvil de kardex recuperado y revisado sobre develop1.0.41+32. Suite completa559/559
 aprobada; análisis comparado con la misma base sin diagnósticos nuevos (78 avisos preexistentes). Compatibilidad
 con movimientos sin referencia cubierta. Integración de código no implica nueva app instalada, release ni migración.
+
+## 26/11/2026 — Cantidad de ventas con el modal de pedidos
+
+Ventas móviles reutiliza `EntradaNumericaPedido`: tocar la cantidad abre el mismo diálogo
+con el valor seleccionado, teclado decimal y Aceptar/Cancelar. Aceptar actualiza el formulario
+y sincroniza cantidad/precios/totales; cancelar o volver descarta la edición. Los botones +/−
+y las cantidades bloqueadas de comanda conservan su comportamiento. La tarjeta de producto
+y su contenedor deslizable usan la identidad del formulario como clave para conservar su estado
+al actualizar la lista y al aparecer el teclado. `DismissibleActionWidget.slidableKey` es
+optativo y solo ventas lo configura; las demás pantallas conservan su política previa.
+
+Regresiones: `venta_formulario_regresion_test.dart` cubre teléfono/tablet, precios tradicionales/
+comerciales e IGV incluido/excluido, foco durante edición, cancelación, validación y decimales.
+`venta_cantidad_modal_test.dart` cubre bloqueo, +/− y selección de la línea correcta.
+Evidencia y alcance de verificación: `Teki/output/foco-cantidad-ventas-2026-11-26/`.
+Cambio local, sin publicación ni distribución de app.
+
+Verificación final local: 28 pruebas focalizadas y 618 completas correctas; compilación iOS arm64
+y recorrido funcional en iPhone SE3/iPad Air11 iOS18.3, con API/sesión ficticias. El arnés nativo
+reportó SemanticsHandle activo al cerrar después de pasar sus aserciones funcionales; no se
+considera una suite nativa completamente aprobada. Sin nueva prueba Android/backend real.
+
+## 26/11/2026 — Cantidad y quitar desde resultados de venta móvil
+
+El resultado agregado muestra −, cantidad pulsable, + y Quitar. La cantidad abre
+`EntradaNumericaPedido`; aceptar/cancelar conservan el texto y regresan a la misma búsqueda.
+Disminuir reduce la última línea editable y la elimina si su cantidad es menor o igual a uno.
+Quitar elimina las líneas editables del producto. Las líneas de comanda permanecen protegidas;
+las bonificaciones se recalculan con el motor existente, sin edición manual desde el resultado.
+
+Si hay varias líneas, el modal permite elegir cuál modificar y muestra cantidad/precio/modalidad
+de envase. Se resuelve de nuevo la línea por UUID antes de aplicar y se comprueba que el carrito
+siga vigente. Las operaciones comparten la cola de agregados y se bloquean duplicados pendientes.
+`setCantidadProductSale(actualizarSeries: true)` conserva las series elegidas al ajustar cantidad;
+el valor predeterminado de esa opción mantiene la política previa de otros consumidores.
+
+Regresiones en `venta_resultados_cantidad_test.dart`: teléfonos320/390 y tablet1024, edición decimal,
+cancelar, +/−, quitar/reagregar sin Listo, varias líneas, bloqueo de comanda y selección previa de series.
+623 pruebas completas correctas y análisis sin errores/76 avisos heredados. Evidencia en
+`Teki/output/controles-resultados-ventas-2026-11-26/`. API/sesión ficticias; cambio local sin distribución.
+
+El recorrido nativo final también pasó en iPhone SE3/iPad Air11 iOS18.3: +/−, edición/cancelación,
+quitar/reagregar con consulta y resultados conservados; ambos arneses cerraron correctamente.
+Capturas y framework.log en el expediente. Instalaciones QA separadas retiradas y entrypoint
+lib/main.dart restaurado; sin nueva distribución de la app habitual.
+
+## 26/11/2026 — Resultados compartidos entre ventas y pedidos móviles
+
+`ProductSearchResult` reúne la presentación común (inicial, nombre, precio/stock y controles
+−/cantidad/+/quitar). Pedidos añade su código y promoción cuando existen, conservando sus fuentes
+de precio y stock. `editarCantidadResultado` comparte selector de línea y modal decimal; ventas
+mantiene `ItemProduct` como alias compatible.
+
+La búsqueda genérica admite un renderer y una clave opcionales. Solo productos de pedidos los usan;
+los selectores de cliente y otras entidades mantienen su presentación y selección anteriores.
+Las acciones de producto se encolan, deshabilitan duplicados pendientes y bloquean el cierre de
+la hoja hasta terminar. Editar/quitar conservan la consulta y los resultados. El pedido se marca
+como modificado; permanecen el cálculo comercial, promociones, guardas y actualización de series.
+
+La hoja usa el Navigator raíz: el renderer recibe explícitamente el ProviderContainer aislado
+del pedido mediante UncontrolledProviderScope. Debe conservarse para evitar mostrar o modificar
+el carrito global de ventas. Una regresión comprueba esa separación.
+
+627 pruebas completas/13 focalizadas correctas, análisis sin errores y 76 avisos heredados.
+Fuentes y alcance de QA: `Teki/output/buscadores-pedidos-ventas-2026-11-26/`.
+Cambio local, sin publicación ni distribución de app.
+
+En el buscador de productos el cierre muestra «Listo», igual que ventas, sin el contador histórico
+de agregados que resultaba engañoso después de quitar. Los selectores genéricos conservan sus textos.
+
+Confirmación final tras ese ajuste: 627 pruebas completas correctas, análisis sin errores/76 avisos
+y build iOS arm64. Ambos buscadores recorridos en iPhone SE3/iPad Air11 iOS18.3 con API ficticia,
+consulta conservada, carritos separados y cierre limpio del arnés. Capturas finales y framework.log
+en el expediente; las capturas anteriores al contador están separadas. QA retirada y entrypoint
+lib/main.dart restaurado; sin publicación/distribución ni validación nueva Android/backend real.
+
+
+## 26/11/2026 — Eliminar borradores desde la lista
+
+Deslizar el borrador hacia la izquierda revela **Eliminar**. Tocar elimina directamente,
+sin abrir el editor ni pedir confirmación. La acción permanece bloqueada mientras se procesa;
+la fila se retira solo tras éxito. Si falla, permanece disponible para reintentar. Después se
+recarga desde la primera página para evitar saltos por desplazamiento de los registros.
+
+Requiere el nuevo `DELETE /api/ticket-order/gestion/borradores/{id}` con `revision` e
+`idPuntoVenta`. Respuestas: 204 éxito/reintento idempotente; 409 revisión, estado o sede en
+conflicto; 412 precondiciones de negocio según el handler existente; 400 parámetros ausentes
+o mal tipados. El backend valida empresa, usuario y sede; elimina lógicamente bajo el mismo
+bloqueo de guardar/enviar y conserva payload. No modifica pedidos enviados, stock ni caja.
+Las respuestas pendientes de un contexto de sesión/sede anterior no modifican la nueva lista.
+
+Verificación local: 637 pruebas Flutter completas correctas, 18 focalizadas como subconjunto,
+análisis sin errores/76 avisos heredados y build iOS arm64 correcto. Gesto, fallo, reintento,
+eliminación y recarga comprobados en iPhone SE3/iPad Air11 iOS18.3 con API ficticia; ambos
+arneses terminaron con All tests passed. Por separado, HTTP real contra Spring/MySQL desechable:
+7 integraciones nuevas más 10 pruebas de permisos y 1 de fronteras, todas correctas;
+paquetes API/worker compilados. Sin nueva validación Android ni API de negocio real.
+
+Evidencia: `Teki/output/eliminar-borradores-pedidos-2026-11-26/`. Cambios implementados y
+probados localmente; sin publicación/despliegue ni eliminación de borradores reales.
+Para habilitarlo se requiere actualizar el backend y recompilar la app. QA aislada retirada,
+entrypoint `lib/main.dart` restaurado y app habitual preservada.

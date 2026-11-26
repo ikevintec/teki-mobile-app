@@ -196,11 +196,82 @@ void main() {
                 closeTo(7.25, .00001),
               );
             }
-            final cantidad = find.descendant(
-              of: find.byType(QuantityControl),
-              matching: find.byType(TextField),
+            await t.tap(
+              find.descendant(
+                of: find.byType(QuantityControl),
+                matching: find.text('1'),
+              ),
             );
-            await t.enterText(cantidad, '10');
+            await t.pumpAndSettle();
+            final entrada = find.widgetWithText(
+              TextFormField,
+              'Cantidad mayor a cero',
+            );
+            final campo = t.widget<TextFormField>(entrada);
+            expect(
+              campo.controller!.selection,
+              const TextSelection(baseOffset: 0, extentOffset: 1),
+            );
+            // El teclado nativo cambia los insets y reconstruye también el
+            // Slidable: no debe desmontar la tarjeta que espera el resultado.
+            final editor = t.state(find.byType(QuantityControl));
+            t.view.viewInsets = const FakeViewPadding(bottom: 220);
+            addTearDown(t.view.resetViewInsets);
+            await t.pumpAndSettle();
+            expect(t.state(find.byType(QuantityControl)), same(editor));
+            await t.enterText(entrada, '123,75');
+            await t.pump(const Duration(seconds: 2));
+            expect(
+              t
+                  .widget<EditableText>(
+                    find.descendant(
+                      of: entrada,
+                      matching: find.byType(EditableText),
+                    ),
+                  )
+                  .focusNode
+                  .hasFocus,
+              isTrue,
+            );
+            expect(
+              container.read(productSaleProvider).productsSales.single.cantidad,
+              1,
+            );
+            await t.tap(find.text('Cancelar'));
+            await t.pumpAndSettle();
+            expect(
+              container.read(productSaleProvider).productsSales.single.cantidad,
+              1,
+            );
+            await t.tap(
+              find.descendant(
+                of: find.byType(QuantityControl),
+                matching: find.text('1'),
+              ),
+            );
+            await t.pumpAndSettle();
+            await t.enterText(entrada, '0');
+            await t.tap(find.text('Aceptar'));
+            await t.pumpAndSettle();
+            expect(
+              find.text('La cantidad debe ser mayor a cero.'),
+              findsOneWidget,
+            );
+            await t.enterText(entrada, '2,5');
+            await t.tap(find.text('Aceptar'));
+            await t.pumpAndSettle();
+            expect(
+              container.read(productSaleProvider).productsSales.single.cantidad,
+              2.5,
+            );
+            await t.tap(
+              find.descendant(
+                of: find.byType(QuantityControl),
+                matching: find.text('2.5'),
+              ),
+            );
+            await t.pumpAndSettle();
+            await t.enterText(entrada, '10');
             await t.testTextInput.receiveAction(TextInputAction.done);
             await t.pumpAndSettle();
             expect(

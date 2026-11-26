@@ -352,15 +352,20 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
     return conserva ? actualizada : _withAutomaticPrice(actualizada);
   }
 
-  void setCantidadProductSale(int index, double cantidad) {
+  void setCantidadProductSale(int index, double cantidad, {bool actualizarSeries = false}) {
     if (state.productsSales[index].comandaDetalle != null || state.productsSales[index].esBonificacion == true) return;
     final existingTicketDetail = state.productsSales[index];
+    TicketDetail conSeries(TicketDetail linea) {
+      if (!actualizarSeries || linea.producto?.tipoLote != 'SERIE') return linea;
+      return linea.copyWith(lotes: _autoSelectSeries(linea, _sesionComercial.office?.id,
+          previousLotes: existingTicketDetail.lotes));
+    }
     if (manejaEnvaseRetornable(existingTicketDetail.producto,
         _sesionComercial, isQuotation: _isQuotation)) {
       final line = existingTicketDetail.copyWith(cantidad: cantidad);
       state = state.copyWith(
         productsSales: List.from(state.productsSales)
-          ..[index] = line.precioManual ? line : _withAutomaticPrice(line),
+          ..[index] = conSeries(line.precioManual ? line : _withAutomaticPrice(line)),
       );
       calculoTotal();
       return;
@@ -369,7 +374,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       final updatedTicketDetail = _lineaConCantidad(existingTicketDetail, cantidad);
       state = state.copyWith(
         productsSales: List.from(state.productsSales)
-          ..[index] = updatedTicketDetail,
+          ..[index] = conSeries(updatedTicketDetail),
       );
     } else {
       final updatedTicketDetail = existingTicketDetail.copyWith(
@@ -377,7 +382,7 @@ mixin ProductsSaleNotifierSettersMixin on StateNotifier<ProductsSaleState> {
       );
       state = state.copyWith(
         productsSales: List.from(state.productsSales)
-          ..[index] = updatedTicketDetail,
+          ..[index] = conSeries(updatedTicketDetail),
       );
     }
     calculoTotal();

@@ -23,12 +23,14 @@ class DismissibleActionWidget extends StatelessWidget {
   final Widget child;
   final List<DismissibleActionData> actions;
   final VoidCallback? onDismissed;
+  final Key? slidableKey;
 
   const DismissibleActionWidget({
     super.key,
     required this.child,
     required this.actions,
     this.onDismissed,
+    this.slidableKey,
   });
 
   @override
@@ -38,7 +40,7 @@ class DismissibleActionWidget extends StatelessWidget {
     }
 
     return Slidable(
-      key: UniqueKey(),
+      key: slidableKey ?? UniqueKey(),
       endActionPane: ActionPane(
         motion: const ScrollMotion(),
         extentRatio: (actions.length * 0.35).clamp(0.35, 0.9),
