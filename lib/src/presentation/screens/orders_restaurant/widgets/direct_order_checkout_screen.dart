@@ -289,6 +289,7 @@ class _DirectOrderCheckoutScreenState
 
   void _update({bool quote = false}) {
     if (locked) return;
+    validationError = null;
     checkout.update(_request());
     if (quote) {
       _debounce?.cancel();
@@ -563,7 +564,7 @@ class _DirectOrderCheckoutScreenState
         PaymentMethodRow(
           method: method,
           entry: entries.where((e) => e.method.id == method.id).firstOrNull,
-          onAmountChanged: () => setState(() {}),
+          onAmountChanged: () => setState(() => validationError = null),
           onTap: () {
             if (locked || entries.any((e) => e.method.id == method.id)) return;
             // One cash row avoids assigning the same change to multiple entries.

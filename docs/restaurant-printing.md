@@ -52,3 +52,11 @@ En NV/boleta de importes que admiten cliente no identificado, los campos de clie
 El cierre y su visor reutilizan `PedidosStyle`, fondo blanco, selección azul, bordes y acciones de pedidos; formulario y pie limitan su ancho en tablet. El pago distingue efectivo recibido y muestra vuelto/pendiente. La propina permanece visible en cierre, editor completo y pago final mediante `RestaurantTipSummary`; se puede quitar antes de emitir y se conservan los pagos de propina separados del total de venta. Los importes de propina admiten hasta dos decimales. El editor conserva una serie seleccionada si sigue disponible.
 
 Al abrir facturación completa con búsqueda local y caché vacía, la precarga se difiere hasta después de construir la pantalla. El pago final restaura los importes preparados para cuentas nuevas de restaurante, incluidos efectivo recibido y vuelto.
+
+
+## Selección de productos antes del cierre
+
+El menú móvil separa Favoritos (orden compartido `numeroOrdenFavorito`, hasta30) y Más vendidos (hasta10 no favoritos por `numeroVentas`). La consulta online reutiliza `favorito=true` del backend y combina el resultado con el menú para conservar categorías. El catálogo local conserva ambos campos y selecciona favoritos antes de limitar resultados. Escribir sale del filtro Favoritos; volver a Favoritos limpia la búsqueda. Limpiar cancela el debounce y las respuestas anteriores no reemplazan una consulta nueva.
+
+
+Los mensajes de validación del cierre se limpian al corregir los datos, cambiar el tipo de comprobante o editar un importe de pago. Una factura inválida o un pago insuficiente siguen bloqueando la emisión sin guardar otro pedido.

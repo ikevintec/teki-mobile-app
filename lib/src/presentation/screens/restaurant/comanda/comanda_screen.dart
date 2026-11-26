@@ -89,10 +89,55 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
 
   void _onSearchChanged(String value) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 700), () {
+    ref.read(comandaProvider.notifier).search(value);
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
       ref.read(comandaProvider.notifier).loadProducts(query: value);
     });
     setState(() {});
+  }
+
+  List<Widget> _productSection(List<Product> products, {String? title}) {
+    final session = ref.read(sesionProvider);
+    return [
+      if (title != null)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      SliverPadding(
+        padding: const EdgeInsets.all(12),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 0.70,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          delegate: SliverChildBuilderDelegate((_, index) {
+            final product = products[index];
+            return ProductMenuCard(
+              product: product,
+              displayPrice: ComandaNotifier.computePrice(
+                product,
+                1,
+                office: session.office,
+                config: session.config,
+              ),
+              isLoading: _openingProductId == product.id,
+              onTap: () => _openProduct(product),
+            );
+          }, childCount: products.length),
+        ),
+      ),
+    ];
   }
 
   Future<void> _reloadProducts() async {
@@ -170,9 +215,12 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
     );
     if (!mounted) return;
     if (result == null) {
-      final scope = '${session.companySelected?.id ?? session.company?.id}:${session.login.user?.id}:${session.office?.id}:${session.saleStation?.id}';
+      final scope =
+          '${session.companySelected?.id ?? session.company?.id}:${session.login.user?.id}:${session.office?.id}:${session.saleStation?.id}';
       try {
-        final pending = await ref.read(directCheckoutServiceProvider).pending(scope);
+        final pending = await ref
+            .read(directCheckoutServiceProvider)
+            .pending(scope);
         if (mounted) setState(() => _hasPendingCheckout = pending != null);
       } catch (_) {
         // The checkout reports a storage failure before allowing another POST.
@@ -188,10 +236,12 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
         printing
             .process(
               result,
-              claimPrinting: () => ref.read(directCheckoutServiceProvider).claimPrinting(
-                '${session.companySelected?.id ?? session.company?.id}:${session.login.user?.id}:${session.office?.id}:${session.saleStation?.id}',
-                result.checkoutData['operationId'] as String,
-              ),
+              claimPrinting: () => ref
+                  .read(directCheckoutServiceProvider)
+                  .claimPrinting(
+                    '${session.companySelected?.id ?? session.company?.id}:${session.login.user?.id}:${session.office?.id}:${session.saleStation?.id}',
+                    result.checkoutData['operationId'] as String,
+                  ),
               config: session.config!,
               office: session.office!,
               station: session.saleStation!,
@@ -246,7 +296,10 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                 propina: (agreed['propina'] as num?)?.toDouble(),
                 mozoResponsable: agreed['idMozo'] == null
                     ? null
-                    : User(id: agreed['idMozo'], nombreCompleto: agreed['nombreMozo']),
+                    : User(
+                        id: agreed['idMozo'],
+                        nombreCompleto: agreed['nombreMozo'],
+                      ),
                 pagosPropina: (agreed['pagosPropina'] as List?)
                     ?.map((p) => PaymentDetail.fromJson(p))
                     .toList(),
@@ -520,6 +573,7 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                               onPressed: () {
                                 _debounce?.cancel();
                                 _searchController.clear();
+                                ref.read(comandaProvider.notifier).search('');
                                 setState(() {});
                                 ref
                                     .read(comandaProvider.notifier)
@@ -560,7 +614,14 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                         icon: Icons.star_rounded,
                         selected:
                             state.selectedCategoria == ComandaState.kFavoritos,
-                        onTap: () => notifier.selectFavoritos(),
+                        onTap: () {
+                          _debounce?.cancel();
+                          final hadQuery = _searchController.text.isNotEmpty;
+                          _searchController.clear();
+                          if (hadQuery) notifier.search('');
+                          notifier.selectFavoritos();
+                          if (hadQuery) notifier.loadProducts();
+                        },
                       ),
                       _CategoryChip(
                         label: 'Todas',
@@ -620,31 +681,26 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                         ),
                       ],
                     )
-                  : GridView.builder(
+                  : CustomScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 110),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            childAspectRatio: 0.70,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                          ),
-                      itemCount: filtered.length,
-                      itemBuilder: (_, i) {
-                        final product = filtered[i];
-                        return ProductMenuCard(
-                          product: product,
-                          displayPrice: ComandaNotifier.computePrice(
-                            product,
-                            1,
-                            office: ref.read(sesionProvider).office,
-                            config: ref.read(sesionProvider).config,
-                          ),
-                          isLoading: _openingProductId == product.id,
-                          onTap: () => _openProduct(product),
-                        );
-                      },
+                      slivers: [
+                        if (state.selectedCategoria ==
+                                ComandaState.kFavoritos &&
+                            state.searchQuery.trim().isEmpty) ...[
+                          if (notifier.favoriteProducts.isNotEmpty)
+                            ..._productSection(
+                              notifier.favoriteProducts,
+                              title: 'Favoritos',
+                            ),
+                          if (notifier.topSellingProducts.isNotEmpty)
+                            ..._productSection(
+                              notifier.topSellingProducts,
+                              title: 'Más vendidos',
+                            ),
+                        ] else
+                          ..._productSection(filtered),
+                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                      ],
                     ),
             ),
           ),

@@ -251,6 +251,49 @@ void main() {
       expect(find.textContaining('La factura requiere'), findsOneWidget);
     },
   );
+  testWidgets('cambiar de factura inválida a nota elimina el error anterior', (
+    tester,
+  ) async {
+    await open(tester, anonymous: true);
+    await tester.tap(find.text('Factura'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Emitir comprobante'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('La factura requiere'), findsOneWidget);
+    await tester.ensureVisible(find.text('Nota de venta'));
+    await tester.tap(find.text('Nota de venta'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('La factura requiere'), findsNothing);
+    expect(service.sent, isEmpty);
+  });
+
+  testWidgets(
+    'corregir el efectivo recibido elimina el error de pago anterior',
+    (tester) async {
+      await open(tester);
+      final cash = find
+          .widgetWithText(TextFormField, 'Efectivo recibido')
+          .first;
+      await tester.ensureVisible(cash);
+      await tester.enterText(cash, '1');
+      await tester.ensureVisible(find.text('Emitir comprobante'));
+      await tester.tap(find.text('Emitir comprobante'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('El monto pagado es menor al total de la venta'),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(cash);
+      await tester.enterText(cash, '19.43');
+      await tester.pumpAndSettle();
+      expect(
+        find.text('El monto pagado es menor al total de la venta'),
+        findsNothing,
+      );
+      expect(service.sent, isEmpty);
+    },
+  );
+
   testWidgets('recuperación permite salir, reabrir y recuperar el mismo UUID', (
     tester,
   ) async {

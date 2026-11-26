@@ -130,6 +130,7 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
 
   /// Mismo tope que el `size: 500` del endpoint que se usaba antes.
   static const _menuLimit = 500;
+  int _searchGeneration = 0;
 
   /// Imágenes ya pedidas en esta sesión: reabrir el menú no repite el POST.
   final Map<int, List<ProductImage>> _imagesCache = {};
@@ -156,6 +157,7 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   // -------------------------------------------------------------------------
 
   Future<void> init(Table? table, {int? existingOrderId}) async {
+    _searchGeneration++;
     state = ComandaState(
       table: table,
       existingOrderId: existingOrderId ?? table?.pedidoActual?.id,
@@ -182,24 +184,30 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
       ref.read(localProductsProvider).allProducts.isNotEmpty;
 
   Future<void> loadProducts({String query = ''}) async {
-    state = state.copyWith(isLoadingProducts: true);
+    final generation = ++_searchGeneration;
+    final normalized = query.trim();
+    state = state.copyWith(isLoadingProducts: true, searchQuery: normalized);
     try {
       final products = _useLocalSearch && _localProductsAvailable
-          ? await _loadLocal(query)
-          : await _loadOnline(query);
+          ? await _loadLocal(normalized)
+          : await _loadOnline(normalized);
+      if (!mounted || generation != _searchGeneration) return;
       final enriched = await _enrich(products);
-      final categorias = enriched
-          .map((p) => p.categoria?.nombre ?? '')
-          .where((c) => c.isNotEmpty)
-          .toSet()
-          .toList()
-        ..sort();
+      if (!mounted || generation != _searchGeneration) return;
+      final categorias =
+          enriched
+              .map((p) => p.categoria?.nombre ?? '')
+              .where((c) => c.isNotEmpty)
+              .toSet()
+              .toList()
+            ..sort();
       state = state.copyWith(
         products: enriched,
-        categorias: categorias,
+        categorias: normalized.isEmpty ? categorias : state.categorias,
         isLoadingProducts: false,
       );
     } catch (e) {
+      if (!mounted || generation != _searchGeneration) return;
       errorNotification(e.toString());
       state = state.copyWith(isLoadingProducts: false);
     }
@@ -214,24 +222,46 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
           .read(localProductsProvider)
           .allProducts
           .where((p) => p.mostrarEnRestaurante == true)
-          .take(_menuLimit)
           .toList();
     }
-    final results =
-        await ref.read(localProductsProvider.notifier).searchLocal(query);
+    final results = await ref
+        .read(localProductsProvider.notifier)
+        .searchLocal(query);
     return results.where((p) => p.mostrarEnRestaurante == true).toList();
   }
 
   /// Búsqueda ligera (`/products/search`) con los mismos filtros que usaba el
   /// endpoint pesado de `/products`.
-  Future<List<Product>> _loadOnline(String query) {
+  Future<List<Product>> _loadOnline(String query) async {
+    final session = ref.read(sesionProvider);
     final params = <String, dynamic>{
       'paginacion': false,
       'limit': _menuLimit,
       'mostrarEnRestaurante': true,
+      if (session.office?.id != null) 'idPuntoVentaOrder': session.office!.id,
+      if (session.config?.buscarPorPuntoVenta == true &&
+          session.office?.id != null)
+        'idPuntoVenta': session.office!.id,
     };
-    if (query.isNotEmpty) params['filterGlobal'] = query;
-    return productsRepository.searchProducts(params);
+    if (query.isNotEmpty) {
+      return productsRepository.searchProducts({
+        ...params,
+        'filterGlobal': query,
+      });
+    }
+    // La misma consulta que la web incluye favoritos ordenados y más vendidos.
+    // Se combina con el menú para conservar Todas y las categorías.
+    final batches = await Future.wait([
+      productsRepository.searchProducts(params),
+      productsRepository.searchProducts({
+        ...params,
+        'favorito': true,
+        'limit': 30,
+      }),
+    ]);
+    return {
+      for (final product in batches.expand((p) => p)) product.id: product,
+    }.values.toList();
   }
 
   /// La búsqueda ligera y el cache local no traen inventario ni imágenes: se
@@ -358,14 +388,38 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   }
 
   void search(String q) {
-    state = state.copyWith(searchQuery: q);
+    // Invalida también las peticiones anteriores durante el debounce.
+    _searchGeneration++;
+    state = state.copyWith(searchQuery: q, clearCategoria: q.trim().isNotEmpty);
+  }
+
+  List<Product> get favoriteProducts {
+    final products = state.products.where((p) => p.favorito == true).toList();
+    products.sort((a, b) {
+      final order = (a.numeroOrdenFavorito ?? 0x7fffffff).compareTo(
+        b.numeroOrdenFavorito ?? 0x7fffffff,
+      );
+      return order != 0 ? order : (a.id ?? 0).compareTo(b.id ?? 0);
+    });
+    return products.take(30).toList();
+  }
+
+  List<Product> get topSellingProducts {
+    final products = state.products.where((p) => p.favorito != true).toList();
+    products.sort((a, b) {
+      final sales = (b.numeroVentas ?? 0).compareTo(a.numeroVentas ?? 0);
+      return sales != 0 ? sales : (a.id ?? 0).compareTo(b.id ?? 0);
+    });
+    return products.take(10).toList();
   }
 
   List<Product> get filteredProducts {
     var products = state.products;
-    if (state.selectedCategoria == ComandaState.kFavoritos) {
-      products = products.where((p) => p.favorito == true).toList();
-    } else if (state.selectedCategoria != null) {
+    if (state.selectedCategoria == ComandaState.kFavoritos &&
+        state.searchQuery.trim().isEmpty) {
+      products = [...favoriteProducts, ...topSellingProducts];
+    } else if (state.selectedCategoria != null &&
+        state.selectedCategoria != ComandaState.kFavoritos) {
       products = products
           .where((p) => p.categoria?.nombre == state.selectedCategoria)
           .toList();
