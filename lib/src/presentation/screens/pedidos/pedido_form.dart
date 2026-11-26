@@ -1,3 +1,4 @@
+import 'package:teki_app/src/presentation/widgets/product_search_result.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -532,6 +533,11 @@ class _PedidoFormState extends ConsumerState<PedidoForm> {
   }
 
   Future<void> _buscarProductos() async {
+    final carritoBusqueda = ref.read(productSaleProvider.notifier);
+    bool vigente() =>
+        mounted &&
+        carritoBusqueda.mounted &&
+        identical(ref.read(productSaleProvider.notifier), carritoBusqueda);
     await buscarEnPedido<Product>(
       context,
       'Buscar producto',
@@ -540,10 +546,100 @@ class _PedidoFormState extends ConsumerState<PedidoForm> {
       subtitulo: (p) => p.codigo,
       lateral: _precioStock,
       etiqueta: _promo,
-      agregar: _agregarProducto,
+      agregar: (p) async {
+        if (vigente()) await _agregarProducto(p);
+      },
       enPedido: _enPedido,
+      claveResultado: (p) => p.id ?? p,
+      // La hoja vive en el Navigator raíz; conservar el carrito aislado del pedido.
+      resultado: (p, agregar, operar, ocupado) => UncontrolledProviderScope(
+        container: ProviderScope.containerOf(context),
+        child: ProductSearchResult(
+          product: p,
+          precioStock: _precioStock(p),
+          promocion: _promo(p),
+          subtitulo: p.codigo,
+          agregando: ocupado,
+          onAdd: agregar,
+          onDecrease: () => operar(() async {
+            if (vigente()) _disminuirResultado(p);
+          }),
+          onRemove: () => operar(() async {
+            if (vigente()) _quitarResultado(p);
+          }),
+          onEdit: () => operar(() async {
+            if (vigente()) await _editarResultado(p);
+          }),
+        ),
+      ),
     );
     if (mounted) setState(() {});
+  }
+
+  List<TicketDetail> _lineasResultado(Product p) => ref
+      .read(productSaleProvider)
+      .productsSales
+      .where((l) => l.producto?.id == p.id && l.esBonificacion != true)
+      .toList();
+
+  int _indiceResultado(TicketDetail linea) => ref
+      .read(productSaleProvider)
+      .productsSales
+      .indexWhere(
+        (l) => linea.uuid != null ? l.uuid == linea.uuid : identical(l, linea),
+      );
+
+  void _disminuirResultado(Product p) {
+    if (!mounted) return;
+    final linea = _lineasResultado(
+      p,
+    ).where((l) => l.comandaDetalle == null).lastOrNull;
+    if (linea == null) return;
+    final indice = _indiceResultado(linea);
+    if (indice < 0) return;
+    final carrito = ref.read(productSaleProvider.notifier);
+    if ((linea.cantidad ?? 1) <= 1) {
+      carrito.removeProductSale(indice);
+    } else {
+      carrito.setCantidadProductSale(
+        indice,
+        linea.cantidad! - 1,
+        actualizarSeries: true,
+      );
+    }
+    _sucio = true;
+  }
+
+  void _quitarResultado(Product p) {
+    if (!mounted) return;
+    final carrito = ref.read(productSaleProvider.notifier);
+    for (final linea in _lineasResultado(
+      p,
+    ).where((l) => l.comandaDetalle == null).toList().reversed) {
+      final indice = _indiceResultado(linea);
+      if (indice >= 0) carrito.removeProductSale(indice);
+    }
+    _sucio = true;
+  }
+
+  Future<void> _editarResultado(Product p) async {
+    if (!mounted) return;
+    final carrito = ref.read(productSaleProvider.notifier);
+    final cambio = await editarCantidadResultado(
+      context,
+      p,
+      _lineasResultado(p),
+    );
+    if (!mounted ||
+        cambio == null ||
+        !carrito.mounted ||
+        !identical(ref.read(productSaleProvider.notifier), carrito)) {
+      return;
+    }
+    final indice = _indiceResultado(cambio.$1);
+    if (indice < 0) return;
+    carrito.setCantidadProductSale(indice, cambio.$2, actualizarSeries: true);
+    _sucio = true;
   }
 
   /// Etiqueta de promoción vigente para el buscador (null si no hay).

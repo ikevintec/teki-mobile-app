@@ -68,7 +68,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.textContaining('Arroz extra 1 kg').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('Listo (').last);
+      await tester.tap(find.text('Listo').last);
       await tester.pumpAndSettle();
       expect(find.text('Arroz extra 1 kg'), findsWidgets);
       await tester.ensureVisible(find.byTooltip('Sumar una unidad'));

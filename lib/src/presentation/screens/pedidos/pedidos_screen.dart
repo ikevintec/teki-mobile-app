@@ -1,3 +1,5 @@
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:teki_app/src/data/services/distribuidor/pedidos_service.dart';
 import 'pedido_list_item.dart';
 import 'package:intl/intl.dart';
 import 'package:teki_app/src/domain/distribuidor/filtros_pedidos.dart';
@@ -35,6 +37,7 @@ class _PedidosScreenState extends ConsumerState<_PedidosContent> {
   int _pagina = 0, _paginaBorrador = 0;
   int _carga = 0;
   String? _error;
+  final Set<String> _eliminandoBorradores = {};
   FiltrosPedidos _filtros = const FiltrosPedidos();
   final _busqueda = TextEditingController();
   Timer? _debounce;
@@ -172,6 +175,51 @@ class _PedidosScreenState extends ConsumerState<_PedidosContent> {
     }
   }
 
+  Future<void> _eliminarBorrador(Map<String, dynamic> borrador) async {
+    final s = ref.read(sesionProvider);
+    final clave = s.claveContexto;
+    final id = borrador['id']?.toString();
+    final revision = borrador['revision'];
+    final sede = s.office?.id;
+    if (id == null || revision is! num || sede == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Actualiza la lista antes de eliminar el borrador.'),
+        ),
+      );
+      return;
+    }
+    if (_eliminandoBorradores.contains(id)) return;
+    setState(() => _eliminandoBorradores.add(id));
+    bool vigente() =>
+        mounted && ref.read(sesionProvider).claveContexto == clave;
+    try {
+      await PedidosService(
+        clave,
+        sigueEnContexto: vigente,
+      ).eliminarBorrador(id, revision.toInt(), sede);
+      if (!mounted || !vigente()) return;
+      setState(() {
+        ++_carga;
+        _cargando = false;
+        _borradores.removeWhere((b) => b['id']?.toString() == id);
+      });
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Borrador eliminado.')));
+      // La eliminación cambia los offsets: recargar desde la primera página.
+      await _cargar();
+    } catch (e) {
+      if (mounted && vigente()) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(mensajePedido(e))));
+      }
+    } finally {
+      if (vigente()) setState(() => _eliminandoBorradores.remove(id));
+    }
+  }
+
   Future<void> _abrir({
     Map<String, dynamic>? pedido,
     Map<String, dynamic>? borrador,
@@ -239,6 +287,7 @@ class _PedidosScreenState extends ConsumerState<_PedidosContent> {
         _filtros = const FiltrosPedidos();
         _pedidos = [];
         _borradores = [];
+        _eliminandoBorradores.clear();
         _masBorradores = false;
         _error = null;
       });
@@ -371,14 +420,46 @@ class _PedidosScreenState extends ConsumerState<_PedidosContent> {
               ),
               for (final b in _borradores)
                 Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.edit_note),
-                    title: Text('${b['nombre'] ?? 'Pedido sin enviar'}'),
-                    subtitle: const Text(
-                      'Aún no enviado · sin reserva de stock',
+                  key: ValueKey('borrador-${b['id']}'),
+                  clipBehavior: Clip.antiAlias,
+                  child: Slidable(
+                    key: ValueKey('acciones-borrador-${b['id']}'),
+                    endActionPane: ActionPane(
+                      motion: const ScrollMotion(),
+                      extentRatio: .32,
+                      children: [
+                        SlidableAction(
+                          onPressed:
+                              _eliminandoBorradores.contains(b['id'].toString())
+                              ? null
+                              : (_) => _eliminarBorrador(b),
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onError,
+                          icon: Icons.delete_outline,
+                          label: 'Eliminar',
+                        ),
+                      ],
                     ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _abrir(borrador: b),
+                    child: ListTile(
+                      leading: const Icon(Icons.edit_note),
+                      title: Text('${b['nombre'] ?? 'Pedido sin enviar'}'),
+                      subtitle: const Text(
+                        'Aún no enviado · sin reserva de stock',
+                      ),
+                      trailing:
+                          _eliminandoBorradores.contains(b['id'].toString())
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.chevron_right),
+                      onTap: _eliminandoBorradores.contains(b['id'].toString())
+                          ? null
+                          : () => _abrir(borrador: b),
+                    ),
                   ),
                 ),
             ],

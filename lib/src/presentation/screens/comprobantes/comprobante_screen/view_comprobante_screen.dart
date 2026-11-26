@@ -31,14 +31,27 @@ class ViewComponentScreen extends ConsumerStatefulWidget {
   final int? id;
   final bool fromSale;
 
-  const ViewComponentScreen({super.key, required this.ticket, this.id, this.fromSale = false});
+  /// Final de un pedido de restaurante: conserva las acciones del comprobante
+  /// y usa la navegación de pedidos en lugar de iniciar una venta.
+  final VoidCallback? onNewOrder;
+
+  const ViewComponentScreen({
+    super.key,
+    required this.ticket,
+    this.id,
+    this.fromSale = false,
+    this.onNewOrder,
+  }) : assert(!fromSale || onNewOrder == null);
 
   @override
   ConsumerState<ViewComponentScreen> createState() => _ViewComponentScreenState();
 }
 
 class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
-  // Ancla desde donde revienta el confeti al venir de una venta.
+  bool get _fromOrder => widget.onNewOrder != null;
+  bool get _isCompletion => widget.fromSale || _fromOrder;
+
+  // Ancla del confeti al completar venta o pedido.
   final GlobalKey _celebrationCheckKey = GlobalKey();
   final PdfFileService _pdfFileService = PdfFileService();
 
@@ -179,7 +192,7 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
     Get.toNamed(AppRoutes.productsSales);
   }
 
-  Widget _buildBottomSaleBar() {
+  Widget _buildBottomCompletionBar() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -198,11 +211,11 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _nuevaVenta,
+              onPressed: widget.onNewOrder ?? _nuevaVenta,
               icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text(
-                'Nueva venta',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              label: Text(
+                _fromOrder ? 'Nuevo pedido' : 'Nueva venta',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColorSchema.primaryColor,
@@ -234,10 +247,10 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Get.offAllNamed(AppRoutes.dashboard);
-                    Get.toNamed(AppRoutes.comprobantesVer);
+                    Get.toNamed(_fromOrder ? AppRoutes.ordersRestaurant : AppRoutes.comprobantesVer);
                   },
                   icon: const Icon(Icons.receipt_long_outlined, size: 17),
-                  label: const Text('Comprobantes', style: TextStyle(fontSize: 13)),
+                  label: Text(_fromOrder ? 'Pedidos' : 'Comprobantes', style: const TextStyle(fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.grey.shade700,
                     side: BorderSide(color: Colors.grey.shade300),
@@ -302,7 +315,7 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                           padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
                           child: Column(
                             children: [
-                              if (widget.fromSale) ...[
+                              if (_isCompletion) ...[
                                 AnimatedSuccessCheck(key: _celebrationCheckKey),
                                 const SizedBox(height: 16),
                               ],
@@ -404,14 +417,14 @@ class _ViewComponentScreenState extends ConsumerState<ViewComponentScreen> {
                     ),
                   ),
                 ),
-                // ── Siguiente acción del cajero (solo al terminar venta) ─
-                if (widget.fromSale) _buildBottomSaleBar(),
+                // ── Siguiente acción al terminar venta o pedido ─
+                if (_isCompletion) _buildBottomCompletionBar(),
               ],
             ),
           ),
         ),                     // Scaffold
         SuccessCelebrationOverlay(
-          show: widget.fromSale,
+          show: _isCompletion,
           anchorKey: _celebrationCheckKey,
         ),
       ],

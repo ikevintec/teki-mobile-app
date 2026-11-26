@@ -2,6 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'pedidos_ui.dart';
 
+typedef ResultadoBusquedaPedido<T> =
+    Widget Function(
+      T item,
+      VoidCallback agregar,
+      Future<void> Function(Future<void> Function()) operar,
+      bool ocupado,
+    );
+
 /// Hoja de búsqueda del pedido.
 /// - Sin [agregar]: selección simple, devuelve el elemento elegido.
 /// - Con [agregar]: la hoja queda abierta para sumar varios productos seguidos;
@@ -20,6 +28,8 @@ Future<T?> buscarEnPedido<T>(
   double Function(T)? enPedido,
   String vacio = 'Escribe un nombre o código para buscar.',
   Widget? accionExtra,
+  ResultadoBusquedaPedido<T>? resultado,
+  Object Function(T)? claveResultado,
 }) => showModalBottomSheet<T>(
   context: context,
   isScrollControlled: true,
@@ -39,6 +49,8 @@ Future<T?> buscarEnPedido<T>(
     enPedido: enPedido,
     vacio: vacio,
     accionExtra: accionExtra,
+    resultado: resultado,
+    claveResultado: claveResultado,
   ),
 );
 
@@ -57,6 +69,8 @@ class _BusquedaPedido<T> extends StatefulWidget {
   final Future<void> Function(T)? agregar;
   final double Function(T)? enPedido;
   final Widget? accionExtra;
+  final ResultadoBusquedaPedido<T>? resultado;
+  final Object Function(T)? claveResultado;
   const _BusquedaPedido({
     required this.titulo,
     required this.buscar,
@@ -68,6 +82,8 @@ class _BusquedaPedido<T> extends StatefulWidget {
     this.agregar,
     this.enPedido,
     this.accionExtra,
+    this.resultado,
+    this.claveResultado,
   });
   @override
   State<_BusquedaPedido<T>> createState() => _BusquedaPedidoState<T>();
@@ -79,6 +95,7 @@ class _BusquedaPedidoState<T> extends State<_BusquedaPedido<T>> {
   int _version = 0, _agregados = 0, _pendientes = 0;
   bool _cargando = false;
   Future<void> _cola = Future.value();
+  final Set<Object> _ocupados = {};
   String? _error;
   List<T> _items = [];
   @override
@@ -108,16 +125,37 @@ class _BusquedaPedidoState<T> extends State<_BusquedaPedido<T>> {
       Navigator.pop(context, item);
       return;
     }
-    // Los toques rápidos se encolan para no perder ninguno.
-    setState(() => _pendientes++);
+    await _operar(
+      () => widget.agregar!(item),
+      agregado: true,
+      clave: widget.claveResultado?.call(item),
+    );
+  }
+
+  Future<void> _operar(
+    Future<void> Function() accion, {
+    bool agregado = false,
+    Object? clave,
+  }) async {
+    if (clave != null && _ocupados.contains(clave)) return;
+    setState(() {
+      _pendientes++;
+      if (clave != null) _ocupados.add(clave);
+    });
     _cola = _cola.then((_) async {
       try {
-        await widget.agregar!(item);
-        if (mounted) setState(() => _agregados++);
+        if (!mounted) return;
+        await accion();
+        if (mounted && agregado) setState(() => _agregados++);
       } catch (e) {
         if (mounted) setState(() => _error = mensajePedido(e));
       } finally {
-        if (mounted) setState(() => _pendientes--);
+        if (mounted) {
+          setState(() {
+            _pendientes--;
+            if (clave != null) _ocupados.remove(clave);
+          });
+        }
       }
     });
     await _cola;
@@ -193,6 +231,19 @@ class _BusquedaPedidoState<T> extends State<_BusquedaPedido<T>> {
                         itemCount: _items.length,
                         itemBuilder: (ctx, i) {
                           final item = _items[i];
+                          if (widget.resultado != null) {
+                            return widget.resultado!(
+                              item,
+                              () => _tocar(item),
+                              (accion) => _operar(
+                                accion,
+                                clave: widget.claveResultado?.call(item),
+                              ),
+                              _ocupados.contains(
+                                widget.claveResultado?.call(item),
+                              ),
+                            );
+                          }
                           final sub = widget.subtitulo?.call(item);
                           final llevo = widget.enPedido?.call(item) ?? 0;
                           final lado = widget.lateral?.call(item);
@@ -327,6 +378,8 @@ class _BusquedaPedidoState<T> extends State<_BusquedaPedido<T>> {
                         child: Text(
                           _pendientes > 0
                               ? 'Agregando…'
+                              : widget.resultado != null
+                              ? 'Listo'
                               : _agregados == 0
                               ? 'Cerrar'
                               : 'Listo ($_agregados)',

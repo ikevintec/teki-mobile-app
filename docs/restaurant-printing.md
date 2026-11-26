@@ -30,7 +30,7 @@ Las pruebas de cobro cubren el `PUT /checks/{id}` y la impresión posterior, inc
 
 La pantalla **Completar pedido** sustituye los modales de cliente/pedido. Permite guardar borrador, abrir facturación completa o emitir directamente; la emisión directa usa `/orders-restaurant/direct-checkout` y su preview del mismo backend web. No registra otra orden/cuenta/venta desde el cliente. Los precios editados y adicionales se envían como precios de comanda; el backend extrae recargo y construye las líneas y redondeos mediante el servicio de emisión existente.
 
-En emisión directa, la comanda se imprime después de confirmar la operación, independientemente del flag de impresión anticipada. El comprobante sigue `impresionAutomatica`, formato A4/TICKET, PDF/ESC-POS y cliente COFFE/BLE. Siempre se abre el visor configurado sobre el listado de pedidos; cerrar conserva el listado y **Nuevo pedido** inicia una canasta nueva. Mesa y cobro posterior conservan sus rutas existentes.
+En emisión directa, la comanda se imprime después de confirmar la operación, independientemente del flag de impresión anticipada. El comprobante sigue `impresionAutomatica`, formato A4/TICKET, PDF/ESC-POS y cliente COFFE/BLE. Tras emitir se abre el detalle del comprobante sobre el listado de pedidos, con check y confeti; **Nuevo pedido** inicia una canasta nueva sin mesa, **Pedidos** abre el listado de restaurante e **Inicio** vuelve al dashboard. Atrás conserva el listado subyacente. El PDF se abre solo desde su acción explícita; la impresión automática configurada sigue a cargo de `DirectCheckoutPrinting`. Mesa y cobro posterior conservan sus rutas existentes.
 
 Cada intento persiste UUID y solicitud completa antes del POST, por empresa/usuario/sede/estación. Ante timeout o respuesta incompleta se recupera el mismo intento y se bloquea otra emisión. La recuperación consulta un marcador local de despacho por contexto y UUID: si la instalación aún no intentó imprimir esa operación, continúa la impresión configurada. El marcador se persiste antes de contactar impresoras; si ya existe, evita el envío automático repetido y solicita revisar/reimprimir manualmente. No acredita entrega física única ni resuelve la ventana de cierre abrupto entre guardar el marcador y contactar la impresora. Un fallo de impresora no reintenta la venta.
 
@@ -60,3 +60,25 @@ El menú móvil separa Favoritos (orden compartido `numeroOrdenFavorito`, hasta3
 
 
 Los mensajes de validación del cierre se limpian al corregir los datos, cambiar el tipo de comprobante o editar un importe de pago. Una factura inválida o un pago insuficiente siguen bloqueando la emisión sin guardar otro pedido.
+
+
+## 26/11/2026 — Final de pedido sin PDF automático
+
+La emisión directa sin mesa reutiliza `ViewComponentScreen` con callback `onNewOrder`.
+El comprobante confirmado se presenta sin recargarlo por ID. El callback distingue el final de
+pedido del final de venta (`fromSale`); ambos contextos son excluyentes. La celebración, resumen
+y acciones Enviar/Imprimir/PDF/Compartir son los mismos del detalle existente. Ventas conserva
+Nueva venta, Comprobantes, permiso VENTAS_CREAR e invalidación/navegación anteriores. El histórico
+no añade celebración ni barra de continuación. Borrador/editar/con mesa no cambian.
+
+11 regresiones nuevas de widgets verifican menú→checkout→detalle, canasta nueva, navegación,
+confeti, PDF manual, permisos de venta y contexto histórico.648 pruebas completas correctas;
+54 focalizadas de cierre/venta/recuperación/impresión también correctas (subconjunto). Análisis
+sin errores nuevos/76 avisos heredados. Datos y servicios ficticios; no emisión fiscal ni
+impresión física. Evidencia: `Teki/output/final-pedido-sin-mesa-2026-11-26/`.
+Implementado/probado localmente; sin publicación ni distribución.
+
+QA nativo final: iPhoneSE3/iPadAir11 M3 iOS18.3, detalle/confeti visible, PDF manual, canasta nueva,
+regreso a Pedidos y continuidad de ventas comprobados; All tests passed sin excepciones en ambos.
+Servicios y destinos de navegación ficticios. Capturas/logs en el expediente; QA separada retirada,
+entrypoint lib/main.dart restaurado. Compilación ARM64 correcta, sin cambios de backend.

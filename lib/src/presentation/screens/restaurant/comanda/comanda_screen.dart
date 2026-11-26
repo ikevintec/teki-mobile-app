@@ -15,7 +15,7 @@ import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:teki_app/src/providers/printer/ble_printer.dart';
 import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
 import 'package:teki_app/src/shared/services/direct_checkout_printing.dart';
-import 'package:teki_app/src/presentation/screens/viewer/pdf_viewer_screen.dart';
+import 'package:teki_app/src/presentation/screens/comprobantes/comprobante_screen/view_comprobante_screen.dart';
 import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/cart_bottom_sheet.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail_sheet.dart';
@@ -325,17 +325,14 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
       }
       return;
     }
-    // The list is underneath the receipt; closing it leaves the saved order visible.
+    // El listado queda debajo del detalle; volver conserva el pedido guardado.
     ref.read(ordersRestaurantProvider.notifier).updateEstadoPago('TODOS');
     Get.until((route) => route.settings.name == AppRoutes.ordersRestaurant);
     if (result.action == 'INVOICE') {
       final ticket = result.check.comprobante!;
       Get.to(
-        () => PdfViewerScreen(
-          uuid: ticket.uuid,
-          fileName: ticket.identificadorDocumento ?? '',
-          fileSize: session.config?.tipoImpresion ?? 'A4',
-          ticketId: ticket.id,
+        () => ViewComponentScreen(
+          ticket: ticket,
           onNewOrder: () {
             Get.back();
             Get.to(() => const ComandaScreen(isPedidoSinMesa: true));

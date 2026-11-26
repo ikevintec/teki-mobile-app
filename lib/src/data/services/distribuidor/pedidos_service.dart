@@ -78,6 +78,15 @@ class PedidosService {
       },
     )).data,
   );
+  Future<void> eliminarBorrador(String id, int revision, int sede) async {
+    _validarContexto();
+    await dio.delete(
+      '/ticket-order/gestion/borradores/$id',
+      queryParameters: {'revision': revision, 'idPuntoVenta': sede},
+    );
+    _validarContexto();
+  }
+
   Future<bool> get hayPendiente async =>
       (await SharedPreferences.getInstance()).containsKey(_key);
   Future<Map<String, dynamic>?> pendiente() async {

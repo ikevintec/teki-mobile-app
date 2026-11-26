@@ -448,6 +448,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                             return Column(
                                               children: [
                                                 DismissibleActionWidget(
+                                                  slidableKey: ObjectKey(formGroup),
                                                   actions: [
                                                     if (products[index]
                                                             .producto !=
@@ -531,7 +532,7 @@ class _ProductsSaleScreenState extends ConsumerState<ProductsSaleScreen> {
                                                       ),
                                                   ],
                                                   child: ProductItemCard(
-                                                    key: UniqueKey(),
+                                                    key: ObjectKey(formGroup),
                                                     productTicketDetail:
                                                         products[index],
                                                     index: index,
