@@ -78,6 +78,8 @@ class Product {
   final bool? ocultarEnBuscadorVentas;
   final bool? mostrarEnWeb;
   final bool? favorito;
+  final int? numeroOrdenFavorito;
+  final double? numeroVentas;
   final bool? estado;
   final int? createdOn;
   final bool? validacionLote;
@@ -146,6 +148,8 @@ class Product {
     this.ocultarEnBuscadorVentas,
     this.mostrarEnWeb,
     this.favorito,
+    this.numeroOrdenFavorito,
+    this.numeroVentas,
     this.estado,
     this.createdOn,
     this.validacionLote,
@@ -248,6 +252,8 @@ class Product {
         ocultarEnBuscadorVentas: json['ocultarEnBuscadorVentas'],
         mostrarEnWeb: json['mostrarEnWeb'],
         favorito: json['favorito'],
+        numeroOrdenFavorito: (json['numeroOrdenFavorito'] as num?)?.toInt(),
+        numeroVentas: (json['numeroVentas'] as num?)?.toDouble(),
         estado: json['estado'],
         createdOn: (json['createdOn'] as num?)?.toInt(),
         validacionLote: json['validacionLote'],
@@ -320,6 +326,8 @@ class Product {
         'ocultarEnBuscadorVentas': ocultarEnBuscadorVentas,
         'mostrarEnWeb': mostrarEnWeb,
         'favorito': favorito,
+        'numeroOrdenFavorito': numeroOrdenFavorito,
+        'numeroVentas': numeroVentas,
         'estado': estado,
         'createdOn': createdOn,
         'validacionLote': validacionLote,
@@ -389,6 +397,8 @@ class Product {
     bool? ocultarEnBuscadorVentas,
     bool? mostrarEnWeb,
     bool? favorito,
+    int? numeroOrdenFavorito,
+    double? numeroVentas,
     bool? estado,
     int? createdOn,
     bool? validacionLote,
@@ -461,6 +471,8 @@ class Product {
       ocultarEnBuscadorVentas: ocultarEnBuscadorVentas ?? this.ocultarEnBuscadorVentas,
       mostrarEnWeb: mostrarEnWeb ?? this.mostrarEnWeb,
       favorito: favorito ?? this.favorito,
+      numeroOrdenFavorito: numeroOrdenFavorito ?? this.numeroOrdenFavorito,
+      numeroVentas: numeroVentas ?? this.numeroVentas,
       estado: estado ?? this.estado,
       createdOn: createdOn ?? this.createdOn,
       validacionLote: validacionLote ?? this.validacionLote,

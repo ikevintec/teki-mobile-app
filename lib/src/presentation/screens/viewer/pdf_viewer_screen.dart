@@ -1,3 +1,4 @@
+import 'package:teki_app/src/presentation/screens/pedidos/pedidos_style.dart';
 // lib/src/presentation/screens/pdf/pdf_viewer_page.dart
 
 import 'package:flutter/material.dart';
@@ -28,6 +29,7 @@ class PdfViewerScreen extends ConsumerStatefulWidget {
   /// (banner de advertencia y botón de imprimir). Usado por cotizaciones,
   /// que no se imprimen por impresora física.
   final bool allowPrint;
+  final VoidCallback? onNewOrder;
 
   const PdfViewerScreen({
     super.key,
@@ -37,6 +39,7 @@ class PdfViewerScreen extends ConsumerStatefulWidget {
     this.ticketId,
     this.customPdfUrl,
     this.allowPrint = true,
+    this.onNewOrder,
   });
 
   @override
@@ -158,11 +161,18 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
             ? ref.watch(blePrinterProvider).hasPrinter && widget.ticketId != null
             : clienteImpresion == 'COFFE' && printer != null);
 
-    return Scaffold(
+    final screen = Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: CustomAppBar(
-          navigateName: "Comprobante - ${widget.fileName}",
+          navigateName: widget.onNewOrder == null ? "Comprobante - ${widget.fileName}" : widget.fileName,
+          actions: widget.onNewOrder == null ? null : [
+            TextButton.icon(
+              onPressed: widget.onNewOrder,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Nuevo pedido', style: TextStyle(color: Colors.white)),
+            ),
+          ],
         ),
       ),
       body: Column(
@@ -196,6 +206,7 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
         ],
       ),
     );
+    return widget.onNewOrder == null ? screen : PedidosStyle(child: screen);
   }
 
   Widget _buildActionButtons(bool canPrint, String? printerName, {bool isBle = false}) {

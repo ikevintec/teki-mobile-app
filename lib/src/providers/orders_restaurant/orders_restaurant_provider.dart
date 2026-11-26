@@ -22,6 +22,9 @@ const List<String> kAllEstados = [
   'CANCELADO',
 ];
 
+// Vista inicial de la web: pedidos operativos, tengan o no comprobante.
+const List<String> kActiveEstados = ['PENDIENTE', 'PREPARADO', 'PRECUENTA'];
+
 final ordersRestaurantProvider = StateNotifierProvider.autoDispose<
     OrdersRestaurantNotifier, OrdersRestaurantState>(
   (ref) {
@@ -34,6 +37,7 @@ final ordersRestaurantProvider = StateNotifierProvider.autoDispose<
 class OrdersRestaurantNotifier
     extends StateNotifier<OrdersRestaurantState> {
   final OrdersRestaurantRepository repository;
+  int _requestId = 0;
 
   OrdersRestaurantNotifier({required this.repository})
       : super(OrdersRestaurantState.initial());
@@ -85,13 +89,14 @@ class OrdersRestaurantNotifier
   }
 
   void updateEstadoPago(String? value) {
+    final selected = value ?? 'TODOS';
     bool? pedidoFacturado;
-    if (value == 'PAGADOS') pedidoFacturado = true;
-    if (value == 'NO_PAGADOS') pedidoFacturado = false;
+    if (selected == 'PAGADOS') pedidoFacturado = true;
+    if (selected == 'NO_PAGADOS') pedidoFacturado = false;
     state = state.copyWith(
-      selectedEstadoPago: value ?? 'NO_PAGADOS',
+      selectedEstadoPago: selected,
       pedidoFacturado: pedidoFacturado,
-      clearPedidoFacturado: value == 'TODOS',
+      clearPedidoFacturado: selected == 'TODOS',
       pageNumber: 0,
       orders: [],
       isLoading: true,
@@ -153,11 +158,12 @@ class OrdersRestaurantNotifier
   }
 
   Future<void> _fetchAndSet({required bool resetList}) async {
+    final requestId = ++_requestId;
     final params = buildOrdersRestaurantQueryParams(state);
     final response = await repository.getOrdersRestaurant(params);
     // El provider es autoDispose: si el usuario salió de la pantalla mientras
     // volaba el request, el notifier ya está destruido y no hay que tocar state.
-    if (!mounted) return;
+    if (!mounted || requestId != _requestId) return;
     final newOrders = response.content ?? [];
     state = state.copyWith(
       orders: resetList ? newOrders : [...state.orders, ...newOrders],
@@ -222,17 +228,21 @@ class OrdersRestaurantState {
       sortField: 'fecha',
       sortOrder: -1,
       tipos: kAllTipos,
-      estados: kAllEstados,
+      estados: kActiveEstados,
       desde: null,
       hasta: null,
       selectedTipo: 'TODOS',
-      // Se abre en lo que falta cobrar: los pagados son historial y antes
-      // obligaban a cambiar el filtro cada vez.
-      selectedEstadoPago: 'NO_PAGADOS',
-      pedidoFacturado: false,
+      selectedEstadoPago: 'TODOS',
+      pedidoFacturado: null,
       notificationTrigger: 0,
     );
   }
+
+  bool get hasAdvancedFilters =>
+      estados.length != kActiveEstados.length ||
+      !estados.toSet().containsAll(kActiveEstados) ||
+      desde != null ||
+      hasta != null;
 
   OrdersRestaurantState copyWith({
     List<OrderRestaurant>? orders,

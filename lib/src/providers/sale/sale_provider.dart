@@ -22,6 +22,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_provider.dart';
 import 'package:teki_app/src/providers/sale/products/helpers/ticket_detail_helper.dart';
 import 'package:teki_app/src/providers/sale/products/products_sales_provider.dart';
+import 'package:teki_app/src/shared/services/command_print_service.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/formats.dart';
 
@@ -301,6 +302,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       puedeLiberarPedido: state.ticket.puedeLiberarPedido,
 
       serie: state.ticket.serie,
+      propina: state.ticket.propina,
+      mozoResponsable: state.ticket.mozoResponsable,
+      pagosPropina: state.ticket.pagosPropina,
       id: state.ticket.id,
       tipoComprobante: state.ticket.tipoComprobante,
       numero: state.ticket.numero,
@@ -469,6 +473,8 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
   /// backend. Devuelve el comprobante emitido (null si la cuenta quedó
   /// registrada sin comprobante). Lanza excepción si el pago falla.
   Future<Ticket?> pagarCuentaRestaurante(int checkId) async {
+    final session = ref.read(sesionProvider);
+    final printService = CommandPrintService();
     final ticketPayload = getTicketPayload();
     final customer = ref.read(customerSaleProvider).customer;
     final originalItems = ref
@@ -487,6 +493,36 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       checkId,
       checkPayload,
     );
+    // Igual que la web: cuando no se imprimió al registrar el pedido sin
+    // mesa, enviar sus comandas después de confirmar el cobro.
+    final order = checkResult.pedido;
+    final office = session.office;
+    final config = session.config;
+    if (order != null &&
+        order.mesa == null &&
+        config?.imprimirPedidoComandaSinComprobante != true &&
+        config?.clienteImpresion == 'COFFE' &&
+        office != null) {
+      final commandIds = (order.comandas ?? [])
+          .map((command) => command.id)
+          .whereType<int>()
+          .toSet();
+      for (final commandId in commandIds) {
+        try {
+          await printService.processCommand(
+            commandId: commandId,
+            puntoVenta: office,
+            escPos: config?.imprimeTicketsEscPos ?? false,
+            clientPrinter: config?.clienteImpresion,
+            idCompany: session.company?.id,
+          );
+        } catch (_) {
+          // El cobro ya quedó registrado: nunca convertir un error de
+          // impresión en un error de pago que invite a cobrar otra vez.
+          notifyError('Pago registrado, pero no se pudo imprimir la comanda.');
+        }
+      }
+    }
     return checkResult.comprobante;
   }
 
@@ -591,6 +627,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     try {
       Ticket ticketToSend = Ticket(
         serie: state.ticket.serie,
+        propina: state.ticket.propina,
+        mozoResponsable: state.ticket.mozoResponsable,
+        pagosPropina: state.ticket.pagosPropina,
         id: state.ticket.id,
         tipoComprobante: state.ticket.tipoComprobante,
         numero: state.ticket.numero,

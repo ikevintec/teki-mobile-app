@@ -64,8 +64,8 @@ class CommandDetail {
 
   factory CommandDetail.fromJson(Map<String, dynamic> json) => CommandDetail(
     id: json['id'],
-    cantidad: json['cantidad'],
-    precioVenta: json['precioVenta'],
+    cantidad: (json['cantidad'] as num?)?.toDouble(),
+    precioVenta: (json['precioVenta'] as num?)?.toDouble(),
     producto: json['producto'] != null
         ? Product.fromJson(json['producto'])
         : null,

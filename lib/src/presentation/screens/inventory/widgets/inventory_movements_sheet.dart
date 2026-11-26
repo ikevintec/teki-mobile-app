@@ -418,8 +418,9 @@ class _LoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSerie = lote.tipoLote == 'SERIE';
-    final accentColor =
-        isSerie ? Colors.purple.shade400 : ColorSchema.primaryColor;
+    final accentColor = isSerie
+        ? Colors.purple.shade400
+        : ColorSchema.primaryColor;
     final stock = lote.cantidad ?? 0;
     final stockColor = stock <= 0
         ? Colors.red
@@ -493,8 +494,7 @@ class _LoteCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (lote.fechaVencimiento != null &&
-                                  !isSerie)
+                              if (lote.fechaVencimiento != null && !isSerie)
                                 Text(
                                   'Vence: ${DateFormat('dd/MM/yyyy').format(lote.fechaVencimiento!)}',
                                   style: GoogleFonts.roboto(
@@ -672,6 +672,11 @@ class _LogItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                if (record.trazabilidadPedido != null)
+                  Text(
+                    record.trazabilidadPedido!,
+                    style: GoogleFonts.roboto(fontSize: 11),
+                  ),
                 Text(
                   fecha,
                   style: GoogleFonts.roboto(
@@ -687,8 +692,7 @@ class _LogItem extends StatelessWidget {
             children: [
               Text(
                 '${record.cantidadAnterior ?? '-'} → ${record.cantidadActual ?? '-'}',
-                style:
-                    GoogleFonts.roboto(fontSize: 11, color: Colors.black54),
+                style: GoogleFonts.roboto(fontSize: 11, color: Colors.black54),
               ),
               Text(
                 record.cantidad != null

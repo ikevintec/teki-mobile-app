@@ -5,6 +5,7 @@ import 'package:teki_app/src/data/models/teki_model/unit_code.dart';
 class ConfigCompany {
   bool? envioAutomaticoSunat;
   bool? preciosIncluidoIgv;
+  bool? excluirIgvNotaVenta;
   bool? descripcionLarga;
   bool? clientePorDefecto;
   String? tipoComprobantePorDefecto;
@@ -64,6 +65,7 @@ class ConfigCompany {
   ConfigCompany({
     this.envioAutomaticoSunat,
     this.preciosIncluidoIgv,
+    this.excluirIgvNotaVenta,
     this.descripcionLarga,
     this.clientePorDefecto,
     this.tipoComprobantePorDefecto,
@@ -120,6 +122,7 @@ class ConfigCompany {
     return ConfigCompany(
       envioAutomaticoSunat: json['envioAutomaticoSunat'],
       preciosIncluidoIgv: json['preciosIncluidoIgv'],
+      excluirIgvNotaVenta: json['excluirIgvNotaVenta'],
       descripcionLarga: json['descripcionLarga'],
       clientePorDefecto: json['clientePorDefecto'],
       tipoComprobantePorDefecto: json['tipoComprobantePorDefecto'],
@@ -137,7 +140,8 @@ class ConfigCompany {
       esRestaurante: json['esRestaurante'],
       usaCodigoBarras: json['usaCodigoBarras'],
       ocultarModalRegistroComanda: json['ocultarModalRegistroComanda'],
-      imprimirPedidoComandaSinComprobante: json['imprimirPedidoComandaSinComprobante'],
+      imprimirPedidoComandaSinComprobante:
+          json['imprimirPedidoComandaSinComprobante'],
       tipoImpresion: json['tipoImpresion'],
       tipoImpresionGuia: json['tipoImpresionGuia'],
       tipoImpresionMovil: json['tipoImpresionMovil'],
@@ -186,6 +190,7 @@ class ConfigCompany {
     return {
       'envioAutomaticoSunat': envioAutomaticoSunat,
       'preciosIncluidoIgv': preciosIncluidoIgv,
+      'excluirIgvNotaVenta': excluirIgvNotaVenta,
       'descripcionLarga': descripcionLarga,
       'clientePorDefecto': clientePorDefecto,
       'tipoComprobantePorDefecto': tipoComprobantePorDefecto,
@@ -203,7 +208,8 @@ class ConfigCompany {
       'esRestaurante': esRestaurante,
       'usaCodigoBarras': usaCodigoBarras,
       'ocultarModalRegistroComanda': ocultarModalRegistroComanda,
-      'imprimirPedidoComandaSinComprobante': imprimirPedidoComandaSinComprobante,
+      'imprimirPedidoComandaSinComprobante':
+          imprimirPedidoComandaSinComprobante,
       'tipoImpresion': tipoImpresion,
       'tipoImpresionGuia': tipoImpresionGuia,
       'tipoImpresionMovil': tipoImpresionMovil,

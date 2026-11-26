@@ -75,6 +75,7 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
   final Map<int, Map<int, int>> _groupQuantities = {};
 
   String? _errorMessage;
+  bool _manualPrice = false;
 
   @override
   void initState() {
@@ -90,6 +91,7 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
     if (existing != null) {
       _quantity = existing.quantity;
       _price = existing.price;
+      _manualPrice = true;
       _paraLlevar = existing.paraLlevar;
       _notaController.text = existing.nota ?? '';
       _priceController = TextEditingController(text: _price.toStringAsFixed(2));
@@ -118,7 +120,7 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
       }
     } else {
       _quantity = 1;
-      _price = ComandaNotifier.computePrice(widget.product, 1);
+      _price = _catalogPrice(1);
       _paraLlevar = false;
       _priceController = TextEditingController(text: _price.toStringAsFixed(2));
 
@@ -148,9 +150,14 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
   // Price auto-update on quantity change
   // -------------------------------------------------------------------------
 
+  double _catalogPrice(int quantity) {
+    final session = ref.read(sesionProvider);
+    return ComandaNotifier.computePrice(widget.product, quantity, office: session.office, config: session.config);
+  }
+
   void _onQuantityChanged(int newQty) {
     if (newQty < 1) return;
-    final newPrice = ComandaNotifier.computePrice(widget.product, newQty);
+    final newPrice = _manualPrice ? _price : _catalogPrice(newQty);
     setState(() {
       _quantity = newQty;
       _price = newPrice;
@@ -175,6 +182,7 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
   // -------------------------------------------------------------------------
 
   bool _validate() {
+    if (!_price.isFinite || _price < 0) { _showError('Ingrese un precio válido.'); return false; }
     final error = ComandaItemForm.validate(
       product: widget.product,
       prepSelections: _prepSelections,
@@ -450,7 +458,7 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
                 ),
                 onChanged: (v) {
                   final parsed = double.tryParse(v);
-                  if (parsed != null) setState(() => _price = parsed);
+                  if (parsed != null) setState(() { _price = parsed; _manualPrice = true; });
                 },
               ),
             ),
@@ -465,7 +473,7 @@ class _ProductDetailSheetState extends ConsumerState<ProductDetailSheet> {
                   product: widget.product,
                   currentPrice: _price,
                   onSelected: (v) {
-                    setState(() => _price = v);
+                    setState(() { _price = v; _manualPrice = true; });
                     _priceController.text = v.toStringAsFixed(2);
                   },
                 ),

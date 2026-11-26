@@ -7,7 +7,7 @@ Inicio muestra accesos rápidos y secciones abiertas, sin el modal «Más opcion
 - Clientes y fidelización: clientes, tarjetas y envases pendientes.
 - Inventario y abastecimiento: productos, inventario, traslados rápidos y compras.
 - Cobros y pagos: cuentas por cobrar, por pagar y Yape.
-- Restaurante: mesas, pedidos, cocina y cobrador, solo con rubro y permisos correspondientes.
+- Restaurante: mesas, Pedidos de restaurante, cocina y cobrador, solo con rubro y permisos correspondientes.
 - Administración: estadísticas y ajustes.
 
 La barra inferior conserva el orden Inicio, Clientes, Inventario, Caja. Cada destino se muestra solo con su permiso de lectura; Inicio siempre está disponible. Los índices internos son estables: quitar un destino no cambia a qué pantalla lleva otro. Revocar el destino activo vuelve a Inicio y desmonta su pantalla.
@@ -22,10 +22,19 @@ Clientes se integra como pestaña reutilizando el listado existente. Crear y edi
 
 El resumen de Inicio es compacto y se desplaza junto al menú. Solo consulta ventas con `VENTAS_VER`, caja con `CAJA_VER` y ofrece estadísticas con `REPORTE_VENTAS`. Conserva monedas y el aviso de una caja anterior abierta; no convierte un error de consulta en un saldo cero.
 
+## Pedidos de restaurante
+
+El listado incluye pedidos con mesa, internos, para llevar, delivery y online. Al entrar abre los estados activos (`PENDIENTE`, `PREPARADO`, `PRECUENTA`), todos los tipos y todos los estados de pago, sin fechas, con la sede actual y los más recientes primero. Los activos que ya tienen comprobante también aparecen. Los borradores quedan fuera de esta consulta, igual que en la web.
+
+Cancelados y finalizados se consultan seleccionando esos estados en **Más filtros**. La selección inicial de activos no enciende el indicador de filtros adicionales; cambiar estados o añadir fechas sí lo enciende. Recargar conserva los filtros seleccionados; salir del listado y volver a abrirlo restaura los valores iniciales.
+
+El listado descarta respuestas antiguas si una consulta posterior cambió los filtros, recargó la lista o seleccionó otra sede. Una página pendiente tampoco puede agregarse a los resultados de una consulta más reciente.
+
 ## Verificación
 
 ```sh
 flutter test test/widgets/restaurant_qa_regression_test.dart test/providers/restaurant_selection_race_test.dart test/navigation/dashboard_navigation_test.dart test/widgets/dashboard_navigation_test.dart test/providers/customer_pagination_test.dart
+flutter test test/providers/orders_restaurant_defaults_test.dart
 flutter run -t test/previews/dashboard_preview.dart -d <simulador>
 LOYALTY_QA_OUTPUT=/tmp/teki-menu-qa flutter drive --no-dds --driver=test_driver/loyalty_p1_driver.dart --target=integration_test/dashboard_menu_test.dart -d <simulador>
 ```

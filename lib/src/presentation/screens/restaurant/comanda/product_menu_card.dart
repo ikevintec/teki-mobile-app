@@ -5,6 +5,7 @@ import 'package:teki_app/src/utils/constants.dart';
 
 class ProductMenuCard extends StatelessWidget {
   final Product product;
+  final double? displayPrice;
   final VoidCallback onTap;
 
   /// Muestra un velo con spinner mientras se trae el detalle completo del
@@ -14,13 +15,14 @@ class ProductMenuCard extends StatelessWidget {
   const ProductMenuCard({
     super.key,
     required this.product,
+    this.displayPrice,
     required this.onTap,
     this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final price = ComandaNotifier.computePrice(product, 1);
+    final price = displayPrice ?? ComandaNotifier.computePrice(product, 1);
 
     return GestureDetector(
       onTap: onTap,
