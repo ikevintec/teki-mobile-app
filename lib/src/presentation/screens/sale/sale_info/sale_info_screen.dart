@@ -1,3 +1,4 @@
+import 'package:teki_app/src/presentation/screens/sale/widgets/restaurant_tip_summary.dart';
 import 'package:flutter/material.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/aviso_faltante.dart';
@@ -104,7 +105,8 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
     final ticketSaleProviderData = ref.read(ticketSaleProvider);
 
     final series = ticketSaleProviderData.numeros;
-    selectedSerie = series.isNotEmpty ? series.first : null;
+    final current = ref.read(ticketProvider).ticket.serie;
+    selectedSerie = series.contains(current) ? current : (series.isNotEmpty ? series.first : null);
 
     if (selectedSerie != null) {
       ref.read(ticketProvider.notifier).setSerie(selectedSerie!);
@@ -230,6 +232,11 @@ class _SaleInfoScreenState extends ConsumerState<SaleInfoScreen> {
                                   size: 70,
                                 ),
                               ],
+                            ),
+                            RestaurantTipSummary(
+                              ticket: provider.ticket,
+                              onRemove: provider.ticket.id == null && !_isSubmitting
+                                ? () => notifier.updateTicket(provider.ticket.copyWith(propina: 0, pagosPropina: [])) : null,
                             ),
                             const SizedBox(height: 15),
                             Row(

@@ -302,6 +302,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
       puedeLiberarPedido: state.ticket.puedeLiberarPedido,
 
       serie: state.ticket.serie,
+      propina: state.ticket.propina,
+      mozoResponsable: state.ticket.mozoResponsable,
+      pagosPropina: state.ticket.pagosPropina,
       id: state.ticket.id,
       tipoComprobante: state.ticket.tipoComprobante,
       numero: state.ticket.numero,
@@ -624,6 +627,9 @@ class TicketNotifier extends StateNotifier<TicketProvider> {
     try {
       Ticket ticketToSend = Ticket(
         serie: state.ticket.serie,
+        propina: state.ticket.propina,
+        mozoResponsable: state.ticket.mozoResponsable,
+        pagosPropina: state.ticket.pagosPropina,
         id: state.ticket.id,
         tipoComprobante: state.ticket.tipoComprobante,
         numero: state.ticket.numero,

@@ -1,3 +1,4 @@
+import 'package:teki_app/src/providers/restaurant/direct_checkout/cart_quote_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/providers/restaurant/comanda_item_form.dart';
@@ -22,7 +23,10 @@ class CartBottomSheet extends ConsumerWidget {
     final items = ref.watch(comandaProvider).cartItems;
     final notifier = ref.read(comandaProvider.notifier);
     final totalItems = items.fold(0, (sum, i) => sum + i.quantity);
-    final totalAmount = notifier.totalAmount;
+    final quoteState = ref.watch(restaurantCartQuoteProvider);
+    final quote = quoteState.isLoading || quoteState.hasError ? null : quoteState.valueOrNull;
+    final totalAmount =
+        (quote?['totalVenta'] as num?)?.toDouble() ?? notifier.totalAmount;
 
     return Container(
       decoration: const BoxDecoration(
@@ -67,12 +71,16 @@ class CartBottomSheet extends ConsumerWidget {
                     const Text(
                       'Canasta',
                       style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     Text(
                       '$totalItems producto(s)',
                       style: TextStyle(
-                          color: Colors.grey.shade500, fontSize: 12),
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -95,13 +103,15 @@ class CartBottomSheet extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Column(
                 children: [
-                  Icon(Icons.shopping_basket_outlined,
-                      size: 48, color: Colors.grey.shade300),
+                  Icon(
+                    Icons.shopping_basket_outlined,
+                    size: 48,
+                    color: Colors.grey.shade300,
+                  ),
                   const SizedBox(height: 10),
                   Text(
                     'La canasta está vacía',
-                    style: TextStyle(
-                        color: Colors.grey.shade400, fontSize: 14),
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                   ),
                 ],
               ),
@@ -121,6 +131,11 @@ class CartBottomSheet extends ConsumerWidget {
                   final item = items[index];
                   return _CartItemTile(
                     item: item,
+                    quotedTotal:
+                        (quote?['totalesPedido'] as List?)?.elementAtOrNull(
+                              index,
+                            )
+                            as num?,
                     onDelete: () => notifier.removeCartItem(index),
                     onEdit: () {
                       Navigator.pop(context);
@@ -149,11 +164,13 @@ class CartBottomSheet extends ConsumerWidget {
 
 class _CartItemTile extends StatelessWidget {
   final CartItem item;
+  final num? quotedTotal;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
   const _CartItemTile({
     required this.item,
+    this.quotedTotal,
     required this.onDelete,
     required this.onEdit,
   });
@@ -215,13 +232,18 @@ class _CartItemTile extends StatelessWidget {
                 Row(
                   children: [
                     if (item.paraLlevar) ...[
-                      Icon(Icons.takeout_dining_outlined,
-                          size: 12, color: Colors.blue.shade400),
+                      Icon(
+                        Icons.takeout_dining_outlined,
+                        size: 12,
+                        color: Colors.blue.shade400,
+                      ),
                       const SizedBox(width: 3),
                       Text(
                         'Para llevar',
                         style: TextStyle(
-                            fontSize: 11, color: Colors.blue.shade400),
+                          fontSize: 11,
+                          color: Colors.blue.shade400,
+                        ),
                       ),
                       const SizedBox(width: 8),
                     ],
@@ -249,7 +271,7 @@ class _CartItemTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'S/ ${item.totalPrice.toStringAsFixed(2)}',
+                'S/ ${(quotedTotal ?? item.totalPrice).toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: ColorSchema.primaryColor,

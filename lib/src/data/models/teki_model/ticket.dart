@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
 import 'package:teki_app/src/data/models/teki_model/additional_field.dart';
 import 'package:teki_app/src/data/models/teki_model/anticipo.dart';
 import 'package:teki_app/src/data/models/teki_model/attached_company.dart';
@@ -29,6 +30,9 @@ class Ticket {
   final bool? puedeLiberarPedido;
 
   static const _unchanged = Object();
+  final double? propina;
+  final User? mozoResponsable;
+  final List<PaymentDetail>? pagosPropina;
   final int? id;
   final String? serie;
   final int? numero;
@@ -170,6 +174,9 @@ class Ticket {
     this.puedeLiberarPedido,
 
     this.id,
+    this.propina,
+    this.mozoResponsable,
+    this.pagosPropina,
     this.serie,
     this.numero,
     this.fechaEmision,
@@ -310,6 +317,13 @@ class Ticket {
     puedeTomarPedido: json['puedeTomarPedido'] as bool?,
     puedeLiberarPedido: json['puedeLiberarPedido'] as bool?,
     id: json['id'],
+    propina: (json['propina'] as num?)?.toDouble(),
+    mozoResponsable: json['mozoResponsable'] == null
+        ? null
+        : User.fromJson(json['mozoResponsable']),
+    pagosPropina: (json['pagosPropina'] as List?)
+        ?.map((p) => PaymentDetail.fromJson(p))
+        .toList(),
     serie: json['serie'],
     numero: json['numero'],
     fechaEmision: json['fechaEmision'],
@@ -345,41 +359,41 @@ class Ticket {
         json['codigoTipoOtroDocumentoRelacionado'],
     serieNumeroOtroDocumentoRelacionado:
         json['serieNumeroOtroDocumentoRelacionado'],
-    totalValorVentaExportacion: json['totalValorVentaExportacion'],
-    totalValorVentaGravada: json['totalValorVentaGravada'],
-    totalValorVentaInafecta: json['totalValorVentaInafecta'],
-    totalValorVentaExonerada: json['totalValorVentaExonerada'],
-    totalValorVentaGratuita: json['totalValorVentaGratuita'],
-    totalValorBaseIsc: json['totalValorBaseIsc'],
-    totalValorBaseIgv: json['totalValorBaseIgv'],
-    totalValorVentaGravadaIvap: json['totalValorVentaGravadaIvap'],
-    totalTributosOperacionGratuita: json['totalTributosOperacionGratuita'],
-    totalTributosBolsas: json['totalTributosBolsas'],
-    totalIvap: json['totalIvap'],
-    totalIgv: json['totalIgv'],
-    totalIsc: json['totalIsc'],
-    otrosTributos: json['otrosTributos'],
-    otrosCargos: json['otrosCargos'],
-    porcentajeOtrosCargos: json['porcentajeOtrosCargos'],
-    totalValorVenta: json['totalValorVenta'],
-    totalVenta: json['totalVenta'],
-    totalVentaCredito: json['totalVentaCredito'],
-    totalAnticipos: json['totalAnticipos'],
+    totalValorVentaExportacion: (json['totalValorVentaExportacion'] as num?)?.toDouble(),
+    totalValorVentaGravada: (json['totalValorVentaGravada'] as num?)?.toDouble(),
+    totalValorVentaInafecta: (json['totalValorVentaInafecta'] as num?)?.toDouble(),
+    totalValorVentaExonerada: (json['totalValorVentaExonerada'] as num?)?.toDouble(),
+    totalValorVentaGratuita: (json['totalValorVentaGratuita'] as num?)?.toDouble(),
+    totalValorBaseIsc: (json['totalValorBaseIsc'] as num?)?.toDouble(),
+    totalValorBaseIgv: (json['totalValorBaseIgv'] as num?)?.toDouble(),
+    totalValorVentaGravadaIvap: (json['totalValorVentaGravadaIvap'] as num?)?.toDouble(),
+    totalTributosOperacionGratuita: (json['totalTributosOperacionGratuita'] as num?)?.toDouble(),
+    totalTributosBolsas: (json['totalTributosBolsas'] as num?)?.toDouble(),
+    totalIvap: (json['totalIvap'] as num?)?.toDouble(),
+    totalIgv: (json['totalIgv'] as num?)?.toDouble(),
+    totalIsc: (json['totalIsc'] as num?)?.toDouble(),
+    otrosTributos: (json['otrosTributos'] as num?)?.toDouble(),
+    otrosCargos: (json['otrosCargos'] as num?)?.toDouble(),
+    porcentajeOtrosCargos: (json['porcentajeOtrosCargos'] as num?)?.toDouble(),
+    totalValorVenta: (json['totalValorVenta'] as num?)?.toDouble(),
+    totalVenta: (json['totalVenta'] as num?)?.toDouble(),
+    totalVentaCredito: (json['totalVentaCredito'] as num?)?.toDouble(),
+    totalAnticipos: (json['totalAnticipos'] as num?)?.toDouble(),
     pagoAnticipado: json['pagoAnticipado'],
     regimenPercepcion: json['regimenPercepcion'],
-    montoPercepcion: json['montoPercepcion'],
-    porcentajePercepcion: json['porcentajePercepcion'],
-    totalVentaPercepcion: json['totalVentaPercepcion'],
-    montoBaseRetencion: json['montoBaseRetencion'],
-    montoRetencion: json['montoRetencion'],
-    porcentajeRetencion: json['porcentajeRetencion'],
-    montoBaseDescuento: json['montoBaseDescuento'],
-    porcentajeDescuento: json['porcentajeDescuento'],
-    totalDescuento: json['totalDescuento'],
-    descuentoGlobal: json['descuentoGlobal'],
-    descuentoPorItem: json['descuentoPorItem'],
+    montoPercepcion: (json['montoPercepcion'] as num?)?.toDouble(),
+    porcentajePercepcion: (json['porcentajePercepcion'] as num?)?.toDouble(),
+    totalVentaPercepcion: (json['totalVentaPercepcion'] as num?)?.toDouble(),
+    montoBaseRetencion: (json['montoBaseRetencion'] as num?)?.toDouble(),
+    montoRetencion: (json['montoRetencion'] as num?)?.toDouble(),
+    porcentajeRetencion: (json['porcentajeRetencion'] as num?)?.toDouble(),
+    montoBaseDescuento: (json['montoBaseDescuento'] as num?)?.toDouble(),
+    porcentajeDescuento: (json['porcentajeDescuento'] as num?)?.toDouble(),
+    totalDescuento: (json['totalDescuento'] as num?)?.toDouble(),
+    descuentoGlobal: (json['descuentoGlobal'] as num?)?.toDouble(),
+    descuentoPorItem: (json['descuentoPorItem'] as num?)?.toDouble(),
     codigoDescuento: json['codigoDescuento'],
-    porcentajeDescuentoGlobal: json['porcentajeDescuentoGlobal'],
+    porcentajeDescuentoGlobal: (json['porcentajeDescuentoGlobal'] as num?)?.toDouble(),
     serieAfectado: json['serieAfectado'],
     numeroAfectado: json['numeroAfectado'],
     tipoComprobanteAfectado: json['tipoComprobanteAfectado'],
@@ -395,8 +409,8 @@ class Ticket {
     motivoAnulacion: json['motivoAnulacion'],
     incIgv: json['incIgv'],
     agruparItems: json['agruparItems'],
-    efectivo: json['efectivo'],
-    cambio: json['cambio'],
+    efectivo: (json['efectivo'] as num?)?.toDouble(),
+    cambio: (json['cambio'] as num?)?.toDouble(),
     items: json['items'] != null
         ? List<TicketDetail>.from(
             json['items'].map((x) => TicketDetail.fromJson(x)),
@@ -433,8 +447,8 @@ class Ticket {
     codigoMedioPago: json['codigoMedioPago'],
     cuentaDetraccion: json['cuentaDetraccion'],
     codigoDetraccion: json['codigoDetraccion'],
-    porcentajeDetraccion: json['porcentajeDetraccion'],
-    montoDetraccion: json['montoDetraccion'],
+    porcentajeDetraccion: (json['porcentajeDetraccion'] as num?)?.toDouble(),
+    montoDetraccion: (json['montoDetraccion'] as num?)?.toDouble(),
     empresa: json['empresa'] != null ? Company.fromJson(json['empresa']) : null,
     empresaAdjunta: json['empresaAdjunta'] != null
         ? AttachedCompany.fromJson(json['empresaAdjunta'])
@@ -493,6 +507,9 @@ class Ticket {
     'puedeTomarPedido': puedeTomarPedido,
     'puedeLiberarPedido': puedeLiberarPedido,
     'id': id,
+    'propina': propina,
+    'mozoResponsable': mozoResponsable?.toJson(),
+    'pagosPropina': pagosPropina?.map((p) => p.toJson()).toList(),
     'serie': serie,
     'numero': numero,
     'fechaEmision': fechaEmision,
@@ -635,6 +652,9 @@ class Ticket {
     bool? puedeLiberarPedido,
 
     int? id,
+    double? propina,
+    User? mozoResponsable,
+    List<PaymentDetail>? pagosPropina,
     String? serie,
     int? numero,
     String? fechaEmision,
@@ -763,6 +783,9 @@ class Ticket {
     String? placaVehiculo,
   }) {
     return Ticket(
+      propina: propina ?? this.propina,
+      mozoResponsable: mozoResponsable ?? this.mozoResponsable,
+      pagosPropina: pagosPropina ?? this.pagosPropina,
       tipoComprobanteDestino:
           tipoComprobanteDestino ?? this.tipoComprobanteDestino,
       tipoPrecioCabeceraId: tipoPrecioCabeceraId ?? this.tipoPrecioCabeceraId,

@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/price.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -295,7 +296,10 @@ class ComandaNotifier extends StateNotifier<ComandaState> {
   // -------------------------------------------------------------------------
 
   /// Returns the most applicable price for the given quantity (mayoreo logic).
-  static double computePrice(Product p, int quantity) {
+  static double computePrice(Product p, int quantity, {Office? office, ConfigCompany? config}) {
+    if (office?.id != null) {
+      return getPriceProduct(p.copyWith(igv: p.igv ?? true), office!, {'qty': quantity.toDouble(), 'igv': config?.igv ?? 0.18});
+    }
     final prices = p.preciosVenta ?? [];
     if (prices.isEmpty) return 0;
 

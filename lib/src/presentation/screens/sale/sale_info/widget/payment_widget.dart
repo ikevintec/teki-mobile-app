@@ -1,3 +1,4 @@
+import 'package:teki_app/src/presentation/screens/sale/widgets/restaurant_tip_summary.dart';
 import 'package:teki_app/src/providers/sale/cash_payment_validation.dart';
 import 'package:teki_app/src/utils/formats.dart';
 import 'package:teki_app/src/presentation/screens/sale/widgets/estilo_accion_principal.dart';
@@ -139,7 +140,7 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
       final sesion = ref.read(sesionProvider);
       paymentMethods = sesion.config?.formasPago ?? [];
 
-      if (isEdit) {
+      if (isEdit || ticket.cuentaRestaurante != null) {
         _loadExistingPaymentData(ticket);
       } else {
         diasCredito.text = "30";
@@ -492,9 +493,15 @@ class _PaymentWidgetState extends ConsumerState<PaymentWidget>
                   // ── Tab Contado ──────────────────────────────────────────
                   ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                    itemCount: visiblePaymentMethods.length,
+                    itemCount: visiblePaymentMethods.length + ((ticket.propina ?? 0) > 0 ? 1 : 0),
                     itemBuilder: (_, index) {
-                      final payment = visiblePaymentMethods[index];
+                      final hasTip = (ticket.propina ?? 0) > 0;
+                      if (hasTip && index == 0) {
+                        return RestaurantTipSummary(ticket: ticket,
+                          onRemove: ticket.id == null && !_isSubmitting
+                            ? () => notifier.updateTicket(ticket.copyWith(propina: 0, pagosPropina: [])) : null);
+                      }
+                      final payment = visiblePaymentMethods[index - (hasTip ? 1 : 0)];
                       final entryIndex = _paymentEntries
                           .indexWhere((e) => e.method.id == payment.id);
                       final entry =

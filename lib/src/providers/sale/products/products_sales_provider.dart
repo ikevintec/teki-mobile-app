@@ -315,7 +315,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
     calculoTotal();
   }
 
-  Future<void> initFromCheck(Check check) async {
+  Future<void> initFromCheck(Check check, {bool excluirIgv = false}) async {
     setLoading(true);
     try {
       // Reset ticket provider
@@ -463,6 +463,25 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         );
       }
 
+      if (excluirIgv && sesion.config?.excluirIgvNotaVenta == true) {
+        final factor = 1 + (sesion.config?.igv ?? 0.18);
+        for (var index = 0; index < items.length; index++) {
+          final line = items[index];
+          // Delivery is a free-form service: the backend changes its tax
+          // code without extracting IGV from the entered delivery charge.
+          final price =
+              (line.precioVentaUnitario ?? 0) /
+              (line.producto == null ? 1 : factor);
+          items[index] = line.copyWith(
+            codigoTipoAfectacionIgv: '20',
+            precioVentaUnitario: price,
+            montoOriginal: price,
+            valorUnitario: price,
+            igv: 0,
+            porcentajeIgv: 0,
+          );
+        }
+      }
       setProductsSaleEntity(items, monedaOrigen: 'PEN');
 
       // Vincular la cuenta y pedido de restaurante al ticket

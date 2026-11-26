@@ -1,3 +1,7 @@
+import 'package:teki_app/src/providers/restaurant/direct_checkout/cart_quote_provider.dart';
+import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
+import 'package:teki_app/src/data/models/teki_model/user.dart';
+import 'package:teki_app/src/data/models/teki_model/cash_register_detail.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart' hide Table;
@@ -5,7 +9,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:teki_app/src/data/models/teki_model/product.dart';
 import 'package:teki_app/src/data/models/teki_model/table.dart';
-import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/pedido_sin_mesa_dialog.dart';
+import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/direct_order_checkout_screen.dart';
+import 'package:teki_app/src/providers/restaurant/direct_checkout/direct_checkout_service.dart';
+import 'package:teki_app/src/providers/sale/sale_provider.dart';
+import 'package:teki_app/src/providers/printer/ble_printer.dart';
+import 'package:teki_app/src/shared/services/comprobante_print_service.dart';
+import 'package:teki_app/src/shared/services/direct_checkout_printing.dart';
+import 'package:teki_app/src/presentation/screens/viewer/pdf_viewer_screen.dart';
+import 'package:teki_app/src/providers/orders_restaurant/orders_restaurant_provider.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/cart_bottom_sheet.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_detail_sheet.dart';
 import 'package:teki_app/src/presentation/screens/restaurant/comanda/product_menu_card.dart';
@@ -41,17 +52,31 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
   /// Producto cuyo detalle completo se está trayendo tras el tap; bloquea
   /// nuevos taps y muestra el spinner en su card.
   int? _openingProductId;
+  bool _openingCheckout = false;
+  bool _hasPendingCheckout = false;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    Future.microtask(() {
+    Future.microtask(() async {
       if (!mounted) return;
-      ref.read(comandaProvider.notifier).init(
-            widget.table,
-            existingOrderId: widget.existingOrderId,
-          );
+      ref
+          .read(comandaProvider.notifier)
+          .init(widget.table, existingOrderId: widget.existingOrderId);
+      if (widget.isPedidoSinMesa) {
+        final s = ref.read(sesionProvider);
+        final scope =
+            '${s.companySelected?.id ?? s.company?.id}:${s.login.user?.id}:${s.office?.id}:${s.saleStation?.id}';
+        try {
+          final pending = await ref
+              .read(directCheckoutServiceProvider)
+              .pending(scope);
+          if (mounted) setState(() => _hasPendingCheckout = pending != null);
+        } catch (_) {
+          /* The checkout itself reports recovery/storage errors. */
+        }
+      }
     });
   }
 
@@ -81,8 +106,9 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
   Future<void> _openProduct(Product product) async {
     if (_openingProductId != null) return;
     setState(() => _openingProductId = product.id);
-    final fullProduct =
-        await ref.read(comandaProvider.notifier).getFullProduct(product);
+    final fullProduct = await ref
+        .read(comandaProvider.notifier)
+        .getFullProduct(product);
     if (!mounted) return;
     setState(() => _openingProductId = null);
     if (fullProduct == null) return;
@@ -122,76 +148,150 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
   // -------------------------------------------------------------------------
 
   Future<void> _handlePedidoSinMesa() async {
+    if (_openingCheckout) return;
     final session = ref.read(sesionProvider);
-    final office = session.office;
-    if (office == null) {
-      warningNotification('No hay punto de venta seleccionado');
+    if (session.office?.id == null || session.saleStation?.id == null) {
+      warningNotification('Seleccione una sede y estación válidas.');
       return;
     }
-    final notifier = ref.read(comandaProvider.notifier);
-    if (notifier.totalItems == 0) {
-      warningNotification('La canasta está vacía');
-      return;
-    }
-
-    final result = await showPedidoSinMesaDialog(context);
-    if (result == null) return;
-
-    final createdOrder = await notifier.submitPedidoSinMesa(
-      puntoVenta: office,
-      config: session.config,
-      idCompany: session.company?.id,
-      tipo: result.tipo,
-      nombreCliente: result.nombreCliente,
-      tipoDocumentoReceptor: result.tipoDocumentoReceptor,
-      numeroDocumentoReceptor: result.numeroDocumentoReceptor,
-      denominacionReceptor: result.denominacionReceptor,
-      direccionReceptor: result.direccionReceptor,
-      emailReceptor: result.emailReceptor,
-      telefonoReceptor: result.telefonoReceptor,
-      direccionCompleta: result.direccionCompleta,
-      montoDelivery: result.montoDelivery,
+    final cart = ref.read(comandaProvider).cartItems;
+    if (cart.isEmpty && !_hasPendingCheckout) return;
+    setState(() => _openingCheckout = true);
+    final order = directOrderFromCart(cart, session.office);
+    final cartQuote = ref.read(restaurantCartQuoteProvider);
+    final initialQuote = cartQuote.isLoading || cartQuote.hasError
+        ? null
+        : cartQuote.valueOrNull;
+    final result = await Navigator.of(context).push<DirectCheckoutResult>(
+      MaterialPageRoute(
+        builder: (_) =>
+            DirectOrderCheckoutScreen(order: order, initialQuote: initialQuote),
+      ),
     );
-
-    if (createdOrder == null) return; // error ya notificado
     if (!mounted) return;
-
-    // Si generarComprobante: cargar la cuenta y lanzar flujo de comprobante
-    if (result.generarComprobante) {
-      final cuentaId = createdOrder.cuentas?.isNotEmpty == true
-          ? createdOrder.cuentas![0].id
-          : null;
-
-      if (cuentaId != null) {
-        try {
-          final fullCheck =
-              await ref.read(cobradorProvider.notifier).getCheckById(cuentaId);
-          if (!mounted) return;
-          await ref.read(productSaleProvider.notifier).initFromCheck(fullCheck);
-          if (!mounted) return;
-          // Reemplaza ComandaScreen con ProductsSaleScreen; back → pedidos
-          Get.offUntil(
-            GetPageRoute(
-              page: () => const ProductsSaleScreen(),
-              routeName: '/products_sale_from_pedido',
-            ),
-            (route) => route.settings.name == AppRoutes.ordersRestaurant,
-          );
-          successNotification('Pedido creado exitosamente');
-        } catch (e) {
-          errorNotification('Error al cargar la cuenta: $e');
-          Get.until((route) =>
-              route.settings.name == AppRoutes.ordersRestaurant);
-          successNotification('Pedido creado. No se pudo abrir el comprobante.');
-        }
-        return;
+    if (result == null) {
+      final scope = '${session.companySelected?.id ?? session.company?.id}:${session.login.user?.id}:${session.office?.id}:${session.saleStation?.id}';
+      try {
+        final pending = await ref.read(directCheckoutServiceProvider).pending(scope);
+        if (mounted) setState(() => _hasPendingCheckout = pending != null);
+      } catch (_) {
+        // The checkout reports a storage failure before allowing another POST.
       }
+      if (mounted) setState(() => _openingCheckout = false);
+      return;
     }
-
-    // Sin generarComprobante o sin cuenta: volver a pedidos
-    successNotification('Pedido creado exitosamente');
-    Get.until(
-        (route) => route.settings.name == AppRoutes.ordersRestaurant);
+    final ble = ref.read(blePrinterProvider).savedPrinter;
+    final printerService = ref.read(printerServiceProvider);
+    final printing = DirectCheckoutPrinting();
+    if (session.config != null) {
+      unawaited(
+        printing
+            .process(
+              result,
+              claimPrinting: () => ref.read(directCheckoutServiceProvider).claimPrinting(
+                '${session.companySelected?.id ?? session.company?.id}:${session.login.user?.id}:${session.office?.id}:${session.saleStation?.id}',
+                result.checkoutData['operationId'] as String,
+              ),
+              config: session.config!,
+              office: session.office!,
+              station: session.saleStation!,
+              company: session.companySelected?.id ?? session.company?.id,
+              printBle: ble == null
+                  ? null
+                  : (ticket) => ComprobantePrintService().autoprintBle(
+                      ticketId: ticket.id!,
+                      printerService: printerService,
+                      blePrinter: ble,
+                      config: session.config!,
+                    ),
+            )
+            .then((warnings) {
+              for (final warning in warnings) {
+                warningNotification(warning);
+              }
+            }),
+      );
+    }
+    if (result.action == 'EDIT') {
+      try {
+        final fullCheck = await ref
+            .read(cobradorProvider.notifier)
+            .getCheckById(result.check.id!);
+        if (!mounted) return;
+        await ref
+            .read(productSaleProvider.notifier)
+            .initFromCheck(
+              fullCheck,
+              excluirIgv:
+                  result.checkoutData['excluirIgv'] == true &&
+                  result.checkoutData['tipoComprobante'] == 'NV',
+            );
+        if (!mounted) return;
+        // Keep the selected receipt type/series when handing over to the full editor.
+        ref
+            .read(ticketProvider.notifier)
+            .setTipoComprobante(
+              result.checkoutData['tipoComprobante'] ??
+                  session.config?.tipoComprobantePorDefecto ??
+                  'NV',
+            );
+        final agreed = result.checkoutData;
+        final ticketNotifier = ref.read(ticketProvider.notifier);
+        ticketNotifier.updateTicket(
+          ref
+              .read(ticketProvider)
+              .ticket
+              .copyWith(
+                serie: agreed['serie'],
+                propina: (agreed['propina'] as num?)?.toDouble(),
+                mozoResponsable: agreed['idMozo'] == null
+                    ? null
+                    : User(id: agreed['idMozo'], nombreCompleto: agreed['nombreMozo']),
+                pagosPropina: (agreed['pagosPropina'] as List?)
+                    ?.map((p) => PaymentDetail.fromJson(p))
+                    .toList(),
+                movimientoCaja: CashRegisterDetail(
+                  pagos: (agreed['pagos'] as List?)
+                      ?.map((p) => PaymentDetail.fromJson(p))
+                      .toList(),
+                ),
+              ),
+        );
+        Get.offUntil(
+          GetPageRoute(
+            page: () => const ProductsSaleScreen(),
+            routeName: '/products_sale_from_pedido',
+          ),
+          (route) => route.settings.name == AppRoutes.ordersRestaurant,
+        );
+      } catch (_) {
+        Get.until((route) => route.settings.name == AppRoutes.ordersRestaurant);
+        warningNotification(
+          'Pedido guardado. Puede abrir la cuenta desde la lista.',
+        );
+      }
+      return;
+    }
+    // The list is underneath the receipt; closing it leaves the saved order visible.
+    ref.read(ordersRestaurantProvider.notifier).updateEstadoPago('TODOS');
+    Get.until((route) => route.settings.name == AppRoutes.ordersRestaurant);
+    if (result.action == 'INVOICE') {
+      final ticket = result.check.comprobante!;
+      Get.to(
+        () => PdfViewerScreen(
+          uuid: ticket.uuid,
+          fileName: ticket.identificadorDocumento ?? '',
+          fileSize: session.config?.tipoImpresion ?? 'A4',
+          ticketId: ticket.id,
+          onNewOrder: () {
+            Get.back();
+            Get.to(() => const ComandaScreen(isPedidoSinMesa: true));
+          },
+        ),
+      );
+    } else {
+      successNotification('Borrador guardado');
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -206,7 +306,7 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
     }
 
     final notifier = ref.read(comandaProvider.notifier);
-    if (notifier.totalItems == 0) {
+    if (notifier.totalItems == 0 && !_hasPendingCheckout) {
       warningNotification('La canasta está vacía');
       return;
     }
@@ -230,17 +330,29 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 22),
+                  const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                   const SizedBox(width: 10),
                   const Expanded(
                     child: Text(
                       'Confirmar Comanda',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(dialogCtx, false),
-                    child: const Icon(Icons.close, color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -249,16 +361,25 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: ColorSchema.primaryColor.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: ColorSchema.primaryColor.withValues(alpha: 0.15)),
+                  border: Border.all(
+                    color: ColorSchema.primaryColor.withValues(alpha: 0.15),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, color: ColorSchema.primaryColor.withValues(alpha: 0.7), size: 18),
+                    Icon(
+                      Icons.info_outline,
+                      color: ColorSchema.primaryColor.withValues(alpha: 0.7),
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -282,9 +403,14 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                         foregroundColor: Colors.grey.shade700,
                         side: BorderSide(color: Colors.grey.shade300),
                         padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: const Text('Cancelar', style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        'Cancelar',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -295,10 +421,15 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                         backgroundColor: ColorSchema.primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         elevation: 0,
                       ),
-                      child: const Text('Confirmar', style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        'Confirmar',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
                 ],
@@ -328,6 +459,7 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
     final notifier = ref.read(comandaProvider.notifier);
     final filtered = notifier.filteredProducts;
     final totalItems = state.cartItems.length;
+    if (widget.isPedidoSinMesa) ref.watch(restaurantCartQuoteProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -342,14 +474,12 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
               widget.isPedidoSinMesa
                   ? 'Pedido (sin mesa)'
                   : 'Mesa ${widget.table?.numero ?? widget.table?.id ?? ''}',
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 15),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             if (!widget.isPedidoSinMesa && widget.table?.salon?.nombre != null)
               Text(
                 widget.table!.salon!.nombre!,
-                style: const TextStyle(
-                    fontSize: 11, color: Colors.white70),
+                style: const TextStyle(fontSize: 11, color: Colors.white70),
               ),
           ],
         ),
@@ -372,25 +502,37 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                     decoration: InputDecoration(
                       hintText: 'Buscar productos...',
                       hintStyle: const TextStyle(
-                          fontSize: 14, color: Colors.black38),
-                      prefixIcon: const Icon(Icons.search,
-                          color: Colors.black38, size: 20),
+                        fontSize: 14,
+                        color: Colors.black38,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Colors.black38,
+                        size: 20,
+                      ),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.close_rounded,
-                                  size: 18, color: Colors.black38),
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: Colors.black38,
+                              ),
                               onPressed: () {
                                 _debounce?.cancel();
                                 _searchController.clear();
                                 setState(() {});
-                                ref.read(comandaProvider.notifier).loadProducts();
+                                ref
+                                    .read(comandaProvider.notifier)
+                                    .loadProducts();
                               },
                             )
                           : null,
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 16),
+                        vertical: 10,
+                        horizontal: 16,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -416,8 +558,8 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                       _CategoryChip(
                         label: 'Favoritos',
                         icon: Icons.star_rounded,
-                        selected: state.selectedCategoria ==
-                            ComandaState.kFavoritos,
+                        selected:
+                            state.selectedCategoria == ComandaState.kFavoritos,
                         onTap: () => notifier.selectFavoritos(),
                       ),
                       _CategoryChip(
@@ -444,54 +586,66 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
               color: ColorSchema.primaryColor,
               onRefresh: _reloadProducts,
               child: state.isLoadingProducts
-                ? const Center(
-                    child: CircularProgressIndicator(
-                        color: ColorSchema.primaryColor),
-                  )
-                : filtered.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                          Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.search_off_rounded,
-                                    size: 52, color: Colors.grey.shade300),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'No hay productos',
-                                  style: TextStyle(
-                                      color: Colors.grey.shade400,
-                                      fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      )
-                    : GridView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding:
-                            const EdgeInsets.fromLTRB(12, 12, 12, 110),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 0.70,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                        ),
-                        itemCount: filtered.length,
-                        itemBuilder: (_, i) {
-                          final product = filtered[i];
-                          return ProductMenuCard(
-                            product: product,
-                            isLoading: _openingProductId == product.id,
-                            onTap: () => _openProduct(product),
-                          );
-                        },
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: ColorSchema.primaryColor,
                       ),
+                    )
+                  : filtered.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                        ),
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.search_off_rounded,
+                                size: 52,
+                                color: Colors.grey.shade300,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'No hay productos',
+                                style: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : GridView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 110),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            childAspectRatio: 0.70,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) {
+                        final product = filtered[i];
+                        return ProductMenuCard(
+                          product: product,
+                          displayPrice: ComandaNotifier.computePrice(
+                            product,
+                            1,
+                            office: ref.read(sesionProvider).office,
+                            config: ref.read(sesionProvider).config,
+                          ),
+                          isLoading: _openingProductId == product.id,
+                          onTap: () => _openProduct(product),
+                        );
+                      },
+                    ),
             ),
           ),
         ],
@@ -510,16 +664,17 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
         ),
         child: SafeArea(
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
                 // Main CTA
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: state.isSubmitting
+                    onPressed: state.isSubmitting || _openingCheckout
                         ? null
-                        : (widget.isPedidoSinMesa ? _handlePedidoSinMesa : _submit),
+                        : (widget.isPedidoSinMesa
+                              ? _handlePedidoSinMesa
+                              : _submit),
                     icon: state.isSubmitting
                         ? const SizedBox(
                             width: 16,
@@ -533,26 +688,32 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                             widget.isPedidoSinMesa
                                 ? Icons.arrow_forward_rounded
                                 : Icons.receipt_long_rounded,
-                            size: 20),
+                            size: 20,
+                          ),
                     label: Text(
                       widget.isPedidoSinMesa
                           ? (totalItems > 0
-                              ? 'Siguiente  ·  S/ ${notifier.totalAmount.toStringAsFixed(2)}'
-                              : 'Siguiente')
+                                ? 'Completar pedido'
+                                : (_hasPendingCheckout
+                                      ? 'Recuperar pedido'
+                                      : 'Completar pedido'))
                           : (totalItems > 0
-                              ? 'Agregar Comanda  ·  S/ ${notifier.totalAmount.toStringAsFixed(2)}'
-                              : 'Agregar Comanda'),
+                                ? 'Agregar Comanda  ·  S/ ${notifier.totalAmount.toStringAsFixed(2)}'
+                                : 'Agregar Comanda'),
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 14),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorSchema.primaryColor,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor:
-                          ColorSchema.primaryColor.withValues(alpha: 0.5),
+                      disabledBackgroundColor: ColorSchema.primaryColor
+                          .withValues(alpha: 0.5),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 0,
                     ),
                   ),
@@ -567,10 +728,14 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(
-                              color: ColorSchema.primaryColor, width: 1.5),
+                            color: ColorSchema.primaryColor,
+                            width: 1.5,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -592,7 +757,9 @@ class _ComandaScreenState extends ConsumerState<ComandaScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(
-                              minWidth: 20, minHeight: 20),
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
                           decoration: const BoxDecoration(
                             color: Colors.red,
                             shape: BoxShape.circle,
@@ -648,9 +815,7 @@ class _CategoryChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.white24,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? Colors.white : Colors.white38,
-          ),
+          border: Border.all(color: selected ? Colors.white : Colors.white38),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -667,8 +832,7 @@ class _CategoryChip extends StatelessWidget {
               label,
               style: TextStyle(
                 color: selected ? ColorSchema.primaryColor : Colors.white,
-                fontWeight:
-                    selected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 12,
               ),
             ),

@@ -12,6 +12,7 @@ class PaymentDetail {
   final String? numeroOperacion;
   final double? monto;
   final double? montoPagado;
+  final double? cambio;
   final bool? eliminado;
   final bool? modificado;
   final DateTime? createdOn;
@@ -31,6 +32,7 @@ class PaymentDetail {
     this.numeroOperacion,
     this.monto,
     this.montoPagado,
+    this.cambio,
     this.eliminado,
     this.modificado,
     this.createdOn,
@@ -51,6 +53,7 @@ class PaymentDetail {
         numeroOperacion: json['numeroOperacion'],
         monto: (json['monto'] as num?)?.toDouble(),
         montoPagado: (json['montoPagado'] as num?)?.toDouble(),
+        cambio: (json['cambio'] as num?)?.toDouble(),
         eliminado: json['eliminado'],
         modificado: json['modificado'],
         createdOn: json['createdOn'] != null ? parseDateTimeFlexible(json['createdOn']) : null,
@@ -71,6 +74,7 @@ class PaymentDetail {
         'numeroOperacion': numeroOperacion,
         'monto': monto,
         'montoPagado': montoPagado,
+        'cambio': cambio,
         'eliminado': eliminado,
         'modificado': modificado,
         'createdOn': createdOn?.toIso8601String(),

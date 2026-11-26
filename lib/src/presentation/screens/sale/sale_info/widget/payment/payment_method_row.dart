@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:teki_app/src/data/models/teki_model/payment_method.dart';
 import 'package:teki_app/src/presentation/screens/sale/sale_info/widget/payment/payment_entry.dart';
@@ -129,10 +130,12 @@ class PaymentMethodRow extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: TextFieldSection(
-                        label: 'Monto',
+                        label: _isCash ? 'Efectivo recibido' : 'Monto',
+                        autocorrect: false,
                         hint: '0.00',
-                        inputType: TextInputType.number,
+                        inputType: const TextInputType.numberWithOptions(decimal: true),
                         controller: entry!.amountController,
+                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$'))],
                         onChanged: (_) => onAmountChanged(),
                         showDoneButton: true,
                       ),

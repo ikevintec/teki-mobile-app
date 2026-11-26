@@ -1,3 +1,4 @@
+import 'package:teki_app/src/data/models/teki_model/config.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,6 +25,45 @@ void main() {
       ..addFont(rootBundle.load('assets/fonts/Roboto-Regular.ttf'));
     await fuente.load();
   });
+  testWidgets(
+    'venta con búsqueda local y caché vacía abre sin modificar providers durante build',
+    (t) async {
+      Get.reset();
+      SharedPreferences.setMockInitialValues({});
+      ApiClient.dio = Dio(BaseOptions(baseUrl: 'https://example.invalid/api'))
+        ..httpClientAdapter = PedidosOpcionesAdapter();
+      final session = pedidosSession();
+      final container = ProviderContainer(
+        overrides: [
+          sesionProvider.overrideWith(
+            (_) => LoyaltySessionNotifier(
+              session.copyWith(
+                config: ConfigCompany.fromJson({
+                  ...session.config!.toJson(),
+                  'busquedaProductosLocalmente': true,
+                }),
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await t.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: ToastificationWrapper(
+            child: GetMaterialApp(
+              theme: ThemeData(fontFamily: 'Roboto'),
+              home: const ProductsSaleScreen(),
+            ),
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Continuar'), findsOneWidget);
+      expect(t.takeException(), isNull);
+    },
+  );
   testWidgets('continuar sin precio dice qué producto lo necesita', (t) async {
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1;
@@ -55,9 +95,15 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text('Continuar'));
     await t.pumpAndSettle();
-    expect(find.text('Agrega al menos un producto para continuar.'), findsOneWidget);
+    expect(
+      find.text('Agrega al menos un producto para continuar.'),
+      findsOneWidget,
+    );
 
-    await t.enterText(find.widgetWithText(TextField, 'Buscar producto'), 'Arroz');
+    await t.enterText(
+      find.widgetWithText(TextField, 'Buscar producto'),
+      'Arroz',
+    );
     await t.pumpAndSettle();
     await t.tap(find.text('Arroz extra 1 kg').last);
     await t.pumpAndSettle();
