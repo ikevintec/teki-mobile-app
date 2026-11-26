@@ -67,6 +67,41 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  test(
+    'el kardex anterior sigue siendo compatible sin referencias de pedido',
+    () {
+      final record = InventoryRecord.fromJson({'id': 1, 'cantidad': 2});
+      expect(record.trazabilidadPedido, isNull);
+      expect(record.cantidad, 2);
+    },
+  );
+
+  testWidgets(
+    'muestra pedido, revisión y venta sin convertir la reserva en venta',
+    (tester) async {
+      final repository = _Repository()
+        ..logs = [
+          InventoryRecord.fromJson({
+            'id': 1,
+            'cantidad': 2,
+            'tipo': 'ENTRADA',
+            'concepto': 'AJUSTE',
+            'pedidoOrigenId': 42,
+            'pedidoOrigenNumero': 'PE01-12',
+            'revisionPedidoOrigen': 3,
+            'eventoPedido': 'AJUSTE_RESERVA',
+            'ventaPedido': {'serie': 'NV01', 'numero': 25},
+          }),
+        ];
+      await showSheet(tester, repository, tipo: null);
+      expect(find.textContaining('Pedido PE01-12'), findsOneWidget);
+      expect(find.textContaining('rev. 3'), findsOneWidget);
+      expect(find.textContaining('Reserva ajustada'), findsOneWidget);
+      expect(find.textContaining('Conversión: NV01-25'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'sin datos anidados, carga lotes al abrir y movimientos al seleccionar',
     (tester) async {
@@ -137,14 +172,15 @@ class _Repository extends Fake implements InventoryRepository {
   final batchPages = <int>[];
   final recordIds = <int>[];
   bool failBatches = false;
+  List<InventoryRecord> logs = [];
 
   @override
   Future<InventoryRecordResponse> getInventoryLogs(
     int idInventory,
     Map<String, dynamic> params,
   ) async => InventoryRecordResponse(
-    content: [],
-    empty: true,
+    content: logs,
+    empty: logs.isEmpty,
     first: true,
     last: true,
     number: 0,

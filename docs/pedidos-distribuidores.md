@@ -397,3 +397,16 @@ Fixture sin rol VENTAS_CREAR para navegación desdeDetalle: caso2 inició relanz
 entre documentos/reset comprobado en providers. Evidencia workspace `output/ajuste-mobile-promociones-2026-11-23/REGISTRO.md`.
 Copia QA retirada, backend efímero cerrado y original conservada/abierta. Config build vuelve a lib/main.dart.
 Implementado/probado localmente; sin publicación/despliegue ni actualización de la app instalada original.
+
+
+### 24/11/2026 — Kardex con origen de pedido
+
+El panel de movimientos consume pedidoOrigenId/Numero, revisionPedidoOrigen, eventoPedido y ventaPedido
+del backend. Muestra reserva/ajuste/liberación separados del comprobante resultante de la conversión.
+Movimientos antiguos sin referencias mantienen su presentación. No modifica la emisión/edición del pedido.
+Requiere backend y migración DISTRIB-14; no se migró la BD del usuario ni se publicó una app nueva.
+Ver guía backend qa-pedidos-inventario.md y evidencia Teki/output/kardex-pedidos-2026-11-24/.
+
+25/11/2026 — Delta móvil de kardex recuperado y revisado sobre develop1.0.41+32. Suite completa559/559
+aprobada; análisis comparado con la misma base sin diagnósticos nuevos (78 avisos preexistentes). Compatibilidad
+con movimientos sin referencia cubierta. Integración de código no implica nueva app instalada, release ni migración.
