@@ -103,7 +103,17 @@ class _DirectOrderCheckoutScreenState
     final customer = session.config?.clientePorDefecto == true
         ? session.config?.clientePorDefectoData
         : null;
-    if (customer != null) _fillCustomer(customer);
+    if (widget.order.cliente != null) {
+      _fillCustomer(widget.order.cliente!);
+    } else if (customer != null) {
+      _fillCustomer(customer);
+    }
+    name.text = widget.order.denominacionReceptor ?? widget.order.nombreCliente ?? name.text;
+    document.text = widget.order.numeroDocumentoReceptor ?? document.text;
+    documentType = widget.order.tipoDocumentoReceptor ?? documentType;
+    address.text = widget.order.direccionReceptor ?? address.text;
+    email.text = widget.order.emailReceptor ?? email.text;
+    phone.text = widget.order.telefonoReceptor ?? phone.text;
     final seen = <int?>{};
     methods = (session.config?.formasPago ?? [])
         .where(
@@ -210,6 +220,13 @@ class _DirectOrderCheckoutScreenState
     final order = widget.order.toJson();
     final anonymous = document.text.trim().isEmpty && type != '01';
     final customerName = name.text.trim();
+    final defaultCustomer = selectedCustomer != null &&
+        (selectedCustomer?.porDefecto == true ||
+            (session.config?.clientePorDefectoData?.id != null &&
+                selectedCustomer?.id == session.config?.clientePorDefectoData?.id));
+    final sameCustomer = selectedCustomer != null &&
+        selectedCustomer?.numeroDocumento == document.text.trim() &&
+        selectedCustomer?.tipoDocumento == documentType;
     final recipientName = customerName.isEmpty && anonymous
         ? 'Clientes varios'
         : customerName;
@@ -230,12 +247,15 @@ class _DirectOrderCheckoutScreenState
       'montoDelivery': isDelivery ? _finiteAmount(delivery.text) : 0,
       'cliente': {
         'id':
-            selectedCustomer?.numeroDocumento == document.text.trim() &&
-                selectedCustomer?.tipoDocumento == documentType &&
-                selectedCustomer?.razonSocial == name.text.trim()
+            sameCustomer &&
+                (defaultCustomer || selectedCustomer?.razonSocial == name.text.trim())
             ? selectedCustomer?.id
             : null,
-        'razonSocial': anonymous ? 'Clientes varios' : recipientName,
+        'razonSocial': anonymous
+            ? 'Clientes varios'
+            : defaultCustomer && sameCustomer
+                ? selectedCustomer?.razonSocial
+                : recipientName,
         'tipoDocumento': recipientType,
         'numeroDocumento': recipientNumber,
         'direccionCompleta': anonymous ? null : address.text.trim(),
@@ -796,6 +816,9 @@ class _DirectOrderCheckoutScreenState
                           TextFormField(
                             controller: text,
                             focusNode: focus,
+                            onTap: () {
+                              text.selection = TextSelection(baseOffset: 0, extentOffset: text.text.length);
+                            },
                             enabled: !locked,
                             decoration: const InputDecoration(
                               labelText: 'Nombre o documento',

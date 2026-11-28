@@ -82,3 +82,14 @@ QA nativo final: iPhoneSE3/iPadAir11 M3 iOS18.3, detalle/confeti visible, PDF ma
 regreso a Pedidos y continuidad de ventas comprobados; All tests passed sin excepciones en ambos.
 Servicios y destinos de navegación ficticios. Capturas/logs en el expediente; QA separada retirada,
 entrypoint lib/main.dart restaurado. Compilación ARM64 correcta, sin cambios de backend.
+
+
+## Nombre del receptor y cliente por defecto — 27/11/2026
+
+En la app, Nombre usa un único controlador para precarga, búsqueda y lectura al continuar. Tocar el campo selecciona todo el texto; borrar no repone el valor anterior. Al editar una venta o cotización y al convertir una cotización a venta, los campos de receptor del comprobante tienen prioridad sobre la ficha de cliente. En cobro de restaurante se precarga el receptor del pedido cuando corresponde al cliente de la cuenta; una cuenta dividida con otro cliente conserva su propia ficha.
+
+La emisión directa de pedidos precarga cliente/receptor existentes y conserva la identidad del genérico al cambiar solo su nombre visible. El nombre específico se envía como denominacionReceptor; no se cambia la configuración del cliente por defecto. Se conserva el documento interno del genérico y las validaciones existentes de documentos.
+
+Verificación local: 30 pruebas focalizadas finales, 659 pruebas completas sobre base dd1dfcc y 673 completas en el checkout habitual con WIP de conectividad preservado y 7 escenarios nativos en cada simulador iPhone SE3/iOS18.3 e iPad Air11/M3/iOS18.3. Datos de UI ficticios/adaptador HTTP, con pantallas reales de Flutter y capturas de selección inspeccionadas; no acredita E2E nativo contra API real. Por separado, Postman/API18085/apilocal y MySQLteki reales: crear/editar NV directa y crear/editar NV restaurante, lectura persistida del nombre y referencia al mismo cliente; SELECT de la fila completa de customer antes/después idéntico. Tres NV y dos pedidos nuevos locales contando el intento preliminar; no cambios de configuración/clientes ni emisión fiscal externa. Sin impresión física ni Android nativo en esta tanda.
+
+API8080 ajena conservada: preview falló por NoSuchMethodError de TicketDetailDto. QA usó API temporal de JAR con dependencia iText local agregada solo al classpath; sin parche backend ni DDL. Servicio temporal detenido al finalizar. Sin commit/push/release/despliegue. Evidencia: Teki/output/nombre-cliente-venta-app-2026-11-27/.
