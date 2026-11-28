@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/caja_resumen.dart';
 import 'package:teki_app/src/data/models/response/cash_register_response.dart';
@@ -36,7 +37,7 @@ class RemoteCashRegister extends CashRegisterDatasource {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -99,7 +100,7 @@ class RemoteCashRegister extends CashRegisterDatasource {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -127,7 +128,7 @@ class RemoteCashRegister extends CashRegisterDatasource {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -175,7 +176,7 @@ class RemoteCashRegister extends CashRegisterDatasource {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -207,7 +208,7 @@ class RemoteCashRegister extends CashRegisterDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -247,7 +248,7 @@ class RemoteCashRegister extends CashRegisterDatasource {
       if (e.type == DioExceptionType.cancel) rethrow;
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -298,7 +299,7 @@ class RemoteCashRegister extends CashRegisterDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -324,7 +325,7 @@ class RemoteCashRegister extends CashRegisterDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final msg = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';

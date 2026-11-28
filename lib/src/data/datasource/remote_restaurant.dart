@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/teki_model/check.dart';
 import 'package:teki_app/src/data/models/teki_model/command.dart';
@@ -23,8 +24,8 @@ class RemoteRestaurant extends RestaurantDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final rd = e.response?.data;
       final msg =
@@ -49,8 +50,8 @@ class RemoteRestaurant extends RestaurantDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final rd = e.response?.data;
       final msg =
@@ -108,8 +109,8 @@ class RemoteRestaurant extends RestaurantDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final rd = e.response?.data;
       final msg =
@@ -349,8 +350,8 @@ class RemoteRestaurant extends RestaurantDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final rd = e.response?.data;
       final msg =

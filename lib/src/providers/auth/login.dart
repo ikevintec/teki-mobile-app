@@ -27,6 +27,7 @@ import 'package:teki_app/src/shared/services/token_storage.dart';
 import 'package:teki_app/src/utils/api_client.constant.dart';
 import 'package:teki_app/src/utils/notifications.dart';
 import 'package:teki_app/src/utils/storage_keys.dart';
+import 'package:teki_app/src/utils/network_error.dart';
 
 // Creación del Provider que gestionará los cambios de estado
 final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
@@ -182,12 +183,8 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     } on DioException catch (e) {
       String message = 'Ocurrió un error desconocido.';
 
-      if (e.type == DioExceptionType.connectionTimeout) {
-        message = 'Tiempo de espera agotado al conectar con el servidor.';
-      } else if (e.type == DioExceptionType.receiveTimeout) {
-        message = 'Tiempo de espera agotado al recibir respuesta del servidor.';
-      } else if (e.type == DioExceptionType.sendTimeout) {
-        message = 'Tiempo de espera agotado al enviar datos al servidor.';
+      if (e.response == null) {
+        message = e.message ?? NetworkMessages.unreachable;
       } else if (e.type == DioExceptionType.badResponse) {
         final statusCode = e.response?.statusCode;
         final errorData = e.response?.data;
@@ -197,15 +194,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
               'Credenciales incorrectas. Verifica tu usuario y contraseña.';
         } else if (statusCode == 403) {
           message = 'Acceso denegado. No tienes permisos suficientes.';
-        } else if (statusCode == 500) {
-          message = 'Error interno del servidor.';
+        } else if (statusCode != null && statusCode >= 500) {
+          message = NetworkMessages.unavailable;
         } else if (errorData is Map) {
           message = errorData['mensaje'] ?? errorData['message'] ?? 'Error HTTP $statusCode';
         } else {
           message = 'Error HTTP $statusCode';
         }
-      } else if (e.type == DioExceptionType.unknown) {
-        message = 'Error de red o el servidor no está disponible.';
       } else {
         message = e.message ?? 'Error inesperado';
       }

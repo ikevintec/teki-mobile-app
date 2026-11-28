@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/order_restaurant_response.dart';
 import 'package:teki_app/src/domain/datasource/orders_restaurant_datasource.dart';
@@ -21,8 +22,8 @@ class RemoteOrdersRestaurant extends OrdersRestaurantDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';

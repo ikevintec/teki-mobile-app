@@ -6,6 +6,7 @@ import 'package:teki_app/src/routes/app_routes.dart';
 import 'package:teki_app/main.dart'; // Importa el routeObserver global
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:teki_app/src/presentation/widgets/keyboard_dismisser.dart';
+import 'package:teki_app/src/presentation/widgets/connectivity/internet_banner.dart';
 
 class Application extends StatelessWidget {
   const Application({super.key});
@@ -34,13 +35,13 @@ class Application extends StatelessWidget {
         // Solo aplicar SafeArea en Android con navegación por botones.
         // La navegación por gestos reserva insets laterales (left/right > 0),
         // en botones esos insets son 0. En iOS no aplica.
-        if (!Platform.isAndroid) return child!;
+        if (!Platform.isAndroid) return InternetBanner(child: child!);
         final gestureInsets = MediaQuery.of(context).systemGestureInsets;
         final isGestureNav = gestureInsets.left > 0 || gestureInsets.right > 0;
-        if (isGestureNav) return child!;
+        if (isGestureNav) return InternetBanner(child: child!);
         return ColoredBox(
           color: Theme.of(context).scaffoldBackgroundColor,
-          child: SafeArea(top: false, child: child!),
+          child: SafeArea(top: false, child: InternetBanner(child: child!)),
         );
       },
       ),

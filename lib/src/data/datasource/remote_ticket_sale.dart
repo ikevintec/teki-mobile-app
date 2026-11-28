@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:teki_app/src/domain/errors/ticket_emission_exception.dart';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
@@ -41,8 +42,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       errorNotification("Error al obtener series por oficina: $e");
       return Future.error(e.toString());
@@ -79,8 +80,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final errorMessage =
@@ -116,8 +117,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final message =
@@ -192,8 +193,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final message =
@@ -241,8 +242,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final message =
@@ -297,8 +298,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final message =
@@ -364,8 +365,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
     } on DioException catch (e) {
       if (e.message == 'SESSION_EXPIRED') throw Exception('Sesión expirada');
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final message =
@@ -396,8 +397,8 @@ class RemoteTicketSaleDatasource extends TicketSaleDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final message =
