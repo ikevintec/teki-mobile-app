@@ -3,6 +3,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/sale/sale_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teki_app/src/data/models/teki_model/customer.dart';
+import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/repositories/customer_repository_impl.dart';
 import 'package:teki_app/src/domain/repositories/customer_repository.dart';
 import 'package:teki_app/src/providers/sale/customer/customer_sale_state.dart';
@@ -90,6 +91,20 @@ class CustomerSaleNotifier extends StateNotifier<CustomerSaleState> {
       ref.read(ticketProvider.notifier).updateTicket(ref.read(ticketProvider).ticket.copyWith(tipoPrecioCabeceraId:c.cabecera));
       return true;
     }catch(_){errorNotification('No se pudo cargar el tipo de precio del cliente. Reintenta antes de continuar.');return false;}
+  }
+
+  /// Los datos del receptor pertenecen al comprobante, no a la ficha compartida.
+  void setCustomerFromTicket(Ticket ticket) {
+    final customer = ticket.cliente ?? Customer();
+    setCustomerEntity(Customer.fromJson({
+      ...customer.toJson(),
+      'razonSocial': ticket.denominacionReceptor ?? customer.razonSocial,
+      'tipoDocumento': ticket.tipoDocumentoReceptor ?? customer.tipoDocumento,
+      'numeroDocumento': ticket.numeroDocumentoReceptor ?? customer.numeroDocumento,
+      'direccion': ticket.direccionReceptor ?? customer.direccion,
+      'email': ticket.emailReceptor ?? customer.email,
+      'telefono': ticket.telefonoReceptor ?? customer.telefono,
+    }));
   }
 
   void setCustomerEntity(Customer customer) {

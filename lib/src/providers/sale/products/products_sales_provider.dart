@@ -246,9 +246,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         );
         final ticketFromQuotation = quotation.toTicketForSale();
         ticketSaleNotifier.updateTicket(ticketFromQuotation);
-        customerNotifier.setCustomerEntity(
-          ticketFromQuotation.cliente ?? Customer(),
-        );
+        customerNotifier.setCustomerFromTicket(ticketFromQuotation);
         productsSaleNotifier.setProductsSaleEntity(
           ticketFromQuotation.items ?? [],
           monedaOrigen: ticketFromQuotation.codigoMoneda,
@@ -266,9 +264,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         );
         final ticketFromQuotation = quotation.toTicketForEdit();
         ticketSaleNotifier.updateTicket(ticketFromQuotation);
-        customerNotifier.setCustomerEntity(
-          ticketFromQuotation.cliente ?? Customer(),
-        );
+        customerNotifier.setCustomerFromTicket(ticketFromQuotation);
         productsSaleNotifier.setProductsSaleEntity(
           ticketFromQuotation.items ?? [],
           monedaOrigen: ticketFromQuotation.codigoMoneda,
@@ -284,7 +280,7 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
         // Cargar el comprobante por ID
         Ticket comprobante = await comprobanteNotifier.fetchComprobanteById(id);
         ticketSaleNotifier.updateTicket(comprobante);
-        customerNotifier.setCustomerEntity(comprobante.cliente ?? Customer());
+        customerNotifier.setCustomerFromTicket(comprobante);
         final items = restoreEditSaleSeriesAvailability(
           items: comprobante.items ?? [],
           officeId: ref.read(sesionProvider).office?.id,
@@ -324,9 +320,26 @@ class ProductsSaleNotifier extends StateNotifier<ProductsSaleState>
       // Resolver cliente: del check o el cliente por defecto de la sesión
       final customer =
           check.cliente ??
+          check.pedido?.cliente ??
           ref.read(sesionProvider).config?.clientePorDefectoData ??
           Customer();
-      ref.read(customerSaleProvider.notifier).setCustomerEntity(customer);
+      final pedido = check.pedido;
+      // Una cuenta puede tener otro cliente asignado después de dividir el pedido.
+      final usarReceptorPedido = check.cliente == null ||
+          (check.cliente?.id != null && check.cliente?.id == pedido?.cliente?.id) ||
+          (pedido?.cliente == null && check.cliente?.id != null &&
+              check.cliente?.id == ref.read(sesionProvider).config?.clientePorDefectoData?.id);
+      ref.read(customerSaleProvider.notifier).setCustomerFromTicket(Ticket(
+        cliente: customer,
+        denominacionReceptor: usarReceptorPedido
+            ? pedido?.denominacionReceptor ?? pedido?.nombreCliente
+            : null,
+        tipoDocumentoReceptor: usarReceptorPedido ? pedido?.tipoDocumentoReceptor : null,
+        numeroDocumentoReceptor: usarReceptorPedido ? pedido?.numeroDocumentoReceptor : null,
+        direccionReceptor: usarReceptorPedido ? pedido?.direccionReceptor : null,
+        emailReceptor: usarReceptorPedido ? pedido?.emailReceptor : null,
+        telefonoReceptor: usarReceptorPedido ? pedido?.telefonoReceptor : null,
+      ));
 
       // Cargar divisas si están vacías
       if (state.currencies.isEmpty) {
