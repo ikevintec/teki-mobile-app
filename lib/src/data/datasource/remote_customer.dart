@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:teki_app/src/data/models/response/customer.dart';
@@ -19,8 +20,8 @@ class RemoteCustomers extends CustomersDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -62,9 +63,9 @@ class RemoteCustomers extends CustomersDatasource {
       
       if (e.response == null) {
       
-        errorNotification('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
       
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       
       }
       
@@ -143,8 +144,8 @@ class RemoteCustomers extends CustomersDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       errorNotification(e.toString());
       return [];

@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -21,8 +22,8 @@ class RemoteProducts extends ProductsDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -42,8 +43,8 @@ class RemoteProducts extends ProductsDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -90,8 +91,8 @@ class RemoteProducts extends ProductsDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final errorMessage = (resData is Map ? (resData['mensaje'] ?? resData['message']) : null) ?? e.message ?? 'Error de conexión';
@@ -120,7 +121,7 @@ class RemoteProducts extends ProductsDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        return Future.error('Sin conexión a internet');
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       // Con ResponseType.plain el cuerpo del error también llega como String.
       final resData = _decodeIfJson(e.response?.data);

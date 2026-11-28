@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:teki_app/src/data/models/teki_model/loyalty_coupon.dart';
 import 'package:teki_app/src/data/models/teki_model/loyalty_customer.dart';
 import 'package:teki_app/src/data/models/teki_model/loyalty_page.dart';
@@ -150,7 +151,7 @@ class RemoteLoyalty implements LoyaltyDatasource {
     }
     return Exception(
       error.response == null
-          ? 'Sin conexión. Comprueba tu internet y vuelve a intentar.'
+          ? (error.message ?? NetworkMessages.unreachable)
           : customers
           ? 'No se pudo cargar la información de fidelización. Vuelve a intentar.'
           : 'No se pudieron cargar las tarjetas. Vuelve a intentar.',

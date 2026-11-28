@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/replicador/replicador_app.dart';
 import 'package:teki_app/src/domain/repositories/pago_yape_repository.dart';
@@ -34,7 +35,7 @@ class RemotePagoYape extends PagoYapeDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        throw Exception('Sin conexión a internet');
+        throw Exception((e.message ?? NetworkMessages.unreachable));
       }
       final data = e.response?.data;
       final message = data is Map ? data['mensaje'] ?? data['message'] : null;
@@ -76,7 +77,7 @@ class RemotePagoYape extends PagoYapeDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        throw Exception('Sin conexión a internet');
+        throw Exception((e.message ?? NetworkMessages.unreachable));
       }
       final status = e.response?.statusCode ?? 0;
       final data = e.response?.data;

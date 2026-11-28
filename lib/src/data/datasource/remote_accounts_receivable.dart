@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/accounts_receivable_total_response.dart';
 import 'package:teki_app/src/data/models/teki_model/account_receivable.dart';
@@ -52,8 +53,8 @@ class RemoteAccountsReceivable implements AccountsReceivableDatasource {
         throw Exception('Sesión expirada');
       }
       if (e.response == null) {
-        errorNotification('Sin conexión a internet');
-        return Future.error('Sin conexión a internet');
+        errorNotification((e.message ?? NetworkMessages.unreachable));
+        return Future.error((e.message ?? NetworkMessages.unreachable));
       }
       final resData = e.response?.data;
       final message = (resData is Map

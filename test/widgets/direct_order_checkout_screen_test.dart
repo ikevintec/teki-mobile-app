@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:teki_app/src/data/models/teki_model/customer.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:teki_app/src/data/models/teki_model/ticket.dart';
 import 'package:teki_app/src/data/models/teki_model/payment_detail.dart';
@@ -24,6 +25,7 @@ import 'package:teki_app/src/providers/config/config.dart';
 import 'package:teki_app/src/providers/restaurant/direct_checkout/direct_checkout_service.dart';
 import 'package:teki_app/src/presentation/screens/orders_restaurant/widgets/direct_order_checkout_screen.dart';
 import '../support/direct_checkout_fixture.dart';
+import '../support/dashboard_fixture.dart';
 
 void main() {
   late CheckoutService service;
@@ -46,6 +48,8 @@ void main() {
     WidgetTester tester, {
     Size size = const Size(390, 844),
     bool anonymous = false,
+    bool generic = false,
+    String? recipientName,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -55,7 +59,7 @@ void main() {
       ProviderScope(
         overrides: [
           sesionProvider.overrideWith(
-            (_) => anonymous ? AnonymousSession() : CheckoutSession(),
+            (_) => anonymous ? AnonymousSession() : generic ? GenericSession() : CheckoutSession(),
           ),
           directCheckoutServiceProvider.overrideWithValue(service),
         ],
@@ -69,6 +73,7 @@ void main() {
                         MaterialPageRoute(
                           builder: (_) => DirectOrderCheckoutScreen(
                             order: OrderRestaurant(
+                              denominacionReceptor: recipientName,
                               comandas: [
                                 Command(
                                   items: [
@@ -106,11 +111,39 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  for (final initialName in <String?>[null, 'Nombre previo del pedido']) {
+    testWidgets('nombre libre restaurante conserva genérico y precarga $initialName', (tester) async {
+      dotenv.loadFromString(envString: 'API_URL=https://example.invalid/api');
+      ApiClient.dio = Dio(BaseOptions(baseUrl: 'https://example.invalid/api'))
+        ..httpClientAdapter = DashboardAdapter();
+      await open(tester, generic: true, recipientName: initialName);
+      final input = find.widgetWithText(TextFormField, 'Nombre o documento');
+      await tester.ensureVisible(input);
+      await tester.tap(input);
+      await tester.pump();
+      final controller = tester.widget<TextFormField>(input).controller!;
+      expect(controller.text, initialName ?? 'Clientes varios');
+      expect(controller.selection, TextSelection(baseOffset: 0, extentOffset: controller.text.length));
+      await tester.enterText(input, 'Ana del restaurante');
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Emitir comprobante'));
+      await tester.tap(find.text('Emitir comprobante'));
+      await tester.pumpAndSettle();
+      final pedido = service.sent.single['pedido'] as Map;
+      expect(pedido['denominacionReceptor'], 'Ana del restaurante');
+      expect(pedido['cliente']['id'], 10);
+      expect(pedido['cliente']['razonSocial'], 'Clientes varios');
+      expect(pedido['cliente']['numeroDocumento'], '-');
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets(
     'pago final de restaurante carga efectivo recibido y vuelto preparados',
     (tester) async {
       dotenv.loadFromString(envString: 'API_URL=https://example.invalid/api');
-      ApiClient.dio = Dio(BaseOptions(baseUrl: 'https://example.invalid/api'));
+      ApiClient.dio = Dio(BaseOptions(baseUrl: 'https://example.invalid/api'))
+        ..httpClientAdapter = DashboardAdapter();
       final container = ProviderContainer(
         overrides: [sesionProvider.overrideWith((_) => CheckoutSession())],
       );
@@ -444,5 +477,12 @@ class AnonymousSession extends CheckoutSession {
         'clientePorDefecto': false,
       }),
     );
+  }
+}
+
+class GenericSession extends CheckoutSession {
+  GenericSession() {
+    state.config!.clientePorDefectoData = Customer(id: 10, razonSocial: 'Clientes varios',
+      tipoDocumento: '0', numeroDocumento: '-', porDefecto: true);
   }
 }

@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/response/inventory_transfer_response.dart';
 import 'package:teki_app/src/data/models/response/product_inventory.dart';
@@ -111,7 +112,7 @@ class RemoteInventoryTransfer extends InventoryTransferDatasource {
 
   String _errorMessage(DioException error, String fallback) {
     if (error.message == 'SESSION_EXPIRED') return 'Sesi\u00f3n expirada';
-    if (error.response == null) return 'Sin conexi\u00f3n a internet';
+    if (error.response == null) return (error.message ?? NetworkMessages.unreachable);
     final data = error.response?.data;
     if (data is Map) {
       final message = data['mensaje'] ?? data['message'] ?? data['error'];

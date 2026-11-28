@@ -29,7 +29,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   final _direccionController = TextEditingController();
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
-  TextEditingController? _autocompleteController;
+  final _nombreFocusNode = FocusNode();
   int? id;
 
   final GlobalKey _fieldKey = GlobalKey();
@@ -115,6 +115,7 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
   void dispose() {
     _debounce?.cancel();
     _nombreController.dispose();
+    _nombreFocusNode.dispose();
     _documentoController.dispose();
     _direccionController.dispose();
     _emailController.dispose();
@@ -128,9 +129,6 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
     final customerName = customer.razonSocial ?? '';
 
     _nombreController.text = customerName;
-    if (_autocompleteController != null) {
-      _autocompleteController!.text = customerName;
-    }
 
     _documentoController.text = customer.numeroDocumento ?? '';
     _direccionController.text = customer.direccionCompleta ?? '';
@@ -197,6 +195,8 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                               ),
                               const SizedBox(height: 15),
                               Autocomplete<Customer>(
+                                textEditingController: _nombreController,
+                                focusNode: _nombreFocusNode,
                                 optionsBuilder:
                                     (TextEditingValue textEditingValue) async {
                                       if (textEditingValue.text
@@ -219,22 +219,21 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                       focusNode,
                                       onEditingComplete,
                                     ) {
-                                      _autocompleteController = controller;
-
-                                      if (controller.text.isEmpty &&
-                                          _nombreController.text.isNotEmpty) {
-                                        controller.text =
-                                            _nombreController.text;
-                                      }
-
-                                      _nombreController.value =
-                                          controller.value;
-
                                       return Container(
                                         key: _fieldKey,
-                                        child: TextField(
+                                        child: TextFormField(
                                           controller: controller,
                                           focusNode: focusNode,
+                                          onTap: () {
+                                            controller.selection = TextSelection(
+                                              baseOffset: 0,
+                                              extentOffset: controller.text.length,
+                                            );
+                                          },
+                                          validator: (value) =>
+                                              (value?.trim().isEmpty ?? true)
+                                                  ? 'Ingrese el nombre del cliente'
+                                                  : null,
                                           decoration: const InputDecoration(
                                             labelText: 'Nombre',
                                             hintText: 'Ingrese el nombre',
@@ -532,13 +531,13 @@ class _ClientSaleScreenState extends ConsumerState<ClientSaleScreen> {
                                 setState(() => _autovalidate = true);
                                 avisarFaltante(
                                   context,
-                                  'Revisa el número de documento del cliente para continuar.',
+                                  'Revisa los datos del cliente para continuar.',
                                 );
                                 return;
                               }
                               clienteNotifier.setCustomer(
                                 id: id,
-                                nombre: _nombreController.text,
+                                nombre: _nombreController.text.trim(),
                                 direccion: _direccionController.text,
                                 documento: _documentoController.text,
                                 email: _emailController.text,

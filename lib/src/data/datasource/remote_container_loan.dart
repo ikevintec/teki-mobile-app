@@ -1,3 +1,4 @@
+import 'package:teki_app/src/utils/network_error.dart';
 import 'package:dio/dio.dart';
 import 'package:teki_app/src/data/models/teki_model/container_loan.dart';
 import 'package:teki_app/src/domain/datasource/container_loan_datasource.dart';
@@ -171,7 +172,7 @@ class RemoteContainerLoan extends ContainerLoanDatasource {
 
   String _errorMessage(DioException error, String fallback) {
     if (error.message == 'SESSION_EXPIRED') return 'Sesión expirada';
-    if (error.response == null) return 'Sin conexión a internet';
+    if (error.response == null) return (error.message ?? NetworkMessages.unreachable);
     final data = error.response?.data;
     if (data is Map) {
       final message = data['mensaje'] ?? data['message'] ?? data['error'];

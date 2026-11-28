@@ -60,6 +60,7 @@ dependencies:
   audioplayers: ^6.7.1
   qr_flutter: ^4.1.0
   sentry_flutter: ^9.0.0
+  internet_connection_checker_plus: ^3.1.2
 
 dev_dependencies:
   integration_test:
